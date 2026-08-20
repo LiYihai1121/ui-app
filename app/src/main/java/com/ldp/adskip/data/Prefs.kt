@@ -13,7 +13,9 @@ object Prefs {
 
     private const val SP_NAME = "adskip_prefs"
     private const val KEY_KEYWORDS = "keywords"
+    private const val KEY_KEYWORDS_JSON = "keywords_json"
     private const val KEY_VIEW_IDS = "view_ids"
+    private const val KEY_VIEW_IDS_JSON = "view_ids_json"
     private const val KEY_DISABLED = "disabled_packages"
     private const val KEY_TOTAL = "total_skips"
     private const val KEY_LAST_APP = "last_app"
@@ -33,22 +35,36 @@ object Prefs {
     // ---------- 全局规则 ----------
     fun getKeywords(context: Context): MutableList<String> {
         val defaults = context.resources.getStringArray(R.array.default_keywords).toList()
-        val saved = sp(context).getStringSet(KEY_KEYWORDS, null)
-        return (saved ?: defaults.toSet()).toMutableList()
+        val prefs = sp(context)
+        if (prefs.contains(KEY_KEYWORDS_JSON)) {
+            return jsonToStringList(prefs.getString(KEY_KEYWORDS_JSON, null)).toMutableList()
+        }
+        val saved = prefs.getStringSet(KEY_KEYWORDS, null)?.toList() ?: defaults
+        val ordered = saved.filter { it.isNotBlank() }.distinct()
+        saveKeywords(context, ordered)
+        return ordered.toMutableList()
     }
 
     fun saveKeywords(context: Context, list: List<String>) {
-        sp(context).edit().putStringSet(KEY_KEYWORDS, list.toSet()).apply()
+        val ordered = list.filter { it.isNotBlank() }.distinct()
+        sp(context).edit().putString(KEY_KEYWORDS_JSON, stringListToJson(ordered)).apply()
     }
 
     fun getViewIds(context: Context): MutableList<String> {
         val defaults = context.resources.getStringArray(R.array.default_view_ids).toList()
-        val saved = sp(context).getStringSet(KEY_VIEW_IDS, null)
-        return (saved ?: defaults.toSet()).toMutableList()
+        val prefs = sp(context)
+        if (prefs.contains(KEY_VIEW_IDS_JSON)) {
+            return jsonToStringList(prefs.getString(KEY_VIEW_IDS_JSON, null)).toMutableList()
+        }
+        val saved = prefs.getStringSet(KEY_VIEW_IDS, null)?.toList() ?: defaults
+        val ordered = saved.filter { it.isNotBlank() }.distinct()
+        saveViewIds(context, ordered)
+        return ordered.toMutableList()
     }
 
     fun saveViewIds(context: Context, list: List<String>) {
-        sp(context).edit().putStringSet(KEY_VIEW_IDS, list.toSet()).apply()
+        val ordered = list.filter { it.isNotBlank() }.distinct()
+        sp(context).edit().putString(KEY_VIEW_IDS_JSON, stringListToJson(ordered)).apply()
     }
 
     // ---------- 按应用规则 ----------
@@ -64,6 +80,18 @@ object Prefs {
 
     fun savePkgViewIds(context: Context, pkg: String, list: List<String>) {
         sp(context).edit().putStringSet(PREFIX_PKG_VIEW_IDS + pkg, list.toSet()).apply()
+    }
+
+    /** 清空所有云端下发的应用专属规则，用于同步时先做完整覆盖。 */
+    fun clearAllPkgRules(context: Context) {
+        val prefs = sp(context)
+        val editor = prefs.edit()
+        for (key in prefs.all.keys) {
+            if (key.startsWith(PREFIX_PKG_KEYWORDS) || key.startsWith(PREFIX_PKG_VIEW_IDS)) {
+                editor.remove(key)
+            }
+        }
+        editor.apply()
     }
 
     fun isPackageDisabled(context: Context, pkg: String): Boolean =
@@ -148,5 +176,25 @@ object Prefs {
 
     fun setLastSyncAt(context: Context, ts: Long) {
         sp(context).edit().putLong(KEY_LAST_SYNC, ts).apply()
+    }
+
+    // ---------- 有序字符串列表序列化 ----------
+    private fun stringListToJson(list: List<String>): String {
+        val arr = JSONArray()
+        for (item in list) arr.put(item)
+        return arr.toString()
+    }
+
+    private fun jsonToStringList(raw: String?): List<String> {
+        if (raw.isNullOrBlank()) return emptyList()
+        return try {
+            val arr = JSONArray(raw)
+            (0 until arr.length()).mapNotNull { index ->
+                val item = arr.optString(index).trim()
+                item.takeIf { it.isNotEmpty() }
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 }

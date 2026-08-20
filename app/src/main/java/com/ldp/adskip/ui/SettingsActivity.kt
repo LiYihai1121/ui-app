@@ -1,6 +1,7 @@
 package com.ldp.adskip.ui
 
 import android.app.Activity
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -42,8 +43,8 @@ class SettingsActivity : Activity() {
 
         findViewById<Button>(R.id.btn_save_server).setOnClickListener {
             val url = etServer.text.toString().trim()
-            if (!url.startsWith("http")) {
-                Toast.makeText(this, "地址需以 http:// 开头", Toast.LENGTH_SHORT).show()
+            if (!isValidServerUrl(url)) {
+                Toast.makeText(this, "地址需为 http:// 或 https:// 开头的有效地址", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             SyncClient.saveServerUrl(this, url)
@@ -52,10 +53,15 @@ class SettingsActivity : Activity() {
 
         btnSync.setOnClickListener {
             val url = etServer.text.toString().trim()
+            if (!isValidServerUrl(url)) {
+                Toast.makeText(this, "地址需为 http:// 或 https:// 开头的有效地址", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             SyncClient.saveServerUrl(this, url)
             btnSync.isEnabled = false
             tvSyncResult.text = getString(R.string.settings_syncing)
             SyncClient.syncRules(applicationContext, url, rulesRepo) { ok, msg ->
+                if (isFinishing || isDestroyed) return@syncRules
                 btnSync.isEnabled = true
                 tvSyncResult.text = msg
                 updateLastSync()
@@ -73,5 +79,10 @@ class SettingsActivity : Activity() {
         } else {
             getString(R.string.settings_never_sync)
         }
+    }
+
+    private fun isValidServerUrl(url: String): Boolean {
+        val uri = Uri.parse(url)
+        return uri.scheme in setOf("http", "https") && !uri.host.isNullOrBlank()
     }
 }
