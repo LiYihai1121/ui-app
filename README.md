@@ -58,19 +58,38 @@ node server.js
 
 ```
 app/src/main/java/com/ldp/adskip/   # Android 客户端（Kotlin，零第三方依赖）
-├── SkipAdService.kt                # 无障碍服务（双通道规则引擎）
-├── MainActivity.kt                 # 主页（状态/统计/关键词/测试/导航）
-├── AppListActivity.kt              # 应用管理
-├── LogsActivity.kt                 # 跳过日志
-├── SettingsActivity.kt             # 云同步设置
-├── SyncUtil.kt                     # 规则同步 + 跳过上报（HttpURLConnection）
-└── Prefs.kt                        # 本地存储（SharedPreferences）
+├── ui/                             # 界面层
+│   ├── MainActivity.kt             #   主页（状态/统计/关键词/测试/导航）
+│   ├── AppListActivity.kt          #   应用管理
+│   ├── LogsActivity.kt             #   跳过日志
+│   └── SettingsActivity.kt         #   云同步设置
+├── service/
+│   └── SkipAdService.kt            # 服务层（薄编排：事件/节流/点击/广播）
+├── engine/
+│   ├── SkipRuleEngine.kt           # 引擎层（纯匹配逻辑，文本+ViewID 双通道）
+│   └── RuleSet.kt                  #   规则集模型
+├── data/
+│   ├── Prefs.kt                    # 存储原语（SharedPreferences）
+│   ├── RulesRepository.kt          # 规则仓库（全局+专属合并、开关、云端落地）
+│   └── StatsRepository.kt          # 统计仓库（计数、日志）
+└── net/
+    └── SyncClient.kt               # 网络层（规则同步 + 跳过上报）
 
 server/                             # 后端（Node.js 原生 http，零依赖）
-├── server.js                       # API 服务（规则/上报/统计）
-├── public/admin.html               # 管理后台网页
+├── server.js                       # 进程引导与路由分发
+├── src/
+│   ├── api.js                      # /api/* 处理器
+│   ├── store.js                    # 存储层（JSON 文件原子读写）
+│   ├── httpUtil.js                 # CORS / JSON / body 工具
+│   └── config.js                   # 集中配置
+├── public/
+│   ├── index.html                  # 产品落地页
+│   └── admin.html                  # 管理后台
+├── test/smoke.js                   # 冒烟测试（npm test）
 └── data/                           # rules.json / stats.json
 ```
+
+详细设计见 [ARCHITECTURE.md](ARCHITECTURE.md)。
 
 ## 构建
 
