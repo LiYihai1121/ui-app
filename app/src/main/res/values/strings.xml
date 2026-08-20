@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">净启动 AdSkip</string>
+    <string name="app_slogan">自动跳过开屏广告</string>
+    <string name="service_name">净启动 · 跳过开屏广告</string>
+    <string name="service_desc">自动识别并点击开屏广告的「跳过」按钮。支持文本关键词与控件 ID 两种匹配方式，仅在本机运行。</string>
+
+    <!-- 主页 -->
+    <string name="status_off">服务未开启</string>
+    <string name="status_on">服务运行中</string>
+    <string name="status_off_hint">请在系统无障碍设置中开启「净启动 AdSkip」</string>
+    <string name="status_on_hint">自动跳过开屏广告已生效，可点击下方按钮测试</string>
+    <string name="btn_open_settings">打开无障碍设置</string>
+    <string name="btn_test">测试：模拟开屏广告</string>
+    <string name="settings_open_failed">无法打开无障碍设置页，请手动前往 设置 → 无障碍</string>
+    <string name="stats_title">跳过统计</string>
+    <string name="stats_format">累计跳过 %1$d 次 ｜ 最近：%2$s</string>
+    <string name="stats_none">暂无</string>
+    <string name="nav_apps">应用管理</string>
+    <string name="nav_logs">跳过日志</string>
+    <string name="nav_settings">云端规则同步</string>
+
+    <!-- 关键词 -->
+    <string name="keywords_title">识别关键词</string>
+    <string name="keywords_hint">命中以下短文本即自动点击，点击条目可删除</string>
+    <string name="keyword_input_hint">添加关键词，如：跳过</string>
+    <string name="btn_add">添加</string>
+    <string name="how_it_works">原理：通过无障碍服务监听应用启动，自动查找并点击「跳过」按钮。数据仅存本机。</string>
+    <string name="btn_add_keyword">添加</string>
+    <string name="keyword_empty">请输入关键词</string>
+    <string name="keyword_exists">关键词已存在</string>
+    <string name="keyword_added">已添加「%1$s」</string>
+    <string name="keyword_removed">已删除「%1$s」</string>
+    <string name="keyword_item">%1$s　✕</string>
+
+    <!-- 默认规则 -->
+    <string-array name="default_keywords">
+        <item>跳过</item>
+        <item>跳過</item>
+        <item>skip</item>
+        <item>跳过广告</item>
+        <item>关闭广告</item>
+    </string-array>
+    <string-array name="default_view_ids">
+        <item>skip</item>
+        <item>jump</item>
+    </string-array>
+
+    <!-- 测试 -->
+    <string name="fake_ad_title">示例开屏广告</string>
+    <string name="fake_ad_subtitle">如果无障碍服务已开启，此广告将被自动跳过</string>
+    <string name="fake_ad_countdown">%1$d 秒后自动关闭</string>
+    <string name="fake_ad_skip">跳过 5</string>
+    <string name="test_need_service">服务未开启，请先开启无障碍服务再测试</string>
+    <string name="test_success">✅ 测试通过！广告已被自动跳过（%1$s）</string>
+    <string name="test_manual">你手动点击了跳过。若要测试自动跳过，请开启无障碍服务后重试</string>
+    <string name="test_timeout">超时未自动跳过，请检查无障碍服务是否已开启</string>
+
+    <!-- Toast -->
+    <string name="toast_skipped">已跳过 %1$s 的开屏广告</string>
+
+    <!-- 应用管理 -->
+    <string name="apps_title">应用管理</string>
+    <string name="apps_hint">关闭开关后，将不在该应用内自动跳过广告</string>
+    <string name="apps_loading">正在加载应用列表…</string>
+    <string name="apps_count">已跳过 %1$d 次</string>
+    <string name="apps_never">从未跳过</string>
+    <string name="apps_disabled">已禁用</string>
+
+    <!-- 跳过日志 -->
+    <string name="logs_title">跳过日志</string>
+    <string name="logs_empty">暂无记录</string>
+    <string name="logs_clear">清空日志</string>
+    <string name="logs_cleared">日志已清空</string>
+    <string name="logs_format">%1$s</string>
+    <string name="logs_pkg_format">%1$s</string>
+
+    <!-- 云同步设置 -->
+    <string name="settings_title">云端规则同步</string>
+    <string name="settings_server_label">服务器地址</string>
+    <string name="settings_server_hint">http://电脑IP:3210</string>
+    <string name="settings_save">保存地址</string>
+    <string name="settings_saved">服务器地址已保存</string>
+    <string name="settings_sync">立即同步云端规则</string>
+    <string name="settings_syncing">正在同步…</string>
+    <string name="settings_last_sync">上次同步：%1$s</string>
+    <string name="settings_never_sync">尚未同步过</string>
+    <string name="settings_desc">同步后：云端的关键词 / ViewID / 应用专属规则将覆盖本地，被云端标记禁用的应用将停止跳过。服务器可用 server 目录下的 AdSkip Server 一键启动。</string>
+</resources>
