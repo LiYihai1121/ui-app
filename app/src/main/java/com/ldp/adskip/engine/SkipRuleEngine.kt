@@ -1,6 +1,7 @@
 package com.ldp.adskip.engine
 
 import android.view.accessibility.AccessibilityNodeInfo
+import java.util.Locale
 
 /**
  * 跳过规则引擎（纯匹配逻辑）。
@@ -46,18 +47,18 @@ class SkipRuleEngine(
         val desc = node.contentDescription?.toString()?.trim()
         for (candidate in listOf(text, desc)) {
             if (candidate.isNullOrEmpty() || candidate.length > maxTextLen) continue
-            val lower = candidate.lowercase()
+            val lower = candidate.lowercase(Locale.ROOT)
             for (kw in rules.keywords) {
-                if (candidate.contains(kw) || lower.contains(kw.lowercase())) return true
+                if (candidate.contains(kw) || lower.contains(kw.lowercase(Locale.ROOT))) return true
             }
         }
 
         // 通道二：ViewID（如 com.example:id/skip_view 命中 "skip"）
         val id = node.viewIdResourceName
         if (id != null) {
-            val lower = id.lowercase()
+            val lower = id.lowercase(Locale.ROOT)
             for (rule in rules.viewIds) {
-                if (rule.length >= minViewIdLen && lower.contains(rule.lowercase())) return true
+                if (rule.length >= minViewIdLen && lower.contains(rule.lowercase(Locale.ROOT))) return true
             }
         }
         return false

@@ -62,7 +62,8 @@ const server = http.createServer(async (req, res) => {
 
     sendJson(res, 404, { error: 'not found' });
   } catch (e) {
-    sendJson(res, 500, { error: String(e && e.message ? e.message : e) });
+    const status = e && Number.isInteger(e.statusCode) ? e.statusCode : 500;
+    sendJson(res, status, { error: String(e && e.message ? e.message : e) });
   }
 });
 

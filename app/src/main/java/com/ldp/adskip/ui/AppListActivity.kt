@@ -47,6 +47,7 @@ class AppListActivity : Activity() {
             val pm = packageManager
             val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
             val items = pm.queryIntentActivities(intent, 0)
+                .distinctBy { it.activityInfo.packageName }
                 .filter { it.activityInfo.packageName != packageName }
                 .map {
                     AppItem(
@@ -56,7 +57,10 @@ class AppListActivity : Activity() {
                     )
                 }
                 .sortedBy { it.label.lowercase() }
-            runOnUiThread { render(items) }
+            runOnUiThread {
+                if (isFinishing || isDestroyed) return@runOnUiThread
+                render(items)
+            }
         }.start()
     }
 
