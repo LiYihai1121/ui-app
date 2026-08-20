@@ -1,0 +1,11 @@
+{
+  "name": "adskip-server",
+  "version": "2.0.0",
+  "private": true,
+  "description": "净启动 AdSkip 后端：规则中心 + 统计 API + 管理后台 + 落地页（零依赖）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/smoke.js"
+  }
+}
