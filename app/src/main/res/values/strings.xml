@@ -72,6 +72,7 @@
     <string name="logs_empty">暂无记录</string>
     <string name="logs_clear">清空日志</string>
     <string name="logs_cleared">日志已清空</string>
+    <string name="logs_share">分享</string>
     <string name="logs_format">%1$s</string>
     <string name="logs_pkg_format">%1$s</string>
 
@@ -86,4 +87,11 @@
     <string name="settings_last_sync">上次同步：%1$s</string>
     <string name="settings_never_sync">尚未同步过</string>
     <string name="settings_desc">同步后：云端的关键词 / ViewID / 应用专属规则将覆盖本地，被云端标记禁用的应用将停止跳过。服务器可用 server 目录下的 AdSkip Server 一键启动。</string>
+    <string name="settings_auto_sync">每 12 小时自动同步</string>
+    <string name="settings_dnd">免打扰时段</string>
+    <string name="settings_dnd_start">开始时间</string>
+    <string name="settings_dnd_end">结束时间</string>
+    <string name="settings_battery">电池优化</string>
+    <string name="settings_battery_allow">允许后台运行</string>
+    <string name="settings_battery_done">当前已允许后台运行</string>
 </resources>

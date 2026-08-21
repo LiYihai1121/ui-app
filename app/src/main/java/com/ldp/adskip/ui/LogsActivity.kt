@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import android.content.Intent
 import com.ldp.adskip.R
 import com.ldp.adskip.data.StatsRepository
 import java.text.SimpleDateFormat
@@ -39,6 +40,7 @@ class LogsActivity : Activity() {
             refresh()
             Toast.makeText(this, R.string.logs_cleared, Toast.LENGTH_SHORT).show()
         }
+        findViewById<Button>(R.id.btn_share).setOnClickListener { shareLogs() }
     }
 
     override fun onResume() {
@@ -69,5 +71,20 @@ class LogsActivity : Activity() {
             })
             llLogs.addView(row)
         }
+    }
+
+    private fun shareLogs() {
+        val text = statsRepo.logs().joinToString("\n") { entry ->
+            "${timeFormat.format(Date(entry.ts))}\t${entry.label}\t${entry.pkg}"
+        }
+        if (text.isBlank()) {
+            Toast.makeText(this, R.string.logs_empty, Toast.LENGTH_SHORT).show()
+            return
+        }
+        startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, getString(R.string.logs_title))
+            putExtra(Intent.EXTRA_TEXT, text)
+        }, getString(R.string.logs_share)))
     }
 }

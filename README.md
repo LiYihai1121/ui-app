@@ -4,7 +4,7 @@
 
 > 与开源项目 GKD / 李跳跳 属同类技术方案。
 
-## 功能（v2.0）
+## 功能（v2.1）
 
 **Android 客户端**
 - ✅ 自动点击开屏广告「跳过」按钮，双通道识别：**文本关键词** + **控件 ViewID**（支持纯图片按钮）
@@ -13,6 +13,9 @@
 - ✅ 云端规则同步：一键拉取关键词 / ViewID / 应用专属规则 / 禁用列表
 - ✅ 内置模拟开屏广告测试
 - ✅ 跳过上报服务端（服务端不在线时静默跳过，纯本地照常工作）
+- ✅ 自动同步规则（每 12 小时同步，开机后恢复）
+- ✅ 免打扰时段与电池优化白名单引导
+- ✅ 日志文本分享
 
 **后端服务（`server/`，Node.js 零依赖）**
 - ✅ 规则中心：全局关键词、ViewID 规则、应用专属规则、禁用列表
@@ -32,7 +35,7 @@ node server.js
 
 ### 2. 安装客户端
 
-把 `AdSkip-v2.0.apk` 传到手机安装（Android 8.0+），打开后：
+把 `AdSkip-v2.1.apk` 传到手机安装（Android 8.0+），打开后：
 
 1. 点「打开无障碍设置」→ 开启「净启动 AdSkip」服务
 2. （建议）将应用加入电池优化白名单，防止后台被清理
@@ -74,6 +77,10 @@ app/src/main/java/com/ldp/adskip/   # Android 客户端（Kotlin，零第三方�
 │   └── StatsRepository.kt          # 统计仓库（计数、日志）
 └── net/
     └── SyncClient.kt               # 网络层（规则同步 + 跳过上报）
+└── sync/
+   ├── SyncScheduler.kt             # AlarmManager 定时同步
+   ├── SyncAlarmReceiver.kt         # 定时同步接收器
+   └── BootReceiver.kt              # 开机恢复同步
 
 server/                             # 后端（Node.js 原生 http，零依赖）
 ├── server.js                       # 进程引导与路由分发
@@ -95,7 +102,7 @@ server/                             # 后端（Node.js 原生 http，零依赖�
 
 ```bash
 gradle assembleDebug
-# 产物: app/build/outputs/apk/debug/app-debug.apk
+# 产物: app/build/outputs/apk/debug/app-debug.apk（发布时命名为 AdSkip-v2.1.apk）
 ```
 
 要求：JDK 17+、Android SDK（compileSdk 35）。或直接用 Android Studio 打开。
@@ -104,6 +111,15 @@ gradle assembleDebug
 
 - Android 8.0 (API 26) 及以上；iOS 不支持（无开放的无障碍自动化接口）
 - 服务端可跑在任何有 Node.js 18+ 的机器上
+
+## 分支与版本
+
+| 分支/标签 | 定位 | 版本状态 |
+|---|---|---|
+| `main` | 稳定基线，仅合并已验证版本 | v2.0，标签 `AdSkip-v2` |
+| `codex/github` | 当前功能开发与交付分支 | v2.1，已完成构建，待合并/发布 |
+
+版本规则：Android 使用 `versionCode` 递增、`versionName` 对外展示；服务端使用 npm 的三段式版本号。功能路线以 [ROADMAP.md](ROADMAP.md) 为准，架构与模块职责以 [ARCHITECTURE.md](ARCHITECTURE.md) 为准。发布新版本时，从 `main` 创建功能分支，完成测试后合并回 `main` 并创建对应标签；不要把构建缓存目录当作版本内容。
 
 ## 合规提示
 

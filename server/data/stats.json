@@ -1,7 +1,8 @@
 {
-  "total": 2,
+  "total": 5,
   "byDay": {
-    "2026-08-20": 2
+    "2026-08-20": 2,
+    "2026-08-21": 3
   },
   "byApp": {
     "com.demo.test": {
@@ -10,10 +11,25 @@
     },
     "com.smoke.test": {
       "label": "冒烟测试",
-      "count": 1
+      "count": 4
     }
   },
   "recent": [
+    {
+      "ts": "2026-08-21T15:31:41.138Z",
+      "pkg": "com.smoke.test",
+      "label": "冒烟测试"
+    },
+    {
+      "ts": "2026-08-21T15:08:44.213Z",
+      "pkg": "com.smoke.test",
+      "label": "冒烟测试"
+    },
+    {
+      "ts": "2026-08-21T14:53:28.110Z",
+      "pkg": "com.smoke.test",
+      "label": "冒烟测试"
+    },
     {
       "ts": "2026-08-20T15:11:09.743Z",
       "pkg": "com.smoke.test",

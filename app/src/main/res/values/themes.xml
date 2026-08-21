@@ -3,6 +3,6 @@
     <style name="Theme.AdSkip" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">#1565C0</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:navigationBarColor">@color/brand</item>
     </style>
 </resources>

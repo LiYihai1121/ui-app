@@ -22,6 +22,10 @@ object Prefs {
     private const val KEY_LOGS = "logs"
     private const val KEY_SERVER_URL = "server_url"
     private const val KEY_LAST_SYNC = "last_sync_at"
+    private const val KEY_AUTO_SYNC = "auto_sync"
+    private const val KEY_DND_ENABLED = "dnd_enabled"
+    private const val KEY_DND_START = "dnd_start_minute"
+    private const val KEY_DND_END = "dnd_end_minute"
 
     private const val PREFIX_PKG_KEYWORDS = "pkg_kw:"
     private const val PREFIX_PKG_VIEW_IDS = "pkg_vid:"
@@ -176,6 +180,34 @@ object Prefs {
 
     fun setLastSyncAt(context: Context, ts: Long) {
         sp(context).edit().putLong(KEY_LAST_SYNC, ts).apply()
+    }
+
+    // ---------- 体验设置 ----------
+    fun isAutoSyncEnabled(context: Context): Boolean =
+        sp(context).getBoolean(KEY_AUTO_SYNC, false)
+
+    fun setAutoSyncEnabled(context: Context, enabled: Boolean) {
+        sp(context).edit().putBoolean(KEY_AUTO_SYNC, enabled).apply()
+    }
+
+    fun isDoNotDisturbEnabled(context: Context): Boolean =
+        sp(context).getBoolean(KEY_DND_ENABLED, false)
+
+    fun setDoNotDisturbEnabled(context: Context, enabled: Boolean) {
+        sp(context).edit().putBoolean(KEY_DND_ENABLED, enabled).apply()
+    }
+
+    fun getDoNotDisturbStart(context: Context): Int =
+        sp(context).getInt(KEY_DND_START, 23 * 60)
+
+    fun getDoNotDisturbEnd(context: Context): Int =
+        sp(context).getInt(KEY_DND_END, 7 * 60)
+
+    fun setDoNotDisturbTimes(context: Context, startMinute: Int, endMinute: Int) {
+        sp(context).edit()
+            .putInt(KEY_DND_START, startMinute)
+            .putInt(KEY_DND_END, endMinute)
+            .apply()
     }
 
     // ---------- 有序字符串列表序列化 ----------
