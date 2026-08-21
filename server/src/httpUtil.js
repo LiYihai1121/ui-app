@@ -28,7 +28,9 @@ function readBody(req) {
     req.on('data', (c) => {
       size += c.length;
       if (size > config.MAX_BODY) {
-        reject(new Error('body too large'));
+        const err = new Error('body too large');
+        err.statusCode = 413;
+        reject(err);
         req.destroy();
         return;
       }

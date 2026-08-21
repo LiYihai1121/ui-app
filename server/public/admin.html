@@ -104,6 +104,14 @@
 const $ = (id) => document.getElementById(id);
 let rules = null;
 
+const esc = (value) => String(value).replace(/[&<>"']/g, (ch) => ({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+}[ch]));
+
 function toast(msg) {
   const t = $('toast');
   t.textContent = msg;
@@ -133,14 +141,14 @@ function renderPackages() {
     div.style.marginBottom = '10px';
     div.innerHTML = `
       <div class="row" style="justify-content:space-between;">
-        <strong style="font-size:13px;">${pkg}</strong>
+        <strong style="font-size:13px;">${esc(pkg)}</strong>
         <label style="font-size:12px;color:#6B7280;">
           <input type="checkbox" class="pkg-disabled" ${r.disabled ? 'checked' : ''} style="width:auto;"/> 禁用该应用的跳过
         </label>
-        <button class="danger" style="padding:6px 12px;" onclick="delPackage('${pkg}')">删除</button>
+        <button class="danger" style="padding:6px 12px;" onclick="delPackage(this)">删除</button>
       </div>
-      <input type="text" class="pkg-kw" data-pkg="${pkg}" value="${(r.keywords || []).join(', ')}" placeholder="专属关键词，逗号分隔" style="margin-bottom:8px;" />
-      <input type="text" class="pkg-vid" data-pkg="${pkg}" value="${(r.viewIds || []).join(', ')}" placeholder="专属 ViewID，逗号分隔" />
+      <input type="text" class="pkg-kw" data-pkg="${esc(pkg)}" value="${esc((r.keywords || []).join(', '))}" placeholder="专属关键词，逗号分隔" style="margin-bottom:8px;" />
+      <input type="text" class="pkg-vid" data-pkg="${esc(pkg)}" value="${esc((r.viewIds || []).join(', '))}" placeholder="专属 ViewID，逗号分隔" />
     `;
     div.dataset.pkg = pkg;
     box.appendChild(div);
@@ -160,8 +168,10 @@ function addPackage() {
   renderPackages();
 }
 
-function delPackage(pkg) {
-  delete rules.packages[pkg];
+function delPackage(btn) {
+  const card = btn.closest('[data-pkg]');
+  if (!card) return;
+  delete rules.packages[card.dataset.pkg];
   renderPackages();
 }
 
@@ -209,15 +219,15 @@ async function loadStats() {
 
   const max = Math.max(1, ...s.byDay.map((d) => d.count));
   $('day-chart').innerHTML = s.byDay.length
-    ? s.byDay.map((d) => `<div class="bar-row"><span class="day">${d.day}</span><div class="bar" style="width:${(d.count / max) * 70}%"></div><span>${d.count}</span></div>`).join('')
+    ? s.byDay.map((d) => `<div class="bar-row"><span class="day">${esc(d.day)}</span><div class="bar" style="width:${(d.count / max) * 70}%"></div><span>${esc(d.count)}</span></div>`).join('')
     : '<div class="hint">暂无数据</div>';
 
   document.querySelector('#app-table tbody').innerHTML = s.byApp.length
-    ? s.byApp.map((a) => `<tr><td>${a.label}</td><td style="color:#9CA3AF;">${a.pkg}</td><td>${a.count}</td></tr>`).join('')
+    ? s.byApp.map((a) => `<tr><td>${esc(a.label)}</td><td style="color:#9CA3AF;">${esc(a.pkg)}</td><td>${esc(a.count)}</td></tr>`).join('')
     : '<tr><td colspan="3" class="hint">暂无数据</td></tr>';
 
   document.querySelector('#recent-table tbody').innerHTML = s.recent.length
-    ? s.recent.map((r) => `<tr><td>${new Date(r.ts).toLocaleString()}</td><td>${r.label}</td></tr>`).join('')
+    ? s.recent.map((r) => `<tr><td>${esc(new Date(r.ts).toLocaleString())}</td><td>${esc(r.label)}</td></tr>`).join('')
     : '<tr><td colspan="2" class="hint">暂无数据</td></tr>';
 }
 

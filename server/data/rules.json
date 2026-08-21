@@ -1,13 +1,22 @@
 {
-  "version": 2,
-  "updatedAt": "2026-08-20T14:00:00.000Z",
-  "keywords": ["跳过", "跳過", "skip", "跳过广告", "关闭广告"],
-  "viewIds": ["skip", "jump"],
+  "keywords": [
+    "跳过",
+    "跳過",
+    "skip",
+    "跳过广告",
+    "关闭广告"
+  ],
+  "viewIds": [
+    "skip",
+    "jump"
+  ],
   "packages": {
     "com.ldp.adskip": {
       "keywords": [],
       "viewIds": [],
       "disabled": false
     }
-  }
+  },
+  "version": 3,
+  "updatedAt": "2026-08-21T15:04:32.982Z"
 }

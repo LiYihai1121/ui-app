@@ -47,6 +47,7 @@ class RulesRepository(private val context: Context) {
     ) {
         keywords?.let { Prefs.saveKeywords(context, it) }
         viewIds?.let { Prefs.saveViewIds(context, it) }
+        Prefs.clearAllPkgRules(context)
         val disabled = mutableListOf<String>()
         for ((pkg, rule) in pkgRules) {
             Prefs.savePkgKeywords(context, pkg, rule.keywords)

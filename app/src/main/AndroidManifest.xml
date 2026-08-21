@@ -3,6 +3,8 @@
 
     <!-- 云端规则同步与跳过上报需要联网；其余功能纯本地 -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!-- 应用管理页需要列出其他可启动应用（Android 11+ 可见性声明） -->
     <queries>
@@ -13,10 +15,11 @@
     </queries>
 
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/Theme.AdSkip">
+        android:theme="@style/Theme.AdSkip"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".ui.MainActivity"
@@ -32,6 +35,20 @@
             android:exported="false"
             android:label="@string/apps_title"
             android:parentActivityName=".ui.MainActivity" />
+
+        <receiver
+            android:name=".sync.BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".sync.SyncAlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
 
         <activity
             android:name=".ui.LogsActivity"

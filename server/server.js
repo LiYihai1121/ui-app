@@ -54,7 +54,7 @@ const server = http.createServer(async (req, res) => {
       if (!fs.existsSync(config.APK_FILE)) return sendJson(res, 404, { error: 'apk not found' });
       res.writeHead(200, {
         'Content-Type': 'application/vnd.android.package-archive',
-        'Content-Disposition': 'attachment; filename="AdSkip-v2.0.apk"',
+        'Content-Disposition': 'attachment; filename="AdSkip-v2.1.apk"',
         'Content-Length': fs.statSync(config.APK_FILE).size,
       });
       return fs.createReadStream(config.APK_FILE).pipe(res);
@@ -62,7 +62,8 @@ const server = http.createServer(async (req, res) => {
 
     sendJson(res, 404, { error: 'not found' });
   } catch (e) {
-    sendJson(res, 500, { error: String(e && e.message ? e.message : e) });
+    const status = e && Number.isInteger(e.statusCode) ? e.statusCode : 500;
+    sendJson(res, status, { error: String(e && e.message ? e.message : e) });
   }
 });
 
