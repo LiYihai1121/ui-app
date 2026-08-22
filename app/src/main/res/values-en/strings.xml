@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AdSkip</string>
+    <string name="app_slogan">Auto-skip splash ads</string>
+    <string name="service_name">AdSkip · Skip Splash Ads</string>
+    <string name="service_desc">Automatically detects and clicks the "Skip" button on splash ads. Supports text keyword and ViewID matching. Runs locally only.</string>
+
+    <!-- Main page -->
+    <string name="status_off">Service is off</string>
+    <string name="status_on">Service is running</string>
+    <string name="status_off_hint">Please enable "AdSkip" in system Accessibility settings</string>
+    <string name="status_on_hint">Auto-skip is active. Tap below to test</string>
+    <string name="btn_open_settings">Open Accessibility Settings</string>
+    <string name="btn_test">Test: Simulate Splash Ad</string>
+    <string name="settings_open_failed">Cannot open accessibility settings. Go to Settings → Accessibility manually</string>
+    <string name="stats_title">Skip Statistics</string>
+    <string name="stats_format">Total skips: %1$d | Recent: %2$s</string>
+    <string name="stats_none">None</string>
+    <string name="nav_apps">App Manager</string>
+    <string name="nav_logs">Skip Logs</string>
+    <string name="nav_settings">Cloud Rule Sync</string>
+
+    <!-- Keywords -->
+    <string name="keywords_title">Detection Keywords</string>
+    <string name="keywords_hint">Short text containing these keywords will be auto-clicked. Tap to remove</string>
+    <string name="keyword_input_hint">Add keyword, e.g.: skip</string>
+    <string name="btn_add">Add</string>
+    <string name="how_it_works">How it works: The accessibility service monitors app launches and automatically finds and clicks the "Skip" button. Data stays on device.</string>
+    <string name="btn_add_keyword">Add</string>
+    <string name="keyword_empty">Please enter a keyword</string>
+    <string name="keyword_exists">Keyword already exists</string>
+    <string name="keyword_added">Added "%1$s"</string>
+    <string name="keyword_removed">Removed "%1$s"</string>
+    <string name="keyword_item">%1$s　✕</string>
+
+    <!-- Test -->
+    <string name="fake_ad_title">Sample Splash Ad</string>
+    <string name="fake_ad_subtitle">If the accessibility service is enabled, this ad will be auto-skipped</string>
+    <string name="fake_ad_countdown">Auto-close in %1$d seconds</string>
+    <string name="fake_ad_skip">Skip 5</string>
+    <string name="test_need_service">Service is off. Please enable accessibility service first</string>
+    <string name="test_success">✅ Test passed! Ad was auto-skipped (%1$s)</string>
+    <string name="test_manual">You manually clicked skip. To test auto-skip, enable accessibility service and retry</string>
+    <string name="test_timeout">Auto-skip timed out. Check if the accessibility service is enabled</string>
+
+    <!-- Toast -->
+    <string name="toast_skipped">Skipped splash ad on %1$s</string>
+
+    <!-- App Manager -->
+    <string name="apps_title">App Manager</string>
+    <string name="apps_hint">Toggle off to stop auto-skipping in that app</string>
+    <string name="apps_loading">Loading app list…</string>
+    <string name="apps_count">Skipped %1$d times</string>
+    <string name="apps_never">Never skipped</string>
+    <string name="apps_disabled">Disabled</string>
+
+    <!-- Skip Logs -->
+    <string name="logs_title">Skip Logs</string>
+    <string name="logs_empty">No records yet</string>
+    <string name="logs_clear">Clear Logs</string>
+    <string name="logs_cleared">Logs cleared</string>
+    <string name="logs_share">Share</string>
+    <string name="logs_format">%1$s</string>
+    <string name="logs_pkg_format">%1$s</string>
+
+    <!-- Cloud Sync Settings -->
+    <string name="settings_title">Cloud Rule Sync</string>
+    <string name="settings_server_label">Server Address</string>
+    <string name="settings_server_hint">http://your-pc-ip:3210</string>
+    <string name="settings_save">Save Address</string>
+    <string name="settings_saved">Server address saved</string>
+    <string name="settings_sync">Sync Cloud Rules Now</string>
+    <string name="settings_syncing">Syncing…</string>
+    <string name="settings_last_sync">Last sync: %1$s</string>
+    <string name="settings_never_sync">Never synced</string>
+    <string name="settings_desc">After sync: cloud keywords / ViewIDs / app-specific rules will overwrite local rules. Apps disabled by cloud rules will stop skipping. Server can be started from the server directory using AdSkip Server.</string>
+    <string name="settings_auto_sync">Auto-sync every 12 hours</string>
+    <string name="settings_dnd">Do Not Disturb</string>
+    <string name="settings_dnd_start">Start Time</string>
+    <string name="settings_dnd_end">End Time</string>
+    <string name="settings_battery">Battery Optimization</string>
+    <string name="settings_battery_allow">Allow Background</string>
+    <string name="settings_battery_done">Background allowed</string>
+</resources>

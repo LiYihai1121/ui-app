@@ -17,12 +17,14 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.R
 import com.ldp.adskip.data.Prefs
-import com.ldp.adskip.sync.SyncScheduler
+import com.ldp.adskip.sync.SyncJobService
 import com.ldp.adskip.data.RulesRepository
 import com.ldp.adskip.data.StatsRepository
 import com.ldp.adskip.service.SkipAdService
+import com.ldp.adskip.core.LogRing
 
 /**
  * 主页：服务状态、统计、关键词管理、模拟测试、功能导航。
@@ -72,11 +74,11 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (Prefs.isAutoSyncEnabled(this)) SyncScheduler.schedule(this)
+        if (Prefs.isAutoSyncEnabled(this)) SyncJobService.schedule(this)
         setContentView(R.layout.activity_main)
 
-        rulesRepo = RulesRepository(this)
-        statsRepo = StatsRepository(this)
+        rulesRepo = AdskipApp.get(this).rulesRepo
+        statsRepo = AdskipApp.get(this).statsRepo
 
         tvStatus = findViewById(R.id.tv_status)
         tvStatusHint = findViewById(R.id.tv_status_hint)

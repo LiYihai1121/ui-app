@@ -5,20 +5,29 @@
  * 净启动 AdSkip 后端入口。
  *
  * 结构：
- *   src/config.js   配置
- *   src/httpUtil.js HTTP 工具
- *   src/store.js    存储层（JSON 文件原子读写）
- *   src/api.js      /api/* 路由
- *   public/         落地页 index.html + 管理后台 admin.html
+ *   src/config.js       配置（env 覆盖）
+ *   src/httpUtil.js     HTTP 工具（CORS 白名单 / JSON / body 安全解析）
+ *   src/auth.js         Bearer token 鉴权
+ *   src/rateLimit.js     令牌桶限频
+ *   src/validate.js     载荷校验（与客户端同源约束）
+ *   src/store.js        存储层（JSON 原子读写 + 备份轮转 + 分日统计）
+ *   src/api/index.js    路由分发 → rulesApi / statsApi / healthApi
+ *   public/             落地页 + 管理后台
  *
  * 路由：
- *   GET  /                    产品落地页
- *   GET  /admin               管理后台
- *   GET  /download            APK 下载
- *   GET  /api/rules/latest    规则下发（客户端）
- *   PUT  /api/rules           规则发布（管理后台）
- *   POST /api/skip            跳过上报（客户端）
- *   GET  /api/stats/summary   统计汇总（管理后台）
+ *   GET  /                     产品落地页
+ *   GET  /admin                管理后台
+ *   GET  /download             APK 下载
+ *   GET  /api/rules/latest     规则下发（v0 兼容）
+ *   PUT  /api/rules            规则发布（v0，需 admin token）
+ *   POST /api/skip             跳过上报（v0 兼容）
+ *   GET  /api/stats/summary    统计汇总（v0 兼容）
+ *   GET  /api/v1/rules/latest  规则下发（v1，ETag/304）
+ *   PUT  /api/v1/rules         规则发布（v1，需 admin token）
+ *   POST /api/v1/rules/test    规则模拟器（需 admin token）
+ *   POST /api/v1/reports/batch 批量上报（v1）
+ *   GET  /api/v1/stats/summary 统计汇总（v1）
+ *   GET  /api/v1/health        健康检查
  */
 const http = require('http');
 const fs = require('fs');
@@ -27,9 +36,15 @@ const os = require('os');
 const config = require('./src/config');
 const { setCors, sendJson, sendHtml } = require('./src/httpUtil');
 const { handleApi } = require('./src/api');
+const store = require('./src/store');
+
+// 启动时清理过期统计分片
+if (config.STATS_DIR_CLEANUP_ON_START) {
+  store.cleanupOldStats();
+}
 
 const server = http.createServer(async (req, res) => {
-  setCors(res);
+  setCors(res, req.headers.origin);
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
     return res.end();
@@ -71,6 +86,9 @@ server.listen(config.PORT, config.HOST, () => {
   console.log(`[AdSkip Server] 已启动，端口 ${config.PORT}`);
   console.log(`[AdSkip Server] 落地页:   http://localhost:${config.PORT}/`);
   console.log(`[AdSkip Server] 管理后台: http://localhost:${config.PORT}/admin`);
+  if (!config.ADMIN_TOKEN) {
+    console.log('[AdSkip Server] ⚠️  ADMIN_TOKEN 未配置，写接口将返回 503');
+  }
   for (const [name, list] of Object.entries(os.networkInterfaces())) {
     for (const net of list || []) {
       if (net.family === 'IPv4' && !net.internal) {
@@ -79,3 +97,18 @@ server.listen(config.PORT, config.HOST, () => {
     }
   }
 });
+
+// ---------- 优雅停机 ----------
+function shutdown(signal) {
+  console.log(`\n[AdSkip Server] 收到 ${signal}，正在优雅停机…`);
+  store.flush();
+  server.close(() => {
+    console.log('[AdSkip Server] 已停止');
+    process.exit(0);
+  });
+  // 兜底：5 秒后强制退出
+  setTimeout(() => process.exit(1), 5000).unref();
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

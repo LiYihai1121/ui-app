@@ -8,6 +8,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import android.content.Intent
+import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.R
 import com.ldp.adskip.data.StatsRepository
 import java.text.SimpleDateFormat
@@ -29,7 +30,7 @@ class LogsActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_logs)
 
-        statsRepo = StatsRepository(this)
+        statsRepo = AdskipApp.get(this).statsRepo
 
         findViewById<TextView>(R.id.btn_back).setOnClickListener { finish() }
         llLogs = findViewById(R.id.ll_logs)
