@@ -18,6 +18,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import com.ldp.adskip.R
+import com.ldp.adskip.data.Prefs
+import com.ldp.adskip.sync.SyncScheduler
 import com.ldp.adskip.data.RulesRepository
 import com.ldp.adskip.data.StatsRepository
 import com.ldp.adskip.service.SkipAdService
@@ -70,6 +72,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (Prefs.isAutoSyncEnabled(this)) SyncScheduler.schedule(this)
         setContentView(R.layout.activity_main)
 
         rulesRepo = RulesRepository(this)

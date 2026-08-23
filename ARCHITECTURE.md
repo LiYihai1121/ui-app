@@ -67,6 +67,13 @@
           → 记录同步时间 → 主页回调提示
 ```
 
+**自动规则同步：**
+```
+设置页开启 → SyncScheduler 注册 AlarmManager（每 12 小时）
+          → SyncAlarmReceiver 调用 SyncClient 静默同步
+设备开机 → BootReceiver 检查开关并恢复定时任务
+```
+
 ## 4. 服务端分层职责
 
 | 模块 | 职责 |
@@ -89,12 +96,12 @@
 | 需求 | 改动位置 |
 |---|---|
 | 新匹配通道（坐标/图像规则） | `engine/RuleSet` 加字段 + `SkipRuleEngine.matches` 加分支 |
-| 定时自动同步 | `net/SyncClient` 不变，加调度器调用即可 |
+| 定时自动同步 | `sync/SyncScheduler` + `sync/SyncAlarmReceiver`，复用 `net/SyncClient` |
 | 服务端换数据库 | 只改 `src/store.js` |
 | 新增 API | `src/api.js` 加分支；客户端 `SyncClient` 加方法 |
 | 客户端换 Room/网络库 | 只改 `data/Prefs` 与 `net/SyncClient` 内部实现 |
 
 ## 7. 测试
 
-- 服务端冒烟测试：`cd server && npm test`（7 项：落地页 / 后台 / 规则 / 上报 / 统计 / 下载 / 404）
+- 服务端冒烟测试：`cd server && npm test`（8 项：落地页 / 后台 / 规则 / 上报 / 统计 / 下载 / 404 / 非法规则）
 - 客户端：App 内「测试：模拟开屏广告」端到端验证无障碍链路

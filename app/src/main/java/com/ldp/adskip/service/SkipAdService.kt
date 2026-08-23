@@ -9,6 +9,7 @@ import android.os.SystemClock
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Toast
+import com.ldp.adskip.data.Prefs
 import com.ldp.adskip.R
 import com.ldp.adskip.data.RulesRepository
 import com.ldp.adskip.data.StatsRepository
@@ -77,6 +78,7 @@ class SkipAdService : AccessibilityService() {
     }
 
     private fun trySkip(pkg: String) {
+        if (Prefs.isDoNotDisturbEnabled(this) && isInDoNotDisturbPeriod()) return
         val now = SystemClock.elapsedRealtime()
         if (now - lastScanAt < SCAN_INTERVAL_MS) return
         if (now - (lastClickMap[pkg] ?: 0L) < CLICK_INTERVAL_MS) return
@@ -98,6 +100,15 @@ class SkipAdService : AccessibilityService() {
         }
         SyncClient.reportSkip(SyncClient.serverUrl(this), pkg, label)
         sendBroadcast(Intent(ACTION_SKIPPED).putExtra(EXTRA_PKG, label))
+    }
+
+    private fun isInDoNotDisturbPeriod(): Boolean {
+        val calendar = java.util.Calendar.getInstance()
+        val minute = calendar.get(java.util.Calendar.HOUR_OF_DAY) * 60 +
+            calendar.get(java.util.Calendar.MINUTE)
+        val start = Prefs.getDoNotDisturbStart(this)
+        val end = Prefs.getDoNotDisturbEnd(this)
+        return if (start <= end) minute in start until end else minute >= start || minute < end
     }
 
     /**
