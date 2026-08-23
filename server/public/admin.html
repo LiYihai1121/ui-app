@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>净启动 AdSkip · 管理后台</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #F5F7FA; color: #1F2937; }
+  .header { background: #1565C0; color: #fff; padding: 20px 24px; }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header p { font-size: 13px; opacity: .85; margin-top: 4px; }
+  .tabs { display: flex; gap: 4px; background: #fff; border-bottom: 1px solid #E5E7EB; padding: 0 24px; }
+  .tab { padding: 12px 18px; font-size: 14px; cursor: pointer; color: #6B7280; border-bottom: 2px solid transparent; }
+  .tab.active { color: #1565C0; border-bottom-color: #1565C0; font-weight: 600; }
+  .container { max-width: 960px; margin: 20px auto; padding: 0 16px; }
+  .card { background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .card h2 { font-size: 15px; margin-bottom: 12px; }
+  .hint { font-size: 12px; color: #9CA3AF; margin-top: 6px; }
+  textarea, input[type=text] { width: 100%; border: 1px solid #D1D5DB; border-radius: 8px; padding: 10px 12px; font-size: 13px; font-family: inherit; resize: vertical; }
+  textarea:focus, input[type=text]:focus { outline: none; border-color: #1565C0; }
+  button { background: #1565C0; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; cursor: pointer; }
+  button:hover { background: #0D47A1; }
+  button.ghost { background: #EEF2F7; color: #374151; }
+  button.danger { background: #FEF2F2; color: #DC2626; }
+  .row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+  .row input { flex: 1; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: #6B7280; font-weight: 500; padding: 8px; border-bottom: 1px solid #E5E7EB; }
+  td { padding: 8px; border-bottom: 1px solid #F3F4F6; }
+  .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stat { background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; padding: 18px; }
+  .stat .num { font-size: 28px; font-weight: 700; color: #1565C0; }
+  .stat .label { font-size: 12px; color: #6B7280; margin-top: 4px; }
+  .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: #1F2937; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; display: none; z-index: 10; }
+  .bar-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 6px; }
+  .bar-row .day { width: 86px; color: #6B7280; }
+  .bar { height: 14px; background: #90CAF9; border-radius: 4px; min-width: 2px; }
+  .pkg-head { display: flex; gap: 8px; margin-bottom: 10px; }
+  .pkg-head input { flex: 1; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>净启动 AdSkip · 管理后台</h1>
+  <p>规则中心 · 统计看板 ｜ 客户端通过 /api/rules/latest 同步规则</p>
+</div>
+<div class="tabs">
+  <div class="tab active" data-tab="rules">规则管理</div>
+  <div class="tab" data-tab="stats">统计看板</div>
+</div>
+<div class="container">
+
+  <!-- 规则管理 -->
+  <div id="page-rules">
+    <div class="card">
+      <h2>全局关键词（文本匹配）</h2>
+      <textarea id="ta-keywords" rows="3" placeholder="每行一个，如：跳过"></textarea>
+      <div class="hint">客户端在界面文本中查找包含关键词的短文本（≤12字）并点击</div>
+    </div>
+    <div class="card">
+      <h2>全局 ViewID 规则（控件 ID 匹配）</h2>
+      <textarea id="ta-viewids" rows="3" placeholder="每行一个，如：skip"></textarea>
+      <div class="hint">匹配控件的资源 ID（如 com.x:id/skip_view），用于纯图片无文字的跳过按钮</div>
+    </div>
+    <div class="card">
+      <h2>应用专属规则</h2>
+      <div class="pkg-head">
+        <input type="text" id="new-pkg" placeholder="包名，如 com.tencent.mm" />
+        <button class="ghost" onclick="addPackage()">＋ 添加应用</button>
+      </div>
+      <div id="pkg-list"></div>
+    </div>
+    <div class="card" style="display:flex; gap:10px; align-items:center;">
+      <button onclick="saveRules()">保存并发布规则</button>
+      <span id="rules-meta" class="hint"></span>
+    </div>
+  </div>
+
+  <!-- 统计看板 -->
+  <div id="page-stats" class="hidden">
+    <div class="stats-grid">
+      <div class="stat"><div class="num" id="stat-total">-</div><div class="label">累计跳过次数</div></div>
+      <div class="stat"><div class="num" id="stat-today">-</div><div class="label">今日跳过</div></div>
+    </div>
+    <div class="card">
+      <h2>近 14 天趋势</h2>
+      <div id="day-chart"></div>
+    </div>
+    <div class="card">
+      <h2>按应用统计</h2>
+      <table id="app-table"><thead><tr><th>应用</th><th>包名</th><th>跳过次数</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="card">
+      <h2>最近跳过记录</h2>
+      <table id="recent-table"><thead><tr><th>时间</th><th>应用</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let rules = null;
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => (t.style.display = 'none'), 2500);
+}
+
+document.querySelectorAll('.tab').forEach((tab) => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach((x) => x.classList.remove('active'));
+    tab.classList.add('active');
+    const name = tab.dataset.tab;
+    $('page-rules').classList.toggle('hidden', name !== 'rules');
+    $('page-stats').classList.toggle('hidden', name !== 'stats');
+    if (name === 'stats') loadStats();
+  });
+});
+
+function renderPackages() {
+  const box = $('pkg-list');
+  box.innerHTML = '';
+  const pkgs = rules.packages || {};
+  Object.keys(pkgs).forEach((pkg) => {
+    const r = pkgs[pkg];
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.style.marginBottom = '10px';
+    div.innerHTML = `
+      <div class="row" style="justify-content:space-between;">
+        <strong style="font-size:13px;">${pkg}</strong>
+        <label style="font-size:12px;color:#6B7280;">
+          <input type="checkbox" class="pkg-disabled" ${r.disabled ? 'checked' : ''} style="width:auto;"/> 禁用该应用的跳过
+        </label>
+        <button class="danger" style="padding:6px 12px;" onclick="delPackage('${pkg}')">删除</button>
+      </div>
+      <input type="text" class="pkg-kw" data-pkg="${pkg}" value="${(r.keywords || []).join(', ')}" placeholder="专属关键词，逗号分隔" style="margin-bottom:8px;" />
+      <input type="text" class="pkg-vid" data-pkg="${pkg}" value="${(r.viewIds || []).join(', ')}" placeholder="专属 ViewID，逗号分隔" />
+    `;
+    div.dataset.pkg = pkg;
+    box.appendChild(div);
+  });
+}
+
+function splitList(s) {
+  return s.split(/[,\n，]/).map((x) => x.trim()).filter(Boolean);
+}
+
+function addPackage() {
+  const pkg = $('new-pkg').value.trim();
+  if (!pkg) return toast('请输入包名');
+  if (rules.packages[pkg]) return toast('该应用已存在');
+  rules.packages[pkg] = { keywords: [], viewIds: [], disabled: false };
+  $('new-pkg').value = '';
+  renderPackages();
+}
+
+function delPackage(pkg) {
+  delete rules.packages[pkg];
+  renderPackages();
+}
+
+async function loadRules() {
+  const res = await fetch('/api/rules/latest');
+  rules = await res.json();
+  $('ta-keywords').value = (rules.keywords || []).join('\n');
+  $('ta-viewids').value = (rules.viewIds || []).join('\n');
+  $('rules-meta').textContent = `版本 v${rules.version} ｜ 更新于 ${new Date(rules.updatedAt).toLocaleString()}`;
+  renderPackages();
+}
+
+async function saveRules() {
+  // 先收集当前表单
+  rules.keywords = splitList($('ta-keywords').value);
+  rules.viewIds = splitList($('ta-viewids').value);
+  document.querySelectorAll('#pkg-list > div').forEach((div) => {
+    const pkg = div.dataset.pkg;
+    rules.packages[pkg] = {
+      keywords: splitList(div.querySelector('.pkg-kw').value),
+      viewIds: splitList(div.querySelector('.pkg-vid').value),
+      disabled: div.querySelector('.pkg-disabled').checked,
+    };
+  });
+  const res = await fetch('/api/rules', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(rules),
+  });
+  const data = await res.json();
+  if (data.ok) {
+    rules.version = data.version;
+    $('rules-meta').textContent = `版本 v${rules.version} ｜ 刚刚发布`;
+    toast('规则已发布，客户端下次同步生效');
+  } else {
+    toast('保存失败：' + (data.error || res.status));
+  }
+}
+
+async function loadStats() {
+  const res = await fetch('/api/stats/summary');
+  const s = await res.json();
+  $('stat-total').textContent = s.total;
+  $('stat-today').textContent = s.today;
+
+  const max = Math.max(1, ...s.byDay.map((d) => d.count));
+  $('day-chart').innerHTML = s.byDay.length
+    ? s.byDay.map((d) => `<div class="bar-row"><span class="day">${d.day}</span><div class="bar" style="width:${(d.count / max) * 70}%"></div><span>${d.count}</span></div>`).join('')
+    : '<div class="hint">暂无数据</div>';
+
+  document.querySelector('#app-table tbody').innerHTML = s.byApp.length
+    ? s.byApp.map((a) => `<tr><td>${a.label}</td><td style="color:#9CA3AF;">${a.pkg}</td><td>${a.count}</td></tr>`).join('')
+    : '<tr><td colspan="3" class="hint">暂无数据</td></tr>';
+
+  document.querySelector('#recent-table tbody').innerHTML = s.recent.length
+    ? s.recent.map((r) => `<tr><td>${new Date(r.ts).toLocaleString()}</td><td>${r.label}</td></tr>`).join('')
+    : '<tr><td colspan="2" class="hint">暂无数据</td></tr>';
+}
+
+loadRules();
+</script>
+</body>
+</html>

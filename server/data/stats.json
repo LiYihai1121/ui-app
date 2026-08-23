@@ -1,0 +1,28 @@
+{
+  "total": 2,
+  "byDay": {
+    "2026-08-20": 2
+  },
+  "byApp": {
+    "com.demo.test": {
+      "label": "演示应用",
+      "count": 1
+    },
+    "com.smoke.test": {
+      "label": "冒烟测试",
+      "count": 1
+    }
+  },
+  "recent": [
+    {
+      "ts": "2026-08-20T15:11:09.743Z",
+      "pkg": "com.smoke.test",
+      "label": "冒烟测试"
+    },
+    {
+      "ts": "2026-08-20T14:38:54.418Z",
+      "pkg": "com.demo.test",
+      "label": "演示应用"
+    }
+  ]
+}
