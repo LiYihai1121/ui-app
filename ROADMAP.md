@@ -30,6 +30,20 @@
 - [x] 规则同步自动定时（零依赖 AlarmManager，开机后恢复）
 - [x] 日志导出（分享为文本）
 
+## ✅ v2.2 — 架构增强（已完成）
+- [x] **安全加固**：服务端鉴权（ADMIN_TOKEN）+ 载荷校验 + 限频 + CORS 白名单 + 备份轮转
+- [x] **客户端 SafetyGuard**：硬编码黑名单防误触敏感按钮，云规则不可覆盖
+- [x] **可测性改造**：AdNode 节点抽象 + Clock 注入，引擎可跑纯 JVM 单测（≥20 例）
+- [x] **手动 DI**：AppContainer 收口依赖，不引入第三方框架
+- [x] **规则缓存**：LruCache 按 (pkg → version) 缓存，事件高频路径只查表
+- [x] **合批落盘**：StatsRepository 计数先进内存，5s 合批写 SP
+- [x] **JobScheduler 三合一**：取代 AlarmManager + AlarmReceiver + BootReceiver
+- [x] **协议 v1**：ETag/304 省流量、deviceId 限频、批量上报、健康检查（v0 兼容保留）
+- [x] **分日统计**：按天分片存储，14 天趋势读 14 个小文件
+- [x] **管理后台增强**：登录 + diff 预览 + 规则模拟器
+- [x] **工程化**：CI（GitHub Actions）、R8 keep 无障碍类、values-en 中英双语
+- [x] **环形日志 LogRing**：内存 500 条，设置页可导出
+
 ## 🔜 v3.0 — 能力增强（规划中）
 - [ ] 截屏取点自定义规则（对无法识别的广告手动标注跳过区域） 
 - [ ] 悬浮窗快捷开关

@@ -26,6 +26,8 @@ object Prefs {
     private const val KEY_DND_ENABLED = "dnd_enabled"
     private const val KEY_DND_START = "dnd_start_minute"
     private const val KEY_DND_END = "dnd_end_minute"
+    private const val KEY_DEVICE_ID = "device_id"
+    private const val KEY_RULES_HASH = "rules_hash"
 
     private const val PREFIX_PKG_KEYWORDS = "pkg_kw:"
     private const val PREFIX_PKG_VIEW_IDS = "pkg_vid:"
@@ -208,6 +210,24 @@ object Prefs {
             .putInt(KEY_DND_START, startMinute)
             .putInt(KEY_DND_END, endMinute)
             .apply()
+    }
+
+    // ---------- 设备标识（上报限频维度） ----------
+    fun getDeviceId(context: Context): String {
+        val prefs = sp(context)
+        var id = prefs.getString(KEY_DEVICE_ID, null)
+        if (id.isNullOrBlank()) {
+            id = java.util.UUID.randomUUID().toString()
+            prefs.edit().putString(KEY_DEVICE_ID, id).apply()
+        }
+        return id
+    }
+
+    // ---------- 规则哈希（If-None-Match 同步） ----------
+    fun getRulesHash(context: Context): String =
+        sp(context).getString(KEY_RULES_HASH, "") ?: ""
+    fun setRulesHash(context: Context, hash: String) {
+        sp(context).edit().putString(KEY_RULES_HASH, hash).apply()
     }
 
     // ---------- 有序字符串列表序列化 ----------

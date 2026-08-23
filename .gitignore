@@ -8,3 +8,10 @@ local.properties
 .tools/
 captures/
 .DS_Store
+
+# Kotlin 构建会话目录
+.kotlin/
+
+# 服务端运行时产物（测试/部署生成，非源码）
+server/data/backups/
+server/data/stats/

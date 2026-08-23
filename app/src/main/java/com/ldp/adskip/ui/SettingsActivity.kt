@@ -12,11 +12,13 @@ import android.widget.EditText
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.data.Prefs
 import com.ldp.adskip.R
 import com.ldp.adskip.data.RulesRepository
 import com.ldp.adskip.net.SyncClient
-import com.ldp.adskip.sync.SyncScheduler
+import com.ldp.adskip.sync.SyncJobService
+import com.ldp.adskip.core.LogRing
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -40,7 +42,7 @@ class SettingsActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
-        rulesRepo = RulesRepository(this)
+        rulesRepo = AdskipApp.get(this).rulesRepo
 
         findViewById<TextView>(R.id.btn_back).setOnClickListener { finish() }
         etServer = findViewById(R.id.et_server)
@@ -83,7 +85,7 @@ class SettingsActivity : Activity() {
         updateLastSync()
         val autoSync = findViewById<Switch>(R.id.switch_auto_sync)
         autoSync.isChecked = Prefs.isAutoSyncEnabled(this)
-        autoSync.setOnCheckedChangeListener { _, enabled -> SyncScheduler.setEnabled(this, enabled) }
+        autoSync.setOnCheckedChangeListener { _, enabled -> SyncJobService.setEnabled(this, enabled) }
 
         val dnd = findViewById<Switch>(R.id.switch_dnd)
         dnd.isChecked = Prefs.isDoNotDisturbEnabled(this)

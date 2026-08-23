@@ -10,6 +10,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Switch
 import android.widget.TextView
+import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.R
 import com.ldp.adskip.data.RulesRepository
 import com.ldp.adskip.data.StatsRepository
@@ -30,8 +31,8 @@ class AppListActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_app_list)
 
-        rulesRepo = RulesRepository(this)
-        statsRepo = StatsRepository(this)
+        rulesRepo = AdskipApp.get(this).rulesRepo
+        statsRepo = AdskipApp.get(this).statsRepo
 
         findViewById<TextView>(R.id.btn_back).setOnClickListener { finish() }
         llApps = findViewById(R.id.ll_apps)
