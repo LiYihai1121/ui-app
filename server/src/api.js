@@ -7,6 +7,45 @@
 const store = require('./store');
 const { sendJson, readBody } = require('./httpUtil');
 
+const MAX_RULE_FIELD = 512;
+const MAX_PACKAGE_RULES = 2000;
+const MAX_RULE_ITEM = 256;
+
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function cleanStringList(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => String(item).trim().slice(0, MAX_RULE_ITEM))
+    .filter((item) => item.length > 0)
+    .slice(0, MAX_RULE_FIELD);
+}
+
+function cleanRules(input) {
+  if (!isPlainObject(input)) return null;
+
+  const keywords = cleanStringList(input.keywords);
+  const viewIds = cleanStringList(input.viewIds);
+  if (!isPlainObject(input.packages)) return null;
+
+  const packages = Object.create(null);
+  for (const [pkg, rule] of Object.entries(input.packages)) {
+    if (Object.keys(packages).length >= MAX_PACKAGE_RULES) break;
+    const safePkg = String(pkg).trim().slice(0, 256);
+    if (!safePkg) continue;
+    if (!isPlainObject(rule)) continue;
+    packages[safePkg] = {
+      keywords: cleanStringList(rule.keywords),
+      viewIds: cleanStringList(rule.viewIds),
+      disabled: rule.disabled === true,
+    };
+  }
+
+  return { keywords, viewIds, packages };
+}
+
 async function handleApi(req, res, url) {
   // 规则下发（客户端同步）
   if (req.method === 'GET' && url.pathname === '/api/rules/latest') {
@@ -22,10 +61,11 @@ async function handleApi(req, res, url) {
     } catch (e) {
       return sendJson(res, 400, { error: 'invalid json' });
     }
-    if (!Array.isArray(rules.keywords) || !Array.isArray(rules.viewIds) || typeof rules.packages !== 'object') {
+    const cleaned = cleanRules(rules);
+    if (!cleaned) {
       return sendJson(res, 400, { error: 'rules must contain keywords[], viewIds[], packages{}' });
     }
-    const version = store.saveRules(rules);
+    const version = store.saveRules(cleaned);
     return sendJson(res, 200, { ok: true, version });
   }
 
@@ -38,7 +78,10 @@ async function handleApi(req, res, url) {
     } catch (e) {
       return sendJson(res, 400, { error: 'invalid json' });
     }
-    store.recordSkip(String(data.pkg || 'unknown'), String(data.label || data.pkg || 'unknown'));
+    if (!isPlainObject(data)) return sendJson(res, 400, { error: 'invalid payload' });
+    const pkg = String(data.pkg || '').trim().slice(0, 256) || 'unknown';
+    const label = String(data.label || data.pkg || '').trim().slice(0, 128) || pkg;
+    store.recordSkip(pkg, label);
     return sendJson(res, 200, { ok: true });
   }
 

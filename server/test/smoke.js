@@ -63,6 +63,14 @@ async function main() {
   const nf = await fetch(BASE + '/api/nope');
   check('未知 API 返回 404', nf.status === 404);
 
+  // 8. 非法规则包应被拒绝，避免 packages=null 落入存储层
+  const badRulesRes = await fetch(BASE + '/api/rules', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keywords: 'not-array', viewIds: [1], packages: null }),
+  });
+  check('PUT /api/rules 拒绝非法 packages', badRulesRes.status === 400);
+
   console.log(`\n${passed} passed, ${failed} failed`);
   process.exit(failed ? 1 : 0);
 }

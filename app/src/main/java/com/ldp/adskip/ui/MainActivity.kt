@@ -208,6 +208,7 @@ class MainActivity : Activity() {
     private fun startTest() {
         if (!SkipAdService.running) {
             Toast.makeText(this, R.string.test_need_service, Toast.LENGTH_LONG).show()
+            return
         }
         SkipAdService.testActive = true
         countdown = 5
