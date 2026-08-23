@@ -58,6 +58,9 @@ jobs:
 
       - name: Start server and run smoke tests
         run: |
-          ADMIN_TOKEN=ci-test-token node server.js &
-          sleep 2
-          ADMIN_TOKEN=ci-test-token node test/smoke.js
+          ADMIN_TOKEN=ci-test-token HOST=127.0.0.1 node server.js &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:3210/api/v1/health >/dev/null && break
+            sleep 1
+          done
+          ADMIN_TOKEN=ci-test-token BASE_URL=http://127.0.0.1:3210 node test/smoke.js
