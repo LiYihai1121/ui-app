@@ -32,24 +32,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".ui.AppListActivity"
-            android:exported="false"
-            android:label="@string/apps_title"
-            android:parentActivityName=".ui.MainActivity" />
-
-        <activity
-            android:name=".ui.LogsActivity"
-            android:exported="false"
-            android:label="@string/logs_title"
-            android:parentActivityName=".ui.MainActivity" />
-
-        <activity
-            android:name=".ui.SettingsActivity"
-            android:exported="false"
-            android:label="@string/settings_title"
-            android:parentActivityName=".ui.MainActivity" />
-
         <!-- 无障碍服务 -->
         <service
             android:name=".service.SkipAdService"

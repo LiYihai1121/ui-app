@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">净启动 AdSkip</string>
+    <string name="btn_back">返回</string>
     <string name="app_slogan">自动跳过开屏广告</string>
     <string name="service_name">净启动 · 跳过开屏广告</string>
     <string name="service_desc">自动识别并点击开屏广告的「跳过」按钮。支持文本关键词与控件 ID 两种匹配方式，仅在本机运行。</string>
@@ -78,6 +79,7 @@
 
     <!-- 云同步设置 -->
     <string name="settings_title">云端规则同步</string>
+    <string name="settings_url_invalid">地址需为 http:// 或 https:// 开头的有效地址</string>
     <string name="settings_server_label">服务器地址</string>
     <string name="settings_server_hint">http://电脑IP:3210</string>
     <string name="settings_save">保存地址</string>

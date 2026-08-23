@@ -15,3 +15,5 @@ captures/
 # 服务端运行时产物（测试/部署生成，非源码）
 server/data/backups/
 server/data/stats/
+server/node_modules/
+server/bun.lock

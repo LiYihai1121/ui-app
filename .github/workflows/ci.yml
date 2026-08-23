@@ -63,41 +63,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
 
-      - name: Run unit tests
-        run: node test/unit.js
+      - name: Install dependencies
+        run: bun install
 
-      - name: Start server and run smoke tests
-        run: |
-          ADMIN_TOKEN=ci-test-token HOST=127.0.0.1 node server.js > /tmp/server.log 2>&1 &
-          ok=0
-          for i in $(seq 1 30); do
-            curl -sf http://127.0.0.1:3210/api/v1/health >/dev/null && { ok=1; break; }
-            sleep 1
-          done
-          if [ "$ok" = "0" ]; then
-            echo "::error::Server failed to start within 30s"
-            cat /tmp/server.log
-            exit 1
-          fi
-          set +e
-          ADMIN_TOKEN=ci-test-token BASE_URL=http://127.0.0.1:3210 node test/smoke.js > /tmp/smoke.log 2>&1
-          SC=$?
-          set -e
-          cat /tmp/smoke.log
-          grep -E '✘|✗' /tmp/smoke.log | head -20 | while IFS= read -r line; do
-            echo "::error::$line"
-          done
-          exit $SC
-
-      - name: Upload server logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: server-logs
-          path: /tmp/*.log
-          if-no-files-found: ignore
+      - name: Run tests
+        run: bun test

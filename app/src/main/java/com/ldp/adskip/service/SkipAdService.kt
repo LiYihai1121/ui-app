@@ -9,6 +9,7 @@ import android.view.accessibility.AccessibilityEvent
 import android.widget.Toast
 import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.R
+import com.ldp.adskip.core.AppEvents
 import com.ldp.adskip.core.Clock
 import com.ldp.adskip.core.LogRing
 import com.ldp.adskip.data.Prefs
@@ -66,12 +67,14 @@ class SkipAdService : AccessibilityService() {
         statsRepo = container.statsRepo
         syncClient = container.syncClient
         running = true
+        AppEvents.setServiceRunning(true)
         sendBroadcast(Intent(ACTION_SERVICE_STATE).putExtra(EXTRA_RUNNING, true))
         LogRing.d("Service", "onServiceConnected")
     }
 
     override fun onDestroy() {
         running = false
+        AppEvents.setServiceRunning(false)
         sendBroadcast(Intent(ACTION_SERVICE_STATE).putExtra(EXTRA_RUNNING, false))
         // 强制落盘待写统计
         if (::statsRepo.isInitialized) statsRepo.flush()
@@ -125,6 +128,7 @@ class SkipAdService : AccessibilityService() {
             Toast.makeText(this, getString(R.string.toast_skipped, label), Toast.LENGTH_SHORT).show()
         }
         syncClient.reportSkip(Prefs.getServerUrl(this), pkg, label, Prefs.getDeviceId(this))
+        AppEvents.emitSkipped(label)
         sendBroadcast(Intent(ACTION_SKIPPED).putExtra(EXTRA_PKG, label))
     }
 

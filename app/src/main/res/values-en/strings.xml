@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AdSkip</string>
+    <string name="btn_back">Back</string>
     <string name="app_slogan">Auto-skip splash ads</string>
     <string name="service_name">AdSkip · Skip Splash Ads</string>
     <string name="service_desc">Automatically detects and clicks the "Skip" button on splash ads. Supports text keyword and ViewID matching. Runs locally only.</string>
@@ -81,4 +82,5 @@
     <string name="settings_battery">Battery Optimization</string>
     <string name="settings_battery_allow">Allow Background</string>
     <string name="settings_battery_done">Background allowed</string>
+    <string name="settings_url_invalid">URL must start with http:// or https://</string>
 </resources>

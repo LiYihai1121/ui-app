@@ -1,16 +1,20 @@
 {
   "name": "adskip-server",
-  "version": "2.2.0",
+  "version": "3.0.0",
   "private": true,
-  "description": "净启动 AdSkip 后端：规则中心 + 统计 API + 管理后台 + 落地页（零依赖）",
-  "main": "server.js",
-  "engines": {
-    "node": ">=18"
-  },
+  "description": "净启动 AdSkip 后端：规则中心 + 统计 API + 管理后台 + 落地页（Bun + TypeScript，零运行时依赖）",
+  "module": "server.ts",
+  "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "test:unit": "node test/unit.js",
-    "test:smoke": "node test/smoke.js",
-    "test": "node test/unit.js"
+    "start": "bun run server.ts",
+    "dev": "bun --watch server.ts",
+    "test": "bun test",
+    "typecheck": "bunx tsc --noEmit"
+  },
+  "engines": {
+    "bun": ">=1.1"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.0"
   }
 }
