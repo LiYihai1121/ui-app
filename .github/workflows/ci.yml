@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -34,10 +34,25 @@ jobs:
           restore-keys: gradle-${{ runner.os }}-
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          set -o pipefail
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon 2>&1 | tee /tmp/android-build.log
 
       - name: Run JVM unit tests
-        run: ./gradlew testDebugUnitTest --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew testDebugUnitTest --no-daemon 2>&1 | tee /tmp/android-test.log
+
+      - name: Upload Android logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-logs
+          path: |
+            /tmp/android-build.log
+            /tmp/android-test.log
+          if-no-files-found: ignore
 
   server:
     name: Server Tests
@@ -58,6 +73,31 @@ jobs:
 
       - name: Start server and run smoke tests
         run: |
-          ADMIN_TOKEN=ci-test-token node server.js &
-          sleep 2
-          ADMIN_TOKEN=ci-test-token node test/smoke.js
+          ADMIN_TOKEN=ci-test-token HOST=127.0.0.1 node server.js > /tmp/server.log 2>&1 &
+          ok=0
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:3210/api/v1/health >/dev/null && { ok=1; break; }
+            sleep 1
+          done
+          if [ "$ok" = "0" ]; then
+            echo "::error::Server failed to start within 30s"
+            cat /tmp/server.log
+            exit 1
+          fi
+          set +e
+          ADMIN_TOKEN=ci-test-token BASE_URL=http://127.0.0.1:3210 node test/smoke.js > /tmp/smoke.log 2>&1
+          SC=$?
+          set -e
+          cat /tmp/smoke.log
+          grep -E '✘|✗' /tmp/smoke.log | head -20 | while IFS= read -r line; do
+            echo "::error::$line"
+          done
+          exit $SC
+
+      - name: Upload server logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-logs
+          path: /tmp/*.log
+          if-no-files-found: ignore

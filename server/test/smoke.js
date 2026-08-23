@@ -10,7 +10,7 @@
  * 若不设置 ADMIN_TOKEN，写接口测试将验证 503（拒绝服务）。
  */
 
-const BASE = process.env.BASE_URL || 'http://localhost:3210';
+const BASE = process.env.BASE_URL || 'http://127.0.0.1:3210';
 const TOKEN = process.env.ADMIN_TOKEN || '';
 const authHeader = TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {};
 
