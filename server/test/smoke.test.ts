@@ -9,7 +9,7 @@ const apkSrc = path.join(import.meta.dir, "..", "..", "AdSkip-v2.1.apk");
 const apkTest = path.join(tmp, "AdSkip-v2.1.apk");
 if (fs.existsSync(apkSrc)) fs.copyFileSync(apkSrc, apkTest);
 
-let server: Bun.Server;
+let server: Bun.Server<undefined>;
 let base: string;
 
 beforeAll(async () => {
@@ -44,13 +44,13 @@ describe("smoke", () => {
 
   it("health 正常", async () => {
     const res = await fetch(`${base}/api/v1/health`);
-    const json = await res.json();
+    const json = (await res.json()) as any;
     expect(json.status).toBe("ok");
   });
 
   it("v0 规则形状", async () => {
     const res = await fetch(`${base}/api/rules/latest`);
-    const j = await res.json();
+    const j = (await res.json()) as any;
     expect(Array.isArray(j.keywords)).toBe(true);
     expect(Array.isArray(j.viewIds)).toBe(true);
     expect(typeof j.packages).toBe("object");
@@ -58,7 +58,7 @@ describe("smoke", () => {
 
   it("v1 规则形状（含 hash）", async () => {
     const res = await fetch(`${base}/api/v1/rules/latest`);
-    const j = await res.json();
+    const j = (await res.json()) as any;
     expect(j.schemaVersion).toBe(1);
     expect(typeof j.rules).toBe("object");
     expect(typeof j.hash).toBe("string");
@@ -67,13 +67,13 @@ describe("smoke", () => {
 
   it("ETag 与 hash 一致", async () => {
     const res = await fetch(`${base}/api/v1/rules/latest`);
-    const j = await res.json();
+    const j = (await res.json()) as any;
     expect(res.headers.get("etag")).toBe(j.hash);
   });
 
   it("If-None-Match 命中返回 304", async () => {
     const res = await fetch(`${base}/api/v1/rules/latest`);
-    const hash = (await res.json()).hash;
+    const hash = ((await res.json()) as any).hash;
     const res2 = await fetch(`${base}/api/v1/rules/latest`, {
       headers: { "if-none-match": hash },
     });
@@ -86,7 +86,7 @@ describe("smoke", () => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ pkg: "com.example.app", label: "Example" }),
     });
-    expect((await res.json()).ok).toBe(true);
+    expect(((await res.json()) as any).ok).toBe(true);
   });
 
   it("批量上报 accepted===2", async () => {
@@ -101,7 +101,7 @@ describe("smoke", () => {
         ],
       }),
     });
-    const j = await res.json();
+    const j = (await res.json()) as any;
     expect(j.ok).toBe(true);
     expect(j.accepted).toBe(2);
   });
@@ -117,7 +117,7 @@ describe("smoke", () => {
 
   it("统计包含上报的应用", async () => {
     const res = await fetch(`${base}/api/v1/stats/summary`);
-    const j = await res.json();
+    const j = (await res.json()) as any;
     const pkgs = j.byApp.map((a: any) => a.pkg);
     expect(pkgs).toContain("com.example.app");
   });
@@ -165,7 +165,7 @@ describe("smoke", () => {
         packages: { "com.published.app": { keywords: ["a"], viewIds: [], disabled: false } },
       }),
     });
-    const j = await res.json();
+    const j = (await res.json()) as any;
     expect(j.ok).toBe(true);
     expect(typeof j.hash).toBe("string");
   });

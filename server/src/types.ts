@@ -1,3 +1,1 @@
-import type { Handler } from "./types";
-
-export type { Handler };
+export type { Handler } from "./utils/httpUtil";

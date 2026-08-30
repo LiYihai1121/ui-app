@@ -1,5 +1,6 @@
 import * as path from "node:path";
 import * as fs from "node:fs";
+import * as os from "node:os";
 import { config } from "./src/config";
 import { handleApi } from "./src/api";
 import { withCors, errorJson } from "./src/utils/httpUtil";
@@ -13,8 +14,11 @@ export interface StartOptions {
   dataDir?: string;
 }
 
+/** 模块级引用，供优雅停机使用（仅 import.meta.main 场景赋值） */
+let server: Bun.Server<undefined> | null = null;
+
 /** 启动 HTTP 服务，返回 Bun.Server（供测试注入端口/数据目录/令牌） */
-export function startServer(options: StartOptions = {}): Bun.Server {
+export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
   if (options.adminToken !== undefined) config.ADMIN_TOKEN = options.adminToken;
   if (options.apkFile !== undefined) config.APK_FILE = options.apkFile;
   if (options.dataDir !== undefined) {
@@ -29,7 +33,7 @@ export function startServer(options: StartOptions = {}): Bun.Server {
   const port = options.port ?? config.PORT;
   const host = options.host ?? config.HOST;
 
-  const server = Bun.serve({
+  const server: Bun.Server<undefined> = Bun.serve({
     port,
     hostname: host,
     async fetch(req) {
@@ -105,19 +109,19 @@ export function startServer(options: StartOptions = {}): Bun.Server {
 function shutdown(signal: string): void {
   console.log(`\n[AdSkip Server] 收到 ${signal}，正在优雅停机…`);
   flush();
-  server.stop(true);
+  server?.stop(true);
   process.exit(0);
 }
 
 if (import.meta.main) {
-  const server = startServer();
+  server = startServer();
   console.log(`[AdSkip Server] 运行于 http://${server.hostname}:${server.port}`);
   console.log(`[AdSkip Server] 落地页: http://${server.hostname}:${server.port}/`);
   console.log(`[AdSkip Server] 管理后台: http://${server.hostname}:${server.port}/admin`);
   if (!config.ADMIN_TOKEN) {
     console.warn("[AdSkip Server] 警告：未配置 ADMIN_TOKEN，写接口将返回 503");
   }
-  for (const info of Object.values(require("node:os").networkInterfaces())) {
+  for (const info of Object.values(os.networkInterfaces())) {
     for (const ni of info ?? []) {
       if (ni.family === "IPv4" && !ni.internal) {
         console.log(`  LAN: http://${ni.address}:${server.port}`);
