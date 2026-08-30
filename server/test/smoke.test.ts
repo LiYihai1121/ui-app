@@ -122,10 +122,14 @@ describe("smoke", () => {
     expect(pkgs).toContain("com.example.app");
   });
 
-  it("/download 返回 apk", async () => {
+  it("/download 返回 apk 或 404（无 APK 文件时）", async () => {
     const res = await fetch(`${base}/download`);
-    expect(res.status).toBe(200);
-    expect(res.headers.get("content-type")).toContain("android.package-archive");
+    if (fs.existsSync(apkTest)) {
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("android.package-archive");
+    } else {
+      expect(res.status).toBe(404);
+    }
   });
 
   it("未知 api 返回 404", async () => {

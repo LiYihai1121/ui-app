@@ -1,4 +1,4 @@
-import { config } from "./config";
+import { config } from "../config";
 
 /** 请求处理器统一签名 */
 export type Handler = (

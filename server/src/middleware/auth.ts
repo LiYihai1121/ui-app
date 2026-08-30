@@ -1,4 +1,4 @@
-import { config } from "./config";
+import { config } from "../config";
 
 export function checkAdminAuth(req: Request): boolean {
   const token = config.ADMIN_TOKEN;

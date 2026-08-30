@@ -1,4 +1,4 @@
-import { config } from "./config";
+import { config } from "../config";
 
 // 包名：字母开头，至少含一个点，只允许字母数字下划线
 export const PKG_RE = /^[a-zA-Z][\w]*(\.[a-zA-Z][\w]*)+$/;
