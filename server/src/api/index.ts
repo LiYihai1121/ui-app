@@ -1,4 +1,8 @@
 import type { Handler } from "../utils/httpUtil";
+import { jsonResponse, errorJson } from "../utils/httpUtil";
+import { requireAdmin } from "../middleware/auth";
+import { limitRead } from "../middleware/rateLimit";
+import { recentAccess } from "../middleware/accessLog";
 import * as rulesApi from "./rulesApi";
 import * as statsApi from "./statsApi";
 import * as healthApi from "./healthApi";
@@ -29,6 +33,12 @@ export async function handleApi(
   }
   if (method === "GET" && p === "/api/v1/health") {
     return healthApi.health(req, url, ctx);
+  }
+  if (method === "GET" && p === "/api/v1/admin/logs") {
+    const auth = requireAdmin(req);
+    if (!auth.ok) return errorJson(auth.status, auth.error);
+    if (!limitRead(req, ctx.ip)) return errorJson(429, "rate limited");
+    return jsonResponse({ entries: recentAccess() });
   }
   if (method === "GET" && p === "/api/rules/latest") {
     return rulesApi.v0_latest(req, url, ctx);
