@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>净启动 AdSkip · 管理后台</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #F5F7FA; color: #1F2937; }
+  .header { background: #1565C0; color: #fff; padding: 20px 24px; }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header p { font-size: 13px; opacity: .85; margin-top: 4px; }
+  .header .auth-status { font-size: 12px; opacity: .7; float: right; }
+  .tabs { display: flex; gap: 4px; background: #fff; border-bottom: 1px solid #E5E7EB; padding: 0 24px; }
+  .tab { padding: 12px 18px; font-size: 14px; cursor: pointer; color: #6B7280; border-bottom: 2px solid transparent; }
+  .tab.active { color: #1565C0; border-bottom-color: #1565C0; font-weight: 600; }
+  .container { max-width: 960px; margin: 20px auto; padding: 0 16px; }
+  .card { background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .card h2 { font-size: 15px; margin-bottom: 12px; }
+  .hint { font-size: 12px; color: #9CA3AF; margin-top: 6px; }
+  textarea, input[type=text] { width: 100%; border: 1px solid #D1D5DB; border-radius: 8px; padding: 10px 12px; font-size: 13px; font-family: inherit; resize: vertical; }
+  textarea:focus, input[type=text]:focus { outline: none; border-color: #1565C0; }
+  button { background: #1565C0; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; cursor: pointer; }
+  button:hover { background: #0D47A1; }
+  button.ghost { background: #EEF2F7; color: #374151; }
+  button.danger { background: #FEF2F2; color: #DC2626; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+  .row input { flex: 1; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: #6B7280; font-weight: 500; padding: 8px; border-bottom: 1px solid #E5E7EB; }
+  td { padding: 8px; border-bottom: 1px solid #F3F4F6; }
+  .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stat { background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; padding: 18px; }
+  .stat .num { font-size: 28px; font-weight: 700; color: #1565C0; }
+  .stat .label { font-size: 12px; color: #6B7280; margin-top: 4px; }
+  .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: #1F2937; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; display: none; z-index: 10; }
+  .bar-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 6px; }
+  .bar-row .day { width: 86px; color: #6B7280; }
+  .bar { height: 14px; background: #90CAF9; border-radius: 4px; min-width: 2px; }
+  .pkg-head { display: flex; gap: 8px; margin-bottom: 10px; }
+  .pkg-head input { flex: 1; }
+  .hidden { display: none; }
+  /* 登录页 */
+  .login-overlay { position: fixed; inset: 0; background: rgba(245,247,250,.97); z-index: 100; display: flex; align-items: center; justify-content: center; }
+  .login-box { background: #fff; border: 1px solid #E5E7EB; border-radius: 16px; padding: 32px; max-width: 360px; width: 90%; }
+  .login-box h2 { font-size: 18px; margin-bottom: 16px; text-align: center; }
+  .login-box input { margin-bottom: 12px; }
+  .login-box button { width: 100%; }
+  .login-box .hint { text-align: center; }
+  /* diff 预览 */
+  .diff-modal { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 50; display: flex; align-items: center; justify-content: center; }
+  .diff-box { background: #fff; border-radius: 16px; padding: 24px; max-width: 640px; width: 90%; max-height: 80vh; overflow-y: auto; }
+  .diff-box h2 { margin-bottom: 16px; }
+  .diff-col { font-size: 12px; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
+  .diff-col.added { color: #059669; }
+  .diff-col.removed { color: #DC2626; }
+  /* 规则模拟器 */
+  .sim-result { margin-top: 12px; font-size: 13px; }
+  .sim-hit { background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px; padding: 8px 12px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <span class="auth-status" id="auth-status"></span>
+  <h1>净启动 AdSkip · 管理后台</h1>
+  <p>规则中心 · 统计看板 · 规则模拟器 ｜ v2.2</p>
+</div>
+
+<!-- 登录层 -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <h2>管理后台登录</h2>
+    <input type="text" id="login-token" placeholder="输入 Admin Token" onkeydown="if(event.key==='Enter')doLogin()" />
+    <button onclick="doLogin()">登录</button>
+    <p class="hint">Token 由服务端 ADMIN_TOKEN 环境变量配置<br/>统计看板可免登录查看</p>
+    <button class="ghost" style="width:100%;margin-top:8px;" onclick="skipLogin()">仅查看统计</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="rules">规则管理</div>
+  <div class="tab" data-tab="simulator">规则模拟器</div>
+  <div class="tab" data-tab="stats">统计看板</div>
+</div>
+<div class="container">
+
+  <!-- 规则管理 -->
+  <div id="page-rules">
+    <div class="card">
+      <h2>全局关键词（文本匹配）</h2>
+      <textarea id="ta-keywords" rows="3" placeholder="每行一个，如：跳过"></textarea>
+      <div class="hint">客户端在界面文本中查找包含关键词的短文本（≤12字）并点击</div>
+    </div>
+    <div class="card">
+      <h2>全局 ViewID 规则（控件 ID 匹配）</h2>
+      <textarea id="ta-viewids" rows="3" placeholder="每行一个，如：skip"></textarea>
+      <div class="hint">匹配控件的资源 ID（如 com.x:id/skip_view），用于纯图片无文字的跳过按钮</div>
+    </div>
+    <div class="card">
+      <h2>应用专属规则</h2>
+      <div class="pkg-head">
+        <input type="text" id="new-pkg" placeholder="包名，如 com.tencent.mm" />
+        <button class="ghost" onclick="addPackage()">＋ 添加应用</button>
+      </div>
+      <div id="pkg-list"></div>
+    </div>
+    <div class="card" style="display:flex; gap:10px; align-items:center;">
+      <button onclick="showDiff()">预览差异并发布</button>
+      <span id="rules-meta" class="hint"></span>
+    </div>
+  </div>
+
+  <!-- 规则模拟器 -->
+  <div id="page-simulator" class="hidden">
+    <div class="card">
+      <h2>规则模拟器</h2>
+      <p class="hint">输入样本文本或 ViewID，测试当前规则是否命中，无需真机。</p>
+      <div style="margin-top:12px;">
+        <label style="font-size:13px;font-weight:600;">样本文本（模拟按钮文字）</label>
+        <input type="text" id="sim-text" placeholder="如：跳过广告" style="margin-top:4px;" />
+      </div>
+      <div style="margin-top:8px;">
+        <label style="font-size:13px;font-weight:600;">样本 ViewID（模拟控件 ID）</label>
+        <input type="text" id="sim-viewid" placeholder="如：com.example:id/skip_btn" style="margin-top:4px;" />
+      </div>
+      <div style="margin-top:12px;">
+        <button onclick="runSimulator()">测试命中</button>
+      </div>
+      <div id="sim-result" class="sim-result"></div>
+    </div>
+  </div>
+
+  <!-- 统计看板 -->
+  <div id="page-stats" class="hidden">
+    <div class="stats-grid">
+      <div class="stat"><div class="num" id="stat-total">-</div><div class="label">累计跳过次数</div></div>
+      <div class="stat"><div class="num" id="stat-today">-</div><div class="label">今日跳过</div></div>
+    </div>
+    <div class="card">
+      <h2>近 14 天趋势</h2>
+      <div id="day-chart"></div>
+    </div>
+    <div class="card">
+      <h2>按应用统计</h2>
+      <table id="app-table"><thead><tr><th>应用</th><th>包名</th><th>跳过次数</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="card">
+      <h2>最近跳过记录</h2>
+      <table id="recent-table"><thead><tr><th>时间</th><th>应用</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- diff 预览弹窗 -->
+<div class="diff-modal hidden" id="diff-modal">
+  <div class="diff-box">
+    <h2>规则差异预览</h2>
+    <div id="diff-content"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button onclick="confirmPublish()">确认发布</button>
+      <button class="ghost" onclick="closeDiff()">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let rules = null;
+let token = sessionStorage.getItem('adskip_admin_token') || '';
+
+const esc = (value) => String(value).replace(/[&<>"']/g, (ch) => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+}[ch]));
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => (t.style.display = 'none'), 2500);
+}
+
+function authHeaders(extra) {
+  const h = { 'Content-Type': 'application/json', ...(extra || {}) };
+  if (token) h['Authorization'] = 'Bearer ' + token;
+  return h;
+}
+
+function updateAuthStatus() {
+  $('auth-status').textContent = token ? '已登录' : '未登录';
+}
+
+// ---------- 登录 ----------
+function doLogin() {
+  token = $('login-token').value.trim();
+  if (!token) return toast('请输入 token');
+  sessionStorage.setItem('adskip_admin_token', token);
+  $('login-overlay').classList.add('hidden');
+  updateAuthStatus();
+  loadRules();
+}
+
+function skipLogin() {
+  $('login-overlay').classList.add('hidden');
+  // 切到统计 tab
+  document.querySelectorAll('.tab').forEach((x) => x.classList.remove('active'));
+  document.querySelector('[data-tab="stats"]').classList.add('active');
+  $('page-rules').classList.add('hidden');
+  $('page-simulator').classList.add('hidden');
+  $('page-stats').classList.remove('hidden');
+  loadStats();
+}
+
+// 页面加载时判断
+if (token) {
+  $('login-overlay').classList.add('hidden');
+  updateAuthStatus();
+} else {
+  updateAuthStatus();
+}
+
+// ---------- Tab 切换 ----------
+document.querySelectorAll('.tab').forEach((tab) => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach((x) => x.classList.remove('active'));
+    tab.classList.add('active');
+    const name = tab.dataset.tab;
+    $('page-rules').classList.toggle('hidden', name !== 'rules');
+    $('page-simulator').classList.toggle('hidden', name !== 'simulator');
+    $('page-stats').classList.toggle('hidden', name !== 'stats');
+    if (name === 'stats') loadStats();
+  });
+});
+
+// ---------- 规则管理 ----------
+function renderPackages() {
+  const box = $('pkg-list');
+  box.innerHTML = '';
+  const pkgs = rules.packages || {};
+  Object.keys(pkgs).forEach((pkg) => {
+    const r = pkgs[pkg];
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.style.marginBottom = '10px';
+    div.innerHTML = `
+      <div class="row" style="justify-content:space-between;">
+        <strong style="font-size:13px;">${esc(pkg)}</strong>
+        <label style="font-size:12px;color:#6B7280;">
+          <input type="checkbox" class="pkg-disabled" ${r.disabled ? 'checked' : ''} style="width:auto;"/> 禁用该应用的跳过
+        </label>
+        <button class="danger" style="padding:6px 12px;" onclick="delPackage(this)">删除</button>
+      </div>
+      <input type="text" class="pkg-kw" data-pkg="${esc(pkg)}" value="${esc((r.keywords || []).join(', '))}" placeholder="专属关键词，逗号分隔" style="margin-bottom:8px;" />
+      <input type="text" class="pkg-vid" data-pkg="${esc(pkg)}" value="${esc((r.viewIds || []).join(', '))}" placeholder="专属 ViewID，逗号分隔" />
+    `;
+    div.dataset.pkg = pkg;
+    box.appendChild(div);
+  });
+}
+
+function splitList(s) {
+  return s.split(/[,\n，]/).map((x) => x.trim()).filter(Boolean);
+}
+
+function addPackage() {
+  const pkg = $('new-pkg').value.trim();
+  if (!pkg) return toast('请输入包名');
+  if (rules.packages[pkg]) return toast('该应用已存在');
+  rules.packages[pkg] = { keywords: [], viewIds: [], disabled: false };
+  $('new-pkg').value = '';
+  renderPackages();
+}
+
+function delPackage(btn) {
+  const card = btn.closest('[data-pkg]');
+  if (!card) return;
+  delete rules.packages[card.dataset.pkg];
+  renderPackages();
+}
+
+async function loadRules() {
+  const res = await fetch('/api/rules/latest');
+  rules = await res.json();
+  $('ta-keywords').value = (rules.keywords || []).join('\n');
+  $('ta-viewids').value = (rules.viewIds || []).join('\n');
+  $('rules-meta').textContent = `版本 v${rules.version} ｜ 更新于 ${new Date(rules.updatedAt).toLocaleString()}`;
+  renderPackages();
+}
+
+/** 收集当前表单为待发布规则 */
+function collectRules() {
+  const newRules = {
+    keywords: splitList($('ta-keywords').value),
+    viewIds: splitList($('ta-viewids').value),
+    packages: {},
+  };
+  document.querySelectorAll('#pkg-list > div').forEach((div) => {
+    const pkg = div.dataset.pkg;
+    newRules.packages[pkg] = {
+      keywords: splitList(div.querySelector('.pkg-kw').value),
+      viewIds: splitList(div.querySelector('.pkg-vid').value),
+      disabled: div.querySelector('.pkg-disabled').checked,
+    };
+  });
+  return newRules;
+}
+
+/** diff 预览 */
+function showDiff() {
+  const newRules = collectRules();
+  let diff = '';
+
+  // 关键词 diff
+  const oldKw = new Set(rules.keywords || []);
+  const newKw = new Set(newRules.keywords);
+  const addedKw = [...newKw].filter((x) => !oldKw.has(x));
+  const removedKw = [...oldKw].filter((x) => !newKw.has(x));
+  if (addedKw.length || removedKw.length) {
+    diff += '全局关键词:\n';
+    addedKw.forEach((x) => diff += `  + ${esc(x)}\n`);
+    removedKw.forEach((x) => diff += `  - ${esc(x)}\n`);
+  }
+
+  // ViewID diff
+  const oldVid = new Set(rules.viewIds || []);
+  const newVid = new Set(newRules.viewIds);
+  const addedVid = [...newVid].filter((x) => !oldVid.has(x));
+  const removedVid = [...oldVid].filter((x) => !newVid.has(x));
+  if (addedVid.length || removedVid.length) {
+    diff += '全局 ViewID:\n';
+    addedVid.forEach((x) => diff += `  + ${esc(x)}\n`);
+    removedVid.forEach((x) => diff += `  - ${esc(x)}\n`);
+  }
+
+  // 应用规则 diff
+  const oldPkgs = new Set(Object.keys(rules.packages || {}));
+  const newPkgs = new Set(Object.keys(newRules.packages));
+  const addedPkgs = [...newPkgs].filter((x) => !oldPkgs.has(x));
+  const removedPkgs = [...oldPkgs].filter((x) => !newPkgs.has(x));
+  if (addedPkgs.length || removedPkgs.length) {
+    diff += '应用规则:\n';
+    addedPkgs.forEach((x) => diff += `  + ${esc(x)}\n`);
+    removedPkgs.forEach((x) => diff += `  - ${esc(x)}\n`);
+  }
+
+  if (!diff) diff = '（无变化）';
+  $('diff-content').innerHTML = `<div class="diff-col">${esc(diff)}</div>`;
+  $('diff-modal').classList.remove('hidden');
+}
+
+function closeDiff() {
+  $('diff-modal').classList.add('hidden');
+}
+
+async function confirmPublish() {
+  closeDiff();
+  const newRules = collectRules();
+  const res = await fetch('/api/rules', {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(newRules),
+  });
+  const data = await res.json();
+  if (data.ok) {
+    rules = newRules;
+    rules.version = data.version;
+    $('rules-meta').textContent = `版本 v${rules.version} ｜ 刚刚发布`;
+    toast('规则已发布，客户端下次同步生效');
+  } else if (res.status === 401) {
+    toast('未登录或 token 无效');
+    $('login-overlay').classList.remove('hidden');
+  } else if (res.status === 503) {
+    toast('服务端未配置 ADMIN_TOKEN');
+  } else {
+    toast('保存失败：' + (data.error || res.status));
+  }
+}
+
+// ---------- 规则模拟器 ----------
+async function runSimulator() {
+  const text = $('sim-text').value.trim();
+  const viewId = $('sim-viewid').value.trim();
+  if (!text && !viewId) return toast('请输入样本文本或 ViewID');
+
+  // 用当前表单的规则
+  const current = collectRules();
+  const res = await fetch('/api/v1/rules/test', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({
+      text: text || undefined,
+      viewId: viewId || undefined,
+      keywords: current.keywords,
+      viewIds: current.viewIds,
+    }),
+  });
+  const data = await res.json();
+  const box = $('sim-result');
+  if (!res.ok) {
+    box.innerHTML = `<span style="color:#DC2626;">错误: ${esc(data.error || res.status)}</span>`;
+    return;
+  }
+  if (data.hit) {
+    const hits = data.hits.map((h) => esc(JSON.stringify(h))).join('<br/>');
+    box.innerHTML = `<div class="sim-hit"><strong>命中!</strong><br/>${hits}</div>`;
+  } else {
+    box.innerHTML = '<span style="color:#6B7280;">未命中任何规则</span>';
+  }
+}
+
+// ---------- 统计看板 ----------
+async function loadStats() {
+  const res = await fetch('/api/stats/summary');
+  const s = await res.json();
+  $('stat-total').textContent = s.total;
+  $('stat-today').textContent = s.today;
+
+  const max = Math.max(1, ...s.byDay.map((d) => d.count));
+  $('day-chart').innerHTML = s.byDay.length
+    ? s.byDay.map((d) => `<div class="bar-row"><span class="day">${esc(d.day)}</span><div class="bar" style="width:${(d.count / max) * 70}%"></div><span>${esc(d.count)}</span></div>`).join('')
+    : '<div class="hint">暂无数据</div>';
+
+  document.querySelector('#app-table tbody').innerHTML = s.byApp.length
+    ? s.byApp.map((a) => `<tr><td>${esc(a.label)}</td><td style="color:#9CA3AF;">${esc(a.pkg)}</td><td>${esc(a.count)}</td></tr>`).join('')
+    : '<tr><td colspan="3" class="hint">暂无数据</td></tr>';
+
+  document.querySelector('#recent-table tbody').innerHTML = s.recent.length
+    ? s.recent.map((r) => `<tr><td>${esc(new Date(r.ts).toLocaleString())}</td><td>${esc(r.label)}</td></tr>`).join('')
+    : '<tr><td colspan="2" class="hint">暂无数据</td></tr>';
+}
+
+// 初始加载
+if (token) loadRules();
+</script>
+</body>
+</html>

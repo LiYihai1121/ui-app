@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>净启动 AdSkip · 自动跳过开屏广告</title>
+<style>
+  :root {
+    --brand: #1565C0;
+    --brand-dark: #0D47A1;
+    --brand-light: #E8F0FE;
+    --bg: #FFFFFF;
+    --bg-soft: #F7F9FC;
+    --text: #1F2937;
+    --text-2: #6B7280;
+    --text-3: #9CA3AF;
+    --border: #E8ECF1;
+    --green: #2E7D32;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1020px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- 导航 ---------- */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  nav .wrap { display: flex; align-items: center; height: 60px; gap: 28px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
+  .logo .icon {
+    width: 30px; height: 30px; border-radius: 8px; background: var(--brand);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo .icon svg { width: 18px; height: 18px; }
+  nav .links { margin-left: auto; display: flex; gap: 24px; align-items: center; }
+  nav a { color: var(--text-2); text-decoration: none; font-size: 14px; transition: color .2s; }
+  nav a:hover { color: var(--brand); }
+  .btn {
+    display: inline-block; padding: 11px 24px; border-radius: 10px;
+    font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer;
+    border: none; transition: transform .15s, box-shadow .15s, background .2s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--brand); color: #fff; }
+  .btn-primary:hover { background: var(--brand-dark); box-shadow: 0 6px 18px rgba(21,101,192,.28); }
+  .btn-ghost { background: var(--brand-light); color: var(--brand); }
+  .btn-ghost:hover { background: #D8E6FA; }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 88px 0 96px; }
+  .hero .wrap { display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--brand-light); color: var(--brand);
+    font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 99px;
+  }
+  .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .hero h1 { font-size: 44px; line-height: 1.25; font-weight: 800; margin: 20px 0 16px; letter-spacing: -0.5px; }
+  .hero h1 em { font-style: normal; color: var(--brand); }
+  .hero p.sub { font-size: 16px; color: var(--text-2); max-width: 420px; }
+  .hero .actions { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
+  .hero .meta { display: flex; gap: 28px; margin-top: 36px; }
+  .hero .meta .m b { display: block; font-size: 20px; color: var(--text); }
+  .hero .meta .m span { font-size: 12px; color: var(--text-3); }
+
+  /* ---------- 手机演示 ---------- */
+  .phone {
+    width: 264px; margin: 0 auto; border-radius: 36px;
+    border: 9px solid #111827; background: #fff;
+    box-shadow: 0 24px 60px rgba(17,24,39,.18);
+    overflow: hidden; position: relative;
+    aspect-ratio: 9 / 19;
+  }
+  .phone .notch {
+    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    width: 74px; height: 18px; background: #111827; border-radius: 99px; z-index: 5;
+  }
+  .screen { position: absolute; inset: 0; background: #F5F7FA; padding: 44px 14px 14px; }
+  .app-title { font-size: 15px; font-weight: 700; }
+  .app-slogan { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+  .m-card {
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px; margin-top: 12px;
+  }
+  .m-status { font-size: 13px; font-weight: 700; color: var(--green); display: flex; align-items: center; gap: 6px; }
+  .m-status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+  .m-hint { font-size: 10px; color: var(--text-3); margin-top: 4px; }
+  .m-stats { font-size: 11px; color: var(--text-2); margin-top: 8px; }
+  .m-btns { display: flex; gap: 6px; margin-top: 12px; }
+  .m-btn {
+    flex: 1; background: var(--brand); color: #fff; font-size: 10px; font-weight: 600;
+    text-align: center; padding: 8px 0; border-radius: 8px;
+  }
+  .m-btn.light { background: var(--brand-light); color: var(--brand); }
+
+  /* 开屏广告覆盖层动画 */
+  .splash {
+    position: absolute; inset: 0; background: linear-gradient(160deg, #263238, #37474F);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 4; opacity: 0; pointer-events: none; transition: opacity .35s;
+  }
+  .splash.show { opacity: 1; }
+  .splash .ad-tag { font-size: 10px; color: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.3); padding: 2px 8px; border-radius: 4px; }
+  .splash .ad-title { color: #fff; font-size: 18px; font-weight: 700; margin-top: 14px; }
+  .splash .ad-sub { color: rgba(255,255,255,.6); font-size: 11px; margin-top: 6px; }
+  .splash .skip {
+    position: absolute; top: 52px; right: 14px;
+    background: rgba(255,255,255,.18); color: #fff; font-size: 11px;
+    padding: 5px 12px; border-radius: 99px; border: 1px solid rgba(255,255,255,.35);
+  }
+  .cursor {
+    position: absolute; width: 16px; height: 16px; border-radius: 50%;
+    background: rgba(21,101,192,.9); box-shadow: 0 0 0 6px rgba(21,101,192,.25);
+    z-index: 6; opacity: 0; transition: all .45s cubic-bezier(.4,0,.2,1);
+  }
+  .toast {
+    position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(8px);
+    background: rgba(31,41,55,.92); color: #fff; font-size: 11px; padding: 7px 14px;
+    border-radius: 99px; z-index: 6; opacity: 0; transition: all .3s; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ---------- 分区通用 ---------- */
+  section { padding: 72px 0; }
+  section.soft { background: var(--bg-soft); }
+  .sec-head { text-align: center; max-width: 560px; margin: 0 auto 44px; }
+  .sec-head h2 { font-size: 28px; font-weight: 800; letter-spacing: -0.3px; }
+  .sec-head p { color: var(--text-2); font-size: 14px; margin-top: 10px; }
+
+  /* 功能卡片 */
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .feature {
+    background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 22px; transition: box-shadow .25s, transform .25s;
+  }
+  .feature:hover { box-shadow: 0 10px 28px rgba(17,24,39,.07); transform: translateY(-2px); }
+  .feature .ic {
+    width: 38px; height: 38px; border-radius: 10px; background: var(--brand-light);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 14px;
+  }
+  .feature .ic svg { width: 20px; height: 20px; stroke: var(--brand); }
+  .feature h3 { font-size: 15px; font-weight: 700; }
+  .feature p { font-size: 13px; color: var(--text-2); margin-top: 6px; }
+
+  /* 工作原理 */
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .step {
+    background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; position: relative;
+  }
+  .step .no {
+    width: 26px; height: 26px; border-radius: 50%; background: var(--brand); color: #fff;
+    font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px;
+  }
+  .step h3 { font-size: 14px; font-weight: 700; }
+  .step p { font-size: 12px; color: var(--text-2); margin-top: 6px; }
+
+  /* 路线图 */
+  .timeline { max-width: 640px; margin: 0 auto; position: relative; padding-left: 28px; }
+  .timeline::before { content: ""; position: absolute; left: 7px; top: 6px; bottom: 6px; width: 2px; background: var(--border); }
+  .tl-item { position: relative; padding-bottom: 30px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-item::before {
+    content: ""; position: absolute; left: -27px; top: 5px;
+    width: 12px; height: 12px; border-radius: 50%; background: #fff;
+    border: 3px solid var(--border);
+  }
+  .tl-item.done::before { border-color: var(--green); background: var(--green); }
+  .tl-item.next::before { border-color: var(--brand); }
+  .tl-item .tag { font-size: 11px; font-weight: 700; color: var(--brand); }
+  .tl-item.done .tag { color: var(--green); }
+  .tl-item h3 { font-size: 15px; font-weight: 700; margin-top: 2px; }
+  .tl-item p { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+
+  /* CTA */
+  .cta { text-align: center; }
+  .cta .box {
+    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+    border-radius: 20px; padding: 56px 32px; color: #fff;
+  }
+  .cta h2 { font-size: 26px; font-weight: 800; }
+  .cta p { opacity: .85; font-size: 14px; margin: 10px 0 28px; }
+  .cta .btn-light { background: #fff; color: var(--brand); }
+  .cta .btn-line { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.5); }
+
+  footer { border-top: 1px solid var(--border); padding: 28px 0 40px; }
+  footer p { font-size: 12px; color: var(--text-3); text-align: center; line-height: 1.9; }
+
+  /* 滚动渐显 */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s, transform .6s; }
+  .reveal.in { opacity: 1; transform: none; }
+
+  @media (max-width: 860px) {
+    .hero .wrap { grid-template-columns: 1fr; gap: 40px; }
+    .hero h1 { font-size: 34px; }
+    .features { grid-template-columns: 1fr 1fr; }
+    .flow { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    .features, .flow { grid-template-columns: 1fr; }
+    nav .links a.hide-s { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="logo">
+      <span class="icon">
+        <svg viewBox="0 0 24 24" fill="#fff"><path d="M5 6l8 6-8 6V6zm10 0h3v12h-3V6z"/></svg>
+      </span>
+      净启动 AdSkip
+    </div>
+    <div class="links">
+      <a href="#features" class="hide-s">功能</a>
+      <a href="#how" class="hide-s">原理</a>
+      <a href="#roadmap" class="hide-s">路线图</a>
+      <a href="/admin">管理后台</a>
+      <a class="btn btn-primary" style="padding:8px 16px;" href="/download">下载 v2.1</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="reveal">
+      <span class="badge"><span class="dot"></span>v2.1 体验优化版已发布</span>
+      <h1>开屏广告<br /><em>一闪而过</em></h1>
+      <p class="sub">基于无障碍服务的开屏广告自动跳过工具。文本 + 控件 ID 双通道识别，规则云端同步，数据不出本机。</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/download">下载 Android APK</a>
+        <a class="btn btn-ghost" href="/admin">打开管理后台</a>
+      </div>
+      <div class="meta">
+        <div class="m"><b>858 KB</b><span>安装包体积</span></div>
+        <div class="m"><b>0</b><span>第三方依赖</span></div>
+        <div class="m"><b>双通道</b><span>文本 + ViewID 识别</span></div>
+      </div>
+    </div>
+
+    <!-- 手机演示 -->
+    <div class="reveal">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="app-title">净启动 AdSkip</div>
+          <div class="app-slogan">自动跳过开屏广告</div>
+          <div class="m-card">
+            <div class="m-status">服务运行中</div>
+            <div class="m-hint">自动跳过开屏广告已生效</div>
+          </div>
+          <div class="m-card">
+            <div class="m-stats" id="m-stats">累计跳过 128 次 ｜ 最近：演示应用</div>
+          </div>
+          <div class="m-btns">
+            <div class="m-btn">应用管理</div>
+            <div class="m-btn light">跳过日志</div>
+            <div class="m-btn light">云同步</div>
+          </div>
+        </div>
+        <!-- 开屏广告覆盖层 -->
+        <div class="splash" id="splash">
+          <div class="skip" id="skipBtn">跳过 3</div>
+          <div class="ad-tag">广告</div>
+          <div class="ad-title">某品牌大促</div>
+          <div class="ad-sub">全场五折起 立即抢购</div>
+        </div>
+        <div class="cursor" id="cursor"></div>
+        <div class="toast" id="toast">已自动跳过广告</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="soft" id="features">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2>功能</h2>
+      <p>一个安装包 + 一个本地服务，覆盖跳过广告的全部环节</p>
+    </div>
+    <div class="features">
+      <div class="feature reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg></div>
+        <h3>毫秒级自动跳过</h3>
+        <p>监听窗口变化，广告出现的瞬间即找到「跳过」按钮并点击，无需手动。</p>
+      </div>
+      <div class="feature reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+        <h3>双通道识别</h3>
+        <p>文本关键词 + 控件 ViewID 两种匹配方式，纯图片按钮也能精准命中。</p>
+      </div>
+      <div class="feature reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="15" width="7" height="7" rx="1.5"/><rect x="14" y="15" width="7" height="7" rx="1.5"/></svg></div>
+        <h3>应用管理</h3>
+        <p>按应用逐项开关自动跳过，各应用跳过次数一目了然。</p>
+      </div>
+      <div class="feature reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></div>
+        <h3>跳过日志</h3>
+        <p>最近 200 条跳过记录：时间、应用、包名，可随时清空。</p>
+      </div>
+      <div class="feature reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></div>
+        <h3>云端规则同步</h3>
+        <p>自建规则中心一键下发关键词、ViewID 与应用专属规则，多设备共享。</p>
+      </div>
+      <div class="feature reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z"/></svg></div>
+        <h3>隐私安全</h3>
+        <p>零第三方依赖，无账号体系，统计仅存本机与你自己的服务器。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2>工作原理</h2>
+      <p>只点击广告界面本身展示的「跳过」按钮，不拦截、不破解任何内容</p>
+    </div>
+    <div class="flow">
+      <div class="step reveal"><div class="no">1</div><h3>监听启动</h3><p>无障碍服务接收应用窗口状态与内容变化事件。</p></div>
+      <div class="step reveal"><div class="no">2</div><h3>识别按钮</h3><p>遍历界面节点，文本关键词与控件 ID 双通道匹配「跳过」按钮。</p></div>
+      <div class="step reveal"><div class="no">3</div><h3>模拟点击</h3><p>优先执行节点点击，不可点击时按坐标派发模拟手势。</p></div>
+      <div class="step reveal"><div class="no">4</div><h3>记录上报</h3><p>本地写入日志与统计，静默上报自建服务端。</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="soft" id="roadmap">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2>路线图</h2>
+      <p>已完成的打勾，下一步清晰可见</p>
+    </div>
+    <div class="timeline">
+      <div class="tl-item done reveal">
+        <div class="tag">v1.0 · 已完成</div>
+        <h3>核心可用</h3>
+        <p>无障碍自动跳过、关键词管理、统计、模拟测试、防误触机制。</p>
+      </div>
+      <div class="tl-item done reveal">
+        <div class="tag">v2.1 · 已完成（当前）</div>
+        <h3>全栈版</h3>
+        <p>ViewID 双通道识别、应用管理、跳过日志、云端规则同步、后端 API 与管理后台。</p>
+      </div>
+      <div class="tl-item next reveal">
+        <div class="tag">v2.1 · 规划中</div>
+        <h3>体验优化</h3>
+        <p>保活引导、免打扰时段、定时同步、日志导出。</p>
+      </div>
+      <div class="tl-item reveal">
+        <div class="tag">v3.0 · 规划中</div>
+        <h3>能力增强</h3>
+        <p>截屏取点自定义规则、悬浮窗开关、Docker 一键部署、局域网规则共享。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="wrap">
+    <div class="box reveal">
+      <h2>立即开始净启动</h2>
+      <p>Android 8.0+ · 安装后开启无障碍服务即可生效</p>
+      <a class="btn btn-light" href="/download">下载 AdSkip v2.1</a>
+      <a class="btn btn-line" href="/admin" style="margin-left:10px;">进入管理后台</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>净启动 AdSkip · 仅通过系统无障碍能力点击广告界面已展示的「跳过」按钮，不拦截或破解任何广告内容<br />请仅用于个人设备 · 数据仅存本机与自建服务端</p>
+  </div>
+</footer>
+
+<script>
+// 滚动渐显
+const io = new IntersectionObserver((entries) => {
+  entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+
+// 手机演示：开屏广告 → 光标移动点击 → 跳过成功，循环播放
+const splash = document.getElementById('splash');
+const cursor = document.getElementById('cursor');
+const toastEl = document.getElementById('toast');
+const skipBtn = document.getElementById('skipBtn');
+let count = 128;
+
+function demoCycle() {
+  // 1. 广告出现
+  toastEl.classList.remove('show');
+  splash.classList.add('show');
+  let n = 3;
+  skipBtn.textContent = '跳过 ' + n;
+  const timer = setInterval(() => {
+    n--;
+    if (n >= 1) skipBtn.textContent = '跳过 ' + n;
+  }, 1000);
+
+  // 2. 光标移到「跳过」按钮
+  setTimeout(() => {
+    const phone = splash.parentElement.getBoundingClientRect();
+    const btn = skipBtn.getBoundingClientRect();
+    cursor.style.opacity = '1';
+    cursor.style.left = (btn.left - phone.left + btn.width / 2 - 8) + 'px';
+    cursor.style.top = (btn.top - phone.top + btn.height / 2 - 8) + 'px';
+  }, 1300);
+
+  // 3. 点击，广告消失，Toast 出现
+  setTimeout(() => {
+    clearInterval(timer);
+    splash.classList.remove('show');
+    cursor.style.opacity = '0';
+    cursor.style.transform = 'scale(.6)';
+    setTimeout(() => (cursor.style.transform = 'scale(1)'), 300);
+    toastEl.classList.add('show');
+    count++;
+    document.getElementById('m-stats').textContent = '累计跳过 ' + count + ' 次 ｜ 最近：演示应用';
+  }, 2100);
+
+  // 4. 收尾，进入下一轮
+  setTimeout(() => toastEl.classList.remove('show'), 4300);
+}
+setTimeout(demoCycle, 900);
+setInterval(demoCycle, 5200);
+</script>
+</body>
+</html>
