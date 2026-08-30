@@ -14,15 +14,13 @@ export class HttpError extends Error {
   }
 }
 
-/** 依据 CORS 配置写入响应头（保持与旧版一致的 quirk：未命中白名单时置为 "null"） */
+/** 依据 CORS 配置写入响应头：白名单命中才回 Allow-Origin，不命中不发（浏览器侧直接拦截）；未配置白名单时回 *（LAN 工具默认开放） */
 export function applyCors(headers: Headers, origin: string | null): void {
   const origins = config.CORS_ORIGINS;
   if (origins && origins.length) {
     if (origin && origins.includes(origin)) {
       headers.set("Access-Control-Allow-Origin", origin);
       headers.set("Vary", "Origin");
-    } else {
-      headers.set("Access-Control-Allow-Origin", "null");
     }
   } else {
     headers.set("Access-Control-Allow-Origin", "*");
@@ -65,8 +63,12 @@ export function htmlResponse(html: string): Response {
   });
 }
 
-/** 读取请求体，超过 MAX_BODY 抛 413 */
+/** 读取请求体：必须显式声明 application/json（阻断跨站表单伪造），超过 MAX_BODY 抛 413 */
 export async function readBody(req: Request): Promise<string> {
+  const ct = (req.headers.get("content-type") ?? "").toLowerCase();
+  if (!ct.startsWith("application/json")) {
+    throw new HttpError(415, "content-type must be application/json");
+  }
   const len = Number(req.headers.get("content-length") ?? "0");
   if (len > config.MAX_BODY) throw new HttpError(413, "body too large");
   const raw = await req.text();

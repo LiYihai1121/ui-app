@@ -26,6 +26,8 @@
 - ✅ 管理后台网页：登录 + **diff 预览** + **规则模拟器** + 统计看板
 - ✅ 协议 v1：ETag/304、批量上报、健康检查（旧 v0 路由兼容保留）
 - ✅ 优雅停机（SIGTERM/SIGINT → 落盘再退出）、CORS 白名单、规则备份轮转
+- ✅ 访问日志（内存 200 条，`/api/v1/admin/logs` 管理令牌查看）；请求体 1MiB 协议层上限 + `application/json` 强制
+- ✅ API 参考文档：[docs/API.md](docs/API.md)
 
 ## 快速开始
 

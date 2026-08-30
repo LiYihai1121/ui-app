@@ -103,8 +103,9 @@ Doze 模式 → 系统推迟到维护窗口执行
 |---|---|
 | `server.ts` | Bun.serve 入口、路由分发、优雅停机（SIGTERM/SIGINT → store.flush()） |
 | `src/api/` | 路由拆分：rulesApi（v0+v1）/ statsApi / healthApi |
-| `src/middleware/auth.ts` | Bearer token 鉴权，保护写接口 |
-| `src/middleware/rateLimit.ts` | 内存令牌桶：per-IP（读/写）+ per-deviceId（上报） |
+| `src/middleware/auth.ts` | Bearer token 鉴权（常数时间比较），保护写接口 |
+| `src/middleware/rateLimit.ts` | 内存令牌桶：per-IP（读/写）+ per-deviceId（上报）+ 读体前 IP 预检 |
+| `src/middleware/accessLog.ts` | 内存访问日志环形缓冲（200 条），`/api/v1/admin/logs` 暴露 |
 | `src/utils/validate.ts` | 载荷校验（PKG_RE / VID_RE / 长度上限 / body 键数/深度上限） |
 | `src/storage/store.ts` | 规则（缓存+备份轮转）/ 统计（分日分片+内存缓存+延迟刷盘） |
 | `src/utils/httpUtil.ts` | CORS 白名单、安全 JSON 解析、响应构建工具 |
@@ -124,6 +125,7 @@ Doze 模式 → 系统推迟到维护窗口执行
 |---|---|---|
 | **服务端鉴权** | Bearer token | `ADMIN_TOKEN` 环境变量；未配置时写接口返回 503；规则发布/模拟器需鉴权 |
 | **服务端校验** | validate.ts | 包名正则 `^[a-zA-Z][\w]*(\.[a-zA-Z][\w]*)+$`、关键词 ≤12 字、总条目 ≤2000、body 键数/深度上限 |
+| **请求约束** | readBody + maxRequestBodySize | body 必须 application/json（415）；>1MiB 协议层拒绝（413/断连），不进应用内存 |
 | **客户端护栏** | SafetyGuard | 硬编码黑名单（支付/付款/确认/同意/购买/下单/授权/登录/免密/开通/安装/下载），云规则不可覆盖 |
 
 ## 6. 线程模型
@@ -192,9 +194,10 @@ AdSkip/                            全栈 monorepo
 ├── server/                       Bun + TypeScript 后端
 │   ├── src/
 │   │   ├── api/                  路由拆分（rulesApi / statsApi / healthApi）
-│   │   ├── middleware/           鉴权 + 限流（auth.ts / rateLimit.ts）
+│   │   ├── middleware/           鉴权 + 限流 + 访问日志（auth / rateLimit / accessLog）
 │   │   ├── utils/                HTTP 工具 + 校验（httpUtil.ts / validate.ts）
 │   │   ├── storage/              规则 + 统计存储（store.ts）
+│   │   ├── types/                域模型类型（rules.ts）
 │   │   └── config.ts             全部可调参数
 │   ├── test/                     bun:test 单元 + 冒烟
 │   ├── server.ts                 入口（Bun.serve）

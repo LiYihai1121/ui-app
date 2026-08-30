@@ -1,4 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 import { config } from "../src/config";
 import {
   cleanRules,
@@ -9,14 +12,17 @@ import {
   PKG_RE,
   VID_RE,
 } from "../src/utils/validate";
+import { applyCors } from "../src/utils/httpUtil";
 import { checkAdminAuth, requireAdmin } from "../src/middleware/auth";
 import {
   limitRead,
   limitWrite,
   limitReport,
+  probeReportIp,
   clientIp,
   _resetRateLimitForTests,
 } from "../src/middleware/rateLimit";
+import { statsSummary, _resetSummaryCacheForTests, _resetStatsCacheForTests } from "../src/storage/store";
 
 function req(headers: Record<string, string> = {}): Request {
   return new Request("http://localhost/", { headers });
@@ -207,5 +213,89 @@ describe("rateLimit", () => {
   it("clientIp 优先取 x-forwarded-for，回退 remoteIp", () => {
     expect(clientIp(req({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" }), "9.9.9.9")).toBe("1.2.3.4");
     expect(clientIp(req(), "9.9.9.9")).toBe("9.9.9.9");
+  });
+
+  it("probeReportIp 探测不扣减令牌", () => {
+    _resetRateLimitForTests();
+    expect(probeReportIp(req(), "10.0.0.5")).toBe(true);
+    // 耗尽上报桶（首次创建不扣减，容量 30 允许 31 次）
+    for (let i = 0; i < 40; i++) limitReport(req(), "10.0.0.5");
+    expect(limitReport(req(), "10.0.0.5")).toBe(false);
+    // 桶空后 probe 也返回 false，且未额外创建令牌
+    expect(probeReportIp(req(), "10.0.0.5")).toBe(false);
+  });
+});
+
+describe("cors", () => {
+  const saved = config.CORS_ORIGINS;
+
+  afterAll(() => {
+    config.CORS_ORIGINS = saved;
+  });
+
+  it("白名单命中回显 Origin", () => {
+    config.CORS_ORIGINS = ["https://good.example"];
+    const h = new Headers();
+    applyCors(h, "https://good.example");
+    expect(h.get("access-control-allow-origin")).toBe("https://good.example");
+  });
+
+  it("白名单不匹配不发送 Allow-Origin（浏览器侧直接拦截）", () => {
+    config.CORS_ORIGINS = ["https://good.example"];
+    const h = new Headers();
+    applyCors(h, "https://evil.example");
+    expect(h.get("access-control-allow-origin")).toBeNull();
+  });
+
+  it("未配置白名单默认 *", () => {
+    config.CORS_ORIGINS = null;
+    const h = new Headers();
+    applyCors(h, "https://any.example");
+    expect(h.get("access-control-allow-origin")).toBe("*");
+  });
+});
+
+describe("statsSummary", () => {
+  it("recent 跨天取最近记录，汇总走缓存", () => {
+    const savedDir = config.STATS_DIR;
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "adskip-stats-"));
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const dayBefore = new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10);
+    fs.writeFileSync(
+      path.join(tmp, `${yesterday}.json`),
+      JSON.stringify({
+        day: yesterday,
+        byApp: { "com.yday.app": { label: "Y", count: 2, byChannel: { text: 2 } } },
+        events: [
+          { ts: "y2", pkg: "com.yday.app", label: "Y", channel: "text" },
+          { ts: "y1", pkg: "com.yday.app", label: "Y", channel: "text" },
+        ],
+      })
+    );
+    fs.writeFileSync(
+      path.join(tmp, `${dayBefore}.json`),
+      JSON.stringify({
+        day: dayBefore,
+        byApp: { "com.old.app": { label: "O", count: 1, byChannel: { viewId: 1 } } },
+        events: [{ ts: "o1", pkg: "com.old.app", label: "O", channel: "viewId" }],
+      })
+    );
+    // 清掉其他测试（smoke）残留在 statsCache 里的真实「今天」，保证隔离
+    _resetStatsCacheForTests();
+    config.STATS_DIR = tmp;
+    try {
+      const s = statsSummary();
+      expect(s.today).toBe(0); // 两天文件都不是今天
+      expect(s.total).toBe(3);
+      expect(s.recent.length).toBe(3); // 跨天合并
+      expect(s.recent[0].ts).toBe("y2"); // 最新一天的记录在前
+      expect(s.byDay.length).toBe(2);
+      // 第二次调用命中缓存（引用相同）
+      expect(statsSummary()).toBe(s);
+    } finally {
+      config.STATS_DIR = savedDir;
+      fs.rmSync(tmp, { recursive: true, force: true });
+      _resetStatsCacheForTests();
+    }
   });
 });
