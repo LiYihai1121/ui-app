@@ -1,4 +1,5 @@
 import { config } from "../config";
+import type { CleanedRules } from "../types/rules";
 
 // 包名：字母开头，至少含一个点，只允许字母数字下划线
 export const PKG_RE = /^[a-zA-Z][\w]*(\.[a-zA-Z][\w]*)+$/;
@@ -41,11 +42,7 @@ function cleanStringList(value: unknown, maxLen = 256): string[] {
 }
 
 /** 校验并清洗规则载荷（v1/v0 兼容），非法返回 null */
-export function cleanRules(input: unknown): {
-  keywords: string[];
-  viewIds: string[];
-  packages: Record<string, { keywords: string[]; viewIds: string[]; disabled: boolean }>;
-} | null {
+export function cleanRules(input: unknown): CleanedRules | null {
   if (
     !input ||
     typeof input !== "object" ||
