@@ -9,6 +9,9 @@ local.properties
 captures/
 .DS_Store
 
+# 本地工具状态目录（安全扫描产物，不入库）
+.mimosa/
+
 # Kotlin 构建会话目录
 .kotlin/
 
