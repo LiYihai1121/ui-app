@@ -167,8 +167,8 @@ Doze 模式 → 系统推迟到维护窗口执行
 ## 10. 测试
 
 **客户端：**
-- JVM 单测：`./gradlew testDebugUnitTest`（引擎匹配 + SafetyGuard 护栏）
-- 构建验证：`./gradlew assembleDebug`
+- JVM 单测：`cd client && ./gradlew testDebugUnitTest`（引擎匹配 + SafetyGuard 护栏）
+- 构建验证：`cd client && ./gradlew assembleDebug`
 
 **服务端（bun:test）：**
 - 全部测试：`cd server && bun test`
@@ -178,9 +178,11 @@ Doze 模式 → 系统推迟到维护窗口执行
 ## 11. 项目结构
 
 ```
-AdSkip/
-├── app/                          Android 客户端（Kotlin + Compose）
-│   └── src/main/java/com/ldp/adskip/
+AdSkip/                            全栈 monorepo
+├── client/                        Android 客户端（Kotlin + Compose，Gradle 工程根）
+│   ├── build.gradle.kts           模块与签名配置（签名参数读 local.properties）
+│   ├── settings.gradle.kts        仓库配置（国内镜像优先）
+│   └── app/src/main/java/com/ldp/adskip/
 │       ├── ui/                   Compose UI（单 Activity + 4 Screen + ViewModel）
 │       ├── core/                 AppEvents / Clock / AppExecutors / LogRing
 │       ├── service/              SkipAdService（无障碍服务）
@@ -194,10 +196,10 @@ AdSkip/
 │   │   ├── middleware/           鉴权 + 限流（auth.ts / rateLimit.ts）
 │   │   ├── utils/                HTTP 工具 + 校验（httpUtil.ts / validate.ts）
 │   │   ├── storage/              规则 + 统计存储（store.ts）
-│   │   ├── config.ts             全部可调参数
-│   │   └── types.ts              类型定义
+│   │   └── config.ts             全部可调参数
 │   ├── test/                     bun:test 单元 + 冒烟
 │   ├── server.ts                 入口（Bun.serve）
 │   └── public/                   落地页 + 管理后台
+├── docs/                         ARCHITECTURE.md / ROADMAP.md
 └── .github/workflows/ci.yml     CI：Android Build + Bun Server Tests
 ```
