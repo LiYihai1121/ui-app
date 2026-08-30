@@ -161,6 +161,8 @@ bun run typecheck     # tsc --noEmit
 
 要求：JDK 17+、Android SDK（compileSdk 35）、Bun 1.1+（服务端）。Android 部分也可直接用 Android Studio / IntelliJ 打开 `client/` 目录。
 
+> 发布副本放在仓库根并命名 `AdSkip-latest.apk`，服务端 `/download` 路由会直接提供下载（配合手机浏览器访问 `http://<本机IP>:3210/download`）。
+
 ## 分支与版本
 
 - 工作流：branch-guard（`.opencode/skills/branch-guard/SKILL.md`）——所有改动在功能分支上进行，测试通过后 `--no-ff` 合并回 `main`。

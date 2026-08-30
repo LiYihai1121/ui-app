@@ -55,12 +55,11 @@
 | 层 | 模块 | 职责 | 不做的事 |
 |---|---|---|---|
 | **ui/** | 4 个 Composable Screen + ViewModel | 声明式 UI 与状态管理，通过 StateFlow 驱动 UI | 不直接读 SharedPreferences、不碰网络 |
-| **core/** | AppEvents | 进程内事件总线（StateFlow/SharedFlow），Service→UI 状态桥 | 不含业务逻辑 |
 | **service/** | SkipAdService | 事件接收、节流去抖、点击执行 | 不含匹配规则逻辑、不做安全裁决 |
 | **engine/** | SkipRuleEngine + RuleSet + AdNode + SafetyGuard | 纯匹配：文本/ViewID 双通道 | 不执行点击、不读存储 |
 | **data/** | Prefs / RulesRepository / StatsRepository | 存储原语 + 领域仓库（合并/LruCache/合批落盘） | 不感知 UI 与网络格式 |
 | **net/** | SyncClient | HTTP 传输（v1: ETag/304/批量补报） | 不直接改存储键值 |
-| **core/** | AppExecutors / Clock / LogRing | 线程域收口、时钟注入、环形日志 | 不含业务逻辑 |
+| **core/** | AppEvents / AppExecutors / Clock / LogRing | 进程内事件总线、线程域收口、时钟注入、环形日志 | 不含业务逻辑 |
 | **sync/** | SyncJobService | JobScheduler 周期同步 | 不含同步逻辑（委托 SyncClient） |
 
 **关键设计**：
@@ -131,7 +130,7 @@ Doze 模式 → 系统推迟到维护窗口执行
 
 | 操作 | 线程 | 说明 |
 |---|---|---|
-| 无障碍事件处理 | 主线程 |节流去抖纯内存操作 |
+| 无障碍事件处理 | 主线程 | 节流去抖纯内存操作 |
 | 规则匹配 | 主线程 | 引擎纯 CPU 计算 |
 | 统计计数 | 主线程（内存）→ IO 线程（落盘） | 内存先记，5s 后 AppExecutors.io 合批写 SP |
 | 规则同步 | IO 线程 | SyncClient 在 AppExecutors.io 执行网络请求 |
