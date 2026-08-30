@@ -70,7 +70,13 @@ SafetyGuard 安全护栏复核（黑名单/可见性/面积）
 ## 工程结构
 
 ```
-app/src/main/java/com/ldp/adskip/   # Android 客户端（Kotlin，零第三方依赖）
+AdSkip/            # 全栈 monorepo
+├── client/        # Android 客户端（Gradle 工程根：build.gradle.kts / settings.gradle.kts / gradle wrapper）
+├── server/        # 后端（Bun + TypeScript，零运行时依赖）
+├── docs/          # ARCHITECTURE.md / ROADMAP.md
+└── .github/       # CI 工作流
+
+client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，零第三方依赖）
 ├── AdskipApp.kt                    # Application + AppContainer（手动 DI）
 ├── core/                           # Clock / AppExecutors / LogRing / AppEvents（状态总线）
 ├── ui/                             # 界面层（Compose 单 Activity + Navigation）
@@ -98,7 +104,7 @@ app/src/main/java/com/ldp/adskip/   # Android 客户端（Kotlin，零第三方�
 └── sync/
     └── SyncJobService.kt           # JobScheduler 定时同步（三合一，跨重启持久化）
 
-app/src/test/java/com/ldp/adskip/   # JVM 单测（FakeAdNode + 引擎/护栏测试，37 项）
+client/app/src/test/java/com/ldp/adskip/   # JVM 单测（FakeAdNode + 引擎/护栏测试，37 项）
 
 server/                             # 后端（Bun + TypeScript，零运行时依赖）
 ├── server.ts                       # Bun.serve 入口、路由分发、优雅停机
@@ -126,17 +132,18 @@ server/                             # 后端（Bun + TypeScript，零运行时�
 └── data/                           # rules.json（规则包）/ stats/（分日统计）/ backups/
 ```
 
-详细设计见 [ARCHITECTURE.md](ARCHITECTURE.md)。
+详细设计见 [ARCHITECTURE.md](docs/ARCHITECTURE.md)。
 
 ## 构建
 
 ```bash
-# Android 客户端
+# Android 客户端（Gradle 工程根在 client/）
+cd client
 ./gradlew assembleDebug
-# 产物: app/build/outputs/apk/debug/app-debug.apk（发布时重命名版本号）
+# 产物: client/app/build/outputs/apk/debug/app-debug.apk（发布时重命名版本号）
 
 # Release 封装（R8 混淆 + 签名）
-# 签名参数写在 local.properties（不入库）：
+# 签名参数写在 client/local.properties（不入库）：
 #   adskip.storeFile=<keystore 路径>  adskip.storePassword=***
 #   adskip.keyAlias=<别名>           adskip.keyPassword=***
 # 未配置签名时 assembleRelease 产出未签名包
@@ -146,19 +153,19 @@ server/                             # 后端（Bun + TypeScript，零运行时�
 ./gradlew testDebugUnitTest
 
 # 服务端测试与类型检查
-cd server
+cd ../server
 bun install
 bun test              # 单元 + 冒烟（40 项）
 bun run typecheck     # tsc --noEmit
 ```
 
-要求：JDK 17+、Android SDK（compileSdk 35）、Bun 1.1+（服务端）。Android 部分也可直接用 Android Studio / IntelliJ 打开。
+要求：JDK 17+、Android SDK（compileSdk 35）、Bun 1.1+（服务端）。Android 部分也可直接用 Android Studio / IntelliJ 打开 `client/` 目录。
 
 ## 分支与版本
 
 - 工作流：branch-guard（`.opencode/skills/branch-guard/SKILL.md`）——所有改动在功能分支上进行，测试通过后 `--no-ff` 合并回 `main`。
 - 版本规则：Android 使用 `versionCode` 递增、`versionName` 对外展示；服务端版本号见 `server/package.json`。
-- 功能路线以 [ROADMAP.md](ROADMAP.md) 为准，架构与模块职责以 [ARCHITECTURE.md](ARCHITECTURE.md) 为准。
+- 功能路线以 [ROADMAP.md](docs/ROADMAP.md) 为准，架构与模块职责以 [ARCHITECTURE.md](docs/ARCHITECTURE.md) 为准。
 
 ## 合规提示
 

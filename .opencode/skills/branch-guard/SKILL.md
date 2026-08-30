@@ -50,6 +50,7 @@ You MUST verify the code works before merging:
 
 **Android 客户端：**
 ```bash
+cd client
 ./gradlew assembleDebug        # 编译通过
 ./gradlew testDebugUnitTest    # 单测通过
 ```

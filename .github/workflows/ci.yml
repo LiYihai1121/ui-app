@@ -10,6 +10,9 @@ jobs:
   android:
     name: Android Build & Test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
     steps:
       - uses: actions/checkout@v4
 
