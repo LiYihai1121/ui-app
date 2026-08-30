@@ -26,6 +26,15 @@ export function allow(key: string, capacity: number): boolean {
   return true;
 }
 
+/** 探测容量但不扣减令牌（用于读取请求体前的低成本预检） */
+export function probe(key: string, capacity: number): boolean {
+  const now = Date.now();
+  const b = buckets.get(key);
+  if (!b) return true;
+  refill(b, capacity, now);
+  return b.tokens >= 1;
+}
+
 export function clientIp(req: Request, remoteIp: string): string {
   const xff = req.headers.get("x-forwarded-for");
   if (xff) return xff.split(",")[0].trim();
@@ -47,6 +56,14 @@ export function limitReport(
 ): boolean {
   return allow(
     "d:" + (deviceId || clientIp(req, remoteIp)),
+    config.RATE_LIMIT_REPORT_PER_MIN
+  );
+}
+
+/** 读体前预检：按来源 IP 探测上报容量，不扣减（真正扣减在读体并校验之后按 deviceId/IP 进行） */
+export function probeReportIp(req: Request, remoteIp: string): boolean {
+  return probe(
+    "d:" + clientIp(req, remoteIp),
     config.RATE_LIMIT_REPORT_PER_MIN
   );
 }

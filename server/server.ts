@@ -5,6 +5,7 @@ import { config } from "./src/config";
 import { handleApi } from "./src/api";
 import { withCors, errorJson } from "./src/utils/httpUtil";
 import { cleanupOldStats, flush } from "./src/storage/store";
+import { recordAccess } from "./src/middleware/accessLog";
 
 export interface StartOptions {
   port?: number;
@@ -36,60 +37,22 @@ export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
   const server: Bun.Server<undefined> = Bun.serve({
     port,
     hostname: host,
+    // 协议层拒绝超大请求体（chunked 无 content-length 时由 Bun 直接拦截，堵内存放大）
+    maxRequestBodySize: config.MAX_BODY,
     async fetch(req) {
+      const started = performance.now();
       const url = new URL(req.url);
       const origin = req.headers.get("origin");
       const ip = server.requestIP(req)?.address ?? "unknown";
       const ctx = { ip };
 
+      let resp: Response;
       try {
-        if (req.method === "OPTIONS") {
-          return withCors(new Response(null, { status: 204 }), origin);
-        }
-
-        if (url.pathname.startsWith("/api/")) {
-          return withCors(await handleApi(req, url, ctx), origin);
-        }
-
-        // ---------- 静态资源 ----------
-        if (req.method === "GET") {
-          if (url.pathname === "/") {
-            return withCors(
-              new Response(Bun.file(path.join(config.PUBLIC_DIR, "index.html"))),
-              origin
-            );
-          }
-          if (url.pathname === "/admin") {
-            return withCors(
-              new Response(Bun.file(path.join(config.PUBLIC_DIR, "admin.html"))),
-              origin
-            );
-          }
-          if (url.pathname === "/download") {
-            if (!fs.existsSync(config.APK_FILE)) {
-              return withCors(errorJson(404, "apk not found"), origin);
-            }
-            const file = Bun.file(config.APK_FILE);
-            return withCors(
-              new Response(file, {
-                headers: {
-                  "Content-Type": "application/vnd.android.package-archive",
-                  "Content-Disposition": `attachment; filename="${path.basename(
-                    config.APK_FILE
-                  )}"`,
-                  "Content-Length": String(file.size),
-                },
-              }),
-              origin
-            );
-          }
-        }
-
-        return withCors(errorJson(404, "not found"), origin);
+        resp = await route(req, url, origin, ctx);
       } catch (e: any) {
         const status =
           typeof e?.statusCode === "number" ? e.statusCode : 500;
-        return withCors(
+        resp = withCors(
           new Response(JSON.stringify({ error: String(e?.message ?? e) }), {
             status,
             headers: { "Content-Type": "application/json; charset=utf-8" },
@@ -97,11 +60,70 @@ export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
           origin
         );
       }
+      recordAccess({
+        method: req.method,
+        path: url.pathname,
+        status: resp.status,
+        ip,
+        ms: Math.round(performance.now() - started),
+      });
+      return resp;
     },
     error() {
       return new Response("Internal Error", { status: 500 });
     },
   });
+
+  async function route(
+    req: Request,
+    url: URL,
+    origin: string | null,
+    ctx: { ip: string }
+  ): Promise<Response> {
+    if (req.method === "OPTIONS") {
+      return withCors(new Response(null, { status: 204 }), origin);
+    }
+
+    if (url.pathname.startsWith("/api/")) {
+      return withCors(await handleApi(req, url, ctx), origin);
+    }
+
+    // ---------- 静态资源 ----------
+    if (req.method === "GET") {
+      if (url.pathname === "/") {
+        return withCors(
+          new Response(Bun.file(path.join(config.PUBLIC_DIR, "index.html"))),
+          origin
+        );
+      }
+      if (url.pathname === "/admin") {
+        return withCors(
+          new Response(Bun.file(path.join(config.PUBLIC_DIR, "admin.html"))),
+          origin
+        );
+      }
+      if (url.pathname === "/download") {
+        if (!fs.existsSync(config.APK_FILE)) {
+          return withCors(errorJson(404, "apk not found"), origin);
+        }
+        const file = Bun.file(config.APK_FILE);
+        return withCors(
+          new Response(file, {
+            headers: {
+              "Content-Type": "application/vnd.android.package-archive",
+              "Content-Disposition": `attachment; filename="${path.basename(
+                config.APK_FILE
+              )}"`,
+              "Content-Length": String(file.size),
+            },
+          }),
+          origin
+        );
+      }
+    }
+
+    return withCors(errorJson(404, "not found"), origin);
+  }
 
   return server;
 }

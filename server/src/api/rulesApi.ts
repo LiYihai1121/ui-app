@@ -1,7 +1,7 @@
 import { config } from "../config";
 import { getRules, saveRules, recordSkip } from "../storage/store";
 import { requireAdmin } from "../middleware/auth";
-import { limitRead, limitWrite, limitReport } from "../middleware/rateLimit";
+import { limitRead, limitWrite, limitReport, probeReportIp } from "../middleware/rateLimit";
 import {
   jsonResponse,
   errorJson,
@@ -10,7 +10,7 @@ import {
   safeJsonParse,
   type Handler,
 } from "../utils/httpUtil";
-import { cleanRules, cleanBatchReport } from "../utils/validate";
+import { cleanRules, cleanBatchReport, cleanReportEvent, isValidPackage } from "../utils/validate";
 
 export const v0_latest: Handler = () => {
   const r = getRules();
@@ -98,13 +98,15 @@ export const v0_skip: Handler = async (req, _url, ctx) => {
   } catch (e: any) {
     return errorJson(e.statusCode ?? 400, e.message);
   }
-  const pkg = String(parsed.pkg ?? "").trim().slice(0, 256);
-  if (!pkg) return errorJson(400, "invalid batch report");
-  recordSkip(pkg, String(parsed.label ?? pkg), "text");
+  const ev = cleanReportEvent(parsed);
+  if (!ev) return errorJson(400, "invalid skip payload");
+  recordSkip(ev.pkg, String(parsed.label ?? ev.pkg).slice(0, 256), ev.channel);
   return jsonResponse({ ok: true });
 };
 
 export const v1_batchReport: Handler = async (req, _url, ctx) => {
+  // 读体之前先按来源 IP 探测容量（不扣减），阻断未认证的大请求体内存放大
+  if (!probeReportIp(req, ctx.ip)) return errorJson(429, "rate limited");
   let body: string;
   try {
     body = await readBody(req);
@@ -128,9 +130,10 @@ export const v1_batchReport: Handler = async (req, _url, ctx) => {
   return jsonResponse({ ok: true, accepted: cleaned.events.length });
 };
 
-export const v1_testRule: Handler = async (req) => {
+export const v1_testRule: Handler = async (req, _url, ctx) => {
   const auth = requireAdmin(req);
   if (!auth.ok) return errorJson(auth.status, auth.error);
+  if (!limitRead(req, ctx.ip)) return errorJson(429, "rate limited");
   let body: string;
   try {
     body = await readBody(req);
@@ -143,19 +146,27 @@ export const v1_testRule: Handler = async (req) => {
   } catch (e: any) {
     return errorJson(e.statusCode ?? 400, e.message);
   }
+  // 与客户端 RulesRepository.ruleSetFor(pkg) 同源：全局 + 应用专属 + 禁用开关
+  const pkgRaw = typeof parsed.pkg === "string" ? parsed.pkg.trim() : "";
+  const pkg = isValidPackage(pkgRaw) ? pkgRaw : "";
   const sample = String(parsed.text ?? "").toLowerCase();
   const vid = String(parsed.viewId ?? "").toLowerCase();
   const rules = getRules();
-  const hits: any[] = [];
-  for (const kw of rules.rules.globalKeywords as string[]) {
+  const app = pkg ? rules.rules.apps[pkg] : undefined;
+  const disabled =
+    app?.disabled === true || (pkg ? rules.rules.disabled.includes(pkg) : false);
+  const keywords = [...rules.rules.globalKeywords, ...(app?.keywords ?? [])];
+  const viewIdRules = [...rules.rules.globalViewIds, ...(app?.viewIds ?? [])];
+  const hits: Array<{ match: string; keyword?: string; rule?: string; field?: string }> = [];
+  for (const kw of keywords) {
     if (sample.includes(kw.toLowerCase())) {
       hits.push({ match: "keyword", keyword: kw, field: "text" });
     }
   }
-  for (const rule of rules.rules.globalViewIds as string[]) {
+  for (const rule of viewIdRules) {
     if (rule.length >= 3 && vid.includes(rule.toLowerCase())) {
       hits.push({ match: "viewId", rule });
     }
   }
-  return jsonResponse({ hits, hit: hits.length > 0 });
+  return jsonResponse({ hits, hit: !disabled && hits.length > 0, disabled });
 };
