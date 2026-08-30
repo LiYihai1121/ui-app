@@ -1,4 +1,4 @@
-import type { Handler } from "../types";
+import type { Handler } from "../utils/httpUtil";
 import * as rulesApi from "./rulesApi";
 import * as statsApi from "./statsApi";
 import * as healthApi from "./healthApi";

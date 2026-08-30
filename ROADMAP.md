@@ -7,7 +7,7 @@
 - [x] 模拟开屏广告自测
 - [x] 防误触机制（去抖 / 节流 / 节点上限 / 排除输入框）
 
-## ✅ v2.0 — 全栈版（当前版本，已完成）
+## ✅ v2.0 — 全栈版（已完成）
 
 ### Android 客户端
 - [x] **ViewID 规则引擎**：匹配控件资源 ID（如 `com.x:id/skip_view`），支持纯图片、无文字的跳过按钮
@@ -44,8 +44,15 @@
 - [x] **工程化**：CI（GitHub Actions）、R8 keep 无障碍类、values-en 中英双语
 - [x] **环形日志 LogRing**：内存 500 条，设置页可导出
 
-## 🔜 v3.0 — 能力增强（规划中）
-- [ ] 截屏取点自定义规则（对无法识别的广告手动标注跳过区域） 
+## ✅ v3.0 — 新架构重构（当前版本，已完成）
+- [x] **客户端 Compose + MVVM**：单 Activity + Navigation Compose，四屏（主页/应用/日志/设置）各自 Screen + ViewModel，StateFlow 驱动 UI
+- [x] **AppEvents 状态总线**：Service → UI 通过 StateFlow/SharedFlow 桥接，取代 BroadcastReceiver 注册
+- [x] **服务端迁移 Bun + TypeScript**：`server.js` 拆分为 `server.ts` + `src/{api,middleware,storage,utils}` 分层
+- [x] **测试体系**：服务端 `bun:test` 单元 + 进程内冒烟（40 项）；客户端引擎/护栏 JVM 单测（37 项）
+- [x] **CI**：GitHub Actions 双 job（Android 构建+单测 / 服务端测试）
+
+## 🔜 v3.1 — 能力增强（规划中）
+- [ ] 截屏取点自定义规则（对无法识别的广告手动标注跳过区域）
 - [ ] 悬浮窗快捷开关
 - [ ] 服务端 Docker 镜像与一键部署脚本
 - [ ] 多设备规则共享（局域网规则仓库）

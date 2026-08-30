@@ -1,22 +1,22 @@
 pluginManagement {
     repositories {
-        // 官方仓库优先（CI 环境稳定），国内镜像作为回退加速
-        google()
-        mavenCentral()
-        gradlePluginPortal()
+        // 国内镜像优先（本机网络直连 dl.google.com/mavenCentral 会读超时），官方仓库回退
         maven("https://maven.aliyun.com/repository/google")
         maven("https://maven.aliyun.com/repository/gradle-plugin")
         maven("https://maven.aliyun.com/repository/public")
+        google()
+        mavenCentral()
+        gradlePluginPortal()
     }
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        // 官方仓库优先，国内镜像回退
-        google()
-        mavenCentral()
+        // 国内镜像优先，官方仓库回退
         maven("https://maven.aliyun.com/repository/google")
         maven("https://maven.aliyun.com/repository/public")
+        google()
+        mavenCentral()
     }
 }
 rootProject.name = "AdSkip"
