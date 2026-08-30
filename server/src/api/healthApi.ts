@@ -1,5 +1,4 @@
-import { jsonResponse } from "../utils/httpUtil";
-import type { Handler } from "../types";
+import { jsonResponse, type Handler } from "../utils/httpUtil";
 
 export const health: Handler = () =>
   jsonResponse({ status: "ok", timestamp: new Date().toISOString() });

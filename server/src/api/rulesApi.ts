@@ -8,9 +8,9 @@ import {
   statusResponse,
   readBody,
   safeJsonParse,
+  type Handler,
 } from "../utils/httpUtil";
 import { cleanRules, cleanBatchReport } from "../utils/validate";
-import type { Handler } from "../types";
 
 export const v0_latest: Handler = () => {
   const r = getRules();

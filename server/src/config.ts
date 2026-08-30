@@ -44,7 +44,7 @@ export const config: Config = {
   RULES_FILE: path.join(ROOT, "data", "rules.json"),
   STATS_DIR: path.join(ROOT, "data", "stats"),
   PUBLIC_DIR: path.join(ROOT, "public"),
-  APK_FILE: path.join(ROOT, "..", "AdSkip-v2.1.apk"),
+  APK_FILE: path.join(ROOT, "..", "AdSkip-latest.apk"),
   MAX_BODY: 1024 * 1024,
   RECENT_CAP: 500,
   STATS_RETENTION_DAYS: 90,
