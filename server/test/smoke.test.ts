@@ -5,8 +5,8 @@ import * as path from "node:path";
 import { startServer } from "../server";
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "adskip-test-"));
-const apkSrc = path.join(import.meta.dir, "..", "..", "AdSkip-v2.1.apk");
-const apkTest = path.join(tmp, "AdSkip-v2.1.apk");
+const apkSrc = path.join(import.meta.dir, "..", "..", "AdSkip-latest.apk");
+const apkTest = path.join(tmp, "AdSkip-latest.apk");
 if (fs.existsSync(apkSrc)) fs.copyFileSync(apkSrc, apkTest);
 
 let server: Bun.Server<undefined>;
