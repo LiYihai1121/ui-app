@@ -1,8 +1,19 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+
+/** 签名信息从 local.properties（gitignored）读取：adskip.storeFile / storePassword / keyAlias / keyPassword */
+val signingProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+val releaseSigningReady = listOf(
+    "adskip.storeFile", "adskip.storePassword", "adskip.keyAlias", "adskip.keyPassword"
+).all { !signingProps.getProperty(it).isNullOrBlank() }
 
 android {
     namespace = "com.ldp.adskip"
@@ -16,6 +27,17 @@ android {
         versionName = "3.0"
     }
 
+    signingConfigs {
+        if (releaseSigningReady) {
+            create("release") {
+                storeFile = rootProject.file(signingProps.getProperty("adskip.storeFile"))
+                storePassword = signingProps.getProperty("adskip.storePassword")
+                keyAlias = signingProps.getProperty("adskip.keyAlias")
+                keyPassword = signingProps.getProperty("adskip.keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -23,6 +45,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (releaseSigningReady) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
@@ -37,6 +62,12 @@ android {
 
     buildFeatures {
         compose = true
+    }
+
+    lint {
+        // release 构建（lintVital）在 JDK 25 + AGP 8.7 内置 lint 下崩溃（ASM 不识别新 class 文件版本）；
+        // CI 仅构建 debug，发布质量由 R8 + 单测保障，故关闭 release 构建的 lint 检查
+        checkReleaseBuilds = false
     }
 
     testOptions {
