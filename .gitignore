@@ -9,6 +9,12 @@ local.properties
 captures/
 .DS_Store
 
+# 签名密钥与本地签名配置（绝不入库）
+signing/
+
+# APK 产物（构建输出已忽略；根目录发布副本同样不入库）
+*.apk
+
 # 本地工具状态目录（安全扫描产物，不入库）
 .mimosa/
 

@@ -135,6 +135,13 @@ server/                             # 后端（Bun + TypeScript，零运行时�
 ./gradlew assembleDebug
 # 产物: app/build/outputs/apk/debug/app-debug.apk（发布时重命名版本号）
 
+# Release 封装（R8 混淆 + 签名）
+# 签名参数写在 local.properties（不入库）：
+#   adskip.storeFile=<keystore 路径>  adskip.storePassword=***
+#   adskip.keyAlias=<别名>           adskip.keyPassword=***
+# 未配置签名时 assembleRelease 产出未签名包
+./gradlew assembleRelease
+
 # 客户端 JVM 单测
 ./gradlew testDebugUnitTest
 
