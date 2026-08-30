@@ -8,15 +8,15 @@ import {
   isValidPackage,
   PKG_RE,
   VID_RE,
-} from "../src/validate";
-import { checkAdminAuth, requireAdmin } from "../src/auth";
+} from "../src/utils/validate";
+import { checkAdminAuth, requireAdmin } from "../src/middleware/auth";
 import {
   limitRead,
   limitWrite,
   limitReport,
   clientIp,
   _resetRateLimitForTests,
-} from "../src/rateLimit";
+} from "../src/middleware/rateLimit";
 
 function req(headers: Record<string, string> = {}): Request {
   return new Request("http://localhost/", { headers });

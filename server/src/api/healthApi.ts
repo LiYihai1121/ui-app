@@ -1,4 +1,4 @@
-import { jsonResponse } from "../httpUtil";
+import { jsonResponse } from "../utils/httpUtil";
 import type { Handler } from "../types";
 
 export const health: Handler = () =>

@@ -2,8 +2,8 @@ import * as path from "node:path";
 import * as fs from "node:fs";
 import { config } from "./src/config";
 import { handleApi } from "./src/api";
-import { withCors, errorJson } from "./src/httpUtil";
-import { cleanupOldStats, flush } from "./src/store";
+import { withCors, errorJson } from "./src/utils/httpUtil";
+import { cleanupOldStats, flush } from "./src/storage/store";
 
 export interface StartOptions {
   port?: number;

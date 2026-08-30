@@ -33,12 +33,15 @@
 │     │     ├ rulesApi   v0 + v1 规则下发/发布/模拟器              │
 │     │     ├ statsApi   统计汇总                                   │
 │     │     └ healthApi  健康检查                                   │
-│     ├─ src/auth.ts       Bearer token 鉴权                       │
-│     ├─ src/rateLimit.ts  内存令牌桶限流                            │
-│     ├─ src/validate.ts   载荷校验（PKG_RE/VID_RE/长度上限）       │
-│     ├─ src/store.ts      规则（缓存+备份轮转）/ 统计（分日分片）  │
-│     ├─ src/httpUtil.ts   CORS / 安全 JSON 解析 / 响应构建        │
-│     └─ src/config.ts     全部可调参数（env 覆盖）                  │
+│     ├─ src/middleware/  鉴权 + 限流                                │
+│     │     ├ auth.ts       Bearer token 鉴权                       │
+│     │     └ rateLimit.ts  内存令牌桶限流                            │
+│     ├─ src/utils/      HTTP 工具 + 校验                            │
+│     │     ├ httpUtil.ts   CORS / 安全 JSON 解析 / 响应构建        │
+│     │     └ validate.ts   载荷校验（PKG_RE/VID_RE/长度上限）       │
+│     ├─ src/storage/    规则 + 统计存储                             │
+│     │     └ store.ts      规则（缓存+备份轮转）/ 统计（分日分片）  │
+│     └─ src/config.ts   全部可调参数（env 覆盖）                    │
 │                                                                  │
 │  public/index.html   产品落地页                                  │
 │  public/admin.html   管理后台（登录 + diff 预览 + 规则模拟器）    │
@@ -101,11 +104,11 @@ Doze 模式 → 系统推迟到维护窗口执行
 |---|---|
 | `server.ts` | Bun.serve 入口、路由分发、优雅停机（SIGTERM/SIGINT → store.flush()） |
 | `src/api/` | 路由拆分：rulesApi（v0+v1）/ statsApi / healthApi |
-| `src/auth.ts` | Bearer token 鉴权，保护写接口 |
-| `src/rateLimit.ts` | 内存令牌桶：per-IP（读/写）+ per-deviceId（上报） |
-| `src/validate.ts` | 载荷校验（PKG_RE / VID_RE / 长度上限 / body 键数/深度上限） |
-| `src/store.ts` | 规则（缓存+备份轮转）/ 统计（分日分片+内存缓存+延迟刷盘） |
-| `src/httpUtil.ts` | CORS 白名单、安全 JSON 解析、响应构建工具 |
+| `src/middleware/auth.ts` | Bearer token 鉴权，保护写接口 |
+| `src/middleware/rateLimit.ts` | 内存令牌桶：per-IP（读/写）+ per-deviceId（上报） |
+| `src/utils/validate.ts` | 载荷校验（PKG_RE / VID_RE / 长度上限 / body 键数/深度上限） |
+| `src/storage/store.ts` | 规则（缓存+备份轮转）/ 统计（分日分片+内存缓存+延迟刷盘） |
+| `src/utils/httpUtil.ts` | CORS 白名单、安全 JSON 解析、响应构建工具 |
 | `src/config.ts` | 全部可调参数（env 覆盖） |
 
 **Bun 特性利用**：
@@ -186,9 +189,13 @@ AdSkip/
 │       ├── net/                  SyncClient
 │       └── sync/                 SyncJobService
 ├── server/                       Bun + TypeScript 后端
-│   ├── src/                      业务模块
-│   │   ├── api/                  路由拆分
-│   │   ├── config.ts / auth.ts / rateLimit.ts / validate.ts / store.ts / httpUtil.ts
+│   ├── src/
+│   │   ├── api/                  路由拆分（rulesApi / statsApi / healthApi）
+│   │   ├── middleware/           鉴权 + 限流（auth.ts / rateLimit.ts）
+│   │   ├── utils/                HTTP 工具 + 校验（httpUtil.ts / validate.ts）
+│   │   ├── storage/              规则 + 统计存储（store.ts）
+│   │   ├── config.ts             全部可调参数
+│   │   └── types.ts              类型定义
 │   ├── test/                     bun:test 单元 + 冒烟
 │   ├── server.ts                 入口（Bun.serve）
 │   └── public/                   落地页 + 管理后台
