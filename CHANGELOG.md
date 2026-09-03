@@ -2,6 +2,8 @@
 
 本文件记录面向用户和运维的版本变更。版本号遵循 Semantic Versioning，正式版本标签以 Git 中的 `vX.Y.Z` 为准。
 
+版本与提交的完整对应关系见 [发布历史与提交链路](docs/RELEASE-HISTORY.md)。
+
 ## [3.0.0] - 2026-09-04
 
 ### Added
