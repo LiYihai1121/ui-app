@@ -167,8 +167,10 @@ bun run typecheck     # tsc --noEmit
 
 ## 分支与版本
 
-- 工作流：branch-guard（`.opencode/skills/branch-guard/SKILL.md`）——所有改动在功能分支上进行，测试通过后 `--no-ff` 合并回 `main`。
-- 版本规则：Android 使用 `versionCode` 递增、`versionName` 对外展示；服务端版本号见 `server/package.json`。
+ 工作流：企业级 GitHub Flow——`main` 和 `release/*` 受保护，所有改动经 PR、CI 和审查后 Squash Merge；功能、修复和紧急变更使用短生命周期分支。
+- 版本规则：遵循 SemVer；Android `versionCode` 全局单调递增，`versionName` 与服务端 `server/package.json` 版本保持一致；正式版本使用不可移动的 `vX.Y.Z` 标签。
+- 发布流程：`release/vX.Y.Z` 冻结验收，CI 根据 tag 生成可追溯制品并记录校验和；事故优先回滚已验证制品，修复通过 `hotfix/*` 发布。
+- 团队协作：提交格式、Pull Request 门禁、分支保护、发布和回滚规则见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 - 功能路线以 [ROADMAP.md](docs/ROADMAP.md) 为准，架构与模块职责以 [ARCHITECTURE.md](docs/ARCHITECTURE.md) 为准。
 
 ## 合规提示

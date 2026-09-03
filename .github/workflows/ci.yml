@@ -1,5 +1,8 @@
 name: CI
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ main ]
@@ -74,3 +77,6 @@ jobs:
 
       - name: Run tests
         run: bun test
+
+      - name: Run typecheck
+        run: bun run typecheck
