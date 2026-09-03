@@ -2152,6 +2152,7 @@
       line-height: 1.35;
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 2;
+      line-clamp: 2;
     }
     .diagram-guide kbd {
       align-self: start;
@@ -5004,7 +5005,11 @@
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="ARCHIFY / 图版 04">
-      <svg viewBox="0 0 1395 596" role="img" lang="zh-CN" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="showcase">
+      <!-- role="group" (not "img"): this diagram contains 13 focusable nodes with
+           role="button" (tabindex="0"). role="img" would collapse the whole subtree
+           into a single image node for assistive tech, hiding those controls, and
+           trips axe's nested-interactive rule. -->
+      <svg viewBox="0 0 1395 596" role="group" lang="zh-CN" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="showcase">
         <title id="archify-diagram-title">净启动 AdSkip 系统架构</title>
         <desc id="archify-diagram-description">由 Archify 生成的架构图。</desc>
         <!-- Definitions -->

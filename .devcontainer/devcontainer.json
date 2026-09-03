@@ -1,0 +1,41 @@
+{
+  "name": "ui-app isolated",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "remoteUser": "root",
+  "containerEnv": {
+    "ANDROID_HOME": "/opt/android-sdk",
+    "GRADLE_USER_HOME": "/root/.gradle",
+    "BUN_INSTALL": "/opt/bun",
+    "HOST": "0.0.0.0",
+    "PORT": "3210"
+  },
+  "mounts": [
+    "source=ui-app-gradle-cache,target=/root/.gradle,type=volume",
+    "source=ui-app-bun-cache,target=/root/.bun,type=volume"
+  ],
+  "forwardPorts": [3210],
+  "portsAttributes": {
+    "3210": {
+      "label": "AdSkip server",
+      "onAutoForward": "notify"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "fwcd.kotlin",
+        "vscjava.vscode-gradle",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "java.jdt.ls.java.home": "/usr/lib/jvm/java-17-openjdk-amd64",
+        "gradle.nestedProjects": ["client"]
+      }
+    }
+  },
+  "postCreateCommand": "cd server && bun install"
+}
