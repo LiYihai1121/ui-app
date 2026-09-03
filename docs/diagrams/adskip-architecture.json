@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "净启动 AdSkip 系统架构",
+    "locale": "zh-CN",
+    "output": "adskip-architecture.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "skip-path",
+        "label": "跳过广告主路径",
+        "focus": ["accessibility", "rules", "engine", "safety", "stats"],
+        "note": "从无障碍事件到安全点击与本地统计。"
+      },
+      {
+        "id": "sync-path",
+        "label": "规则同步路径",
+        "focus": ["sync", "http", "api", "serverRules", "serverStore"],
+        "note": "客户端通过 v1 HTTP 协议获取规则并上报统计。"
+      },
+      {
+        "id": "security-boundary",
+        "label": "安全边界",
+        "focus": ["safety", "http", "auth", "validate", "serverStore"],
+        "note": "客户端安全护栏与服务端鉴权、校验、限流共同约束请求。"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "accessibility",
+      "type": "external",
+      "label": "目标应用",
+      "sublabel": "Android 无障碍事件",
+      "pos": [40, 300],
+      "size": [150, 68]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "SkipAdService",
+      "sublabel": "节流 / 去抖 / 编排",
+      "pos": [245, 300],
+      "size": [150, 68]
+    },
+    {
+      "id": "rules",
+      "type": "database",
+      "label": "RulesRepository",
+      "sublabel": "合并规则 / LruCache",
+      "pos": [450, 160],
+      "size": [155, 68]
+    },
+    {
+      "id": "engine",
+      "type": "backend",
+      "label": "SkipRuleEngine",
+      "sublabel": "文本 + ViewID 匹配",
+      "pos": [450, 300],
+      "size": [155, 68]
+    },
+    {
+      "id": "safety",
+      "type": "security",
+      "label": "SafetyGuard",
+      "sublabel": "黑名单 / 可点击性复核",
+      "pos": [660, 300],
+      "size": [155, 68],
+      "tag": "本地不可覆盖"
+    },
+    {
+      "id": "stats",
+      "type": "database",
+      "label": "StatsRepository",
+      "sublabel": "内存计数 / 合批落盘",
+      "pos": [825, 160],
+      "size": [155, 68]
+    },
+    {
+      "id": "sync",
+      "type": "backend",
+      "label": "SyncClient",
+      "sublabel": "ETag / 批量上报",
+      "pos": [825, 440],
+      "size": [155, 68]
+    },
+    {
+      "id": "http",
+      "type": "cloud",
+      "label": "HTTP v1",
+      "sublabel": "规则同步 / 统计上报",
+      "pos": [1020, 440],
+      "size": [135, 68]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Bun API",
+      "sublabel": "rules / stats / health",
+      "pos": [980, 300],
+      "size": [145, 68]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "鉴权与限流",
+      "sublabel": "Bearer / IP / deviceId",
+      "pos": [1000, 160],
+      "size": [145, 68]
+    },
+    {
+      "id": "validate",
+      "type": "security",
+      "label": "载荷校验",
+      "sublabel": "schema / 大小 / 深度",
+      "pos": [1180, 160],
+      "size": [145, 68]
+    },
+    {
+      "id": "serverRules",
+      "type": "database",
+      "label": "规则存储",
+      "sublabel": "rules.json + 备份轮转",
+      "pos": [1180, 300],
+      "size": [145, 68]
+    },
+    {
+      "id": "serverStore",
+      "type": "database",
+      "label": "统计存储",
+      "sublabel": "按日分片 JSON",
+      "pos": [1180, 440],
+      "size": [145, 68]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Android 客户端",
+      "wraps": ["service", "rules", "engine", "safety", "stats", "sync"]
+    },
+    {
+      "kind": "region",
+      "label": "Bun + TypeScript 服务端",
+      "wraps": ["api", "auth", "validate", "serverRules", "serverStore"]
+    },
+    {
+      "kind": "security-group",
+      "label": "服务端请求防线",
+      "wraps": ["auth", "validate", "api"]
+    }
+  ],
+  "connections": [
+    { "id": "event-to-service", "from": "accessibility", "to": "service", "label": "窗口 / 内容变化", "variant": "emphasis", "labelDy": 58 },
+    { "id": "service-to-rules", "from": "service", "to": "rules", "label": "取 pkg 规则", "fromSide": "top", "toSide": "bottom" },
+    { "id": "service-to-engine", "from": "service", "to": "engine", "label": "遍历节点树" },
+    { "id": "engine-to-safety", "from": "engine", "to": "safety", "label": "候选目标", "variant": "security" },
+    { "id": "service-to-stats", "from": "service", "to": "stats", "label": "recordSkip", "fromSide": "bottom", "toSide": "bottom" },
+    { "id": "stats-to-sync", "from": "stats", "to": "sync", "label": "批量补报", "fromSide": "bottom", "toSide": "top", "labelDx": 64, "labelDy": 24, "variant": "dashed" },
+    { "id": "sync-to-http", "from": "sync", "to": "http", "label": "GET / POST", "labelDy": 58, "variant": "emphasis" },
+    { "id": "http-to-api", "from": "http", "to": "api", "label": "HTTPS / JSON", "fromSide": "top", "toSide": "bottom", "route": "orthogonal-v", "variant": "emphasis" },
+    { "id": "api-to-auth", "from": "api", "to": "auth", "label": "Bearer 校验", "fromSide": "top", "toSide": "bottom", "variant": "security" },
+    { "id": "auth-to-validate", "from": "auth", "to": "validate", "label": "通过请求", "labelDy": 58, "variant": "security" },
+    { "id": "api-to-rules", "from": "api", "to": "serverRules", "label": "规则读写", "fromSide": "right", "toSide": "left" },
+    { "id": "api-to-store", "from": "api", "to": "serverStore", "label": "统计读写", "fromSide": "right", "toSide": "top", "via": [[1145, 334], [1145, 420], [1252.5, 420]], "labelDx": 70, "labelDy": 30, "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "本地主路径", "items": ["规则匹配与安全复核在 Android 本地完成", "服务端不可用时仍可继续跳过"] },
+    { "dot": "emerald", "title": "同步协议", "items": ["v1 规则接口支持 ETag / 304", "统计通过批量上报降低请求频率"] },
+    { "dot": "rose", "title": "安全约束", "items": ["SafetyGuard 黑名单不可被云规则覆盖", "服务端写接口经过鉴权、限流和载荷校验"] }
+  ]
+}
