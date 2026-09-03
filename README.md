@@ -6,7 +6,8 @@
 
 ## 功能（v3.0）
 
-**Android 客户端（Kotlin + Jetpack Compose，MVVM）**
+### Android 客户端（Kotlin + Jetpack Compose，MVVM）
+
 - ✅ 自动点击开屏广告「跳过」按钮，双通道识别：**文本关键词** + **控件 ViewID**（支持纯图片按钮）
 - ✅ **安全护栏 SafetyGuard**：硬编码黑名单防误触敏感按钮（支付/授权/登录等），云规则不可覆盖
 - ✅ 应用管理：逐项开启/关闭跳过，各应用跳过次数统计
@@ -19,7 +20,8 @@
 - ✅ 环形日志（内存 500 条，设置页可导出分享）
 - ✅ 中英双语资源（values / values-en）
 
-**后端服务（`server/`，Bun + TypeScript，零运行时依赖）**
+### 后端服务（`server/`，Bun + TypeScript，零运行时依赖）
+
 - ✅ 规则中心：全局关键词、ViewID 规则、应用专属规则、禁用列表
 - ✅ **鉴权**（ADMIN_TOKEN）、**载荷校验**（与客户端同源约束）、**限频**（令牌桶 per-IP/per-deviceId）
 - ✅ 统计 API：累计 / 今日 / 14 天趋势 / 按应用排行 / 最近记录（按天分片存储）
@@ -54,7 +56,7 @@ ADMIN_TOKEN=your-secret-token bun run server.ts
 
 ## 技术原理
 
-```
+```text
 应用启动 → 开屏广告出现
    ↓ 无障碍事件（窗口状态/内容变化）
 遍历节点树 → ① 文本/描述命中关键词（≤12字、可见、非输入框）
@@ -71,7 +73,7 @@ SafetyGuard 安全护栏复核（黑名单/可见性/面积）
 
 ## 工程结构
 
-```
+```text
 AdSkip/            # 全栈 monorepo
 ├── client/        # Android 客户端（Gradle 工程根：build.gradle.kts / settings.gradle.kts / gradle wrapper）
 ├── server/        # 后端（Bun + TypeScript，零运行时依赖）
@@ -157,7 +159,7 @@ cd client
 # 服务端测试与类型检查
 cd ../server
 bun install
-bun test              # 单元 + 冒烟（40 项）
+bun test              # 单元 + 冒烟（51 项）
 bun run typecheck     # tsc --noEmit
 ```
 
@@ -167,7 +169,7 @@ bun run typecheck     # tsc --noEmit
 
 ## 分支与版本
 
- 工作流：企业级 GitHub Flow——`main` 和 `release/*` 受保护，所有改动经 PR、CI 和审查后 Squash Merge；功能、修复和紧急变更使用短生命周期分支。
+- 工作流：企业级 GitHub Flow——`main` 和 `release/*` 受保护，所有改动经 PR、CI 和审查后 Squash Merge；功能、修复和紧急变更使用短生命周期分支。
 - 版本规则：遵循 SemVer；Android `versionCode` 全局单调递增，`versionName` 与服务端 `server/package.json` 版本保持一致；正式版本使用不可移动的 `vX.Y.Z` 标签。
 - 发布流程：`release/vX.Y.Z` 冻结验收，CI 根据 tag 生成可追溯制品并记录校验和；事故优先回滚已验证制品，修复通过 `hotfix/*` 发布。
 - 团队协作：提交格式、Pull Request 门禁、分支保护、发布和回滚规则见 [CONTRIBUTING.md](CONTRIBUTING.md)。

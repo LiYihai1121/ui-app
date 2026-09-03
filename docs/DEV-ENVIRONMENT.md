@@ -1,45 +1,49 @@
-# 独立开发环境
+# 开发环境
 
-本项目使用 VS Code Dev Container 隔离 Android 客户端和 Bun 服务端环境。
+本项目采用本机开发方式，不依赖 VS Code Dev Container。Android 客户端和 Bun 服务端可以分别启动，互不要求同时运行。
 
 ## 前置条件
 
-- Windows 安装 Docker Desktop，并启用 WSL 2 后端。
-- VS Code 安装 Dev Containers 扩展：`ms-vscode-remote.remote-containers`。
-- 使用 VS Code 打开项目根目录 `ui-app`。
+- JDK 17 或更高版本，以及 Android SDK（compileSdk 35）。
+- Bun 1.1 或更高版本。
+- Windows 用户建议使用 PowerShell；macOS/Linux 使用 Bash。
+- 使用 VS Code 或 Android Studio 打开项目根目录 `ui-app`。
 
 ## 启动
 
-1. 执行 `Dev Containers: Reopen in Container`。
-2. 首次启动会构建固定的 Android SDK/JDK/Bun 镜像。
-3. 在容器终端中运行：
+服务端：
 
-   ```bash
-   cd server
-   bun test
-   bun run dev
-   ```
+```powershell
+cd server
+bun install
+bun test
+bun run typecheck
+```
 
-4. Android 客户端使用：
+Android 客户端：
 
-   ```bash
-   cd client
-   ./gradlew assembleDebug
-   ```
+```powershell
+cd client
+.\gradlew.bat assembleDebug
+.\gradlew.bat testDebugUnitTest
+```
 
-Windows 容器终端也可以运行 `gradlew.bat assembleDebug`。
+Linux/macOS 将 `.\gradlew.bat` 替换为 `./gradlew`。APK 输出在 `client/app/build/outputs/apk/debug/app-debug.apk`，该目录属于构建产物，不提交到 Git。
 
-## 隔离边界
+## 本地运行
 
-- Gradle 缓存使用 Docker volume `ui-app-gradle-cache`。
-- Bun 缓存使用 Docker volume `ui-app-bun-cache`。
-- 容器内设置的 `ANDROID_HOME`、`GRADLE_USER_HOME`、`BUN_INSTALL` 不写入系统环境变量。
-- 服务端仅转发容器端口 `3210`，不会占用其他项目的依赖环境。
-- 项目数据目录仍挂载在工作区中，便于本地查看和保留；不要把真实密钥提交到仓库。
+启动服务端：
 
-## 退出和清理
+```powershell
+cd server
+$env:ADMIN_TOKEN = "your-secret-token"
+bun run server.ts
+```
 
-关闭 VS Code 窗口即可停止容器。需要彻底删除本项目环境时，在 Docker Desktop 中删除容器及以下两个项目专属 volume：
+服务端默认监听 `http://localhost:3210`。未配置 `ADMIN_TOKEN` 时，公开读取接口仍可用，但管理写接口返回 `503`。端口或数据目录等配置见 `server/src/config.ts`。
 
-- `ui-app-gradle-cache`
-- `ui-app-bun-cache`
+## 环境清理
+
+- 可安全删除 `client/build/`、`.gradle/`、`.kotlin/` 等构建缓存；Gradle 会自动重新生成。
+- 服务端 `server/data/stats/` 和 `server/data/backups/` 是运行数据，删除前先确认无需保留统计和回滚记录。
+- 不要删除 `server/data/rules.json`，它是服务端初始规则数据。

@@ -15,8 +15,9 @@ You MUST follow this workflow for ALL code changes in this project. No exception
 Before making ANY code change, you MUST:
 
 ```bash
-# Check current branch (must be on main to start)
+# Check current branch and worktree before starting
 git branch --show-current
+git status --short --branch
 
 # Create a new branch from the latest main
 git switch main
@@ -59,7 +60,8 @@ cd client
 
 **服务端（Bun）：**
 ```bash
-cd server && bun install && bun test  # 当前测试全部通过，0 fail
+cd server && bun install && bun test
+bun run typecheck
 ```
 
 If ANY test fails, fix the issue on the same branch before proceeding.

@@ -20,7 +20,6 @@
 下发规则包。带 `If-None-Match: <hash>` 命中时返回 `304`（零正文，省流量）。
 
 ```json
-// 200
 {
   "schemaVersion": 1, "version": 3, "hash": "sha256:...", "updatedAt": "...",
   "rules": { "globalKeywords": ["跳过"], "globalViewIds": ["skip"], "apps": {}, "disabled": [] }
@@ -50,7 +49,7 @@
 
 ### POST /api/v1/reports/batch
 
-批量补报（读体前先按 IP 预检限流）。
+批量补报（读体前先按 IP 预检限流）。`deviceId` 由客户端首次运行时生成并持久化，至少 8 个字符；`ts` 使用 Unix 毫秒时间戳。
 
 ```json
 { "deviceId": "≥8字符", "events": [ { "pkg": "com.x", "channel": "text|viewId", "ts": 123 } ] }
@@ -59,6 +58,8 @@
 最多 50 条，非法包名事件被静默跳过。响应 `{"ok":true,"accepted":N}`
 
 ### GET /api/v1/stats/summary
+
+公开读取接口，不需要管理令牌。
 
 ```json
 { "total": 0, "today": 0, "byDay": [{"day":"2026-08-30","count":0}], "byApp": [{"pkg":"com.x","label":"X","count":0}], "recent": [] }
@@ -81,7 +82,7 @@
 ## v0 兼容协议（旧客户端，形状不变）
 
 | 路由 | 说明 |
-|---|---|
+| --- | --- |
 | `GET /api/rules/latest` | 旧形状规则包（无 hash/ETag） |
 | `PUT /api/rules` `[admin]` | 发布（与 v1 同一校验管线） |
 | `POST /api/skip` | 单条上报——已与 v1 同源校验：包名须符合 PKG_RE（非法 `400`）、支持 channel 字段 |
@@ -90,7 +91,9 @@
 ## 静态资源
 
 | 路由 | 说明 |
-|---|---|
+| --- | --- |
 | `GET /` | 产品落地页 |
 | `GET /admin` | 管理后台（登录 + diff 预览 + 规则模拟器 + 统计看板） |
 | `GET /download` | 下载 APK（`APK_FILE`，默认仓库根 `AdSkip-latest.apk`） |
+
+`/download` 找不到 APK 时返回 `404`。可通过 `APK_FILE` 环境变量指定绝对路径或相对服务端工作目录的文件路径。

@@ -77,8 +77,8 @@ fix(client): 避免重复触发跳过点击
 
 版本发布必须遵循以下顺序：
 
-1. 从 `main` 创建 `release/vX.Y.Z`，冻结功能并更新 `CHANGELOG.md`；
-2. 统一更新 Android `versionName`、单调递增的 `versionCode` 和服务端 `package.json` 版本；
+1. 从 `main` 创建 `release/vX.Y.Z`，冻结功能并更新 [CHANGELOG.md](CHANGELOG.md)；
+2. 以发布标签 `vX.Y.Z` 为规范版本；Android `versionName` 使用对应的 `X.Y` 展示值，单调递增 `versionCode`，服务端 `package.json` 使用完整 `X.Y.Z`；
 3. 通过完整 CI、发布验收和安全检查；
 4. 合并到 `main` 后创建带注释的、不可移动的 `vX.Y.Z` 标签；
 5. 由 CI 根据标签生成制品和 Release，记录制品校验和；
@@ -87,8 +87,8 @@ fix(client): 避免重复触发跳过点击
 版本标签一经推送不得删除或移动。版本号变更不能与无关功能混在同一个 PR 中。Android `versionCode` 必须全局单调递增，禁止复用已发布编号。发布使用带注释的 Git tag：
 
 ```bash
-git tag -a v3.1.0 -m "release: v3.1.0"
-git push origin v3.1.0
+git tag -a vX.Y.Z -m "release: vX.Y.Z"
+git push origin vX.Y.Z
 ```
 
 ## 紧急变更与回滚
