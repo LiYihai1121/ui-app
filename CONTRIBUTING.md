@@ -56,7 +56,7 @@ fix(client): 避免重复触发跳过点击
 3. 在本地通过 Android 构建/单测、服务端测试/类型检查；
 4. 填写变更范围、兼容性、数据影响、风险、验证结果和回滚方案；
 5. 涉及协议、数据、权限、安全或发布配置时，明确请求对应领域负责人审查。
-6. 完成项目更迭时，同步更新 `CHANGELOG.md` 和 [Release list](docs/RELEASE-HISTORY.md#release-list)；发布版本还必须核对 annotated tag、合并提交、GitHub Release 和制品校验和。
+6. 完成项目更迭时，同步更新 `CHANGELOG.md` 和 [Release list](docs/RELEASE-HISTORY.md#release-list)；发布版本还必须核对 annotated tag、合并提交、GitHub Release 和制品校验和（详见 [每次发布完成后的最小核对清单](#每次发布完成后的最小核对清单)）。
 
 合并规则：
 
@@ -92,7 +92,7 @@ git tag -a vX.Y.Z -m "release: vX.Y.Z"
 git push origin vX.Y.Z
 ```
 
-每次发布完成后的最小核对清单：
+## 每次发布完成后的最小核对清单
 
 - [ ] `CHANGELOG.md` 已新增版本条目；
 - [ ] [Release list](docs/RELEASE-HISTORY.md#release-list) 已记录版本、tag、合并提交和 Release 状态；
