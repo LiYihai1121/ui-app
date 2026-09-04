@@ -5,9 +5,18 @@ on:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
       - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to rebuild'
+        required: true
+        type: string
 
 permissions:
   contents: write
+
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   verify-history:
@@ -18,22 +27,25 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Verify annotated tag and commit object
         shell: bash
         run: |
-          test "$(git cat-file -t "$GITHUB_REF_NAME")" = tag
-          test "$(git cat-file -t "$GITHUB_SHA")" = commit
+          test "$(git cat-file -t "$RELEASE_TAG")" = tag
+          release_commit="$(git rev-parse "$RELEASE_TAG^{}")"
+          test "$(git cat-file -t "$release_commit")" = commit
+          test "$release_commit" = "$(git rev-parse HEAD)"
 
       - name: Verify release versions
         shell: bash
         run: |
-          tag_version="${GITHUB_REF_NAME#v}"
+          tag_version="${RELEASE_TAG#v}"
           if [[ "$tag_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-rc\.[0-9]+)?$ ]]; then
             base_version="${BASH_REMATCH[1]}"
             android_version="${base_version%.*}"
           else
-            echo "Unsupported release tag: ${GITHUB_REF_NAME}" >&2
+            echo "Unsupported release tag: ${RELEASE_TAG}" >&2
             exit 1
           fi
 
@@ -43,11 +55,12 @@ jobs:
           test "$android_version_name" = "$android_version"
 
       - name: Verify known workflow chain
-        if: github.ref_name == 'v3.0.0'
+        if: env.RELEASE_TAG == 'v3.0.0'
         shell: bash
         run: |
           git merge-base --is-ancestor bdf31d5d328c9a146607bf4e3bdaa5e0dd84dcca c5cdac70bfb0394013dea6baee1470860eaac820
-          git merge-base --is-ancestor c5cdac70bfb0394013dea6baee1470860eaac820 "$GITHUB_SHA"
+          release_commit="$(git rev-parse "$RELEASE_TAG^{}")"
+          git merge-base --is-ancestor c5cdac70bfb0394013dea6baee1470860eaac820 "$release_commit"
 
   build-and-test:
     name: Build release artifacts
@@ -57,6 +70,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -91,7 +105,7 @@ jobs:
           mkdir -p release
           apk_file="$(find client/app/build/outputs/apk/release -maxdepth 1 -type f -name 'app-release*.apk' -print -quit)"
           test -n "$apk_file"
-          cp "$apk_file" "release/AdSkip-${GITHUB_REF_NAME}.apk"
+          cp "$apk_file" "release/AdSkip-${RELEASE_TAG}.apk"
           sha256sum release/*.apk > release/SHA256SUMS
 
       - name: Create GitHub Release
