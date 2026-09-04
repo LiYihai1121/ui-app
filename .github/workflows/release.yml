@@ -23,7 +23,9 @@ jobs:
         shell: bash
         run: |
           test "$(git cat-file -t "$GITHUB_REF_NAME")" = tag
-          test "$(git cat-file -t "$GITHUB_SHA")" = commit
+          release_commit="$(git rev-parse "$GITHUB_REF_NAME^{}")"
+          test "$(git cat-file -t "$release_commit")" = commit
+          test "$release_commit" = "$(git rev-parse HEAD)"
 
       - name: Verify release versions
         shell: bash
@@ -47,7 +49,8 @@ jobs:
         shell: bash
         run: |
           git merge-base --is-ancestor bdf31d5d328c9a146607bf4e3bdaa5e0dd84dcca c5cdac70bfb0394013dea6baee1470860eaac820
-          git merge-base --is-ancestor c5cdac70bfb0394013dea6baee1470860eaac820 "$GITHUB_SHA"
+          release_commit="$(git rev-parse "$GITHUB_REF_NAME^{}")"
+          git merge-base --is-ancestor c5cdac70bfb0394013dea6baee1470860eaac820 "$release_commit"
 
   build-and-test:
     name: Build release artifacts
