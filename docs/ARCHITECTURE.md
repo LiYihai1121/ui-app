@@ -2,7 +2,7 @@
 
 ## 1. 系统全景
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Android 客户端                            │
 │                                                                  │
@@ -48,12 +48,12 @@
 │  data/rules.json     规则包      data/stats/  分日统计            │
 │  data/backups/       规则备份轮转                                 │
 └─────────────────────────────────────────────────────────────────┘
-```
+```text
 
 ## 2. 客户端分层职责
 
 | 层 | 模块 | 职责 | 不做的事 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **ui/** | 4 个 Composable Screen + ViewModel | 声明式 UI 与状态管理，通过 StateFlow 驱动 UI | 不直接读 SharedPreferences、不碰网络 |
 | **service/** | SkipAdService | 事件接收、节流去抖、点击执行 | 不含匹配规则逻辑、不做安全裁决 |
 | **engine/** | SkipRuleEngine + RuleSet + AdNode + SafetyGuard | 纯匹配：文本/ViewID 双通道 | 不执行点击、不读存储 |
@@ -70,7 +70,7 @@
 ## 3. 数据流
 
 **跳过一次广告：**
-```
+```text
 窗口事件 → SkipAdService（150ms 节流 / 1.2s 去抖，Clock 注入）
         → RulesRepository.ruleSetFor(pkg) 取规则（LruCache 命中）
         → SkipRuleEngine.findTarget(root: AdNode, ruleSet) 找目标
@@ -82,7 +82,8 @@
 ```
 
 **云端规则同步（v1 协议）：**
-```
+
+```text
 SyncJobService / 设置页触发 → SyncClient GET /api/v1/rules/latest
           → If-None-Match: <已知 hash> → 304 Not Modified
           → 或 200 + 新规则 → RulesRepository.applyCloudRules（校验 schemaVersion）
@@ -90,7 +91,8 @@ SyncJobService / 设置页触发 → SyncClient GET /api/v1/rules/latest
 ```
 
 **自动规则同步（JobScheduler）：**
-```
+
+```text
 设置页开启 → SyncJobService.setEnabled(true)
           → JobScheduler.setPeriodic(12h) + setPersisted(true) + setRequiredNetworkType(ANY)
 设备重启 → 系统自动恢复持久化 Job（无需 BootReceiver）
@@ -100,7 +102,7 @@ Doze 模式 → 系统推迟到维护窗口执行
 ## 4. 服务端分层职责
 
 | 模块 | 职责 |
-|---|---|
+| --- | --- |
 | `server.ts` | Bun.serve 入口、路由分发、优雅停机（SIGTERM/SIGINT → store.flush()） |
 | `src/api/` | 路由拆分：rulesApi（v0+v1）/ statsApi / healthApi |
 | `src/middleware/auth.ts` | Bearer token 鉴权（常数时间比较），保护写接口 |
@@ -112,6 +114,7 @@ Doze 模式 → 系统推迟到维护窗口执行
 | `src/config.ts` | 全部可调参数（env 覆盖） |
 
 **Bun 特性利用**：
+
 - `Bun.serve()` 单进程 HTTP 服务器，自带 TLS/HTTP2 支持
 - `Bun.file()` 零拷贝静态文件服务
 - `bun:test` 内置测试运行器，in-process 冒烟测试（无需外部进程管理）
@@ -122,7 +125,7 @@ Doze 模式 → 系统推迟到维护窗口执行
 三层安全防护，从信任服务器改为本地最小权限：
 
 | 层 | 机制 | 说明 |
-|---|---|---|
+| --- | --- | --- |
 | **服务端鉴权** | Bearer token | `ADMIN_TOKEN` 环境变量；未配置时写接口返回 503；规则发布/模拟器需鉴权 |
 | **服务端校验** | validate.ts | 包名正则 `^[a-zA-Z][\w]*(\.[a-zA-Z][\w]*)+$`、关键词 ≤12 字、总条目 ≤2000、body 键数/深度上限 |
 | **请求约束** | readBody + maxRequestBodySize | body 必须 application/json（415）；>1MiB 协议层拒绝（413/断连），不进应用内存 |
@@ -131,7 +134,7 @@ Doze 模式 → 系统推迟到维护窗口执行
 ## 6. 线程模型
 
 | 操作 | 线程 | 说明 |
-|---|---|---|
+| --- | --- | --- |
 | 无障碍事件处理 | 主线程 | 节流去抖纯内存操作 |
 | 规则匹配 | 主线程 | 引擎纯 CPU 计算 |
 | 统计计数 | 主线程（内存）→ IO 线程（落盘） | 内存先记，5s 后 AppExecutors.io 合批写 SP |
@@ -141,7 +144,7 @@ Doze 模式 → 系统推迟到维护窗口执行
 ## 7. 协议版本与兼容策略
 
 | 版本 | 路由 | 说明 |
-|---|---|---|
+| --- | --- | --- |
 | v0（兼容期） | `/api/rules/latest`, `/api/rules`, `/api/skip`, `/api/stats/summary` | 旧客户端无感 |
 | v1（当前） | `/api/v1/rules/latest` (ETag/304), `/api/v1/rules`, `/api/v1/reports/batch`, `/api/v1/rules/test`, `/api/v1/stats/summary`, `/api/v1/health` | 新增 schemaVersion/hash/ETag/批量上报 |
 
@@ -157,10 +160,10 @@ Doze 模式 → 系统推迟到维护窗口执行
 ## 9. 扩展点
 
 | 需求 | 改动位置 |
-|---|---|
+| --- | --- |
 | 新匹配通道（坐标/图像规则） | `engine/RuleSet` 加字段 + `SkipRuleEngine.matches` 加分支 |
 | 新增 UI 页面 | `ui/` 加 Composable Screen + ViewModel + NavHost 路由 |
-| 服务端换数据库 | 只改 `src/store.ts` |
+| 服务端换数据库 | 只改 `server/src/storage/store.ts` |
 | 新增 API | `src/api/` 加路由文件 + `api/index.ts` 加分发 |
 | 客户端换网络库 | 只改 `net/SyncClient` 内部实现 |
 | 新增安全黑名单词 | `engine/SafetyGuard.DENY_WORDS` |
@@ -168,17 +171,19 @@ Doze 模式 → 系统推迟到维护窗口执行
 ## 10. 测试
 
 **客户端：**
+
 - JVM 单测：`cd client && ./gradlew testDebugUnitTest`（引擎匹配 + SafetyGuard 护栏）
 - 构建验证：`cd client && ./gradlew assembleDebug`
 
 **服务端（bun:test）：**
+
 - 全部测试：`cd server && bun test`
-- 单元测试（24 项）：validate（14）/ auth（5）/ rateLimit（5）
-- 冒烟测试（16 项）：in-process 启动服务器，覆盖全部 v0+v1 路由 + 鉴权 + 校验
+- 单元测试：覆盖 validate、auth、rateLimit 和 CORS 等核心约束
+- 冒烟测试：in-process 启动服务器，覆盖全部 v0+v1 路由、鉴权和校验
 
 ## 11. 项目结构
 
-```
+```text
 AdSkip/                            全栈 monorepo
 ├── client/                        Android 客户端（Kotlin + Compose，Gradle 工程根）
 │   ├── build.gradle.kts           模块与签名配置（签名参数读 local.properties）
@@ -202,6 +207,6 @@ AdSkip/                            全栈 monorepo
 │   ├── test/                     bun:test 单元 + 冒烟
 │   ├── server.ts                 入口（Bun.serve）
 │   └── public/                   落地页 + 管理后台
-├── docs/                         ARCHITECTURE.md / ROADMAP.md
+├── docs/                         API.md / ARCHITECTURE.md / DEV-ENVIRONMENT.md / RELEASE-HISTORY.md / ROADMAP.md
 └── .github/workflows/ci.yml     CI：Android Build + Bun Server Tests
 ```

@@ -1,0 +1,21 @@
+{
+  "extends": [
+    "development"
+  ],
+  "browserslist": [
+    "Chrome >= 111",
+    "Edge >= 111",
+    "Firefox >= 113",
+    "Safari >= 16.4"
+  ],
+  "hints": {
+    "compat-api/css": [
+      "default",
+      {
+        "ignore": [
+          "rx"
+        ]
+      }
+    ]
+  }
+}

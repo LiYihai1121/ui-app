@@ -1,9 +1,9 @@
 ---
 name: branch-guard
-description: Enforce branch-per-change workflow — every code change must use a new branch, pass tests, then merge back. Protects main from direct commits and untested code.
+description: Enforce enterprise branch governance — every change uses a traceable branch, passes CI and review, then enters protected main or a release branch.
 metadata:
   audience: all-contributors
-  workflow: git-flow
+  workflow: github-flow
 ---
 
 ## Branch Workflow Rules
@@ -15,13 +15,14 @@ You MUST follow this workflow for ALL code changes in this project. No exception
 Before making ANY code change, you MUST:
 
 ```bash
-# Check current branch (must be on main to start)
+# Check current branch and worktree before starting
 git branch --show-current
+git status --short --branch
 
-# Create a new branch from main (or master)
-git checkout main
-git pull
-git checkout -b <branch-name>
+# Create a new branch from the latest main
+git switch main
+git pull --ff-only origin main
+git switch -c <branch-name>
 ```
 
 **Branch naming convention:**
@@ -34,6 +35,8 @@ git checkout -b <branch-name>
 | 文档 | `docs/<简述>` | `docs/architecture-update` |
 | CI/构建 | `ci/<简述>` | `ci/bun-workflow` |
 | 测试 | `test/<简述>` | `test/smoke-in-process` |
+| 发布 | `release/vX.Y.Z` | `release/v3.1.0` |
+| 紧急修复 | `hotfix/<id>-<简述>` | `hotfix/456-crash-on-start` |
 
 ### 2. Make changes on the branch
 
@@ -41,7 +44,7 @@ Work ONLY on the new branch. Commit with descriptive messages:
 
 ```bash
 git add -A
-git commit -m "type: description"
+git commit -m "type(scope): description"
 ```
 
 ### 3. Test before merging
@@ -57,21 +60,22 @@ cd client
 
 **服务端（Bun）：**
 ```bash
-cd server && bun install && bun test  # 40 tests pass, 0 fail
+cd server && bun install && bun test
+bun run typecheck
 ```
 
 If ANY test fails, fix the issue on the same branch before proceeding.
 
-### 4. Merge back to main
+### 4. Pull Request and merge
 
-Only after ALL tests pass:
+Only after ALL tests pass and required reviewers approve:
 
 ```bash
-git checkout main
-git merge --no-ff <branch-name> -m "merge: <branch-name> — <summary>"
-git push origin main
-git branch -d <branch-name>  # clean up local branch
-git push origin --delete <branch-name>  # clean up remote branch (if pushed)
+gh pr create --base main --head <branch-name>
+# Merge through the protected repository UI using Squash Merge.
+git switch main
+git pull --ff-only origin main
+git branch -d <branch-name>
 ```
 
 ### 5. Main branch protection rules
@@ -80,7 +84,7 @@ git push origin --delete <branch-name>  # clean up remote branch (if pushed)
 
 - `git commit` directly on main
 - `git push origin main` without going through a branch
-- Merging code that hasn't been tested
+- Merging code that has not passed required CI or review
 - Skipping the branch workflow for "small" changes
 
 **"Small" changes still require a branch:**
@@ -94,7 +98,7 @@ The ONLY exception is merging a completed feature branch back to main (step 4).
 ### 6. Workflow summary
 
 ```
-main → create branch → edit → commit → test → merge back → delete branch → main
+main → create traceable branch → edit → test → PR review → squash merge → delete branch → main
 ```
 
 Every cycle follows this pattern. No shortcuts.
