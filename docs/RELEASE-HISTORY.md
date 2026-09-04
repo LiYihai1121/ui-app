@@ -2,7 +2,7 @@
 
 本文记录版本阶段与 Git 提交的对应关系，避免仅凭短哈希或提交标题判断历史是否断链。
 
-标签发布由 [.github/workflows/release.yml](../.github/workflows/release.yml) 自动执行：先校验 annotated tag 和提交对象，再构建 Android、运行服务端检查、生成 APK SHA-256 校验和并创建 GitHub Release。目标分支保护和发布前合并要求由仓库规则及 GitHub 分支保护执行。
+标签发布由 [.github/workflows/release.yml](../.github/workflows/release.yml) 自动执行：先校验 annotated tag、提交对象和 Android/服务端版本一致性，再构建 R8 Release 变体、运行服务端检查、生成 APK SHA-256 校验和并创建 GitHub Release。CI 不持有签名密钥，因此上传的是未签名 APK；正式分发前必须在受信任环境签名。目标分支保护和发布前合并要求由仓库规则及 GitHub 分支保护执行。
 
 ## 链路结论
 

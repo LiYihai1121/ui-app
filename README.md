@@ -146,12 +146,13 @@ cd client
 ./gradlew assembleDebug
 # 产物: client/app/build/outputs/apk/debug/app-debug.apk（发布时重命名版本号）
 
-# Release 封装（R8 混淆 + 签名）
+# Release 封装（R8 混淆）
 # 签名参数写在 client/local.properties（不入库）：
 #   adskip.storeFile=<keystore 路径>  adskip.storePassword=***
 #   adskip.keyAlias=<别名>           adskip.keyPassword=***
 # 未配置签名时 assembleRelease 产出未签名包
 ./gradlew assembleRelease
+# CI 发布使用同样的 Release 变体；由于签名密钥不进入仓库，GitHub Release 默认上传未签名 APK
 
 # 客户端 JVM 单测
 ./gradlew testDebugUnitTest
@@ -165,7 +166,7 @@ bun run typecheck     # tsc --noEmit
 
 要求：JDK 17+、Android SDK（compileSdk 35）、Bun 1.1+（服务端）。Android 部分也可直接用 Android Studio / IntelliJ 打开 `client/` 目录。
 
-> 发布副本放在仓库根并命名 `AdSkip-latest.apk`，服务端 `/download` 路由会直接提供下载（配合手机浏览器访问 `http://<本机IP>:3210/download`）。
+> 本地发布副本可放在仓库根并命名 `AdSkip-latest.apk`，服务端 `/download` 路由会直接提供下载（配合手机浏览器访问 `http://<本机IP>:3210/download`）。GitHub Release 由版本 tag 自动创建，上传 R8 Release APK 和 `SHA256SUMS`；正式发布前需要在受信任环境完成签名。
 
 ## 分支与版本
 

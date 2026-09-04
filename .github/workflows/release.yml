@@ -25,6 +25,23 @@ jobs:
           test "$(git cat-file -t "$GITHUB_REF_NAME")" = tag
           test "$(git cat-file -t "$GITHUB_SHA")" = commit
 
+      - name: Verify release versions
+        shell: bash
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          if [[ "$tag_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(-rc\.[0-9]+)?$ ]]; then
+            base_version="${BASH_REMATCH[1]}"
+            android_version="${base_version%.*}"
+          else
+            echo "Unsupported release tag: ${GITHUB_REF_NAME}" >&2
+            exit 1
+          fi
+
+          server_version="$(node -p "require('./server/package.json').version")"
+          android_version_name="$(sed -n 's/^[[:space:]]*versionName = "\([^"]*\)"/\1/p' client/app/build.gradle.kts)"
+          test "$server_version" = "$base_version"
+          test "$android_version_name" = "$android_version"
+
       - name: Verify known workflow chain
         if: github.ref_name == 'v3.0.0'
         shell: bash
@@ -59,7 +76,7 @@ jobs:
         working-directory: client
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug testDebugUnitTest --no-daemon
+          ./gradlew assembleRelease testDebugUnitTest --no-daemon
 
       - name: Test server
         working-directory: server
@@ -72,8 +89,10 @@ jobs:
         shell: bash
         run: |
           mkdir -p release
-          cp client/app/build/outputs/apk/debug/app-debug.apk "release/AdSkip-${GITHUB_REF_NAME}.apk"
-          sha256sum release/* > release/SHA256SUMS
+          apk_file="$(find client/app/build/outputs/apk/release -maxdepth 1 -type f -name 'app-release*.apk' -print -quit)"
+          test -n "$apk_file"
+          cp "$apk_file" "release/AdSkip-${GITHUB_REF_NAME}.apk"
+          sha256sum release/*.apk > release/SHA256SUMS
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
