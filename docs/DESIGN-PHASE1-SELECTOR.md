@@ -1,7 +1,7 @@
 # Phase 1 技术方案：选择器引擎（DESIGN-PHASE1-SELECTOR）
 
 > 实现 [ROADMAP-ADS.md](ROADMAP-ADS.md) Phase 1（L1 无障碍引擎增强）的详细设计。
-> 状态：待评审；目标里程碑 M1（v3.1）；最后更新：2026-09。
+> 状态：已评审通过（2026-09-24），步骤 A/B 实现中（PR #11）；目标里程碑 M1（v3.1）；最后更新：2026-09-24。
 
 ## 1. 目标与非目标
 
@@ -108,6 +108,7 @@ data class RuleSet(
 - `SkipRuleEngine.findTarget` 保持**单次 DFS、单节点预算**；每节点按序测试：**① 选择器 → ② 文本 → ③ ViewID**（同一 DFS 序内先命中先返回，顺序确定性写入 KDoc）；
 - 选择器通道复用现有前置守卫：`isVisible`、`!isEditable`；
 - `matches()` 保留原两通道语义不变（存量单测不破坏）。
+- **实现注记（2026-09-24 评审）**：`SCHEMA_VERSION=2` 随步骤 C（协议 v2）落地时再升；步骤 A/B 先引入 `selectors` 字段、版本保持 1——提前声明 2 无服务端配合且会让存量断言失真。另：`RuleSet.isEmpty` 须计入 `selectors`。
 
 ## 5. 匹配算法
 
@@ -137,7 +138,7 @@ match(node, i):                          # i = 从右往左的 compound 下标
 
 ### 5.3 兄弟节点实现约束（已知风险）
 
-`FrameworkAdNode.previousSibling()` 经 `parent` 子列表定位前一个节点，依赖 `AccessibilityNodeInfo.equals`（API 21+ 已实现）。若真机验证 equals 不可靠：回退方案为「按 `indexInParent` 定位」（FrameworkAdNode 缓存自身在父子列表中的下标）。**验收前必须真机抽测 3 个 App**，失败则本期下线 `+` 组合符（语法保留、匹配恒 false），不影响其余规则。
+`FrameworkAdNode.previousSibling()` 经 `parent` 子列表定位前一个节点，依赖 `AccessibilityNodeInfo.equals`（API 21+ 已实现）。**实现期核实：`indexInParent` / `sourceNodeId` 均非公开 API**，原「按 indexInParent 缓存下标」回退路径不存在——equals 即唯一身份语义（实现即本文档的主路径）。若真机验证 equals 不可靠：直接按预案下线 `+` 组合符（语法保留、匹配恒 false），不影响其余规则。**验收前必须真机抽测 3 个 App**。
 
 ## 6. 协议扩展（schemaVersion 2）
 
