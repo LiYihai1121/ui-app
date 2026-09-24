@@ -5,7 +5,7 @@ package com.ldp.adskip.engine
  *
  * 设计原则：接口中不使用 Android 框架类型（Rect/Point），
  * 使引擎可跑纯 JVM 单测（用 [FakeAdNode] 模拟节点树）。
- * 生产实现 [FrameworkAdNode] 包装 AccessibilityNodeInfo。
+ * 生产实现 [com.ldp.adskip.service.FrameworkAdNode] 包装 AccessibilityNodeInfo（归属 service 层）。
  */
 interface AdNode {
     val text: String?
