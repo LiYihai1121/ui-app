@@ -193,4 +193,107 @@ class SkipRuleEngineTest {
     fun `ruleset min schemaVersion is 1`() {
         assertEquals(1, RuleSet.MIN_SCHEMA_VERSION)
     }
+
+    // ---------- 第三通道：选择器（DESIGN-PHASE1 步骤 A/B） ----------
+
+    private fun sel(expr: String) =
+        requireNotNull(com.ldp.adskip.engine.selector.SelectorParser.parse(expr)) { "invalid test expr: $expr" }
+
+    @Test
+    fun `selector channel finds target`() {
+        val root = FakeAdNode.node(
+            children = listOf(FakeAdNode.node(viewId = "com.example:id/banner")),
+            text = "广告页"
+        )
+        val rules = RuleSet(
+            keywords = emptyList(),
+            viewIds = emptyList(),
+            selectors = listOf(sel("[vid$=\":id/banner\"]"))
+        )
+        val result = engine.findTarget(root, rules)
+        assertNotNull(result)
+        assertEquals("com.example:id/banner", result?.viewId)
+    }
+
+    @Test
+    fun `selector-only ruleset is not empty`() {
+        val rules = RuleSet(
+            keywords = emptyList(),
+            viewIds = emptyList(),
+            selectors = listOf(sel("[click]"))
+        )
+        assertFalse(rules.isEmpty)
+    }
+
+    @Test
+    fun `invisible node not matched by selector channel`() {
+        val node = FakeAdNode.node(text = "跳过", visible = false)
+        val rules = RuleSet(
+            keywords = emptyList(),
+            viewIds = emptyList(),
+            selectors = listOf(sel("[text*=\"跳过\"]"))
+        )
+        assertFalse(engine.matches(node, rules))
+    }
+
+    @Test
+    fun `editable node not matched by selector channel`() {
+        val node = FakeAdNode.node(text = "跳过", editable = true)
+        val rules = RuleSet(
+            keywords = emptyList(),
+            viewIds = emptyList(),
+            selectors = listOf(sel("[text*=\"跳过\"]"))
+        )
+        assertFalse(engine.matches(node, rules))
+    }
+
+    @Test
+    fun `selector and keyword channels coexist`() {
+        val keywordOnly = FakeAdNode.node(text = "关闭")
+        val selectorOnly = FakeAdNode.node(viewId = "com.example:id/skip_btn")
+        val root = FakeAdNode.node(children = listOf(keywordOnly, selectorOnly))
+        val rules = RuleSet(
+            keywords = listOf("关闭"),
+            viewIds = emptyList(),
+            selectors = listOf(sel("[vid$=\":id/skip_btn\"]"))
+        )
+        // 两通道独立命中：关键词节点与选择器节点都应通过 matches()
+        assertTrue(engine.matches(keywordOnly, rules))
+        assertTrue(engine.matches(selectorOnly, rules))
+        // 栈式 DFS 子节点逆序出栈：selectorOnly 先被测得、命中即返回（通道内 ①→②→③ 同序）
+        val hit = engine.findTarget(root, rules)
+        assertNotNull(hit)
+        assertEquals("com.example:id/skip_btn", hit?.viewId)
+    }
+
+    @Test
+    fun `disabled ruleset with selectors returns null`() {
+        val root = FakeAdNode.node(text = "跳过")
+        val rules = RuleSet(
+            keywords = emptyList(),
+            viewIds = emptyList(),
+            selectors = listOf(sel("[text*=\"跳过\"]")),
+            disabled = true
+        )
+        assertNull(engine.findTarget(root, rules))
+    }
+
+    @Test
+    fun `selector deep target respects node budget`() {
+        val target = FakeAdNode.node(clickable = true)
+        var deepest = target
+        repeat(30) {
+            val next = FakeAdNode.node(children = listOf(deepest))
+            deepest = next
+        }
+        val rules = RuleSet(
+            keywords = emptyList(),
+            viewIds = emptyList(),
+            selectors = listOf(sel("[click]"))
+        )
+        // 常规预算内可命中
+        assertNotNull(SkipRuleEngine(maxNodes = 500).findTarget(deepest, rules))
+        // 小预算（≤ 链深度）截断后不命中，与现有通道共享预算语义一致
+        assertNull(SkipRuleEngine(maxNodes = 10).findTarget(deepest, rules))
+    }
 }

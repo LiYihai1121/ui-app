@@ -1,5 +1,6 @@
 package com.ldp.adskip.engine
 
+import com.ldp.adskip.engine.selector.SelectorMatcher
 import java.util.Locale
 
 /**
@@ -11,9 +12,10 @@ import java.util.Locale
  * 职责单一：给定节点树与规则集，找出应点击的目标节点。
  * 与「如何点击」（AccessibilityService 动作/手势）完全解耦。
  *
- * 匹配通道：
- *  1. 文本 —— text / contentDescription 包含关键词，限短文本防误点
- *  2. ViewID —— 控件资源 ID 包含规则串，覆盖纯图片按钮
+ * 匹配通道（每节点按序测试，同 DFS 序内先命中先返回）：
+ *  1. 选择器 —— 类 CSS 子集的上下文关系匹配（engine/selector，右到左求值）
+ *  2. 文本 —— text / contentDescription 包含关键词，限短文本防误点
+ *  3. ViewID —— 控件资源 ID 包含规则串，覆盖纯图片按钮
  */
 class SkipRuleEngine(
     private val maxNodes: Int = 500,
@@ -43,7 +45,12 @@ class SkipRuleEngine(
         if (!node.isVisible) return false
         if (node.isEditable) return false
 
-        // 通道一：文本 / 内容描述
+        // 通道一：选择器规则（类 CSS 子集；解析已在上游完成，热路径零解析）
+        for (selector in rules.selectors) {
+            if (SelectorMatcher.matches(selector, node)) return true
+        }
+
+        // 通道二：文本 / 内容描述
         val text = node.text?.trim()
         val desc = node.desc?.trim()
         for (candidate in listOf(text, desc)) {
@@ -54,7 +61,7 @@ class SkipRuleEngine(
             }
         }
 
-        // 通道二：ViewID（如 com.example:id/skip_view 命中 "skip"）
+        // 通道三：ViewID（如 com.example:id/skip_view 命中 "skip"）
         val id = node.viewId
         if (id != null) {
             val lower = id.lowercase(Locale.ROOT)

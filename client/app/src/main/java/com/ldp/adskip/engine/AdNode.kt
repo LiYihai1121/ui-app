@@ -18,6 +18,12 @@ interface AdNode {
     /** 子节点列表（实现可做深度/数量截断） */
     fun children(): List<AdNode>
 
+    /** 父节点（根节点为 null；选择器祖先匹配用） */
+    val parent: AdNode?
+
+    /** 相邻前一个兄弟节点（不存在时为 null；选择器 `+` 组合符用） */
+    fun previousSibling(): AdNode?
+
     /** 沿父链找可点击节点 */
     fun clickableParent(): AdNode?
 
