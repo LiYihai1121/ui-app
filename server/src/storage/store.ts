@@ -108,7 +108,9 @@ function ensureCompatShape(input: unknown): RulesPackage {
 
 export function getRules(): RulesPackage {
   if (rulesCache) return rulesCache;
-  const raw = readJson(config.RULES_FILE, null);
+  // 运行时文件缺失/损坏时回退到入库种子，两者都不可用才走内置默认
+  let raw = readJson(config.RULES_FILE, null);
+  if (raw === null) raw = readJson(config.SEED_RULES_FILE, null);
   const shaped = ensureCompatShape(raw);
   shaped.hash = computeHash(shaped);
   rulesCache = shaped;
@@ -322,6 +324,11 @@ export function _resetSummaryCacheForTests(): void {
 export function _resetStatsCacheForTests(): void {
   statsCache.clear();
   summaryCache = null;
+}
+
+/** 仅供测试：清空规则缓存（隔离种子兜底测试的 config.RULES_FILE 切换） */
+export function _resetRulesCacheForTests(): void {
+  rulesCache = null;
 }
 
 function flushDay(day: string): void {

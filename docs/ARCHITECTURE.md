@@ -152,7 +152,7 @@ Doze 模式 → 系统推迟到维护窗口执行
 
 - **客户端 Compose + MVVM**：声明式 UI、单 Activity + Navigation Compose、Material3、StateFlow 驱动，符合 Google 推荐的现代 Android 架构。
 - **服务端 Bun + TypeScript**：零运行时依赖、类型安全、`bun:test` 内置测试、`Bun.serve` 高性能 HTTP、`Bun.file` 零拷贝静态服务。
-- **JSON 文件存储**：单进程本地服务，数据量小；tmp+rename 原子写避免损坏。统计按天分片，14 天趋势 = 读 14 个小文件。
+- **JSON 文件存储**：单进程本地服务，数据量小；tmp+rename 原子写避免损坏。统计按天分片，14 天趋势 = 读 14 个小文件。种子规则固化在 `seed/rules.json`（入库），`data/` 仅存运行时数据且不入库。
 - **离线优先**：客户端一切功能本地可用；服务端不可达时上报静默失败。
 - **手动 DI**：AppContainer 收口所有依赖，不引入 Hilt/Koin 等第三方 DI 框架。
 - **可测性**：AdNode 抽象使引擎可跑纯 JVM 单测；服务端 startServer API 支持注入端口/数据目录/令牌。

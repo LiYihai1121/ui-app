@@ -45,5 +45,4 @@ bun run server.ts
 ## 环境清理
 
 - 可安全删除 `client/build/`、`.gradle/`、`.kotlin/` 等构建缓存；Gradle 会自动重新生成。
-- 服务端 `server/data/stats/` 和 `server/data/backups/` 是运行数据，删除前先确认无需保留统计和回滚记录。
-- 不要删除 `server/data/rules.json`，它是服务端初始规则数据。
+- 服务端 `server/data/`（`rules.json` / `stats/` / `backups/`）是运行数据，删除前先确认无需保留当前规则、统计和回滚记录；初始规则种子固化在入库的 `server/seed/rules.json`，运行时规则文件缺失或损坏时自动回退种子。
