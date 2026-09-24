@@ -61,6 +61,8 @@
 
 ### Phase 1 — L1 无障碍引擎增强（第 3~8 周，P0 核心）
 
+> 详细技术方案（文法规范、匹配算法、协议 v2、改动清单、测试计划）见 [DESIGN-PHASE1-SELECTOR.md](DESIGN-PHASE1-SELECTOR.md)。
+
 参考 GKD / TapClick 升级现有引擎（当前关键词 + ViewID 双通道是覆盖瓶颈）：
 
 1. **选择器引擎**：在 `SkipRuleEngine` 上增加父子/兄弟节点关系匹配（类 CSS 选择器**子集**：`vid`/`text`/`desc` + 3~4 种关系运算符），保持纯 Kotlin 零依赖；
