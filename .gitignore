@@ -19,11 +19,20 @@ signing/
 .mimosa/
 .workbuddy/
 
+# 个人 IDE 配置不入库（AGENTS.md：不提交个人环境配置）
+.vscode/
+
 # Kotlin 构建会话目录
 .kotlin/
+
+# Python 服务端脚手架虚拟环境与字节码
+server_python/.venv/
+server_python/.venv-*/
+__pycache__/
+*.pyc
+.pytest_cache/
 
 # 服务端运行时产物（测试/部署生成，非源码）
 server/data/backups/
 server/data/stats/
 server/node_modules/
-server/bun.lock
