@@ -43,19 +43,7 @@
 
 ## 快速开始
 
-### 1. 启动后端（本机）
-
-```bash
-cd server
-bun install
-# 生产环境建议设置 ADMIN_TOKEN（不设则写接口返回 503）
-ADMIN_TOKEN=your-secret-token bun run server.ts
-# 落地页:   http://localhost:3210/
-# 管理后台: http://localhost:3210/admin
-# 局域网:   http://<本机IP>:3210
-```
-
-### 2. 安装客户端
+### 1. 安装客户端
 
 构建 APK 传到手机安装（Android 8.0+），打开后：
 
