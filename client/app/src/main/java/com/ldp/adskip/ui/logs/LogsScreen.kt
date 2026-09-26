@@ -44,7 +44,7 @@ fun LogsScreen(
     onBack: () -> Unit,
     viewModel: LogsViewModel = viewModel(factory = LogsViewModel.Factory)
 ) {
-    val logs by viewModel.logs.collectAsStateWithLifecycle()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     LaunchedEffect(Unit) { viewModel.reload() }
@@ -100,7 +100,7 @@ fun LogsScreen(
             )
         }
     ) { padding ->
-        if (logs.isEmpty()) {
+        if (state.logs.isEmpty()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -120,7 +120,7 @@ fun LogsScreen(
                     .padding(padding),
                 contentPadding = PaddingValues(16.dp)
             ) {
-                items(logs, key = { "${it.ts}:${it.pkg}:${it.label}" }) { entry ->
+                items(state.logs, key = { "${it.ts}:${it.pkg}:${it.label}" }) { entry ->
                     Column(Modifier.padding(vertical = 8.dp)) {
                         Text(text = entry.label, style = MaterialTheme.typography.bodyLarge)
                         Spacer(Modifier.height(2.dp))

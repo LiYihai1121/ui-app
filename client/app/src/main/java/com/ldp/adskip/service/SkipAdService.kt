@@ -42,7 +42,6 @@ class SkipAdService : AccessibilityService() {
 
         @Volatile var running = false
             private set
-        @Volatile var testActive = false
 
         private const val CLICK_INTERVAL_MS = 1200L   // 同一应用点击去抖
         private const val SCAN_INTERVAL_MS = 150L     // 全局扫描节流
@@ -89,7 +88,7 @@ class SkipAdService : AccessibilityService() {
         val pkg = event.packageName?.toString() ?: return
 
         if (pkg == IGNORE_PACKAGES) return
-        if (pkg == packageName && !testActive) return
+        if (pkg == packageName && !AppEvents.testActive) return
 
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
@@ -123,7 +122,7 @@ class SkipAdService : AccessibilityService() {
         lastClickMap[pkg] = now
         val label = appLabel(pkg)
         statsRepo.recordSkip(pkg, label)
-        if (!testActive) {
+        if (!AppEvents.testActive) {
             Toast.makeText(this, getString(R.string.toast_skipped, label), Toast.LENGTH_SHORT).show()
         }
         syncClient.reportSkip(Prefs.getServerUrl(this), pkg, label, Prefs.getDeviceId(this))

@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
+import com.ldp.adskip.ui.UiEffect
 import java.util.Locale
 
 /**
@@ -59,8 +60,11 @@ fun SettingsScreen(
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.messages.collect { msg ->
-            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is UiEffect.ShowMessage ->
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+            }
         }
     }
     LaunchedEffect(Unit) { viewModel.refreshBatteryStatus() }

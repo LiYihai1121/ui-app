@@ -57,18 +57,41 @@
 
 | 层 | 模块 | 职责 | 不做的事 |
 | --- | --- | --- | --- |
-| **ui/** | 4 个 Composable Screen + ViewModel | 声明式 UI 与状态管理，通过 StateFlow 驱动 UI | 不直接读 SharedPreferences、不碰网络 |
-| **service/** | SkipAdService + FrameworkAdNode | 事件接收、节流去抖、点击执行、AccessibilityNodeInfo 节点适配 | 不含匹配规则逻辑、不做安全裁决 |
-| **engine/** | SkipRuleEngine + RuleSet + AdNode + SafetyGuard + selector/ | 纯匹配：文本/ViewID/选择器 三通道（选择器为类 CSS 子集，右到左求值，DESIGN-PHASE1） | 不执行点击、不读存储 |
-| **data/** | Prefs / RulesRepository / StatsRepository | 存储原语 + 领域仓库（合并/LruCache/合批落盘） | 不感知 UI 与网络格式 |
+| **ui/** | 4 个 Composable Screen + ViewModel + `UiEffect` | 声明式 UI 与单向数据流状态管理：状态入 `UiState`（StateFlow），一次性事件经 `effects: SharedFlow<UiEffect>` 下发 | 不直接读 SharedPreferences、不碰网络、不依赖 `service/`、`net/`、`sync/`（设置读写经 `data/SettingsRepository`，边界契约见 2.1） |
+| **service/** | SkipAdService + FrameworkAdNode | 事件接收、节流去抖、点击执行、AccessibilityNodeInfo 节点适配 | 不含匹配规则逻辑、不做安全裁决、不依赖 `ui/` |
+| **engine/** | SkipRuleEngine + RuleSet + AdNode + SafetyGuard + selector/ | 纯匹配：文本/ViewID/选择器 三通道（选择器为类 CSS 子集，右到左求值，DESIGN-PHASE1） | 不执行点击、不读存储、不依赖任何 Android 类型 |
+| **data/** | Prefs / RulesRepository / StatsRepository / SettingsRepository | 存储原语 + 领域仓库（合并/LruCache/合批落盘）+ 设置门面（收口 net/sync 委托） | 不感知 UI 与网络格式 |
 | **net/** | SyncClient | HTTP 传输（v1: ETag/304/批量补报） | 不直接改存储键值 |
 | **core/** | AppEvents / AppExecutors / Clock / LogRing | 进程内事件总线、线程域收口、时钟注入、环形日志 | 不含业务逻辑 |
 | **sync/** | SyncJobService | JobScheduler 周期同步 | 不含同步逻辑（委托 SyncClient） |
 
 **关键设计**：
-- **MVVM + StateFlow**：ViewModel 通过 `viewModelFactory { initializer { } }` 从 `AppContainer` 取依赖，暴露 `StateFlow` 给 Compose `collectAsStateWithLifecycle()`。
-- **AppEvents**：`Service` 层通过 `AppEvents.setServiceRunning()` / `AppEvents.emitSkipped()` 推送状态，ViewModel 通过 `StateFlow` / `SharedFlow` 收集，取代旧架构中 UI 直接注册 `BroadcastReceiver` 的方式。
+- **MVVM + StateFlow + UiEffect 单向数据流**：ViewModel 通过 `viewModelFactory { initializer { } }` 从 `AppContainer` 取依赖，可回退状态聚合为单一 `UiState` 暴露 `StateFlow`（Compose `collectAsStateWithLifecycle()` 收集）；Toast 等一次性事件统一经 `effects: SharedFlow<UiEffect>` 下发，由 Screen 在 `LaunchedEffect` 中消费，四个页面同一套模式。
+- **AppEvents**：`Service` 层通过 `AppEvents.setServiceRunning()` / `AppEvents.emitSkipped()` 推送状态，ViewModel 通过 `StateFlow` / `SharedFlow` 收集，取代旧架构中 UI 直接注册 `BroadcastReceiver` 的方式；模拟测试标记 `testActive` 同样经 AppEvents 中转，ui 与 service 互不依赖。
 - **RulesRepository.ruleSetFor(pkg)** 是规则的唯一组装点——全局关键词 + 应用专属关键词 + 全局 ViewID + 应用专属 ViewID + 选择器（全局/应用级，`3.0.3` 起）+ 禁用开关，合并为一个不可变的 `RuleSet` 交给引擎。
+
+### 2.1 边界契约
+
+分层不只是目录约定，更是**可执行的依赖规则**。下表为各包允许/禁止的 import 关系，
+由 `client/app/src/test/java/com/ldp/adskip/arch/ArchitectureBoundaryTest.kt` 在每次
+`testDebugUnitTest`（及 CI 门禁）中扫描源码强制校验，违反即测试失败。
+
+| 包 | 允许依赖 | 禁止依赖（守护测试强制） |
+| --- | --- | --- |
+| `engine/` | 仅 Kotlin/JDK 与 `engine/` 自身 | `android.*`、`androidx.*`、其他所有 `com.ldp.adskip.*` |
+| `core/` | Kotlin/JDK/协程、`core/` 自身 | 其他所有 `com.ldp.adskip.*` |
+| `ui/` | Compose/AndroidX、组合根（`AdskipApp`/`AppContainer`）、`core/`、`engine/`、`data/` 领域仓库（`RulesRepository`/`StatsRepository`/`SettingsRepository`）、`R` | `service/`、`net/`、`sync/`、`data.Prefs` |
+| `data/` | `engine/`（RuleSet）、`net/`（设置门面委托）、`sync/`（调度委托）、Android SDK | `ui/`、`service/` |
+| `net/` | `data/`、Android SDK、org.json | `ui/`、`service/` |
+| `sync/` | `data/`、`core/`、Android SDK | `ui/`、`service/` |
+| `service/` | `core/`、`data/`、`engine/`、`net/`、组合根 | `ui/` |
+| 组合根（`AdskipApp`/`AppContainer`） | 全部（唯一 DI 装配点） | —（不承载业务逻辑） |
+
+规则解读：
+- **engine 纯 JVM**：不触碰任何 Android 类型——引擎单测可在纯 JVM 毫秒级运行，也是未来若需拆分 `:engine` module 的前提。
+- **ui 单向取值**：UI 只经 `StateFlow`/`UiEffect` 收状态与事件、经 `AppContainer` 拿仓库；不直连网络、后台调度与原始偏好。`data/SettingsRepository` 是设置页的唯一数据出口（收口 `SyncClient`/`SyncJobService`/`Prefs`）。
+- **core 零业务依赖**：`AppEvents` 初值不再引用 `SkipAdService`，Service 连接时主动写入真实状态；ui/service 双向都只经 core 中转。
+- **组合根兜底**：进程级初始化（如 JobScheduler 周期任务重注册）在 `AdskipApp.onCreate` 完成，不进 UI 层。
 
 ## 3. 数据流
 
@@ -155,6 +178,8 @@ Doze 模式 → 系统推迟到维护窗口执行
 ## 8. 设计决策
 
 - **客户端 Compose + MVVM**：声明式 UI、单 Activity + Navigation Compose、Material3、StateFlow 驱动，符合 Google 推荐的现代 Android 架构。
+- **UiEffect 单向数据流**：状态与副作用分离——可回退状态入 `UiState`，一次性提示统一走 `UiEffect.ShowMessage`，杜绝各页自定义消息类型（原 `HomeMessage`/裸 `String` 两种并存已收敛）。
+- **架构边界守护**：层间依赖规则写入 2.1 节并由 `ArchitectureBoundaryTest` 源码级强制校验，边界违规在 CI 即失败，而非代码评审时才发现。
 - **服务端 Bun + TypeScript**：零运行时依赖、类型安全、`bun:test` 内置测试、`Bun.serve` 高性能 HTTP、`Bun.file` 零拷贝静态服务。
 - **JSON 文件存储**：单进程本地服务，数据量小；tmp+rename 原子写避免损坏。统计按天分片，14 天趋势 = 读 14 个小文件。种子规则固化在 `seed/rules.json`（入库），`data/` 仅存运行时数据且不入库。
 - **离线优先**：客户端一切功能本地可用；服务端不可达时上报静默失败。
@@ -178,7 +203,7 @@ Doze 模式 → 系统推迟到维护窗口执行
 
 **客户端：**
 
-- JVM 单测：`cd client && ./gradlew testDebugUnitTest`（引擎匹配 + SafetyGuard 护栏）
+- JVM 单测：`cd client && ./gradlew testDebugUnitTest`（引擎匹配 + SafetyGuard 护栏 + 架构边界守护 `ArchitectureBoundaryTest`）
 - 构建验证：`cd client && ./gradlew assembleDebug`
 
 **服务端（bun:test）：**
@@ -195,12 +220,12 @@ AdSkip/                            全栈 monorepo
 │   ├── build.gradle.kts           模块与签名配置（签名参数读 local.properties）
 │   ├── settings.gradle.kts        仓库配置（国内镜像优先）
 │   └── app/src/main/java/com/ldp/adskip/
-│       ├── ui/                   Compose UI（单 Activity + 4 Screen + ViewModel）
+│       ├── ui/                   Compose UI（单 Activity + 4 Screen + ViewModel + UiEffect）
 │       ├── core/                 AppEvents / Clock / AppExecutors / LogRing
 │       ├── service/              SkipAdService + FrameworkAdNode（无障碍服务/节点适配）
 │       ├── engine/               规则引擎（纯 JVM 可测：AdNode / RuleSet / SkipRuleEngine / SafetyGuard）
 │       │   └── selector/         选择器引擎（SelectorAst / SelectorParser / SelectorMatcher）
-│       ├── data/                 Prefs / RulesRepository / StatsRepository
+│       ├── data/                 Prefs / RulesRepository / StatsRepository / SettingsRepository
 │       ├── net/                  SyncClient
 │       └── sync/                 SyncJobService
 ├── server/                       Bun + TypeScript 后端

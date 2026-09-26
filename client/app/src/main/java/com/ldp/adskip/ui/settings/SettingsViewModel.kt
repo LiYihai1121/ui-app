@@ -11,9 +11,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.AppContainer
 import com.ldp.adskip.R
-import com.ldp.adskip.data.Prefs
-import com.ldp.adskip.net.SyncClient
-import com.ldp.adskip.sync.SyncJobService
+import com.ldp.adskip.ui.UiEffect
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -25,6 +23,10 @@ import java.util.Locale
 
 /**
  * 云端规则同步设置状态。
+ *
+ * 持久化 / 网络 / 后台调度一律经 [com.ldp.adskip.data.SettingsRepository] 访问
+ * （边界契约：ui 层不直读 Prefs、不碰 SyncClient / SyncJobService）。
+ * 单向数据流：状态入 [UiState]，一次性提示经 [effects] 下发。
  */
 class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
@@ -42,19 +44,19 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
         UiState(
-            serverUrlInput = SyncClient.serverUrl(container.app),
-            lastSyncAt = SyncClient.lastSyncAt(container.app),
-            autoSync = Prefs.isAutoSyncEnabled(container.app),
-            dndEnabled = Prefs.isDoNotDisturbEnabled(container.app),
-            dndStartMinute = Prefs.getDoNotDisturbStart(container.app),
-            dndEndMinute = Prefs.getDoNotDisturbEnd(container.app),
+            serverUrlInput = container.settingsRepo.serverUrl(),
+            lastSyncAt = container.settingsRepo.lastSyncAt(),
+            autoSync = container.settingsRepo.isAutoSyncEnabled(),
+            dndEnabled = container.settingsRepo.isDoNotDisturbEnabled(),
+            dndStartMinute = container.settingsRepo.getDoNotDisturbStart(),
+            dndEndMinute = container.settingsRepo.getDoNotDisturbEnd(),
             batteryExempt = queryBatteryExempt()
         )
     )
     val uiState: StateFlow<UiState> = _uiState
 
-    private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 8)
-    val messages: SharedFlow<String> = _messages
+    private val _effects = MutableSharedFlow<UiEffect>(extraBufferCapacity = 8)
+    val effects: SharedFlow<UiEffect> = _effects
 
     fun onServerUrlChanged(value: String) {
         _uiState.value = _uiState.value.copy(serverUrlInput = value)
@@ -71,7 +73,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             send(container.app.getString(R.string.settings_url_invalid))
             return false
         }
-        SyncClient.saveServerUrl(container.app, raw.trim())
+        container.settingsRepo.saveServerUrl(raw.trim())
         send(container.app.getString(R.string.settings_saved))
         return true
     }
@@ -81,24 +83,24 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         val url = _uiState.value.serverUrlInput.trim()
         if (!saveServerUrl(url)) return
         _uiState.value = _uiState.value.copy(syncing = true)
-        SyncClient.syncRules(container.app, url, container.rulesRepo) { _, msg ->
+        container.settingsRepo.syncNow(url) { _, msg ->
             _uiState.value = _uiState.value.copy(syncing = false, syncResult = msg)
             refreshLastSync()
         }
     }
 
     fun setAutoSync(enabled: Boolean) {
-        SyncJobService.setEnabled(container.app, enabled)
+        container.settingsRepo.setAutoSyncEnabled(enabled)
         _uiState.value = _uiState.value.copy(autoSync = enabled)
     }
 
     fun setDndEnabled(enabled: Boolean) {
-        Prefs.setDoNotDisturbEnabled(container.app, enabled)
+        container.settingsRepo.setDoNotDisturbEnabled(enabled)
         _uiState.value = _uiState.value.copy(dndEnabled = enabled)
     }
 
     fun setDndTimes(startMinute: Int, endMinute: Int) {
-        Prefs.setDoNotDisturbTimes(container.app, startMinute, endMinute)
+        container.settingsRepo.setDoNotDisturbTimes(startMinute, endMinute)
         _uiState.value = _uiState.value.copy(dndStartMinute = startMinute, dndEndMinute = endMinute)
     }
 
@@ -111,7 +113,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     } else ""
 
     private fun refreshLastSync() {
-        _uiState.value = _uiState.value.copy(lastSyncAt = SyncClient.lastSyncAt(container.app))
+        _uiState.value = _uiState.value.copy(lastSyncAt = container.settingsRepo.lastSyncAt())
     }
 
     private fun queryBatteryExempt(): Boolean {
@@ -120,7 +122,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     private fun send(message: String) {
-        viewModelScope.launch { _messages.emit(message) }
+        viewModelScope.launch { _effects.emit(UiEffect.ShowMessage(message)) }
     }
 
     companion object {

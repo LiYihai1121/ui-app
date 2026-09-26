@@ -47,6 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
 import com.ldp.adskip.ui.Routes
+import com.ldp.adskip.ui.UiEffect
 import com.ldp.adskip.ui.theme.StatusOff
 import com.ldp.adskip.ui.theme.StatusOn
 
@@ -62,9 +63,10 @@ fun HomeScreen(
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.messages.collect { msg ->
-            if (msg is HomeMessage.Text) {
-                Toast.makeText(context, msg.value, Toast.LENGTH_SHORT).show()
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is UiEffect.ShowMessage ->
+                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
             }
         }
     }

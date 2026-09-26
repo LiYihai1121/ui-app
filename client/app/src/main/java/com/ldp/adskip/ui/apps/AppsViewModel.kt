@@ -18,6 +18,8 @@ import kotlinx.coroutines.withContext
 
 /**
  * 应用管理页状态：可启动应用列表 + 每应用的跳过开关与次数。
+ *
+ * 单向数据流：列表与加载态聚合为一个 [UiState]（本页无一次性 Effect）。
  */
 class AppsViewModel(private val container: AppContainer) : ViewModel() {
 
@@ -29,11 +31,13 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
         val count: Int
     )
 
-    private val _items = MutableStateFlow<List<AppRow>>(emptyList())
-    val items: StateFlow<List<AppRow>> = _items
+    data class UiState(
+        val items: List<AppRow> = emptyList(),
+        val loading: Boolean = true
+    )
 
-    private val _loading = MutableStateFlow(true)
-    val loading: StateFlow<Boolean> = _loading
+    private val _uiState = MutableStateFlow(UiState())
+    val uiState: StateFlow<UiState> = _uiState
 
     init {
         load()
@@ -41,7 +45,7 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
 
     /** 在 IO 线程枚举启动器应用并读取规则/统计，回主线程提交。 */
     fun load() {
-        _loading.value = true
+        _uiState.value = _uiState.value.copy(loading = true)
         viewModelScope.launch {
             val rows = withContext(Dispatchers.IO) {
                 val pm = container.app.packageManager
@@ -61,16 +65,17 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
                     }
                     .sortedBy { it.label.lowercase() }
             }
-            _items.value = rows
-            _loading.value = false
+            _uiState.value = UiState(items = rows, loading = false)
         }
     }
 
     fun setEnabled(pkg: String, enabled: Boolean) {
         container.rulesRepo.setDisabled(pkg, !enabled)
-        _items.value = _items.value.map {
-            if (it.pkg == pkg) it.copy(disabled = !enabled) else it
-        }
+        _uiState.value = _uiState.value.copy(
+            items = _uiState.value.items.map {
+                if (it.pkg == pkg) it.copy(disabled = !enabled) else it
+            }
+        )
     }
 
     companion object {

@@ -10,7 +10,7 @@ import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.AppContainer
 import com.ldp.adskip.R
 import com.ldp.adskip.core.AppEvents
-import com.ldp.adskip.service.SkipAdService
+import com.ldp.adskip.ui.UiEffect
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -19,14 +19,12 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-/** 主页一次性提示事件（对应旧架构的 Toast） */
-sealed class HomeMessage {
-    data class Text(val value: String) : HomeMessage()
-}
-
 /**
  * 主页状态：
  * 服务开关状态 / 跳过统计 / 全局关键词 / 模拟开屏广告测试。
+ *
+ * 单向数据流：可回退状态入 [UiState]（StateFlow），
+ * 一次性提示经 [effects]（[UiEffect] SharedFlow）下发，由 Screen 消费。
  */
 class HomeViewModel(private val container: AppContainer) : ViewModel() {
 
@@ -44,8 +42,8 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState
 
-    private val _messages = MutableSharedFlow<HomeMessage>(extraBufferCapacity = 8)
-    val messages: SharedFlow<HomeMessage> = _messages
+    private val _effects = MutableSharedFlow<UiEffect>(extraBufferCapacity = 8)
+    val effects: SharedFlow<UiEffect> = _effects
 
     private var countdownJob: Job? = null
 
@@ -61,8 +59,8 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
             AppEvents.skipped.collect { label ->
                 if (_uiState.value.testActive) {
                     endTest()
-                    _messages.emit(
-                        HomeMessage.Text(container.app.getString(R.string.test_success, label))
+                    _effects.emit(
+                        UiEffect.ShowMessage(container.app.getString(R.string.test_success, label))
                     )
                 }
                 refreshStats()
@@ -101,7 +99,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
             send(R.string.test_need_service)
             return
         }
-        SkipAdService.testActive = true
+        AppEvents.setTestActive(true)
         _uiState.value = _uiState.value.copy(fakeAdVisible = true, countdown = FAKE_AD_SECONDS)
         countdownJob?.cancel()
         countdownJob = viewModelScope.launch {
@@ -125,7 +123,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     private fun endTest() {
         countdownJob?.cancel()
         countdownJob = null
-        SkipAdService.testActive = false
+        AppEvents.setTestActive(false)
         _uiState.value = _uiState.value.copy(fakeAdVisible = false)
     }
 
@@ -147,7 +145,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
 
     private fun send(resId: Int, vararg args: Any) {
         viewModelScope.launch {
-            _messages.emit(HomeMessage.Text(container.app.getString(resId, *args)))
+            _effects.emit(UiEffect.ShowMessage(container.app.getString(resId, *args)))
         }
     }
 
