@@ -16,7 +16,18 @@
 
 ## 未发布
 
-- `3.1.0` 进入规划：L1 无障碍引擎增强（选择器引擎 + 快照工具），版本序列与里程碑以 `docs/ROADMAP-ADS.md` 为准；截屏取点、Docker 部署、多设备规则共享等移入 `docs/ROADMAP.md` 候选池（未排期）。
+### 3.0.3（待发版）
+
+- 引擎内核新增类 CSS 选择器第三通道（`engine/selector/`：AST / 解析器 / 匹配器，纯 JVM、零第三方依赖）。
+- 节点通道序变为 ① 选择器 → ② 文本 → ③ ViewID；`AdNode` 增加 `parent` 与 `previousSibling()`，`RuleSet` 增加 `selectors`（`isEmpty` 计入）。
+- JVM 单测 44 → 121 项；失败用例不抛异常（解析失败即丢弃该条规则，fail-safe）。
+- 本版本为纯内核增量：服务端尚未下发选择器规则，用户可见行为与 3.0.2 一致；停发选择器字段即可回退 v1 行为，无数据迁移。
+
+### 路线调整（2026-09-26）
+
+- 原规划的 `3.1.0`「L1 引擎 + 快照工具 + Top 30 规则」大礼包里程碑**已剥离**，改为增量发版：
+  `3.0.3`（引擎内核）→ `3.1.0`（协议 v2 + 点击校验）→ `3.2.0`（快照工具）→ `3.3.0`（Top 30 规则与真机验收）→ `3.4.0` / `3.5.0` / `4.0.0`（L2 / L3 / L4）。
+- 详见 [docs/ROADMAP.md](docs/ROADMAP.md) 与 [docs/ROADMAP-ADS.md](docs/ROADMAP-ADS.md)；技术方案与步骤划分见 [docs/DESIGN-PHASE1-SELECTOR.md](docs/DESIGN-PHASE1-SELECTOR.md)。
 
 ## [3.0.2] - 2026-09-04
 

@@ -81,6 +81,8 @@ SafetyGuard 安全护栏复核（黑名单/可见性/面积）
 
 防误触：同应用 1.2s 去抖、150ms 全局节流、单次遍历 ≤500 节点、忽略系统 UI、按应用禁用、SafetyGuard 硬编码黑名单。
 
+> 选择器第三通道（`engine/selector/`，类 CSS 子集：`[vid$=":id/skip_view"]`、`[text*="跳过"] > [vid$="id/iv_close"]`、`[desc^="跳过"] + [vid$="id/iv_close"]` 等）已在内核落地（步骤 A/B，方案见 [DESIGN-PHASE1-SELECTOR.md](docs/DESIGN-PHASE1-SELECTOR.md)）；服务端下发选择器规则后自动生效，当前发布版行为仍是上述「文本 + ViewID」双通道。发版节奏见 [ROADMAP.md](docs/ROADMAP.md)。
+
 ## 工程结构
 
 ```text

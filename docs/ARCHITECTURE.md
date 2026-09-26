@@ -207,6 +207,6 @@ AdSkip/                            全栈 monorepo
 │   ├── test/                     bun:test 单元 + 冒烟
 │   ├── server.ts                 入口（Bun.serve）
 │   └── public/                   落地页 + 管理后台
-├── docs/                         API.md / ARCHITECTURE.md / DEV-ENVIRONMENT.md / RELEASE-HISTORY.md / ROADMAP.md
+├── docs/                         API.md / ARCHITECTURE.md / DESIGN-PHASE1-SELECTOR.md / DEV-ENVIRONMENT.md / RELEASE-HISTORY.md / ROADMAP.md / ROADMAP-ADS.md
 └── .github/workflows/ci.yml     CI：Android Build + Bun Server Tests
 ```

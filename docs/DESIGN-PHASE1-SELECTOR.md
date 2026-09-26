@@ -1,7 +1,7 @@
 # Phase 1 技术方案：选择器引擎（DESIGN-PHASE1-SELECTOR）
 
 > 实现 [ROADMAP-ADS.md](ROADMAP-ADS.md) Phase 1（L1 无障碍引擎增强）的详细设计。
-> 状态：已评审通过（2026-09-24），步骤 A/B 实现中（PR #11）；目标里程碑 M1（v3.1）；最后更新：2026-09-24。
+> 状态：已评审通过（2026-09-24）；步骤 A/B 已并入 `main`（PR #12），待随 `3.0.3` 发版；剩余步骤 C–F 分别归属 `3.1.0` / `3.2.0` / `3.3.0`（见 [ROADMAP.md](ROADMAP.md)）；最后更新：2026-09-26。
 
 ## 1. 目标与非目标
 
@@ -229,7 +229,7 @@ event.pkg 为其他应用                        → 判定劫持：
 | --- | --- | --- |
 | engine | `selector/{SelectorAst,SelectorParser,SelectorMatcher}.kt` | 新增（纯 JVM） |
 | engine | `AdNode.kt` / `FrameworkAdNode.kt` | +`parent` / `previousSibling()` |
-| engine | `RuleSet.kt` | +`selectors`、`SCHEMA_VERSION=2` |
+| engine | `RuleSet.kt` | +`selectors`（步骤 B 已落地，`SCHEMA_VERSION` 暂保持 1）；步骤 C 升为 2 |
 | engine | `SkipRuleEngine.kt` | 第三通道接入 + 通道优先级 |
 | data | `Prefs.kt` | selectors 存取 + 黑名单键值 |
 | data | `RulesRepository.kt` | 编译缓存、黑名单过滤、合并链路 |
@@ -247,14 +247,14 @@ event.pkg 为其他应用                        → 判定劫持：
 
 ## 10. 实施顺序（对应 ROADMAP-ADS 第 3~8 周）
 
-| 步骤 | 周 | 内容 | 出口条件 |
-| --- | --- | --- | --- |
-| A | W3~W4 | AST + 解析器 + 匹配器 + `AdNode` 扩展（纯 JVM） | 解析/匹配单测全绿 |
-| B | W4~W5 | `RuleSet`/引擎/`RulesRepository`/`Prefs` 集成 | 存量单测不回归，新增引擎集成测试绿 |
-| C | W5~W6 | 协议 v2：服务端字段 + 校验 + 契约夹具 + 管理后台 | `bun test` + `bun run typecheck` 绿 |
-| D | W6 | `SyncClient` 解析 + 点击结果校验状态机 + 黑名单 | 劫持场景单测绿 |
-| E | W7 | 快照工具 + 设置页入口 | 真机导出 JSON 可读 |
-| F | W7~W8 | Top 30 App 规则编写 + 真机回归 + 性能采样 | 验收指标（下节）全达标 |
+| 步骤 | 版本 | 周 | 内容 | 出口条件 |
+| --- | --- | --- | --- | --- |
+| A | `3.0.3` | W3~W4 | AST + 解析器 + 匹配器 + `AdNode` 扩展（纯 JVM） | ✅ 已并入 `main`：解析/匹配单测全绿（39 + 31 例） |
+| B | `3.0.3` | W4~W5 | `RuleSet`/引擎/`RulesRepository`/`Prefs` 集成 | ✅ 已并入 `main`：存量 44 例零回归，集成新增 7 例（合计 121 例） |
+| C | `3.1.0` | W5~W6 | 协议 v2：服务端字段 + 校验 + 契约夹具 + 管理后台 | `bun test` + `bun run typecheck` 绿；夹具双端一致 |
+| D | `3.1.0` | W6 | `SyncClient` 解析 + 点击结果校验状态机 + 黑名单 | 劫持场景单测绿 |
+| E | `3.2.0` | W7 | 快照工具 + 设置页入口 | 真机导出 JSON 可读 |
+| F | `3.3.0` | W7~W8 | Top 30 App 规则编写 + 真机回归 + 性能采样 | 验收指标（下节）全达标 |
 
 ## 11. 测试计划与验收
 
@@ -274,6 +274,8 @@ event.pkg 为其他应用                        → 判定劫持：
 3. `cd client && ./gradlew assembleDebug`、`./gradlew testDebugUnitTest`、`cd server && bun test`、`bun run typecheck` 全绿；
 4. 性能：128 条规则下 `findTarget` p99 < 8ms（中端真机 LogRing 采样）；
 5. 兼容：旧客户端对 schema 2 载荷行为不变（冒烟用例固化）。
+
+**验收分层（2026-09-26）**：步骤 C–E 以工程门禁为出口（CI 全绿 + 契约夹具一致 + 单测覆盖），上列第 1/2/4 条真机指标集中在 `3.3.0`（步骤 F）执行——避免真机验收阻塞协议与工具的发版。
 
 ## 12. 风险与回滚
 

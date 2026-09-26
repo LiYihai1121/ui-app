@@ -16,6 +16,7 @@
 
 | 版本 | Git tag | 对应提交 | GitHub Release | 状态 |
 | --- | --- | --- | --- | --- |
+| `3.0.3` | 未创建 | 待填（引擎内核已在 `main`：PR #12） | 未创建 | 待发布：选择器第三通道内核（步骤 A/B），版本节奏见 [ROADMAP.md](ROADMAP.md) |
 | `3.0.2` | [`v3.0.2`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.2) | `5b85e96` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.2) | 已创建，制品待补传 |
 | `3.0.1` | [`v3.0.1`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.1) | `b7ebabb` | 未创建 | 历史误指标签，不得复用 |
 | `3.0.0` | [`v3.0.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.0) | `b7ebabb` | 未创建 | 历史标签 |
