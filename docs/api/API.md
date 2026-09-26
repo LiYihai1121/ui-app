@@ -86,7 +86,7 @@
 | `1` | **当前** | 本页描述的 v1 载荷（`globalKeywords` / `globalViewIds` / `apps` / `disabled`） |
 | `2` | 规划（随 `3.1.0`） | 新增 `selectors` 字段（全局 + 应用级，类 CSS 选择器子集）；`MIN_SCHEMA_VERSION` 保持 1 |
 
-兼容约定：服务端按 `MIN` 校验、客户端按 `schemaVersion` 决定是否解析新字段；选择器是纯增量字段，服务端停发即回退 v1 行为，无数据迁移。语法、校验上限与契约夹具见 [DESIGN-PHASE1-SELECTOR.md](DESIGN-PHASE1-SELECTOR.md)（步骤 C）。
+兼容约定：服务端按 `MIN` 校验、客户端按 `schemaVersion` 决定是否解析新字段；选择器是纯增量字段，服务端停发即回退 v1 行为，无数据迁移。语法、校验上限与契约夹具见 [DESIGN-PHASE1-SELECTOR.md](../planning/DESIGN-PHASE1-SELECTOR.md)（步骤 C）。
 
 ## v0 兼容协议（旧客户端，形状不变）
 

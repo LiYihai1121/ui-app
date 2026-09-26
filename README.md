@@ -39,7 +39,7 @@
 - ✅ 协议 v1：ETag/304、批量上报、健康检查（旧 v0 路由兼容保留）
 - ✅ 优雅停机（SIGTERM/SIGINT → 落盘再退出）、CORS 白名单、规则备份轮转
 - ✅ 访问日志（内存 200 条，`/api/v1/admin/logs` 管理令牌查看）；请求体 1MiB 协议层上限 + `application/json` 强制
-- ✅ API 参考文档：[docs/API.md](docs/API.md)
+- ✅ API 参考文档：[docs/api/API.md](docs/api/API.md)
 
 ## 快速开始
 
@@ -81,7 +81,7 @@ SafetyGuard 安全护栏复核（黑名单/可见性/面积）
 
 防误触：同应用 1.2s 去抖、150ms 全局节流、单次遍历 ≤500 节点、忽略系统 UI、按应用禁用、SafetyGuard 硬编码黑名单。
 
-> 选择器第三通道（`engine/selector/`，类 CSS 子集：`[vid$=":id/skip_view"]`、`[text*="跳过"] > [vid$="id/iv_close"]`、`[desc^="跳过"] + [vid$="id/iv_close"]` 等）已在内核落地（步骤 A/B，方案见 [DESIGN-PHASE1-SELECTOR.md](docs/DESIGN-PHASE1-SELECTOR.md)）；服务端下发选择器规则后自动生效，当前发布版行为仍是上述「文本 + ViewID」双通道。发版节奏见 [ROADMAP.md](docs/ROADMAP.md)。
+> 选择器第三通道（`engine/selector/`，类 CSS 子集：`[vid$=":id/skip_view"]`、`[text*="跳过"] > [vid$="id/iv_close"]`、`[desc^="跳过"] + [vid$="id/iv_close"]` 等）已在内核落地（步骤 A/B，方案见 [DESIGN-PHASE1-SELECTOR.md](docs/planning/DESIGN-PHASE1-SELECTOR.md)）；服务端下发选择器规则后自动生效，当前发布版行为仍是上述「文本 + ViewID」双通道。发版节奏见 [ROADMAP.md](docs/planning/ROADMAP.md)。
 
 ## 工程结构
 
@@ -89,7 +89,7 @@ SafetyGuard 安全护栏复核（黑名单/可见性/面积）
 AdSkip/            # 全栈 monorepo
 ├── client/        # Android 客户端（Gradle 工程根：build.gradle.kts / settings.gradle.kts / gradle wrapper）
 ├── server/        # 后端（Bun + TypeScript，零运行时依赖）
-├── docs/          # 文档地图 README.md（规划事实源入口）/ ARCHITECTURE / API / ROADMAP / ROADMAP-ADS / DESIGN-PHASE1-SELECTOR / DEV-ENVIRONMENT / RELEASE-HISTORY
+├── docs/          # 文档地图 README.md（规划事实源入口）+ api/ architecture/ development/ planning/ diagrams/
 └── .github/       # CI 工作流
 
 client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，零第三方依赖）
@@ -153,7 +153,7 @@ server/                             # 后端（Bun + TypeScript，零运行时�
 └── data/                           # 运行时数据（不入库）：rules.json / stats/ / backups/
 ```
 
-详细设计见 [ARCHITECTURE.md](docs/ARCHITECTURE.md)。
+详细设计见 [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)。
 
 ## 构建与下载
 
@@ -201,7 +201,7 @@ bun run typecheck     # tsc --noEmit
 - 版本规则：遵循 SemVer；Android `versionCode` 全局单调递增，`versionName` 与服务端 `server/package.json` 版本保持一致；正式版本使用不可移动的 `vX.Y.Z` 标签。
 - 发布流程：`release/vX.Y.Z` 冻结验收，CI 根据 tag 生成可追溯制品并记录校验和；事故优先回滚已验证制品，修复通过 `hotfix/*` 发布。
 - 团队协作：提交格式、Pull Request 门禁、分支保护、发布和回滚规则见 [CONTRIBUTING.md](CONTRIBUTING.md)。
-- 功能路线以 [ROADMAP.md](docs/ROADMAP.md) 为准，架构与模块职责以 [ARCHITECTURE.md](docs/ARCHITECTURE.md) 为准，版本链路以 [RELEASE-HISTORY.md](docs/RELEASE-HISTORY.md) 为准；**文档入口与规划事实源见 [docs/README.md](docs/README.md)**。
+- 功能路线以 [ROADMAP.md](docs/planning/ROADMAP.md) 为准，架构与模块职责以 [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) 为准，版本链路以 [RELEASE-HISTORY.md](docs/planning/RELEASE-HISTORY.md) 为准；**文档入口与规划事实源见 [docs/README.md](docs/README.md)**。
 
 ## 合规提示
 

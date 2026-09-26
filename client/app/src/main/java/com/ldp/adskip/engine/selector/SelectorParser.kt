@@ -3,7 +3,7 @@ package com.ldp.adskip.engine.selector
 /**
  * 选择器解析器：字符串 → [SelectorAst]；任何非法输入返回 null，绝不抛异常（fail-safe）。
  *
- * 文法权威：docs/DESIGN-PHASE1-SELECTOR.md §3。两处已记录的处理偏差（见实现 PR）：
+ * 文法权威：docs/planning/DESIGN-PHASE1-SELECTOR.md §3。两处已记录的处理偏差（见实现 PR）：
  *  - 组合符两侧空白可选（接受文法 `WS combinator WS?` 的超集，`[a]>[b]` 亦合法）；
  *  - [AttrKey.CLICK] 仅允许 `=` 与存在性两种形态（值域仅 `true`/`false`），其余运算符解析期拒绝。
  */

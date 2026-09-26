@@ -6,7 +6,7 @@ import org.junit.Test
 /**
  * 解析器 JVM 单测：合法向量须得到结构正确的 AST，非法向量一律返回 null（不抛异常）。
  *
- * 文法权威：docs/DESIGN-PHASE1-SELECTOR.md §3。
+ * 文法权威：docs/planning/DESIGN-PHASE1-SELECTOR.md §3。
  */
 class SelectorParserTest {
 
