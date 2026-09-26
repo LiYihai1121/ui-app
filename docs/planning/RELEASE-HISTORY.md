@@ -17,7 +17,7 @@
 
 | 版本 | Git tag | 对应提交 | GitHub Release | 状态 |
 | --- | --- | --- | --- | --- |
-| `3.0.3` | 未创建 | 待填（引擎内核已在 `main`：PR #12） | 未创建 | 待发布：选择器第三通道内核（步骤 A/B），版本节奏见 [ROADMAP.md](ROADMAP.md) |
+| `3.0.3` | [`v3.0.3`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.3) | `958ce23` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.3) | 已发布（含未签名 Release APK 与 SHA256SUMS） |
 | `3.0.2` | [`v3.0.2`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.2) | `5b85e96` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.2) | 已创建，制品待补传 |
 | `3.0.1` | [`v3.0.1`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.1) | `b7ebabb` | 未创建 | 历史误指标签，不得复用 |
 | `3.0.0` | [`v3.0.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.0) | `b7ebabb` | 未创建 | 历史标签 |
@@ -64,6 +64,8 @@ Release list 的维护要求：版本变更、tag、合并提交和 GitHub Relea
 | 工作流 | `bdf31d5d328c9a146607bf4e3bdaa5e0dd84dcca` | branch-guard、权限和 CI 工作流 | 由后续合并提交收录 |
 | 历史整理 | `c5cdac70bfb0394013dea6baee1470860eaac820` | release/v2 历史合并 | `v3.0.0` 的祖先 |
 | v3.0 | `b7ebabb` | Bun/Compose 架构与文档收尾（**不在 `main` 线上**，见「发布基线说明」） | `v3.0.0`、`v3.0.1`（历史标签） |
+| v3.0.2 基线 | `5b85e96` | 规范化发布流程与版本对齐 | `v3.0.2` |
+| v3.0.3 | `958ce23` | L1 选择器第三通道内核（纯 JVM 增量） | `v3.0.3` |
 
 ## 验证命令
 
