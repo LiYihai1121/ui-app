@@ -9,6 +9,8 @@ export interface Config {
   ROOT: string;
   DATA_DIR: string;
   RULES_FILE: string;
+  /** 入库的初始规则种子；运行时 RULES_FILE 缺失时兜底（不随 dataDir 注入改变） */
+  SEED_RULES_FILE: string;
   STATS_DIR: string;
   PUBLIC_DIR: string;
   APK_FILE: string;
@@ -42,6 +44,7 @@ export const config: Config = {
   ROOT,
   DATA_DIR: path.join(ROOT, "data"),
   RULES_FILE: path.join(ROOT, "data", "rules.json"),
+  SEED_RULES_FILE: path.join(ROOT, "seed", "rules.json"),
   STATS_DIR: path.join(ROOT, "data", "stats"),
   PUBLIC_DIR: path.join(ROOT, "public"),
   APK_FILE: path.join(ROOT, "..", "AdSkip-latest.apk"),

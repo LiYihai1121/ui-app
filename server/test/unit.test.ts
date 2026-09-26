@@ -22,7 +22,13 @@ import {
   clientIp,
   _resetRateLimitForTests,
 } from "../src/middleware/rateLimit";
-import { statsSummary, _resetSummaryCacheForTests, _resetStatsCacheForTests } from "../src/storage/store";
+import {
+  getRules,
+  statsSummary,
+  _resetSummaryCacheForTests,
+  _resetStatsCacheForTests,
+  _resetRulesCacheForTests,
+} from "../src/storage/store";
 
 function req(headers: Record<string, string> = {}): Request {
   return new Request("http://localhost/", { headers });
@@ -296,6 +302,78 @@ describe("statsSummary", () => {
       config.STATS_DIR = savedDir;
       fs.rmSync(tmp, { recursive: true, force: true });
       _resetStatsCacheForTests();
+    }
+  });
+});
+
+describe("seed rules fallback", () => {
+  it("运行时规则文件缺失时回退到入库种子", () => {
+    const savedRulesFile = config.RULES_FILE;
+    const savedSeedFile = config.SEED_RULES_FILE;
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "adskip-seed-"));
+    fs.writeFileSync(
+      path.join(tmp, "seed.json"),
+      JSON.stringify({ keywords: ["种子词"], viewIds: ["seed_view"], packages: {}, version: 7 })
+    );
+    config.RULES_FILE = path.join(tmp, "missing-rules.json");
+    config.SEED_RULES_FILE = path.join(tmp, "seed.json");
+    try {
+      _resetRulesCacheForTests();
+      const r = getRules();
+      expect(r.keywords).toEqual(["种子词"]);
+      expect(r.version).toBe(7);
+      expect(r.schemaVersion).toBe(1); // v0 形状被兼容层补成 v1
+      expect(r.hash.startsWith("sha256:")).toBe(true);
+      expect(r.packages).toEqual({}); // legacy packages 指向 v1 apps
+      expect(fs.existsSync(config.RULES_FILE)).toBe(false); // 读路径无副作用
+    } finally {
+      config.RULES_FILE = savedRulesFile;
+      config.SEED_RULES_FILE = savedSeedFile;
+      _resetRulesCacheForTests();
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("种子也缺失时使用内置默认规则", () => {
+    const savedRulesFile = config.RULES_FILE;
+    const savedSeedFile = config.SEED_RULES_FILE;
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "adskip-seed-"));
+    config.RULES_FILE = path.join(tmp, "missing-rules.json");
+    config.SEED_RULES_FILE = path.join(tmp, "missing-seed.json");
+    try {
+      _resetRulesCacheForTests();
+      const r = getRules();
+      expect(r.keywords).toContain("跳过");
+      expect(r.version).toBe(1);
+      expect(r.hash.startsWith("sha256:")).toBe(true);
+    } finally {
+      config.RULES_FILE = savedRulesFile;
+      config.SEED_RULES_FILE = savedSeedFile;
+      _resetRulesCacheForTests();
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("运行时文件损坏时回退种子", () => {
+    const savedRulesFile = config.RULES_FILE;
+    const savedSeedFile = config.SEED_RULES_FILE;
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "adskip-seed-"));
+    fs.writeFileSync(path.join(tmp, "rules.json"), "{ not valid json");
+    fs.writeFileSync(
+      path.join(tmp, "seed.json"),
+      JSON.stringify({ keywords: ["兜底"], viewIds: [], packages: {}, version: 3 })
+    );
+    config.RULES_FILE = path.join(tmp, "rules.json");
+    config.SEED_RULES_FILE = path.join(tmp, "seed.json");
+    try {
+      _resetRulesCacheForTests();
+      const r = getRules();
+      expect(r.keywords).toEqual(["兜底"]);
+    } finally {
+      config.RULES_FILE = savedRulesFile;
+      config.SEED_RULES_FILE = savedSeedFile;
+      _resetRulesCacheForTests();
+      fs.rmSync(tmp, { recursive: true, force: true });
     }
   });
 });

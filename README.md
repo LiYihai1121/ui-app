@@ -145,9 +145,10 @@ server/                             # 后端（Bun + TypeScript，零运行时�
 │   ├── index.html                  # 产品落地页
 │   └── admin.html                  # 管理后台（登录 + diff 预览 + 规则模拟器）
 ├── test/
-│   ├── unit.test.ts                # 单元测试（validate/auth/rateLimit）
+│   ├── unit.test.ts                # 单元测试（validate/auth/rateLimit/种子兜底）
 │   └── smoke.test.ts               # 冒烟测试（in-process，全部路由 v0+v1）
-└── data/                           # rules.json（规则包）/ stats/（分日统计）/ backups/
+├── seed/rules.json                 # 初始规则种子（入库；运行时文件缺失时兜底）
+└── data/                           # 运行时数据（不入库）：rules.json / stats/ / backups/
 ```
 
 详细设计见 [ARCHITECTURE.md](docs/ARCHITECTURE.md)。
@@ -179,7 +180,7 @@ cd client
 ```bash
 cd server
 bun install
-bun test              # 单元 + 冒烟（51 项）
+bun test              # 单元 + 冒烟（54 项）
 bun run typecheck     # tsc --noEmit
 ```
 
