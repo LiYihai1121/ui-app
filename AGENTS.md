@@ -34,4 +34,10 @@
 - 通过完整 CI 和发布验收后，创建不可移动的带注释标签 `vX.Y.Z`，制品必须可追溯到 commit/tag 并记录校验和。
 - 禁止删除或移动已推送的版本标签；故障优先回滚已验证制品或使用 `git revert`，不得对受保护分支执行 reset 或 force-push。
 
+## 文档与规划
+
+- 文档入口与事实源见 [docs/README.md](docs/README.md)：版本序列以 `docs/ROADMAP.md` 为准，里程碑与出口条件见 `docs/ROADMAP-ADS.md`，技术步骤见 `docs/DESIGN-PHASE1-SELECTOR.md`，发布链路见 `docs/RELEASE-HISTORY.md`。
+- 改规划按「ROADMAP → ROADMAP-ADS / DESIGN → CHANGELOG / RELEASE-HISTORY」顺序更新；新增、改名或删除文档必须登记到文档地图。
+- 涉及协议或数据形态变更时，同步更新 `docs/API.md` 与 `docs/ARCHITECTURE.md`。
+
 每次开发开始前先确认分支和工作区状态；每次修改后先验证，再提交或创建 PR。

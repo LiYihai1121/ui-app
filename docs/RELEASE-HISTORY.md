@@ -8,6 +8,7 @@
 
 - [Release list](#release-list)
 - [链路结论](#链路结论)
+- [发布基线说明](#发布基线说明)
 - [关键提交](#关键提交)
 - [验证命令](#验证命令)
 - [后续规则](#后续规则)
@@ -44,6 +45,15 @@ Release list 的维护要求：版本变更、tag、合并提交和 GitHub Relea
 
 `c5cdac7` 是 `c5cdac70bfb0394013dea6baee1470860eaac820` 的短哈希。它同时包含两个父提交，属于正常的历史合并，不应通过重写历史来“修复”。
 
+## 发布基线说明
+
+- `v3.0.2`（提交 `5b85e96`）是当前**唯一可追溯的发布基线**：tag、提交与 GitHub Release 均在 `main` 线上。
+- `v3.0.0` 与 `v3.0.1` 是 annotated tag，两者都指向提交 `b7ebabb`；该提交**不是 `origin/main` 的祖先**（`git merge-base --is-ancestor b7ebabb origin/main` 返回非 0），只存在于远程分支 `docs/enterprise-version-governance`、`docs/repository-development-rules` 与本地 `main`。因此：
+  - 这两个 tag 不得作为发布基线，其 GitHub Release 不再补建；
+  - tag 保留不动（不删除、不移动），其指向的提交必须保持可达——承载该提交的两个远程分支**不得删除**；
+  - 版本号 `3.0.0` / `3.0.1` 不再复用。
+- 后续发布硬要求：tag 必须指向合并后的 `main` 提交，并由 [release.yml](../.github/workflows/release.yml) 校验 Android 与服务端版本一致性。
+
 ## 关键提交
 
 | 阶段 | 提交 | 内容 | 版本标签 |
@@ -53,7 +63,7 @@ Release list 的维护要求：版本变更、tag、合并提交和 GitHub Relea
 | v2.2 | `0a40728` | 安全、可测试性和协议增强 | `v2.2.0` |
 | 工作流 | `bdf31d5d328c9a146607bf4e3bdaa5e0dd84dcca` | branch-guard、权限和 CI 工作流 | 由后续合并提交收录 |
 | 历史整理 | `c5cdac70bfb0394013dea6baee1470860eaac820` | release/v2 历史合并 | `v3.0.0` 的祖先 |
-| v3.0 | `b7ebabb` | 当前 Bun/Compose 架构和文档收尾 | `v3.0.0` |
+| v3.0 | `b7ebabb` | Bun/Compose 架构与文档收尾（**不在 `main` 线上**，见「发布基线说明」） | `v3.0.0`、`v3.0.1`（历史标签） |
 
 ## 验证命令
 
@@ -77,3 +87,4 @@ git tag --contains c5cdac70bfb0394013dea6baee1470860eaac820
 - 发布版本以 annotated tag 为准，提交、标签和构建制品必须可以相互追溯。
 - 每次项目更迭完成后更新 `CHANGELOG.md` 和本页 `Release list`；正式版本必须创建新的 annotated tag，不得复用旧版本号。
 - 发布核对至少包括：版本号一致、Android `versionCode` 递增、tag 指向合并后的 `main`、GitHub Release 状态和 `SHA256SUMS` 已记录。
+- 发布 tag 必须指向合并后的 `main` 提交；指向非 `main` 提交的 tag 视为历史标签——不得补建 Release、不得复用版本号，其承载分支不得删除。

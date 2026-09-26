@@ -1,6 +1,8 @@
 # 净启动 AdSkip 产品路线图
 
 > 分层广告治理专项计划（覆盖 60+ 种广告类型的能力矩阵、分阶段计划与合规边界）见 [ROADMAP-ADS.md](ROADMAP-ADS.md)。
+>
+> 本页是**版本序列与能力意图的唯一事实源**：里程碑、周次与出口条件见 [ROADMAP-ADS.md](ROADMAP-ADS.md) 第 6 节，技术步骤见 [DESIGN-PHASE1-SELECTOR.md](DESIGN-PHASE1-SELECTOR.md) 第 10 节，文档入口见 [README.md](README.md)（文档地图）。
 
 ## ✅ v1.0 — 核心可用（已完成）
 

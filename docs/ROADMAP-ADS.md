@@ -1,6 +1,7 @@
 # 广告分层治理计划（ROADMAP-ADS）
 
 > 本文档是 [ROADMAP.md](ROADMAP.md) 的专项扩展：针对「国内手机软件广告类型大全」清单中的 60+ 种广告类型，制定分层治理方案。
+> 版本号以 [ROADMAP.md](ROADMAP.md) 为准，本页只维护里程碑、周次与出口条件；文档入口见 [README.md](README.md)（文档地图）。
 > 状态：Phase 1 进行中（步骤 A/B 已并入 main）；Phase 0（合规评审）待启动——L2/L3 启动未获批；最后更新：2026-09-26。
 
 ## 1. 背景与结论
@@ -59,7 +60,7 @@
   - 技术选型 ADR：L2 采用「本地 VpnService DNS（免 Root）」还是「外接 AdGuard Home」；L3 采用 LSPosed 模块还是独立 Root 方案。
 - **验收**：边界声明定稿；L2/L3 启动获批。
 
-### Phase 1 — L1 无障碍引擎增强（第 3~8 周，P0 核心）
+### Phase 1 — L1 无障碍点击层（引擎增强，第 3~8 周，P0 核心）
 
 > 详细技术方案（文法规范、匹配算法、协议 v2、改动清单、测试计划）见 [DESIGN-PHASE1-SELECTOR.md](DESIGN-PHASE1-SELECTOR.md)。
 
