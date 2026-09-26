@@ -102,10 +102,10 @@ client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，
 │   ├── logs/                      #   跳过日志 Screen + ViewModel
 │   └── settings/                  #   云同步设置 Screen + ViewModel
 ├── service/
-│   └── SkipAdService.kt            # 服务层（薄编排：事件/节流/点击/SafetyGuard）
-├── engine/
+│   ├── SkipAdService.kt            # 服务层（薄编排：事件/节流/点击/SafetyGuard）
+│   └── FrameworkAdNode.kt          # 框架适配（包装 AccessibilityNodeInfo；归 service 保 engine 纯 JVM）
+├── engine/                         # 纯 JVM：接口/引擎/护栏/规则集（可跑无 Android 单测）
 │   ├── AdNode.kt                   # 节点抽象接口（引擎不依赖框架类）
-│   ├── FrameworkAdNode.kt          # 框架适配（包装 AccessibilityNodeInfo）
 │   ├── SafetyGuard.kt              # 安全护栏（黑名单/合法性）
 │   ├── SkipRuleEngine.kt           # 引擎层（纯匹配逻辑，文本+ViewID 双通道）
 │   └── RuleSet.kt                  # 规则集模型（+ schemaVersion）
@@ -118,7 +118,7 @@ client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，
 └── sync/
     └── SyncJobService.kt           # JobScheduler 定时同步（三合一，跨重启持久化）
 
-client/app/src/test/java/com/ldp/adskip/   # JVM 单测（FakeAdNode + 引擎/护栏测试，37 项）
+client/app/src/test/java/com/ldp/adskip/   # JVM 单测（引擎/护栏/日志环/事件总线，44 项）
 
 server/                             # 后端（Bun + TypeScript，零运行时依赖）
 ├── server.ts                       # Bun.serve 入口、路由分发、优雅停机
@@ -202,3 +202,9 @@ bun run typecheck     # tsc --noEmit
 
 > 1. 此类工具不符合 Google Play 对 AccessibilityService 的审核口径，分发以 APK 自建渠道为准，不上架应用商店。
 > 2. **隐私声明**：数据默认不出本机。上报为可选且仅含包名、时间戳和匹配通道（text/viewId），不含任何用户隐私数据。服务端无账号体系，统计仅存自建服务端。
+
+## 许可证
+
+本项目以 [GNU 通用公共许可证第三版（GPL-3.0）](LICENSE) 发布。在保留版权声明的前提下，你可以自由使用、修改与分发本项目；衍生作品须以 GPL-3.0 继续开源。
+
+选择 GPL-3.0 的理由：本项目定位为「自建服务端 + 个人设备使用」的非商业工具，强传染性许可证可防止闭源商用套壳，并与主流自建服务生态（AdGuard Home、AdAway 等同为 GPL-3.0）保持一致。如需其他授权安排，请联系作者。
