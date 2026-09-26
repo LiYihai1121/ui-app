@@ -4,6 +4,16 @@
 
 > 与开源项目 GKD / 李跳跳 属同类技术方案。
 
+## 目录
+
+- [功能（v3.0）](#功能v30)
+- [快速开始](#快速开始)
+- [技术原理](#技术原理)
+- [工程结构](#工程结构)
+- [构建与下载](#构建与下载)
+- [分支与版本](#分支与版本)
+- [合规提示](#合规提示)
+
 ## 功能（v3.0）
 
 ### Android 客户端（Kotlin + Jetpack Compose，MVVM）
@@ -138,13 +148,15 @@ server/                             # 后端（Bun + TypeScript，零运行时�
 
 详细设计见 [ARCHITECTURE.md](docs/ARCHITECTURE.md)。
 
-## 构建
+## 构建与下载
+
+### Android 客户端
 
 ```bash
-# Android 客户端（Gradle 工程根在 client/）
+# Debug 构建
 cd client
 ./gradlew assembleDebug
-# 产物: client/app/build/outputs/apk/debug/app-debug.apk（发布时重命名版本号）
+# 产物: client/app/build/outputs/apk/debug/app-debug.apk
 
 # Release 封装（R8 混淆）
 # 签名参数写在 client/local.properties（不入库）：
@@ -154,19 +166,27 @@ cd client
 ./gradlew assembleRelease
 # CI 发布使用同样的 Release 变体；由于签名密钥不进入仓库，GitHub Release 默认上传未签名 APK
 
-# 客户端 JVM 单测
+# JVM 单测
 ./gradlew testDebugUnitTest
+```
 
-# 服务端测试与类型检查
-cd ../server
+### 服务端
+
+```bash
+cd server
 bun install
 bun test              # 单元 + 冒烟（51 项）
 bun run typecheck     # tsc --noEmit
 ```
 
-要求：JDK 17+、Android SDK（compileSdk 35）、Bun 1.1+（服务端）。Android 部分也可直接用 Android Studio / IntelliJ 打开 `client/` 目录。
+### 分发与下载
 
-> 本地发布副本可放在仓库根并命名 `AdSkip-latest.apk`，服务端 `/download` 路由会直接提供下载（配合手机浏览器访问 `http://<本机IP>:3210/download`）。GitHub Release 由版本 tag 自动创建，上传 R8 Release APK 和 `SHA256SUMS`；正式发布前需要在受信任环境完成签名。
+| 渠道 | 说明 |
+| --- | --- |
+| 本地副本 | 将 Release APK 放在仓库根并命名为 `AdSkip-latest.apk`；服务端 `/download` 路由直接提供下载，手机浏览器访问 `http://<本机IP>:3210/download` 即可。 |
+| GitHub Release | 由版本 tag 自动创建，上传 R8 Release APK 和 `SHA256SUMS`；正式发布前需要在受信任环境完成签名。 |
+
+要求：JDK 17+、Android SDK（compileSdk 35）、Bun 1.1+（服务端）。Android 部分也可直接用 Android Studio / IntelliJ 打开 `client/` 目录。
 
 ## 分支与版本
 

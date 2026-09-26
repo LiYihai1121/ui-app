@@ -4,6 +4,14 @@
 
 标签发布由 [.github/workflows/release.yml](../.github/workflows/release.yml) 自动执行：先校验 annotated tag、提交对象和 Android/服务端版本一致性，再构建 R8 Release 变体、运行服务端检查、生成 APK SHA-256 校验和并创建 GitHub Release。CI 不持有签名密钥，因此上传的是未签名 APK；正式分发前必须在受信任环境签名。目标分支保护和发布前合并要求由仓库规则及 GitHub 分支保护执行。
 
+## 目录
+
+- [Release list](#release-list)
+- [链路结论](#链路结论)
+- [关键提交](#关键提交)
+- [验证命令](#验证命令)
+- [后续规则](#后续规则)
+
 ## Release list
 
 | 版本 | Git tag | 对应提交 | GitHub Release | 状态 |
