@@ -1,0 +1,22 @@
+# EditorConfig: https://editorconfig.org
+# 缩进/字符集/空白约定；行尾策略由 .gitattributes 管辖（仓库内一律 LF）。
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+
+[*.{kt,kts}]
+indent_size = 4
+
+[*.{ts,js,json,yml,yaml}]
+indent_size = 2
+
+[*.md]
+# Markdown 结尾两个空格是硬换行语法，不裁剪
+trim_trailing_whitespace = false
+
+[*.{bat,cmd}]
+end_of_line = crlf
