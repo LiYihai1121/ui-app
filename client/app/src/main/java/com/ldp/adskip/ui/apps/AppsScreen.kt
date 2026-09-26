@@ -48,8 +48,7 @@ fun AppsScreen(
     onBack: () -> Unit,
     viewModel: AppsViewModel = viewModel(factory = AppsViewModel.Factory)
 ) {
-    val items by viewModel.items.collectAsStateWithLifecycle()
-    val loading by viewModel.loading.collectAsStateWithLifecycle()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -77,7 +76,7 @@ fun AppsScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
-            if (loading && items.isEmpty()) {
+            if (state.loading && state.items.isEmpty()) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -89,7 +88,7 @@ fun AppsScreen(
                 }
             } else {
                 LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
-                    items(items, key = { it.pkg }) { row ->
+                    items(state.items, key = { it.pkg }) { row ->
                         AppRowItem(row = row, onToggle = viewModel::setEnabled)
                     }
                 }

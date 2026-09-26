@@ -6,8 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.ldp.adskip.data.Prefs
-import com.ldp.adskip.sync.SyncJobService
 import com.ldp.adskip.ui.apps.AppsScreen
 import com.ldp.adskip.ui.home.HomeScreen
 import com.ldp.adskip.ui.logs.LogsScreen
@@ -24,8 +22,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 兜底：持久化 Job 因厂商 ROM 清理丢失时重新注册
-        if (Prefs.isAutoSyncEnabled(this)) SyncJobService.schedule(this)
+        // 自动同步 Job 的兜底重注册在组合根 AdskipApp.onCreate 中完成
 
         setContent {
             AdskipTheme {

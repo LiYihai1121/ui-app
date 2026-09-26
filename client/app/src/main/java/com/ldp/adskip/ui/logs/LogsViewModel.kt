@@ -16,18 +16,24 @@ import java.util.Locale
 
 /**
  * 跳过日志页状态：最近 200 笔自动跳过记录。
+ *
+ * 单向数据流：列表聚合为一个 [UiState]（本页无一次性 Effect）。
  */
 class LogsViewModel(private val container: AppContainer) : ViewModel() {
 
-    private val _logs = MutableStateFlow<List<StatsRepository.LogEntry>>(emptyList())
-    val logs: StateFlow<List<StatsRepository.LogEntry>> = _logs
+    data class UiState(
+        val logs: List<StatsRepository.LogEntry> = emptyList()
+    )
+
+    private val _uiState = MutableStateFlow(UiState())
+    val uiState: StateFlow<UiState> = _uiState
 
     init {
         reload()
     }
 
     fun reload() {
-        _logs.value = container.statsRepo.logs()
+        _uiState.value = UiState(container.statsRepo.logs())
     }
 
     fun clear() {
