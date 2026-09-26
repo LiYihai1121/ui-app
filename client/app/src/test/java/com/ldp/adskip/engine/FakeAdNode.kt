@@ -20,6 +20,21 @@ class FakeAdNode(
     private val clickResult: Boolean = true
 ) : AdNode {
 
+    private var parentNode: FakeAdNode? = null
+
+    init {
+        // 构造时回填父子关系（children 先于 parent 构造，由父节点 init 统一接线）
+        childList.forEach { it.parentNode = this }
+    }
+
+    override val parent: AdNode? get() = parentNode
+
+    override fun previousSibling(): AdNode? {
+        val p = parentNode ?: return null
+        val index = p.childList.indexOf(this) // FakeAdNode 未覆写 equals → 引用相等
+        return if (index > 0) p.childList[index - 1] else null
+    }
+
     override fun children(): List<AdNode> = childList.toList()
     override fun clickableParent(): AdNode? = null
     override fun centerX(): Float = cx

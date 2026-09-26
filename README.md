@@ -107,8 +107,12 @@ client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，
 ├── engine/                         # 纯 JVM：接口/引擎/护栏/规则集（可跑无 Android 单测）
 │   ├── AdNode.kt                   # 节点抽象接口（引擎不依赖框架类）
 │   ├── SafetyGuard.kt              # 安全护栏（黑名单/合法性）
-│   ├── SkipRuleEngine.kt           # 引擎层（纯匹配逻辑，文本+ViewID 双通道）
-│   └── RuleSet.kt                  # 规则集模型（+ schemaVersion）
+│   ├── SkipRuleEngine.kt           # 引擎层（纯匹配逻辑，文本/ViewID/选择器 三通道）
+│   ├── RuleSet.kt                  # 规则集模型（keywords/viewIds/selectors + schemaVersion）
+│   └── selector/                   # 选择器引擎（类 CSS 子集，纯 JVM）
+│       ├── SelectorAst.kt          #   AST（组合符/属性断言/CompoundSelector）
+│       ├── SelectorParser.kt       #   解析器（非法输入返回 null，fail-safe）
+│       └── SelectorMatcher.kt      #   右到左求值（祖先/子/前兄弟关系匹配）
 ├── data/
 │   ├── Prefs.kt                    # 存储原语（SharedPreferences + deviceId + rulesHash）
 │   ├── RulesRepository.kt          # 规则仓库（LruCache 缓存/版本失效/schemaVersion 校验）
@@ -118,7 +122,7 @@ client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，
 └── sync/
     └── SyncJobService.kt           # JobScheduler 定时同步（三合一，跨重启持久化）
 
-client/app/src/test/java/com/ldp/adskip/   # JVM 单测（引擎/护栏/日志环/事件总线，44 项）
+client/app/src/test/java/com/ldp/adskip/   # JVM 单测（引擎/护栏/日志环/事件总线/选择器，121 项）
 
 server/                             # 后端（Bun + TypeScript，零运行时依赖）
 ├── server.ts                       # Bun.serve 入口、路由分发、优雅停机

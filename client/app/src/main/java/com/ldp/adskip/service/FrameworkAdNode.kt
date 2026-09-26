@@ -32,6 +32,29 @@ class FrameworkAdNode(
         return out
     }
 
+    override val parent: AdNode?
+        get() = node.parent?.let { FrameworkAdNode(it, maxDepth) }
+
+    /**
+     * 相邻前一个兄弟：沿父节点子列表用 [AccessibilityNodeInfo.equals] 定位自身，返回前一节点。
+     *
+     * 说明（DESIGN-PHASE1 §5.3）：`indexInParent` / `sourceNodeId` 均非公开 API，
+     * 故实现即设计文档的 equals 主路径（官方 API 21+ 覆写为 windowId+nodeId 比对）。
+     * 真机抽测如 equals 不可靠，按预案下线 `+` 组合符（语法保留、匹配恒 false）。
+     */
+    override fun previousSibling(): AdNode? {
+        val parentNode = node.parent ?: return null
+        var prev: AccessibilityNodeInfo? = null
+        for (i in 0 until parentNode.childCount) {
+            val child = parentNode.getChild(i) ?: continue
+            if (child == node) {
+                return prev?.let { FrameworkAdNode(it, maxDepth) }
+            }
+            prev = child
+        }
+        return null
+    }
+
     override fun clickableParent(): AdNode? {
         var current: AccessibilityNodeInfo? = node
         var depth = 0
