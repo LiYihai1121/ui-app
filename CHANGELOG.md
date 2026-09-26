@@ -2,7 +2,7 @@
 
 本文件记录面向用户和运维的版本变更。版本号遵循 Semantic Versioning，正式版本标签以 Git 中的 `vX.Y.Z` 为准。
 
-版本与提交的完整对应关系见 [发布历史与提交链路](docs/RELEASE-HISTORY.md)。
+版本与提交的完整对应关系见 [发布历史与提交链路](docs/planning/RELEASE-HISTORY.md)。
 
 ## 目录
 
@@ -27,7 +27,7 @@
 
 - 原规划的 `3.1.0`「L1 引擎 + 快照工具 + Top 30 规则」大礼包里程碑**已剥离**，改为增量发版：
   `3.0.3`（引擎内核）→ `3.1.0`（协议 v2 + 点击校验）→ `3.2.0`（快照工具）→ `3.3.0`（Top 30 规则与真机验收）→ `3.4.0` / `3.5.0` / `4.0.0`（L2 / L3 / L4）。
-- 详见 [docs/ROADMAP.md](docs/ROADMAP.md) 与 [docs/ROADMAP-ADS.md](docs/ROADMAP-ADS.md)；技术方案与步骤划分见 [docs/DESIGN-PHASE1-SELECTOR.md](docs/DESIGN-PHASE1-SELECTOR.md)。
+- 详见 [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md) 与 [docs/planning/ROADMAP-ADS.md](docs/planning/ROADMAP-ADS.md)；技术方案与步骤划分见 [docs/planning/DESIGN-PHASE1-SELECTOR.md](docs/planning/DESIGN-PHASE1-SELECTOR.md)。
 
 ## [3.0.2] - 2026-09-04
 

@@ -36,8 +36,8 @@
 
 ## 文档与规划
 
-- 文档入口与事实源见 [docs/README.md](docs/README.md)：版本序列以 `docs/ROADMAP.md` 为准，里程碑与出口条件见 `docs/ROADMAP-ADS.md`，技术步骤见 `docs/DESIGN-PHASE1-SELECTOR.md`，发布链路见 `docs/RELEASE-HISTORY.md`。
+- 文档入口与事实源见 [docs/README.md](docs/README.md)：版本序列以 `docs/planning/ROADMAP.md` 为准，里程碑与出口条件见 `docs/planning/ROADMAP-ADS.md`，技术步骤见 `docs/planning/DESIGN-PHASE1-SELECTOR.md`，发布链路见 `docs/planning/RELEASE-HISTORY.md`。
 - 改规划按「ROADMAP → ROADMAP-ADS / DESIGN → CHANGELOG / RELEASE-HISTORY」顺序更新；新增、改名或删除文档必须登记到文档地图。
-- 涉及协议或数据形态变更时，同步更新 `docs/API.md` 与 `docs/ARCHITECTURE.md`。
+- 涉及协议或数据形态变更时，同步更新 `docs/api/API.md` 与 `docs/architecture/ARCHITECTURE.md`。
 
 每次开发开始前先确认分支和工作区状态；每次修改后先验证，再提交或创建 PR。

@@ -50,7 +50,8 @@
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-> 节点匹配有**三条通道**：文本/描述关键词、控件 ViewID、选择器（`engine/selector/`，类 CSS 子集）。分层职责见第 2 节，技术方案见 [DESIGN-PHASE1-SELECTOR.md](DESIGN-PHASE1-SELECTOR.md)。
+> 架构图源文件 [diagrams/adskip-architecture.json](../diagrams/adskip-architecture.json)，浏览器渲染版 [diagrams/adskip-architecture.html](../diagrams/adskip-architecture.html)。
+> 节点匹配有**三条通道**：文本/描述关键词、控件 ViewID、选择器（`engine/selector/`，类 CSS 子集）。分层职责见第 2 节，技术方案见 [DESIGN-PHASE1-SELECTOR.md](../planning/DESIGN-PHASE1-SELECTOR.md)。
 
 ## 2. 客户端分层职责
 
@@ -149,7 +150,7 @@ Doze 模式 → 系统推迟到维护窗口执行
 | --- | --- | --- |
 | v0（兼容期） | `/api/rules/latest`, `/api/rules`, `/api/skip`, `/api/stats/summary` | 旧客户端无感 |
 | v1（当前） | `/api/v1/rules/latest` (ETag/304), `/api/v1/rules`, `/api/v1/reports/batch`, `/api/v1/rules/test`, `/api/v1/stats/summary`, `/api/v1/health` | 新增 schemaVersion/hash/ETag/批量上报 |
-| v2（规划，随 `3.1.0`） | 复用 v1 路由，仅扩展载荷 | `schemaVersion` 升 2：新增 `selectors` 字段（全局 + 应用级）；`MIN_SCHEMA_VERSION` 保持 1，旧客户端忽略未知字段、行为不变。方案见 [DESIGN-PHASE1-SELECTOR.md](DESIGN-PHASE1-SELECTOR.md) 步骤 C |
+| v2（规划，随 `3.1.0`） | 复用 v1 路由，仅扩展载荷 | `schemaVersion` 升 2：新增 `selectors` 字段（全局 + 应用级）；`MIN_SCHEMA_VERSION` 保持 1，旧客户端忽略未知字段、行为不变。方案见 [DESIGN-PHASE1-SELECTOR.md](../planning/DESIGN-PHASE1-SELECTOR.md) 步骤 C |
 
 ## 8. 设计决策
 
@@ -213,6 +214,6 @@ AdSkip/                            全栈 monorepo
 │   ├── test/                     bun:test 单元 + 冒烟
 │   ├── server.ts                 入口（Bun.serve）
 │   └── public/                   落地页 + 管理后台
-├── docs/                         README.md（文档地图）/ API.md / ARCHITECTURE.md / DESIGN-PHASE1-SELECTOR.md / DEV-ENVIRONMENT.md / RELEASE-HISTORY.md / ROADMAP.md / ROADMAP-ADS.md
+├── docs/                         README.md（文档地图）+ api/ architecture/ development/ planning/ diagrams/
 └── .github/workflows/ci.yml     CI：Android Build + Bun Server Tests
 ```

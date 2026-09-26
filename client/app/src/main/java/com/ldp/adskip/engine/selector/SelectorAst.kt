@@ -4,7 +4,7 @@ import com.ldp.adskip.engine.AdNode
 import java.util.Locale
 
 /**
- * 选择器 AST（纯数据结构；文法见 docs/DESIGN-PHASE1-SELECTOR.md §3）。
+ * 选择器 AST（纯数据结构；文法见 docs/planning/DESIGN-PHASE1-SELECTOR.md §3）。
  *
  * ```text
  * selector := compound (WS combinator WS? compound)*

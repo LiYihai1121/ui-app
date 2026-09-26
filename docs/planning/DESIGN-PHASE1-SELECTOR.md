@@ -241,7 +241,7 @@ event.pkg 为其他应用                        → 判定劫持：
 | server | `types/rules.ts` / `validate.ts` / `config.ts` / `storage/store.ts` | selectors 字段全链路 |
 | server | `public/admin.html` | 选择器编辑文本域 |
 | server | `test/fixtures/selectors.contract.json` + 单测/冒烟 | 契约夹具 + ≥8 例 |
-| docs | `docs/API.md` / `ARCHITECTURE.md` | schema v2 与第三通道说明 |
+| docs | `docs/api/API.md` / `docs/architecture/ARCHITECTURE.md` | schema v2 与第三通道说明 |
 
 **不动**：`SafetyGuard`（判定语义只增不改）、v0 路由、上报协议、`SyncJobService`。
 
