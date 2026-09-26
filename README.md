@@ -89,7 +89,7 @@ SafetyGuard 安全护栏复核（黑名单/可见性/面积）
 AdSkip/            # 全栈 monorepo
 ├── client/        # Android 客户端（Gradle 工程根：build.gradle.kts / settings.gradle.kts / gradle wrapper）
 ├── server/        # 后端（Bun + TypeScript，零运行时依赖）
-├── docs/          # ARCHITECTURE.md / ROADMAP.md
+├── docs/          # 文档地图 README.md（规划事实源入口）/ ARCHITECTURE / API / ROADMAP / ROADMAP-ADS / DESIGN-PHASE1-SELECTOR / DEV-ENVIRONMENT / RELEASE-HISTORY
 └── .github/       # CI 工作流
 
 client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，零第三方依赖）
@@ -201,7 +201,7 @@ bun run typecheck     # tsc --noEmit
 - 版本规则：遵循 SemVer；Android `versionCode` 全局单调递增，`versionName` 与服务端 `server/package.json` 版本保持一致；正式版本使用不可移动的 `vX.Y.Z` 标签。
 - 发布流程：`release/vX.Y.Z` 冻结验收，CI 根据 tag 生成可追溯制品并记录校验和；事故优先回滚已验证制品，修复通过 `hotfix/*` 发布。
 - 团队协作：提交格式、Pull Request 门禁、分支保护、发布和回滚规则见 [CONTRIBUTING.md](CONTRIBUTING.md)。
-- 功能路线以 [ROADMAP.md](docs/ROADMAP.md) 为准，架构与模块职责以 [ARCHITECTURE.md](docs/ARCHITECTURE.md) 为准，版本链路以 [RELEASE-HISTORY.md](docs/RELEASE-HISTORY.md) 为准。
+- 功能路线以 [ROADMAP.md](docs/ROADMAP.md) 为准，架构与模块职责以 [ARCHITECTURE.md](docs/ARCHITECTURE.md) 为准，版本链路以 [RELEASE-HISTORY.md](docs/RELEASE-HISTORY.md) 为准；**文档入口与规划事实源见 [docs/README.md](docs/README.md)**。
 
 ## 合规提示
 

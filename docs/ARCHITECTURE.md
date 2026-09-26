@@ -48,7 +48,9 @@
 │  data/rules.json     规则包      data/stats/  分日统计            │
 │  data/backups/       规则备份轮转                                 │
 └─────────────────────────────────────────────────────────────────┘
-```text
+```
+
+> 节点匹配有**三条通道**：文本/描述关键词、控件 ViewID、选择器（`engine/selector/`，类 CSS 子集）。分层职责见第 2 节，技术方案见 [DESIGN-PHASE1-SELECTOR.md](DESIGN-PHASE1-SELECTOR.md)。
 
 ## 2. 客户端分层职责
 
@@ -65,7 +67,7 @@
 **关键设计**：
 - **MVVM + StateFlow**：ViewModel 通过 `viewModelFactory { initializer { } }` 从 `AppContainer` 取依赖，暴露 `StateFlow` 给 Compose `collectAsStateWithLifecycle()`。
 - **AppEvents**：`Service` 层通过 `AppEvents.setServiceRunning()` / `AppEvents.emitSkipped()` 推送状态，ViewModel 通过 `StateFlow` / `SharedFlow` 收集，取代旧架构中 UI 直接注册 `BroadcastReceiver` 的方式。
-- **RulesRepository.ruleSetFor(pkg)** 是规则的唯一组装点——全局关键词 + 应用专属关键词 + 全局 ViewID + 应用专属 ViewID + 禁用开关，合并为一个不可变的 `RuleSet` 交给引擎。
+- **RulesRepository.ruleSetFor(pkg)** 是规则的唯一组装点——全局关键词 + 应用专属关键词 + 全局 ViewID + 应用专属 ViewID + 选择器（全局/应用级，`3.0.3` 起）+ 禁用开关，合并为一个不可变的 `RuleSet` 交给引擎。
 
 ## 3. 数据流
 
@@ -147,6 +149,7 @@ Doze 模式 → 系统推迟到维护窗口执行
 | --- | --- | --- |
 | v0（兼容期） | `/api/rules/latest`, `/api/rules`, `/api/skip`, `/api/stats/summary` | 旧客户端无感 |
 | v1（当前） | `/api/v1/rules/latest` (ETag/304), `/api/v1/rules`, `/api/v1/reports/batch`, `/api/v1/rules/test`, `/api/v1/stats/summary`, `/api/v1/health` | 新增 schemaVersion/hash/ETag/批量上报 |
+| v2（规划，随 `3.1.0`） | 复用 v1 路由，仅扩展载荷 | `schemaVersion` 升 2：新增 `selectors` 字段（全局 + 应用级）；`MIN_SCHEMA_VERSION` 保持 1，旧客户端忽略未知字段、行为不变。方案见 [DESIGN-PHASE1-SELECTOR.md](DESIGN-PHASE1-SELECTOR.md) 步骤 C |
 
 ## 8. 设计决策
 
@@ -167,6 +170,8 @@ Doze 模式 → 系统推迟到维护窗口执行
 | 新增 API | `src/api/` 加路由文件 + `api/index.ts` 加分发 |
 | 客户端换网络库 | 只改 `net/SyncClient` 内部实现 |
 | 新增安全黑名单词 | `engine/SafetyGuard.DENY_WORDS` |
+
+> 选择器通道（`3.0.3` 内核）即按上表第一行「新匹配通道」的路径落地：`RuleSet` 增 `selectors` 字段 + `SkipRuleEngine` 增通道分支 + 新增 `engine/selector/` 子包，未改动既有两通道语义。
 
 ## 10. 测试
 
@@ -192,7 +197,8 @@ AdSkip/                            全栈 monorepo
 │       ├── ui/                   Compose UI（单 Activity + 4 Screen + ViewModel）
 │       ├── core/                 AppEvents / Clock / AppExecutors / LogRing
 │       ├── service/              SkipAdService + FrameworkAdNode（无障碍服务/节点适配）
-│       ├── engine/               规则引擎（纯 JVM 可测）
+│       ├── engine/               规则引擎（纯 JVM 可测：AdNode / RuleSet / SkipRuleEngine / SafetyGuard）
+│       │   └── selector/         选择器引擎（SelectorAst / SelectorParser / SelectorMatcher）
 │       ├── data/                 Prefs / RulesRepository / StatsRepository
 │       ├── net/                  SyncClient
 │       └── sync/                 SyncJobService
@@ -207,6 +213,6 @@ AdSkip/                            全栈 monorepo
 │   ├── test/                     bun:test 单元 + 冒烟
 │   ├── server.ts                 入口（Bun.serve）
 │   └── public/                   落地页 + 管理后台
-├── docs/                         API.md / ARCHITECTURE.md / DESIGN-PHASE1-SELECTOR.md / DEV-ENVIRONMENT.md / RELEASE-HISTORY.md / ROADMAP.md / ROADMAP-ADS.md
+├── docs/                         README.md（文档地图）/ API.md / ARCHITECTURE.md / DESIGN-PHASE1-SELECTOR.md / DEV-ENVIRONMENT.md / RELEASE-HISTORY.md / ROADMAP.md / ROADMAP-ADS.md
 └── .github/workflows/ci.yml     CI：Android Build + Bun Server Tests
 ```
