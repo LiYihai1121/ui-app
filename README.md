@@ -1,5 +1,9 @@
 # 净启动 AdSkip
 
+[![CI](https://github.com/LiYihai1121/ui-app/actions/workflows/ci.yml/badge.svg)](https://github.com/LiYihai1121/ui-app/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/LiYihai1121/ui-app?sort=semver)](https://github.com/LiYihai1121/ui-app/releases)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+
 一个自动跳过 Android 应用开屏广告的**全栈**工具：Android 客户端（无障碍服务）+ 自建后端（规则中心 / 统计 / 管理后台）。
 
 > 与开源项目 GKD / 李跳跳 属同类技术方案。
@@ -13,6 +17,7 @@
 - [构建与下载](#构建与下载)
 - [分支与版本](#分支与版本)
 - [合规提示](#合规提示)
+- [许可证](#许可证)
 
 ## 功能（v3.0）
 
@@ -43,14 +48,22 @@
 
 ## 快速开始
 
-### 1. 安装客户端
+### 获取安装包
 
-构建 APK 传到手机安装（Android 8.0+），打开后：
+| 渠道 | 说明 |
+| --- | --- |
+| [GitHub Releases](https://github.com/LiYihai1121/ui-app/releases) | 下载最新 `AdSkip-vX.Y.Z.apk` 与 `SHA256SUMS`；安装前注意事项见 [分发与下载](#分发与下载) |
+| 本地构建 | 见 [构建与下载](#构建与下载)，签名配置就绪后 `assembleRelease` 直接产出可安装包 |
 
-1. 点「打开无障碍设置」→ 开启「净启动 AdSkip」服务
-2. （建议）将应用加入电池优化白名单，防止后台被清理
-3. 点「云端规则同步」→ 服务器地址填 `http://<本机IP>:3210` → 「立即同步云端规则」
-4. 打开任意带开屏广告的 App 即可自动跳过；可先用「测试：模拟开屏广告」验证
+### 安装与配置（Android 8.0+）
+
+1. 安装 APK 后打开应用
+2. 点「打开无障碍设置」→ 开启「净启动 AdSkip」服务
+3. （建议）将应用加入电池优化白名单，防止后台被清理
+4. 点「云端规则同步」→ 服务器地址填 `http://<本机IP>:3210` → 「立即同步云端规则」
+5. 打开任意带开屏广告的 App 即可自动跳过；可先用「测试：模拟开屏广告」验证
+
+> 仅用本地内置规则时无需后端，跳过功能开箱即用；自建后端（规则下发 / 统计 / 管理后台）的启动步骤见 [DEV-ENVIRONMENT.md](docs/development/DEV-ENVIRONMENT.md)。
 
 ## 技术原理
 
@@ -179,7 +192,9 @@ bun run typecheck     # tsc --noEmit
 | 渠道 | 说明 |
 | --- | --- |
 | 本地副本 | 将 Release APK 放在仓库根并命名为 `AdSkip-latest.apk`；服务端 `/download` 路由直接提供下载，手机浏览器访问 `http://<本机IP>:3210/download` 即可。 |
-| GitHub Release | 由版本 tag 自动创建，上传 R8 Release APK 和 `SHA256SUMS`；正式发布前需要在受信任环境完成签名。 |
+| GitHub Release | 由版本 tag 自动创建，上传 R8 Release APK 和 `SHA256SUMS`；**CI 不持有签名密钥，产物为未签名包**，安装前需先在受信任环境签名（或直接使用本地 `assembleRelease` 产出的已签名包）。 |
+
+> 安装 Release 包若提示「应用未安装 / 签名冲突」：未签名包需先在受信任环境签名后再安装；与手机上旧的 debug 签名版冲突时，先卸载 `com.ldp.adskip` 再安装。
 
 要求：JDK 17+、Android SDK（compileSdk 35）、Bun 1.1+（服务端）。Android 部分也可直接用 Android Studio / IntelliJ 打开 `client/` 目录。
 
