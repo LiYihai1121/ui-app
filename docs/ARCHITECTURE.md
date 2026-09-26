@@ -10,9 +10,9 @@
 │  ├ MainActivity（单 Activity）   SkipAdService   SkipRuleEngine  │
 │  ├ Navigation Compose           （薄编排层）───▶（纯匹配逻辑）    │
 │  │  ├ HomeScreen + VM                │         ├ AdNode（接口）  │
-│  │  ├ AppsScreen + VM                │         ├ FrameworkAdNode │
-│  │  ├ LogsScreen + VM                │         ├ SafetyGuard     │
-│  │  └ SettingsScreen + VM            │         └ RuleSet         │
+│  │  ├ AppsScreen + VM                │         ├ SafetyGuard     │
+│  │  ├ LogsScreen + VM                │         └ RuleSet         │
+│  │  └ SettingsScreen + VM            │                           │
 │  │  └ AppEvents（进程内状态总线）      │                          │
 │  │                                    ▼                          │
 │  │                              data/                            │
@@ -55,7 +55,7 @@
 | 层 | 模块 | 职责 | 不做的事 |
 | --- | --- | --- | --- |
 | **ui/** | 4 个 Composable Screen + ViewModel | 声明式 UI 与状态管理，通过 StateFlow 驱动 UI | 不直接读 SharedPreferences、不碰网络 |
-| **service/** | SkipAdService | 事件接收、节流去抖、点击执行 | 不含匹配规则逻辑、不做安全裁决 |
+| **service/** | SkipAdService + FrameworkAdNode | 事件接收、节流去抖、点击执行、AccessibilityNodeInfo 节点适配 | 不含匹配规则逻辑、不做安全裁决 |
 | **engine/** | SkipRuleEngine + RuleSet + AdNode + SafetyGuard | 纯匹配：文本/ViewID 双通道 | 不执行点击、不读存储 |
 | **data/** | Prefs / RulesRepository / StatsRepository | 存储原语 + 领域仓库（合并/LruCache/合批落盘） | 不感知 UI 与网络格式 |
 | **net/** | SyncClient | HTTP 传输（v1: ETag/304/批量补报） | 不直接改存储键值 |
@@ -191,7 +191,7 @@ AdSkip/                            全栈 monorepo
 │   └── app/src/main/java/com/ldp/adskip/
 │       ├── ui/                   Compose UI（单 Activity + 4 Screen + ViewModel）
 │       ├── core/                 AppEvents / Clock / AppExecutors / LogRing
-│       ├── service/              SkipAdService（无障碍服务）
+│       ├── service/              SkipAdService + FrameworkAdNode（无障碍服务/节点适配）
 │       ├── engine/               规则引擎（纯 JVM 可测）
 │       ├── data/                 Prefs / RulesRepository / StatsRepository
 │       ├── net/                  SyncClient

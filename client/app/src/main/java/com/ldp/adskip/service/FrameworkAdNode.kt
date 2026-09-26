@@ -1,11 +1,14 @@
-package com.ldp.adskip.engine
+package com.ldp.adskip.service
 
 import android.graphics.Rect
 import android.view.accessibility.AccessibilityNodeInfo
+import com.ldp.adskip.engine.AdNode
 
 /**
- * 生产用 AdNode：包装 [AccessibilityNodeInfo]。
+ * 生产用 [AdNode]：包装 [AccessibilityNodeInfo]。
  *
+ * 归属 service 层：本类依赖 Android 框架类型，
+ * 移出 engine/ 以保持引擎包纯 JVM 可测（与 AdNode 抽象的设计初衷一致）。
  * children() 做深度截断和数量限制，防过度遍历。
  * click() 执行 ACTION_CLICK；false 时由服务层回退坐标手势。
  */

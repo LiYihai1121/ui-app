@@ -5,7 +5,7 @@
 -keep class com.ldp.adskip.sync.SyncJobService { *; }
 -keep class com.ldp.adskip.AdskipApp { *; }
 
-# 引擎接口和实现（运行时反射）
+# 引擎接口与模型（保守保留；无反射引用，框架适配 FrameworkAdNode 归属 service 层）
 -keep class com.ldp.adskip.engine.** { *; }
 
 # 数据模型
