@@ -15,7 +15,6 @@ import com.ldp.adskip.core.LogRing
 import com.ldp.adskip.data.Prefs
 import com.ldp.adskip.data.RulesRepository
 import com.ldp.adskip.data.StatsRepository
-import com.ldp.adskip.engine.FrameworkAdNode
 import com.ldp.adskip.engine.SafetyGuard
 import com.ldp.adskip.engine.SkipRuleEngine
 import com.ldp.adskip.net.SyncClient
