@@ -6,6 +6,7 @@
 
 ## 目录
 
+- [Unreleased](#unreleased)
 - [3.0.3](#303---2026-09-26)
 - [3.0.2](#302---2026-09-04)
 - [3.0.1](#301---2026-09-04)
@@ -13,6 +14,18 @@
 - [2.2.0](#220---2026-08-24)
 - [2.1.0](#210---2026-08-24)
 - [2.0.0](#200---2026-08-24)
+
+## [Unreleased]
+
+### Fixed
+
+- 修复发布 APK 未签名导致手机安装报「解析软件包时出现问题」：`assembleRelease` 在缺少正式签名配置时回退 debug 签名，保证产物可直接安装；需要未签名包时必须显式设置 `adskip.unsignedRelease=true`。
+- 发布流水线在打包后强制 `apksigner verify`（签名证书与 `SHA256SUMS` 一并写入工作流 Summary），未签名制品直接失败，不再发布不可安装的包。
+
+### Added
+
+- 发布流水线支持通过仓库 Secrets（`ADSKIP_KEYSTORE_BASE64` / `ADSKIP_STORE_PASSWORD` / `ADSKIP_KEY_ALIAS` / `ADSKIP_KEY_PASSWORD`）注入正式签名密钥；未配置时回退 debug 签名。
+- 安装排障说明：README 与 [docs/development/DEV-ENVIRONMENT.md](docs/development/DEV-ENVIRONMENT.md) 增加「解析软件包时出现问题」「应用未安装」的归因与校验命令。
 
 ## [3.0.3] - 2026-09-26
 

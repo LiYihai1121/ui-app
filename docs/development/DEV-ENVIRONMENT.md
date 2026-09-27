@@ -42,6 +42,25 @@ bun run server.ts
 
 服务端默认监听 `http://localhost:3210`。未配置 `ADMIN_TOKEN` 时，公开读取接口仍可用，但管理写接口返回 `503`。端口或数据目录等配置见 `server/src/config.ts`。
 
+## APK 安装排障
+
+手机安装 APK 报「解析软件包时出现问题」时，先确认包本身可用：
+
+```powershell
+# 1. 校验签名：未签名包无法安装（apksigner 随 Android SDK build-tools 提供）
+& "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --print-certs .\app\build\outputs\apk\release\app-release.apk
+
+# 2. 校验分发文件完整性：与 Release 中 SHA256SUMS 比对
+Get-FileHash .\AdSkip-latest.apk -Algorithm SHA256
+```
+
+判定要点：
+
+- **未签名包**：`assembleRelease` 在 `client/local.properties` 缺少 `adskip.*` 签名配置时会回退 debug 签名；只有显式设置 `adskip.unsignedRelease=true` 才产出未签名包，而发布流水线会拒绝上传这类产物。
+- **`minSdk = 26`**：对应 Android 8.0，低于该版本的设备会直接解析失败。
+- **签名冲突**：与手机上已安装版本签名不一致时报「应用未安装」，需先卸载 `com.ldp.adskip`。
+- **分发完整性**：APK 经聊天工具转发可能被改名或截断，务必比对 SHA-256；本机分发建议把签名后的包放到仓库根并命名 `AdSkip-latest.apk`（`*.apk` 不入库），手机浏览器访问 `http://<本机IP>:3210/download` 下载。
+
 ## 环境清理
 
 - 可安全删除 `client/build/`、`.gradle/`、`.kotlin/` 等构建缓存；Gradle 会自动重新生成。
