@@ -42,7 +42,7 @@ android {
         applicationId = "com.ldp.adskip"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
+        versionCode = 9
         versionName = "3.0"
     }
 

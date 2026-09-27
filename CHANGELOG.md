@@ -6,7 +6,7 @@
 
 ## 目录
 
-- [Unreleased](#unreleased)
+- [3.0.4](#304---2026-09-27)
 - [3.0.3](#303---2026-09-26)
 - [3.0.2](#302---2026-09-04)
 - [3.0.1](#301---2026-09-04)
@@ -15,7 +15,7 @@
 - [2.1.0](#210---2026-08-24)
 - [2.0.0](#200---2026-08-24)
 
-## [Unreleased]
+## [3.0.4] - 2026-09-27
 
 ### Fixed
 
@@ -24,8 +24,12 @@
 
 ### Added
 
-- 发布流水线支持通过仓库 Secrets（`ADSKIP_KEYSTORE_BASE64` / `ADSKIP_STORE_PASSWORD` / `ADSKIP_KEY_ALIAS` / `ADSKIP_KEY_PASSWORD`）注入正式签名密钥；未配置时回退 debug 签名。
+- 发布流水线支持通过仓库 Secrets（`ADSKIP_KEYSTORE_BASE64` / `ADSKIP_STORE_PASSWORD` / `ADSKIP_KEY_ALIAS` / `ADSKIP_KEY_PASSWORD`）注入正式签名密钥；本仓库已启用，Release 制品使用 `CN=AdSkip Release` 签名，可直接安装并覆盖升级。
 - 安装排障说明：README 与 [docs/development/DEV-ENVIRONMENT.md](docs/development/DEV-ENVIRONMENT.md) 增加「解析软件包时出现问题」「应用未安装」的归因与校验命令。
+
+### Changed
+
+- 版本号同步：Android `versionCode` 9（`versionName` 3.0）、服务端 `server/package.json` 3.0.4；无协议与数据形态变化。
 
 ## [3.0.3] - 2026-09-26
 
