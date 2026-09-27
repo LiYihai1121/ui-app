@@ -18,7 +18,7 @@
 
 | 版本 | Git tag | 对应提交 | GitHub Release | 状态 |
 | --- | --- | --- | --- | --- |
-| `3.0.4` | [`v3.0.4`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.4) | 待补填 | 待创建 | 待发布（安装可用性修复，Issue #23） |
+| `3.0.4` | [`v3.0.4`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.4) | `27c3f5c` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.4) | 已发布（已签名 Release APK，`CN=AdSkip Release`，可直接安装） |
 | `3.0.3` | [`v3.0.3`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.3) | `958ce23` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.3) | 已发布；APK 为未签名包，无法安装（见「制品勘误」） |
 | `3.0.2` | [`v3.0.2`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.2) | `5b85e96` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.2) | 已创建，制品待补传 |
 | `3.0.1` | [`v3.0.1`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.1) | `b7ebabb` | 未创建 | 历史误指标签，不得复用 |
@@ -49,7 +49,7 @@ Release list 的维护要求：版本变更、tag、合并提交和 GitHub Relea
 
 ## 发布基线说明
 
-- `v3.0.2`（提交 `5b85e96`）是当前**唯一可追溯的发布基线**：tag、提交与 GitHub Release 均在 `main` 线上。
+- `v3.0.4`（提交 `27c3f5c`）是当前**发布基线**：tag、提交与 GitHub Release 均在 `main` 线上，制品由正式密钥签名、可直接安装。`v3.0.2`（提交 `5b85e96`，制品待补传）与 `v3.0.3`（提交 `958ce23`，制品不可安装，见「制品勘误」）同样位于 `main` 线，可追溯。
 - `v3.0.0` 与 `v3.0.1` 是 annotated tag，两者都指向提交 `b7ebabb`；该提交**不是 `origin/main` 的祖先**（`git merge-base --is-ancestor b7ebabb origin/main` 返回非 0），只存在于远程分支 `docs/enterprise-version-governance`、`docs/repository-development-rules` 与本地 `main`。因此：
   - 这两个 tag 不得作为发布基线，其 GitHub Release 不再补建；
   - tag 保留不动（不删除、不移动），其指向的提交必须保持可达——承载该提交的两个远程分支**不得删除**；
@@ -62,6 +62,7 @@ Release list 的维护要求：版本变更、tag、合并提交和 GitHub Relea
 - `3.0.2` 的状态为「制品待补传」；补传前必须先通过签名校验，不得直接把本地未签名产物传上去。
 - 处置原则：tag、历史 Release 与已发布制品一律不删除、不移动；不可安装的历史制品保留原样作为记录，改由新链路保证后续版本可安装——构建侧在缺少正式签名时回退 debug 签名，发布侧打包后强制 `apksigner verify`，签名证书与 `SHA256SUMS` 一并写入工作流 Summary。
 - 升级一致性：同一台设备要长期升级，请固定签名来源（本地正式签名构建，或已配置 Secrets 的 Release 制品）；混用 debug 签名与正式签名版本时需先卸载重装。
+- 修复验证（`v3.0.4`）：Release 制品 `AdSkip-v3.0.4.apk` 由正式密钥签名（`CN=AdSkip Release`，证书 SHA-256 `040d7afd0e288b7fe8df2aab43fb3f2b9b8eb458e88ab4d104d89921c9993edc`），`apksigner verify` 通过，`versionCode = 9`；SHA-256 `8c8b50148c91b69c25de6be36fad9821fb1c6452ffd931209a336dd64f88ec11` 与 Release 内 `SHA256SUMS` 一致。
 - 关联 Issue：[#23](https://github.com/LiYihai1121/ui-app/issues/23)。
 
 ## 关键提交
@@ -76,6 +77,7 @@ Release list 的维护要求：版本变更、tag、合并提交和 GitHub Relea
 | v3.0 | `b7ebabb` | Bun/Compose 架构与文档收尾（**不在 `main` 线上**，见「发布基线说明」） | `v3.0.0`、`v3.0.1`（历史标签） |
 | v3.0.2 基线 | `5b85e96` | 规范化发布流程与版本对齐 | `v3.0.2` |
 | v3.0.3 | `958ce23` | L1 选择器第三通道内核（纯 JVM 增量） | `v3.0.3` |
+| v3.0.4 | `27c3f5c` | 安装可用性修复：release 签名回退 + 发布强制签名校验 + Secrets 正式签名 | `v3.0.4` |
 
 ## 验证命令
 

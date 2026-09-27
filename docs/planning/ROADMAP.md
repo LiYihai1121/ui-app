@@ -66,7 +66,7 @@
 版本序列以 [ROADMAP-ADS.md](ROADMAP-ADS.md) 的里程碑为准（避免两份文档各自承诺同一版本号）。**每个版本独立走 `release/vX.Y.Z` → 全门禁 → Squash Merge → 签名 Release**；本表表达的是「发布意图」，版本号在发版冻结时按 SemVer 最终确认。
 
 - [x] **v3.0.3（M1a，已发布）**：L1 引擎内核——选择器第三通道（`engine/selector/` AST / 解析器 / 匹配器 + `AdNode.parent` / `previousSibling()`）。纯内核增量、无用户可见行为变化；技术方案见 [DESIGN-PHASE1-SELECTOR.md](DESIGN-PHASE1-SELECTOR.md) 步骤 A/B
-- [x] **v3.0.4（M1a 补丁，待发布）**：安装可用性修复——`assembleRelease` 缺签名配置时回退 debug 签名、发布流水线强制 `apksigner verify` 并支持 Secrets 注入正式密钥，修复发布制品未签名导致手机报「解析软件包时出现问题」（[Issue #23](https://github.com/LiYihai1121/ui-app/issues/23)）；无功能行为变化
+- [x] **v3.0.4（M1a 补丁，已发布）**：安装可用性修复——`assembleRelease` 缺签名配置时回退 debug 签名、发布流水线强制 `apksigner verify` 并支持 Secrets 注入正式密钥，修复发布制品未签名导致手机报「解析软件包时出现问题」（[Issue #23](https://github.com/LiYihai1121/ui-app/issues/23)）；无功能行为变化
 - [ ] **v3.1.0（M1b）**：协议 v2——服务端 `selectors` 字段与校验 + `SyncClient` 解析 + 点击结果校验与本地规则黑名单（步骤 C/D）
 - [ ] **v3.2.0（M1c）**：节点快照工具——App 内导出当前界面节点树 JSON，规则编写不再靠猜（步骤 E）
 - [ ] **v3.3.0（M1d）**：Top 30 App 首批选择器规则入库 + 真机回归与性能采样 + 规则审核通道（步骤 F、L5 基础）
