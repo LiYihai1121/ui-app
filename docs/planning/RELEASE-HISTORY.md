@@ -18,6 +18,7 @@
 
 | 版本 | Git tag | 对应提交 | GitHub Release | 状态 |
 | --- | --- | --- | --- | --- |
+| `3.0.4` | [`v3.0.4`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.4) | 待补填 | 待创建 | 待发布（安装可用性修复，Issue #23） |
 | `3.0.3` | [`v3.0.3`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.3) | `958ce23` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.3) | 已发布；APK 为未签名包，无法安装（见「制品勘误」） |
 | `3.0.2` | [`v3.0.2`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.2) | `5b85e96` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.2) | 已创建，制品待补传 |
 | `3.0.1` | [`v3.0.1`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.1) | `b7ebabb` | 未创建 | 历史误指标签，不得复用 |
