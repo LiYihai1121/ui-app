@@ -55,7 +55,7 @@ docs/
 | --- | --- | --- | --- |
 | `3.0.2` | 已发布（tag 已建，制品待补传） | v3.0 系列补丁 | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
 | `3.0.3` | 已发布（tag 已建，CI 制品已归档；制品未签名不可安装，见 [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) 制品勘误） | 选择器第三通道内核（步骤 A/B，无用户可见行为变化） | [planning/DESIGN-PHASE1-SELECTOR.md](planning/DESIGN-PHASE1-SELECTOR.md) 第 10 节 |
-| `3.0.4` | 待发布 | 安装可用性修复：release 签名回退 + 发布强制签名校验 + Secrets 注入正式密钥（Issue #23） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
+| `3.0.4` | 已发布（tag 已建，制品已签名可直接安装） | 安装可用性修复：release 签名回退 + 发布强制签名校验 + Secrets 注入正式密钥（Issue #23） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
 | `3.1.0` | 规划 | 协议 v2（`selectors` 字段）+ 点击结果校验与本地规则黑名单（步骤 C/D） | 同上 |
 | `3.2.0` | 规划 | 节点快照工具 + 设置页入口（步骤 E） | 同上 |
 | `3.3.0` | 规划 | Top 30 规则入库 + 真机回归 + 规则审核通道（步骤 F） | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 6 节 |
