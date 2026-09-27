@@ -50,6 +50,15 @@ jobs:
           set -o pipefail
           ./gradlew testDebugUnitTest --no-daemon 2>&1 | tee /tmp/android-test.log
 
+      - name: Build release APK and verify it is signed
+        run: |
+          set -o pipefail
+          ./gradlew assembleRelease --no-daemon 2>&1 | tee /tmp/android-release-build.log
+          # 无签名配置时必须回退 debug 签名，产物必须可安装（未签名 APK 在手机上报「解析软件包时出现问题」，Issue #23）
+          apksigner="$(find "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/build-tools" -maxdepth 2 -type f -name apksigner | sort | tail -n 1)"
+          test -n "$apksigner"
+          "$apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
+
       - name: Upload Android logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -58,6 +67,7 @@ jobs:
           path: |
             /tmp/android-build.log
             /tmp/android-test.log
+            /tmp/android-release-build.log
           if-no-files-found: ignore
 
   server:

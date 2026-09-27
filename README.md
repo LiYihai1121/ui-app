@@ -167,12 +167,13 @@ cd client
 # 产物: client/app/build/outputs/apk/debug/app-debug.apk
 
 # Release 封装（R8 混淆）
-# 签名参数写在 client/local.properties（不入库）：
+# 正式签名参数写在 client/local.properties（不入库）：
 #   adskip.storeFile=<keystore 路径>  adskip.storePassword=***
 #   adskip.keyAlias=<别名>           adskip.keyPassword=***
-# 未配置签名时 assembleRelease 产出未签名包
+# 未配置正式签名时自动回退 debug 签名，保证产物可直接安装
+# 仅在需要未签名包（交由受信任环境自行签名）时显式设置 adskip.unsignedRelease=true
 ./gradlew assembleRelease
-# CI 发布使用同样的 Release 变体；由于签名密钥不进入仓库，GitHub Release 默认上传未签名 APK
+# CI 发布使用同样的 Release 变体；配置 ADSKIP_KEYSTORE_BASE64 等仓库 Secrets 时用正式密钥签名，否则回退 debug 签名
 
 # JVM 单测
 ./gradlew testDebugUnitTest
@@ -192,9 +193,16 @@ bun run typecheck     # tsc --noEmit
 | 渠道 | 说明 |
 | --- | --- |
 | 本地副本 | 将 Release APK 放在仓库根并命名为 `AdSkip-latest.apk`；服务端 `/download` 路由直接提供下载，手机浏览器访问 `http://<本机IP>:3210/download` 即可。 |
-| GitHub Release | 由版本 tag 自动创建，上传 R8 Release APK 和 `SHA256SUMS`；**CI 不持有签名密钥，产物为未签名包**，安装前需先在受信任环境签名（或直接使用本地 `assembleRelease` 产出的已签名包）。 |
+| GitHub Release | 由版本 tag 自动创建，上传 Release APK 和 `SHA256SUMS`。配置 `ADSKIP_KEYSTORE_BASE64` / `ADSKIP_STORE_PASSWORD` / `ADSKIP_KEY_ALIAS` / `ADSKIP_KEY_PASSWORD` Secrets 时用正式密钥签名，否则回退 debug 签名；打包步骤强制 `apksigner verify`，不再发布未签名包。 |
 
-> 安装 Release 包若提示「应用未安装 / 签名冲突」：未签名包需先在受信任环境签名后再安装；与手机上旧的 debug 签名版冲突时，先卸载 `com.ldp.adskip` 再安装。
+> **手机安装报错排查**
+>
+> | 手机提示 | 原因 | 处理 |
+> | --- | --- | --- |
+> | 解析软件包时出现问题 | APK 未签名（历史上 CI 无签名密钥时上传的制品） | 改用当前链路产物：CI 已强制 `apksigner verify`，本地 `assembleRelease` 默认回退 debug 签名；校验命令见 [DEV-ENVIRONMENT.md](docs/development/DEV-ENVIRONMENT.md) |
+> | 解析软件包时出现问题 | 手机 Android 版本低于 `minSdk`（26 = Android 8.0） | 换用 Android 8.0 及以上设备 |
+> | 解析软件包时出现问题 | 传输中断，或被聊天工具改名/压缩（大小与 `SHA256SUMS` 不一致） | 比对 SHA-256 后重传，或改用服务端 `/download` |
+> | 应用未安装 / 签名冲突 | 手机上已装 debug 签名版或其它密钥版本 | 卸载 `com.ldp.adskip` 后重装 |
 
 要求：JDK 17+、Android SDK（compileSdk 35）、Bun 1.1+（服务端）。Android 部分也可直接用 Android Studio / IntelliJ 打开 `client/` 目录。
 

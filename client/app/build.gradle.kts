@@ -15,6 +15,25 @@ val releaseSigningReady = listOf(
     "adskip.storeFile", "adskip.storePassword", "adskip.keyAlias", "adskip.keyPassword"
 ).all { !signingProps.getProperty(it).isNullOrBlank() }
 
+/**
+ * 未配置正式签名时的 release 行为：
+ * - 默认回退 debug 签名，保证 assembleRelease 产物可直接安装
+ *   （未签名 APK 在手机上必然报「解析软件包时出现问题」，见 Issue #23）；
+ * - adskip.unsignedRelease=true 时保留未签名产物，仅供受信任环境自行签名。
+ */
+val unsignedRelease = signingProps.getProperty("adskip.unsignedRelease")?.toBoolean() ?: false
+
+if (!releaseSigningReady) {
+    logger.lifecycle(
+        if (unsignedRelease) {
+            "[adskip] release 未配置签名：按 adskip.unsignedRelease=true 产出未签名 APK（仅供受信任环境自行签名）"
+        } else {
+            "[adskip] release 未配置签名：已回退 debug 签名以保证 APK 可安装；正式分发请在 local.properties 配置 " +
+                "adskip.storeFile / adskip.storePassword / adskip.keyAlias / adskip.keyPassword"
+        }
+    )
+}
+
 android {
     namespace = "com.ldp.adskip"
     compileSdk = 35
@@ -45,8 +64,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            if (releaseSigningReady) {
-                signingConfig = signingConfigs.getByName("release")
+            signingConfig = when {
+                releaseSigningReady -> signingConfigs.getByName("release")
+                unsignedRelease -> null // 仅在显式选择时产出未签名包
+                else -> signingConfigs.getByName("debug") // 回退：产物必须可安装
             }
         }
     }

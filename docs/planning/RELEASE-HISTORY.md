@@ -2,13 +2,14 @@
 
 本文记录版本阶段、Git tag、合并提交和 GitHub Release 的对应关系，避免仅凭短哈希或提交标题判断历史是否断链。每次项目更迭完成后，必须同步更新本页的 Release list，并核对对应的 annotated tag。
 
-标签发布由 [.github/workflows/release.yml](../../.github/workflows/release.yml) 自动执行：先校验 annotated tag、提交对象和 Android/服务端版本一致性，再构建 R8 Release 变体、运行服务端检查、生成 APK SHA-256 校验和并创建 GitHub Release。CI 不持有签名密钥，因此上传的是未签名 APK；正式分发前必须在受信任环境签名。目标分支保护和发布前合并要求由仓库规则及 GitHub 分支保护执行。
+标签发布由 [.github/workflows/release.yml](../../.github/workflows/release.yml) 自动执行：先校验 annotated tag、提交对象和 Android/服务端版本一致性，再构建 R8 Release 变体、运行服务端检查、生成 APK SHA-256 校验和并创建 GitHub Release。打包步骤强制 `apksigner verify`：配置 `ADSKIP_KEYSTORE_BASE64` 等仓库 Secrets 时用正式密钥签名，未配置时构建脚本回退 debug 签名（保证制品可安装），未签名产物一律拒绝上传（见「制品勘误」）。目标分支保护和发布前合并要求由仓库规则及 GitHub 分支保护执行。
 
 ## 目录
 
 - [Release list](#release-list)
 - [链路结论](#链路结论)
 - [发布基线说明](#发布基线说明)
+- [制品勘误](#制品勘误)
 - [关键提交](#关键提交)
 - [验证命令](#验证命令)
 - [后续规则](#后续规则)
@@ -17,7 +18,7 @@
 
 | 版本 | Git tag | 对应提交 | GitHub Release | 状态 |
 | --- | --- | --- | --- | --- |
-| `3.0.3` | [`v3.0.3`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.3) | `958ce23` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.3) | 已发布（含未签名 Release APK 与 SHA256SUMS） |
+| `3.0.3` | [`v3.0.3`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.3) | `958ce23` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.3) | 已发布；APK 为未签名包，无法安装（见「制品勘误」） |
 | `3.0.2` | [`v3.0.2`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.2) | `5b85e96` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.2) | 已创建，制品待补传 |
 | `3.0.1` | [`v3.0.1`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.1) | `b7ebabb` | 未创建 | 历史误指标签，不得复用 |
 | `3.0.0` | [`v3.0.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.0) | `b7ebabb` | 未创建 | 历史标签 |
@@ -53,6 +54,14 @@ Release list 的维护要求：版本变更、tag、合并提交和 GitHub Relea
   - tag 保留不动（不删除、不移动），其指向的提交必须保持可达——承载该提交的两个远程分支**不得删除**；
   - 版本号 `3.0.0` / `3.0.1` 不再复用。
 - 后续发布硬要求：tag 必须指向合并后的 `main` 提交，并由 [release.yml](../../.github/workflows/release.yml) 校验 Android 与服务端版本一致性。
+
+## 制品勘误
+
+- `v3.0.3`（tag 指向 `958ce23`）的 Release 制品 `AdSkip-v3.0.3.apk` 是**未签名包**：`apksigner verify` 返回 `DOES NOT VERIFY`，手机安装报「解析软件包时出现问题」，属于不可安装制品。成因是该版本发布的 CI 无签名密钥，构建脚本静默产出未签名 APK，工作流又没有签名校验环节。
+- `3.0.2` 的状态为「制品待补传」；补传前必须先通过签名校验，不得直接把本地未签名产物传上去。
+- 处置原则：tag、历史 Release 与已发布制品一律不删除、不移动；不可安装的历史制品保留原样作为记录，改由新链路保证后续版本可安装——构建侧在缺少正式签名时回退 debug 签名，发布侧打包后强制 `apksigner verify`，签名证书与 `SHA256SUMS` 一并写入工作流 Summary。
+- 升级一致性：同一台设备要长期升级，请固定签名来源（本地正式签名构建，或已配置 Secrets 的 Release 制品）；混用 debug 签名与正式签名版本时需先卸载重装。
+- 关联 Issue：[#23](https://github.com/LiYihai1121/ui-app/issues/23)。
 
 ## 关键提交
 
