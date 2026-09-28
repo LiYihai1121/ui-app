@@ -13,6 +13,7 @@ import com.ldp.adskip.AppContainer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -33,11 +34,33 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
 
     data class UiState(
         val items: List<AppRow> = emptyList(),
-        val loading: Boolean = true
-    )
+        val loading: Boolean = true,
+        val query: String = "",
+        val onlyEnabled: Boolean = false
+    ) {
+        /** 搜索 + 筛选后的可见列表；匹配包名与应用名，大小写不敏感。 */
+        val visibleItems: List<AppRow>
+            get() {
+                val q = query.trim().lowercase()
+                return items.filter { row ->
+                    (onlyEnabled.not() || row.disabled.not()) &&
+                        (q.isEmpty() ||
+                            row.label.lowercase().contains(q) ||
+                            row.pkg.lowercase().contains(q))
+                }
+            }
+    }
 
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState
+
+    fun setQuery(query: String) {
+        _uiState.update { it.copy(query = query) }
+    }
+
+    fun setOnlyEnabled(onlyEnabled: Boolean) {
+        _uiState.update { it.copy(onlyEnabled = onlyEnabled) }
+    }
 
     init {
         load()
@@ -65,7 +88,7 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
                     }
                     .sortedBy { it.label.lowercase() }
             }
-            _uiState.value = UiState(items = rows, loading = false)
+            _uiState.value = _uiState.value.copy(items = rows, loading = false)
         }
     }
 
