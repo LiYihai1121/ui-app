@@ -4,6 +4,10 @@
 > 阶段 C（`core:common` / `core:engine` 模块拆分）待排期。阶段 A（目录结构契约）已落地，见
 > [ARCHITECTURE.md 第 2.2 节](../architecture/ARCHITECTURE.md#22-目录结构契约)。
 > **最后更新**：2026-09-28
+>
+> **补充（2026-09-28）**：静态检查 `ktlint` 已接入（规则集事实源为仓库根 `.editorconfig`，插件由约定插件应用，
+> ktlint 本体版本在 `client/build.gradle.kts` 锁定），并成为 CI 与发布流水线的门禁之一；
+> 同一批次把 Compose BOM 升到 2026.08.00（Compose 1.12）、`compileSdk` 升到 37、CI 的 SDK 声明与约定插件收口同源。
 > **归属版本**：阶段 B 不产生用户可见能力，随分支 `feature/build-framework-overhaul` 并入 `main`；阶段 C 实施前需按 [ROADMAP.md](ROADMAP.md) 的「候选池」取版本号。
 
 ## 1. 目标与非目标
