@@ -76,6 +76,7 @@
     <string name="logs_clear_confirm">This will delete all skip records permanently. Continue?</string>
     <string name="logs_cleared">Logs cleared</string>
     <string name="logs_share">Share</string>
+    <string name="logs_item_subtitle">%1$s | %2$s</string>
     <string name="logs_format">%1$s</string>
     <string name="logs_pkg_format">%1$s</string>
 

@@ -89,6 +89,7 @@
     <string name="logs_clear_confirm">将删除全部跳过记录，且无法恢复。确定继续吗？</string>
     <string name="logs_cleared">日志已清空</string>
     <string name="logs_share">分享</string>
+    <string name="logs_item_subtitle">%1$s ｜ %2$s</string>
     <string name="logs_format">%1$s</string>
     <string name="logs_pkg_format">%1$s</string>
 

@@ -230,11 +230,16 @@ private fun StatusHero(running: Boolean, onPrimaryAction: () -> Unit, onTest: ()
         )
 
         // 「测试」是可选的验证动作，用 TextButton 让它明确矮于主行动。
+        //
+        // 这里**不能**用 `enabled = running` 把按钮禁用：那样服务未开启时用户只看到一个
+        // 灰按钮，既没有原因也没有下一步（灰控件不解释自己是常见 UX 反模式）。
+        // HomeViewModel.startFakeAdTest() 已实现「未开启则提示先开启服务」的分支，
+        // 之前被 enabled 挡住而永远不可达；改为始终可点后，那条提示才真正生效。
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
         ) {
-            TextButton(onClick = onTest, enabled = running) {
+            TextButton(onClick = onTest) {
                 Text(stringResource(R.string.btn_test))
             }
         }

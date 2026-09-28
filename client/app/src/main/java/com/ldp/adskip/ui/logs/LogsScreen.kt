@@ -14,14 +14,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -83,7 +84,9 @@ fun LogsScreen(viewModel: LogsViewModel = viewModel(factory = LogsViewModel.Fact
             modifier = Modifier.padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            FilledTonalButton(
+            // 破坏性操作降级到最轻的 TextButton：清空不可逆，且无频率价值，
+            // 不该和「分享」这种日常操作同权重并列在操作行里（视觉权重 = 出错概率）。
+            TextButton(
                 onClick = { showClearConfirm = true },
                 enabled = state.logs.isNotEmpty(),
             ) {
@@ -134,17 +137,25 @@ fun LogsScreen(viewModel: LogsViewModel = viewModel(factory = LogsViewModel.Fact
 
         if (state.logs.isEmpty()) {
             EmptyState(
-                icon = Icons.Default.Check,
+                // 此前用 Check（勾号）表示「暂无记录」：勾号在语义上是「已完成」，
+                // 与「还没有记录」正好相反，会让用户怀疑自己看错了。改用中性列表符号。
+                icon = Icons.AutoMirrored.Filled.List,
                 title = stringResource(R.string.logs_empty),
                 subtitle = stringResource(R.string.logs_empty_hint),
                 modifier = Modifier.fillMaxSize(),
             )
         } else {
-            LazyColumn(contentPadding = PaddingValues(16.dp)) {
+            LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp)) {
                 items(state.logs, key = { "${it.ts}:${it.pkg}:${it.label}" }) { entry ->
                     TwoLineRow(
                         title = entry.label,
-                        subtitle = "${viewModel.formatTimestamp(entry.ts)} ｜ ${entry.pkg}",
+                        // 走 stringResource 而非硬编码「 ｜ 」，否则英文环境仍显示中文分隔符，
+                        // 且分隔符改动要同时改代码与译文两处
+                        subtitle = stringResource(
+                            R.string.logs_item_subtitle,
+                            viewModel.formatTimestamp(entry.ts),
+                            entry.pkg,
+                        ),
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
