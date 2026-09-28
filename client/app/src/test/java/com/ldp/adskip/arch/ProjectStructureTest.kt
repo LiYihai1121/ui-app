@@ -334,6 +334,25 @@ class ProjectStructureTest {
     }
 
     @Test
+    fun `vscode directory only holds the shared config`() {
+        val vscode = File(repoRoot(), ".vscode")
+        if (!vscode.isDirectory) {
+            // 目录不存在是允许的：共享配置对构建与测试都不是必需的，
+            // 不该因为它缺席就让守护测试变红。
+            return
+        }
+        val actual = vscode.listFiles()?.map { it.name }?.toSet().orEmpty()
+        val unexpected = actual - VSCODE_SHARED_FILES
+        assertTrue(
+            ".vscode/ 只应包含团队共享配置（${VSCODE_SHARED_FILES.sorted().joinToString()}）；" +
+                "以下文件属于本机调试/工作区状态，入库会带进个人路径与断点：" +
+                unexpected.sorted().joinToString { " $it" } +
+                "（根 .gitignore 已用否定规则放行上述共享文件）",
+            unexpected.isEmpty(),
+        )
+    }
+
+    @Test
     fun `profile page is implemented under ui profile and wired to navigation`() {
         assertTrue(
             "「我的」页实现应位于 ui/profile/（与其余四屏同级）",
@@ -522,13 +541,27 @@ class ProjectStructureTest {
             ".kilocode", // 同族工具目录
             ".agents", // 同族工具目录
             ".worktrees", // 多 Agent worktree 落点（AGENT-WORKFLOW 第 2.1 节强制约定，已被 .gitignore 忽略）
+            ".vscode", // 编辑器共享配置（选择性入库，规则见 VSCODE_SHARED_FILES）
             "skills", // 随仓库版本控制的 Agent 技能（kilo.json 的 skills.paths 挂载点）
             "client", // Android 工程根
             "docs", // 文档
             "server", // Bun + TypeScript 服务端
         )
 
-        // 仓库根白名单：文件（治理类，全部受版本控制）
+        /**
+         * `.vscode/` 中允许入库的文件。
+         *
+         * 根 `.gitignore` 采取选择性入库：共享的编辑器行为与推荐扩展要进版本控制，
+         * 否则它们只存在于各自本机，任何一条都可能在某台机器上悄悄失效；
+         * 而 launch.json / tasks.json 这类个人调试状态绝不能进——它们带着本机路径、
+         * 个人断点与临时任务，进了库就是噪声。
+         *
+         * 本清单同时是 `.gitignore` 否定规则的**对照表**：两边不一致时以本清单为准，
+         * 因为本清单会被 CI 强制执行。
+         */
+        val VSCODE_SHARED_FILES = setOf("settings.json", "extensions.json")
+
+        // 仓库根白名单：文件（治理类 + 工具配置，全部受版本控制）
         val ALLOWED_ROOT_FILES = setOf(
             ".editorconfig", ".gitattributes", ".gitignore",
             "AGENTS.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "README.md",
