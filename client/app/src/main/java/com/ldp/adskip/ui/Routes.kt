@@ -6,4 +6,5 @@ object Routes {
     const val APPS = "apps"
     const val LOGS = "logs"
     const val SETTINGS = "settings"
+    const val PROFILE = "profile"
 }

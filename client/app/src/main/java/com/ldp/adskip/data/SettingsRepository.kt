@@ -1,4 +1,4 @@
-package com.ldp.adskip.data
+﻿package com.ldp.adskip.data
 
 import android.content.Context
 import com.ldp.adskip.net.SyncClient
@@ -49,4 +49,28 @@ class SettingsRepository(
 
     fun setDoNotDisturbTimes(startMinute: Int, endMinute: Int) =
         Prefs.setDoNotDisturbTimes(context, startMinute, endMinute)
+
+    // ---------- 应用元数据（供「我的」页展示） ----------
+
+    /**
+     * 应用版本展示值，形如 `3.1 (10)`（versionName + versionCode）。
+     *
+     * 为什么由 data 层查而不是让 UI 读 `BuildConfig`：约定插件
+     * `adskip.android.application` 未开启 `buildConfig`，`BuildConfig` 并未生成；
+     * 为一行展示文案打开它会给整个模块增加生成产物。对**本应用**查询
+     * `PackageManager` 也不受 Android 11+ 包可见性限制。
+     *
+     * 仅当系统卸载/替换本应用时理论上会抛 `NameNotFoundException`，故兜底空串
+     * 而非让「我的」页崩溃。
+     */
+    fun appVersionDisplay(): String = runCatching {
+        val info = context.packageManager.getPackageInfo(context.packageName, 0)
+        val code = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            info.longVersionCode
+        } else {
+            @Suppress("DEPRECATION")
+            info.versionCode.toLong()
+        }
+        "$`{info.versionName} ($code)"
+    }.getOrElse { "" }
 }
