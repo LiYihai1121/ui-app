@@ -327,13 +327,14 @@ class ProjectStructureTest {
         // client/ 白名单：末尾几项为本机生成/被忽略的目录，允许存在但不强制
         val ALLOWED_CLIENT_ENTRIES = setOf(
             "app", "gradle",
+            "build-logic", // 复合构建（included build）：托管约定插件，非主构建模块
             "build.gradle.kts", "settings.gradle.kts", "gradle.properties",
             "gradlew", "gradlew.bat", "local.properties",
             "build", ".gradle", ".kotlin", "signing"
         )
 
         /** client/ 下不是 Gradle 模块的目录（不参与「未注册模块」检查）。 */
-        val NON_MODULE_DIRS = setOf("gradle", "build", ".gradle", ".kotlin", "signing")
+        val NON_MODULE_DIRS = setOf("gradle", "build", ".gradle", ".kotlin", "signing", "build-logic")
 
         /** 扫描产物时剪掉的目录：构建输出、依赖与工具/本机生成物。 */
         val PRUNED_DIRS = setOf(
