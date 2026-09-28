@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AdSkip</string>
     <string name="btn_back">Back</string>
@@ -60,11 +60,20 @@
     <string name="apps_count">Skipped %1$d times</string>
     <string name="apps_never">Never skipped</string>
     <string name="apps_disabled">Disabled</string>
+    <string name="apps_search_placeholder">Search app name or package</string>
+    <string name="apps_search_clear">Clear search</string>
+    <string name="apps_filter_enabled">Enabled only</string>
+    <string name="apps_empty">No manageable apps found</string>
+    <string name="apps_no_match">No matching apps</string>
+    <string name="apps_no_match_hint">Try another keyword, or turn off the “Enabled only” filter</string>
 
     <!-- Skip Logs -->
     <string name="logs_title">Skip Logs</string>
+    <string name="logs_subtitle">%1$d records, only the latest 200 are kept</string>
     <string name="logs_empty">No records yet</string>
+    <string name="logs_empty_hint">Once the service is on, every auto-skip will show up here</string>
     <string name="logs_clear">Clear Logs</string>
+    <string name="logs_clear_confirm">This will delete all skip records permanently. Continue?</string>
     <string name="logs_cleared">Logs cleared</string>
     <string name="logs_share">Share</string>
     <string name="logs_format">%1$s</string>
@@ -121,4 +130,18 @@
     <string name="vendor_oneplus">OnePlus (OxygenOS / ColorOS)</string>
     <string name="vendor_samsung">Samsung (One UI)</string>
     <string name="vendor_generic">Other system (generic entries)</string>
+
+    <!-- Profile -->
+    <string name="nav_profile">Profile</string>
+    <string name="profile_title">Profile</string>
+    <string name="profile_subtitle">On-device usage overview and version info</string>
+    <string name="profile_usage_section">Usage</string>
+    <string name="profile_about_section">About</string>
+    <string name="profile_version_label">App version</string>
+    <string name="profile_android_label">Android version</string>
+    <string name="profile_device_label">Device model</string>
+    <string name="profile_vendor_label">ROM vendor</string>
+    <string name="profile_active_apps_label">Apps skipped for</string>
+    <string name="profile_value_unknown">Unknown</string>
+    <string name="profile_privacy_hint">Skip logs and statistics stay on this device and are never uploaded.</string>
 </resources>

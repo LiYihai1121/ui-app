@@ -19,6 +19,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- **「我的」用户页**：底部导航新增第五个一级入口（本页），展示本机使用概览（累计跳过 / 已跳过应用数 / 服务状态）与应用、设备信息（应用版本、系统版本、设备型号、ROM 厂商），并明示「跳过记录与统计均只保存在本机」。实现遵循既有单向下行数据流：`ui/profile/ProfileScreen` + `ProfileViewModel`（StateFlow 驱动），统计经 `StatsRepository`、版本经 `SettingsRepository` 读取，UI 不自行查 `PackageManager`（遵守 ARCHITECTURE.md 2.1 边界）。
+- **导航契约守护测试**：`ProjectStructureTest` 新增三项断言，把「路由声明 ↔ 底部导航 ↔ NavHost」三方对齐与「新增页面必须在每个 locale 声明文案」升级为 CI 可执行规则。此规则源于本仓库的真实缺陷——`Routes.SETTINGS` 与 `SettingsScreen` 曾早已存在却无任何入口，用户进不去保活与磁贴设置。
+
 ### Fixed
 
 - **首页边到边缺陷**：`targetSdk = 35` 在 Android 15 起强制边到边，而四个页面中只有 `HomeScreen` 没有 `Scaffold`，标题会压在状态栏时钟上（已在 Android 15 / API 35 模拟器复现）。inset 改由外壳统一分发，页面只消费 `innerPadding`。

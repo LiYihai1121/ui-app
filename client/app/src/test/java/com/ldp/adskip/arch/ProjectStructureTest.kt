@@ -1,4 +1,4 @@
-package com.ldp.adskip.arch
+﻿package com.ldp.adskip.arch
 
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -262,8 +262,6 @@ class ProjectStructureTest {
         )
     }
 
-    // ---------- 工具 ----------
-
     /** 解析 settings.gradle.kts 中已注册的模块目录列表。 */
     private fun registeredModules(client: File): List<File> {
         val settings = File(client, "settings.gradle.kts")
@@ -282,6 +280,96 @@ class ProjectStructureTest {
 
     private fun rel(file: File): String =
         repoRoot().toPath().relativize(file.toPath()).toString().replace('\\', '/')
+
+    // ---------- 导航契约：一级路由与页面注册必须一一对应 ----------
+    //
+    // 背景（本仓库实测缺陷，非假想风险）：`Routes.SETTINGS` 与 `SettingsScreen`
+    // 早已存在却无任何入口，用户根本进不去。新增页面若只写 Screen 不接导航，
+    // 就是同一类问题的复发，故把「路由 ↔ 底部导航 ↔ NavHost」三方对齐升级为测试。
+
+    @Test
+    fun `every route is reachable from the bottom navigation`() {
+        // 声明在 Routes.kt，接线在 MainActivity.kt——两侧都要看，才能挡住「声明了但进不去」。
+        val routesSource = readUiSource("Routes.kt")
+        val navSource = readUiSource("MainActivity.kt")
+
+        val declared = ROUTE_CONST_REGEX.findAll(routesSource)
+            .map { it.groupValues[1] }
+            .toSet()
+        assertTrue(
+            "Routes 应恰好登记 5 个一级路由（首页/应用/日志/设置/我的），实际为 ${declared.sorted()}",
+            declared.size == 5
+        )
+        assertTrue(
+            "Routes 缺少 PROFILE（「我的」页路由）",
+            declared.contains("PROFILE")
+        )
+
+        val inBottomBar = TOP_LEVEL_ITEM_REGEX.findAll(navSource)
+            .map { it.groupValues[1] }
+            .toSet()
+        val inNavHost = COMPOSABLE_REGEX.findAll(navSource)
+            .map { it.groupValues[1] }
+            .toSet()
+
+        assertTrue(
+            "底部导航缺少一级入口：导航=${inBottomBar.sorted()}，路由=${declared.sorted()}\n" +
+                "「页面已存在但用户进不去」是本仓库发生过的真实缺陷，请同步 TopLevelDestinations。",
+            inBottomBar.containsAll(declared)
+        )
+        assertTrue(
+            "NavHost 缺少一级路由注册：宿主=${inNavHost.sorted()}，路由=${declared.sorted()}",
+            inNavHost.containsAll(declared)
+        )
+        // 反向检查：出现未在 Routes 登记的导航项会形成第二份真相。
+        val unregistered = (inBottomBar + inNavHost).filterNot { it in declared }
+        assertTrue(
+            "导航/宿主里出现了未在 Routes 登记的路由：${unregistered.sorted()}",
+            unregistered.isEmpty()
+        )
+    }
+
+    @Test
+    fun `profile page is implemented under ui profile and wired to navigation`() {
+        assertTrue(
+            "「我的」页实现应位于 ui/profile/（与其余四屏同级）",
+            File(File(repoRoot(), "client/app/src/main/java/$BASE_PACKAGE_PATH/ui"), "profile").isDirectory
+        )
+
+        val navSource = readUiSource("MainActivity.kt")
+        assertTrue(
+            "NavHost 缺少 Routes.PROFILE → ProfileScreen 的注册",
+            navSource.contains("composable(Routes.PROFILE) { ProfileScreen() }")
+        )
+    }
+
+    @Test
+    fun `profile strings are declared in every locale`() {
+        val required = listOf("nav_profile", "profile_title", "profile_version_label")
+        val resRoot = File(repoRoot(), "client/app/src/main/res")
+        val locales = resRoot.listFiles()
+            ?.filter { it.isDirectory && it.name.startsWith("values") }
+            ?.map { it.name }
+            .orEmpty()
+
+        locales.forEach { locale ->
+            val xml = File(File(resRoot, locale), "strings.xml")
+            assertTrue("缺少 ${xml.path}", xml.isFile)
+            val text = xml.readText()
+            val missing = required.filter { !text.contains("name=\"$it\"") }
+            assertTrue(
+                "client/app/src/main/res/$locale/strings.xml 缺少文案：${missing.joinToString()}",
+                missing.isEmpty()
+            )
+        }
+    }
+
+    /** 读取 `ui/` 源目录下的 Kotlin 源文件。 */
+    private fun readUiSource(relative: String): String {
+        val file = File(repoRoot(), "client/app/src/main/java/$BASE_PACKAGE_PATH/ui/$relative")
+        assertTrue("缺少源码 ${file.path}（或包结构已变更，请同步本测试）", file.isFile)
+        return file.readText()
+    }
 
     /** 从当前工作目录向上定位仓库根（需同时包含 .gitignore 与 docs/README.md）。 */
     private fun repoRoot(): File {
@@ -306,6 +394,15 @@ class ProjectStructureTest {
 
         /** sendBroadcast 调用名（配合括号配平扫描使用）。 */
         const val CALL_NAME = "sendBroadcast"
+
+        /** `Routes` 中的路由常量声明：`const val PROFILE = "profile"`。 */
+        val ROUTE_CONST_REGEX = Regex("""const\s+val\s+(\w+)\s*=\s*""")
+
+        /** 底部导航数据源中的一项：`TopLevelDestination(Routes.PROFILE, ...)`。 */
+        val TOP_LEVEL_ITEM_REGEX = Regex("""TopLevelDestination\(\s*Routes\.(\w+)""")
+
+        /** NavHost 中的注册：`composable(Routes.PROFILE) { ... }`。 */
+        val COMPOSABLE_REGEX = Regex("""composable\(\s*Routes\.(\w+)""")
 
         // 仓库根白名单：目录
         val ALLOWED_ROOT_DIRS = setOf(
