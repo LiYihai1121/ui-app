@@ -52,7 +52,7 @@ docs/
 
 > **改规划的顺序**：先改 `docs/planning/ROADMAP.md`（版本意图）→ 再改同目录的 `ROADMAP-ADS.md` 与 `DESIGN-PHASE1-SELECTOR.md` 的版本归属 → 最后同步 `CHANGELOG.md` 与 `RELEASE-HISTORY.md` 的对应行。`docs/api/API.md`、`docs/architecture/ARCHITECTURE.md` 涉及协议字段时一并更新。
 
-## 当前规划全景（更新于 2026-09-27）
+## 当前规划全景（更新于 2026-09-28）
 
 | 版本 | 状态 | 内容 | 详见 |
 | --- | --- | --- | --- |

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  仅保留被引用的资源色。UI 运行时配色（品牌蓝/状态色/文本色）的唯一事实源是
+  ui/theme/Theme.kt 的 Material3 ColorScheme；此处再存一份会形成第二份真相，
+  且 status_on/status_off 这类名字与 R.string.status_on/off 撞名，极易误用。
+-->
 <resources>
     <color name="ic_launcher_background">#1565C0</color>
-    <color name="status_on">#2E7D32</color>
-    <color name="status_off">#C62828</color>
-    <color name="text_primary">#1F2937</color>
-    <color name="text_secondary">#9CA3AF</color>
     <color name="brand">#1565C0</color>
 </resources>

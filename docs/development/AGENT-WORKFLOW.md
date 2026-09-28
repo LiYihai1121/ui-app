@@ -119,17 +119,10 @@ git rev-parse --show-toplevel  # 确认工作区根
 
 ## 6. 验证：每个 Agent 自跑门禁
 
-合并前**各自**跑通与变更相关的最小门禁，跨模块跑全门禁（与 [AGENTS.md](../../AGENTS.md) 一致）：
-
-```bash
-cd client && ./gradlew assembleDebug
-cd client && ./gradlew testDebugUnitTest
-cd server && bun test
-cd server && bun run typecheck
-```
+合并前**各自**跑通与变更相关的最小门禁，跨模块跑全门禁——命令清单见 [AGENTS.md](../../AGENTS.md)「验证与合并」，本节不重复，以免两处漂移。
 
 - **不要把验证推给 CI 或集成者**：CI 红了要重跑一轮，代价远高于本地自测；
-- 报告验证结果时给出**实际命令与数字**（如「153/153 通过」），不给「应该没问题」；
+- 报告验证结果时给出**实际执行的命令与结果数字**（形如「N/N 通过」），不给「应该没问题」；
 - 只跑了子集测试时必须显式说明未跑的部分。
 
 ## 7. 交接：最小交接信息
@@ -149,7 +142,7 @@ Agent 之间移交任务或收工时，输出以下五项，缺一项都会让�
    SkipAdService 增加 isEnabled()/requestShutdown()，AndroidManifest 注册磁贴与 <queries>。
 2. 新增 device/ 层边界（ARCHITECTURE.md 2.1），由 ArchitectureBoundaryTest 守护；
    新增 ManifestContractTest 守护磁贴注册与 <queries> 覆盖。
-3. assembleDebug 通过；testDebugUnitTest 153/153（新增 32）；bun test 54；typecheck exit 0。
+3. assembleDebug 通过；testDebugUnitTest 全绿（新增用例若干）；bun test 全绿；typecheck exit 0。
 4. 入口表为社区经验值，ROM 升级可能失效（已做运行时可解析性探测 + 降级）；
    未在 MIUI/HarmonyOS 真机验证跳转，磁贴点按关闭为“一键关核心功能”策略，待产品确认。
 5. 在 MIUI 与 HarmonyOS 真机上各跑一次保活跳转，把失败项回报以修表。

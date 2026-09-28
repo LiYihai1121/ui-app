@@ -25,7 +25,13 @@
 - 根 `.gitignore` 补齐 `.kilo/`、`.kilocode/`、`.worktrees/`、`.agents/`：此前相关规则只存在于本机 `.git/info/exclude`，导致 `git status` 干净但文件检索仍能命中第二份源码（已一并清理该残留副本）。
 - 系统级体验：下拉通知栏快捷磁贴（`SkipTileService`）——一眼查看无障碍服务状态，一次点击即可启停（运行中点按等价于在系统设置中关闭服务）；Android 13+ 可在设置页一键请求系统添加磁贴，低版本引导手动从「编辑磁贴」拖动。
 - 厂商保活引导：设置页新增「系统保活与快捷入口」，自动识别 MIUI / HarmonyOS / MagicOS / ColorOS / OriginOS / Flyme / OxygenOS / One UI 并一键跳转对应的自启动 / 后台管理页面，入口不可用时逐级降级到系统通用页面并提示手动路径——针对「后台被强杀导致跳过静默失效」这一高频问题。
-- 客户端新增 `device/` 系统集成层（ROM 识别与入口表、跳转出口、快捷磁贴），设置页与首页不再自行拼装系统 `Intent`；新增 JVM 单测覆盖厂商识别、磁贴点击决策与 `AndroidManifest.xml` 契约（磁贴注册、`<queries>` 包可见性声明），单测总数 121 → 153。
+- 客户端新增 `device/` 系统集成层（ROM 识别与入口表、跳转出口、快捷磁贴），设置页与首页不再自行拼装系统 `Intent`；新增 JVM 单测覆盖厂商识别、磁贴点击决策与 `AndroidManifest.xml` 契约（磁贴注册、`<queries>` 包可见性声明）。
+
+### Changed
+
+- 规范去重为单一事实源：`.opencode/skills/branch-guard` 不再复述分支命名表与门禁命令，改为指向 [CONTRIBUTING.md](CONTRIBUTING.md)（流程规范）、[AGENTS.md](AGENTS.md)（执行摘要）与 [docs/development/AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md)（并行协作）；[AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md) 的门禁命令也改为引用 `AGENTS.md`，PR 模板只保留勾选项加规则指针。
+- 清理无人引用的重复定义：`res/values/colors.xml` 删除 4 个与 `ui/theme/Theme.kt` 品牌色板重复的色值（同时消除与 `R.string.status_on/off` 的命名撞车），`Theme.kt` 删除死变量 `TextSecondary`。
+- 去除会随迭代漂移的绝对数字：README 目录说明与 CHANGELOG 不再写死单测总数（当前值以门禁输出为准），历史条目中的数字保持原样作为版本记录。
 
 ### Fixed
 
