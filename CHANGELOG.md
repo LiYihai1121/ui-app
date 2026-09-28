@@ -20,6 +20,8 @@
 
 ### Added
 
+- 目录结构守护测试 `ProjectStructureTest`（随 `testDebugUnitTest` 运行，CI 独立 job `Structure Contract` 最先执行）：把「仓库长什么样」升级为门禁——根目录白名单、构建产物与临时文件不得入库（仅放行 `gradle-wrapper.jar`）、`settings.gradle.kts` 的 `include()` 与磁盘模块目录双向一致、`client/` 工程根整洁、标准 Android 源集布局、Kotlin `package` 声明与目录对位、文档必须登记到 `docs/README.md`。这直接堵住根目录再次长出 `*.apk` 与工具残留目录的路径。
+- 构建框架工程化设计文档 [docs/planning/DESIGN-BUILD-FRAMEWORK.md](docs/planning/DESIGN-BUILD-FRAMEWORK.md)：version catalog、`build-logic` 约定插件、Gradle 硬化与模块拆分的完整方案，含 5 个具体坑位（included build 镜像、CI 缓存键不覆盖 `.toml`、wrapper 缺 SHA-256、`checkReleaseBuilds=false` 继承、签名路径漂移）与分步回滚策略。
 - 多 Agent 协作规范（[docs/development/AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md)）：一人一 worktree 的隔离约定、文件级唯一写入者与认领板、文档单写者事实源、契约先行、最小交接信息与冲突裁决规则。
 - 新增仓库卫生守护测试 `RepoHygieneTest`（随 `testDebugUnitTest` 运行），把协作约定升级为 CI 门禁：根 `.gitignore` 必须覆盖 Agent 产物/工作区目录、仓库内不得出现无 `.git` 元数据的整仓副本、协作规范必须在文档地图登记、分支名必须可追踪。
 - 根 `.gitignore` 补齐 `.kilo/`、`.kilocode/`、`.worktrees/`、`.agents/`：此前相关规则只存在于本机 `.git/info/exclude`，导致 `git status` 干净但文件检索仍能命中第二份源码（已一并清理该残留副本）。

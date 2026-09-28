@@ -100,6 +100,29 @@
 > 另一条由测试守护的隐式约定：保活入口表依赖 Android 11+ 的包可见性，`<queries>` 声明必须与 `device/VendorKeepAlive.kt` 的入口表逐条对齐，
 > 由 `client/app/src/test/java/com/ldp/adskip/arch/ManifestContractTest.kt` 校验（漏声明只会让跳转静默失败，不会编译报错）。
 
+### 2.2 目录结构契约
+
+2.1 管的是**包之间的依赖**，2.2 管的是**仓库与工程结构本身**。后者同样由
+`client/app/src/test/java/com/ldp/adskip/arch/ProjectStructureTest.kt` 强制，
+随 `testDebugUnitTest` 运行，并在 CI 中作为独立 job（`Structure Contract`）最先执行——让结构问题在几分钟内失败，而不是等完整构建结束。
+
+| 契约 | 强制内容 | 背景（实测故障） |
+| --- | --- | --- |
+| 根目录白名单 | 只允许 `.github/` `.opencode/` `client/` `docs/` `server/` 与 9 个治理文件 | 根目录曾长期滞留 `AdSkip-latest.apk` 与 `.kilo/`、`.mimosa/` 工具残留目录 |
+| 产物不入库 | 禁止 `*.apk/*.aab/*.aar/*.log/*.zip/*.keystore/*.iml`、`.DS_Store` 等（仅放行 `gradle-wrapper.jar`） | 分发以 Releases + `SHA256SUMS` 为准；构建产物属于被忽略目录 |
+| 模块双向一致 | `settings.gradle.kts` 的 `include(":x")` ↔ 磁盘模块目录**双向**校验 | 模块目录被删却仍注册，或建了目录忘注册（代码写了但不编译） |
+| Gradle 工程根 | `client/` 只保留 wrapper、构建脚本与模块目录 | 防止脚本/产物随手落进工程根 |
+| 标准源集布局 | `src/main/{java,res}` + `AndroidManifest.xml`（应用模块）、`src/test/java`；非常规源集须在 `build.gradle.kts` 声明 | 非常规源集目录默认不参与编译，属静默失效 |
+| 包声明对位 | 每个 `.kt` 的 `package` 必须与其目录路径一致 | 包路径错位会让 2.1 的包级扫描按错误边界生效 |
+| 文档登记 | `docs/` 子目录限 `api/ architecture/ development/ planning/ diagrams/`，且每份文档必须出现在 `docs/README.md` | 与文档地图的单一事实源要求对齐 |
+
+> **白名单是刻意收紧的**：确需新增根级条目时，先更新 `ProjectStructureTest` 的
+> `ALLOWED_ROOT_DIRS` / `ALLOWED_ROOT_FILES` 并在 PR 说明理由——让结构调整成为一次显式决策，
+> 而不是一次顺手拖拽。若条目属于本机生成物，正确做法是写入根 `.gitignore` 而非加白名单。
+
+> 尚未落地的工程化演进（version catalog、build-logic 约定插件、模块拆分）见
+> [DESIGN-BUILD-FRAMEWORK.md](../planning/DESIGN-BUILD-FRAMEWORK.md)，其中已标注各项的具体坑位与迁移顺序。
+
 ## 3. 数据流
 
 **跳过一次广告：**

@@ -10,6 +10,44 @@ on:
     branches: [ main ]
 
 jobs:
+  structure:
+    name: Structure Contract
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-35 build-tools;35.0.0'
+
+      - name: Run architecture & structure contract tests
+        # 只跑 arch 包下的守护测试：失败要在几分钟内暴露，而不是等完整 Android 构建跑完。
+        # 覆盖 ProjectStructureTest（目录/产物/模块/包结构）、ArchitectureBoundaryTest（包边界）、
+        # ManifestContractTest（Manifest 契约）、RepoHygieneTest（仓库卫生）。
+        run: |
+          set -o pipefail
+          chmod +x gradlew
+          ./gradlew testDebugUnitTest --tests 'com.ldp.adskip.arch.*' --no-daemon 2>&1 | tee /tmp/android-contract.log
+
+      - name: Upload contract logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-contract-logs
+          path: |
+            /tmp/android-contract.log
+          if-no-files-found: ignore
+
   android:
     name: Android Build & Test
     runs-on: ubuntu-latest

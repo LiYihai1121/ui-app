@@ -61,7 +61,7 @@ fix(client): 避免重复触发跳过点击
 合并规则：
 
 - `main` 和 `release/*` 禁止直接 push、强制推送和删除；
-- 必须通过 CI：`Android Build & Test`、`Server Tests`、服务端类型检查；
+- 必须通过 CI：`Structure Contract`、`Android Build & Test`、`Server Tests`、服务端类型检查；
 - 至少 1 名维护者批准；安全、协议或数据变更至少 2 名审批者，其中包含领域负责人；
 - 所有评论解决，旧审批在新增提交后失效；
 - 分支必须基于最新目标分支，合并使用 Squash；合并后自动删除源分支；
@@ -73,7 +73,7 @@ fix(client): 避免重复触发跳过点击
 
 1. **隔离**：每个 Agent 一个真正的 `git worktree`（`.worktrees/<agent>-<slug>/`），禁止在仓库内复制整仓；Agent 产物目录必须写进共享 `.gitignore`，不得只写本机 `.git/info/exclude`。
 2. **所有权**：同一文件同一时间只有一个写入者（开工前认领），`CHANGELOG.md`、`docs/planning/ROADMAP*.md`、`docs/architecture/ARCHITECTURE.md`、`docs/README.md` 为单写者事实源。
-3. **契约**：跨包/跨端边界的改动必须附带可执行契约测试（客户端由 `ArchitectureBoundaryTest`、`ManifestContractTest`、`RepoHygieneTest` 守护），先写失败测试再写实现。
+3. **契约**：跨包/跨端边界的改动必须附带可执行契约测试（客户端由 `ArchitectureBoundaryTest`、`ManifestContractTest`、`ProjectStructureTest`、`RepoHygieneTest` 守护），先写失败测试再写实现；目录布局本身也是契约，新增根级文件/目录需先更新 `ProjectStructureTest` 白名单并在 PR 说明理由（细则见 [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) 第 2.2 节）。
 4. **交接与合并**：分支与 Agent 一一绑定，禁止对他人分支 rebase/force-push；交接给出「改了什么 / 边界变化 / 验证结果 / 遗留风险 / 下一步」五项；合并仍走 PR + Squash，顺序上先合依赖方。
 
 违反上述约定时，仓库卫生类问题会由 `RepoHygieneTest` 直接判失败（如仓库内出现无 `.git` 元数据的整仓副本、忽略规则缺失、协作文档未登记、分支名不合规）。
