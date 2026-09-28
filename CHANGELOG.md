@@ -27,6 +27,8 @@
 
 - **Jetpack Compose BOM 2026.06.01 → 2026.08.00（Compose 1.12 / material3 1.5 Expressive）**：官方明确要求「always use the latest Compose BOM」——BOM 是各 Compose 库互相兼容的同一时刻快照，单独升某个库反而会制造不匹配组合。因 Compose 1.12 强制要求 `compileSdk 37`，`compileSdk` 同步 36 → 37；`targetSdk` 刻意仍留 35（升 36 会引入 Android 16 强制 edge-to-edge 等行为变更，与 UI 改动耦合会让「这次界面为什么变了」难以归因）。
 - **CI 的 Android SDK 声明与约定插件收口同源**：`ci.yml` 两处 `packages` 由长期滞后的 `platforms;android-35 build-tools;35.0.0` 改为 `platforms;android-37 build-tools;36.0.0`。此前靠 Gradle 自动解析兜住，属于「靠工具兜底」而非「显式声明」，AGP 一收紧校验就会在 CI 上突然失败。
+- **Agent 工具配置收敛到 `kilo.json`**：`opencode.json` 已是 legacy 路径（Kilo 仍会加载，但排在 `kilo.json` 之后），其唯一有效内容是 `permission.skill."*": "allow"`，现迁至根 `kilo.json` 并补 `skills.paths: ["./skills"]`，原文件删除。顺带根治「工具每次运行都重写配置、把工作区改脏」——扩展写入的 `commit_message.prompt` 之类的字段会随文件一起消失。
+- **Agent 技能从 `.opencode/skills/` 迁到受版本控制的 `skills/`**：Kilo 只扫描 `.kilo` 与 `.kilocode` 两个配置目录，**`.opencode` 目录不会被加载**，其中的 `branch-guard` 技能在当前工具链下从不生效；而 `.kilo/` 已被根 `.gitignore` 整体忽略（Agent Manager 状态目录），技能放进去无法入库，等于每个人的技能集各不相同——那正是「第二份真相」的另一种形态。现随仓库版本控制并由 `kilo.json` 显式挂载；`ProjectStructureTest` 与 `ARCHITECTURE.md` 2.2 的根白名单同步更新（移除 `.opencode`、登记 `skills/` 与 `kilo.json`，治理文件仍为 9 个）。
 - **首页重设计（信息层级 + 动作分级）**：依据 v3.1 真机截图在 1080×2340 上的实测——旧版状态卡就占掉首屏约 60% 高度，**关键词输入框必须滑过一次才看得到**，而关键词是这个 app 唯一需要用户主动操作的东西。据此重排：
   - `StatusHero` 由竖排改为**横排**，状态环 108dp → 56dp，状态卡高度从约 300dp 降到约 150dp，整页内容**无需滚动即全部可见**；
   - **动作分级**：服务未开启时主 CTA 用 filled（这是用户必须做的事），运行中降级为 tonal（避免让用户误以为还有必须点的操作）；「测试」由独立全宽按钮收进状态卡并降为 `TextButton`，它是可选的验证动作，不该和「去开启服务」抢焦点；测试按钮同时受 `enabled = running` 约束；

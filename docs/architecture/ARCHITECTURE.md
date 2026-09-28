@@ -119,7 +119,7 @@
 
 | 契约 | 强制内容 | 背景（实测故障） |
 | --- | --- | --- |
-| 根目录白名单 | 只允许 `.github/` `.opencode/` `.kilo/` `.kilocode/` `.agents/` `.worktrees/` `client/` `docs/` `server/` 与 9 个治理文件 | 根目录曾长期滞留 `AdSkip-latest.apk` 与 `.kilo/`、`.mimosa/` 工具残留目录 |
+| 根目录白名单 | 只允许 `.github/` `.kilo/` `.kilocode/` `.agents/` `.worktrees/` `skills/` `client/` `docs/` `server/` 与 9 个治理文件 | 根目录曾长期滞留 `AdSkip-latest.apk` 与 `.kilo/`、`.mimosa/` 工具残留目录 |
 | 产物不入库 | 禁止 `*.apk/*.aab/*.aar/*.log/*.zip/*.keystore/*.iml`、`.DS_Store` 等（仅放行 `gradle-wrapper.jar`） | 分发以 Releases + `SHA256SUMS` 为准；构建产物属于被忽略目录 |
 | 模块双向一致 | `settings.gradle.kts` 的 `include(":x")` ↔ 磁盘模块目录**双向**校验 | 模块目录被删却仍注册，或建了目录忘注册（代码写了但不编译） |
 | Gradle 工程根 | `client/` 只保留 wrapper、构建脚本、`gradle/libs.versions.toml`、`build-logic/` 与模块目录 | 防止脚本/产物随手落进工程根 |
