@@ -18,6 +18,7 @@
 
 | 版本 | Git tag | 对应提交 | GitHub Release | 状态 |
 | --- | --- | --- | --- | --- |
+| `3.1.0-rc.1` | [`v3.1.0-rc.1`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0-rc.1) | `696ef1e` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0-rc.1) | **预发布**（已签名 APK + `SHA256SUMS`；厂商跳转与磁贴未真机验收，**不可作为正式版分发**） |
 | `3.0.4` | [`v3.0.4`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.4) | `27c3f5c` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.4) | 已发布（已签名 Release APK，`CN=AdSkip Release`，可直接安装） |
 | `3.0.3` | [`v3.0.3`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.3) | `958ce23` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.3) | 已发布；APK 为未签名包，无法安装（见「制品勘误」） |
 | `3.0.2` | [`v3.0.2`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.2) | `5b85e96` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.2) | 已创建，制品待补传 |
