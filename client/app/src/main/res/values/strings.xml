@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">净启动 AdSkip</string>
     <string name="btn_back">返回</string>
@@ -157,4 +157,7 @@
     <string name="profile_active_apps_label">已跳过应用数</string>
     <string name="profile_value_unknown">未知</string>
     <string name="profile_privacy_hint">跳过记录与统计均只保存在本机，不会上传。</string>
+    <string name="profile_accessibility_section">无障碍服务</string>
+    <string name="stats_total_short">累计跳过 %1$d 次</string>
+    <string name="stats_recent_short">最近：%1$s</string>
 </resources>

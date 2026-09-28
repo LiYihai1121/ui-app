@@ -18,7 +18,6 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -40,9 +39,8 @@ import androidx.navigation.compose.rememberNavController
 import com.ldp.adskip.R
 import com.ldp.adskip.ui.apps.AppsScreen
 import com.ldp.adskip.ui.home.HomeScreen
-import com.ldp.adskip.ui.profile.ProfileScreen
 import com.ldp.adskip.ui.logs.LogsScreen
-import com.ldp.adskip.ui.settings.SettingsScreen
+import com.ldp.adskip.ui.profile.ProfileScreen
 import com.ldp.adskip.ui.theme.AdskipTheme
 
 /**
@@ -92,7 +90,6 @@ private val TopLevelDestinations = listOf(
     TopLevelDestination(Routes.HOME, R.string.nav_home, Icons.Filled.Home),
     TopLevelDestination(Routes.APPS, R.string.nav_apps, Icons.AutoMirrored.Filled.List),
     TopLevelDestination(Routes.LOGS, R.string.nav_logs, Icons.Filled.DateRange),
-    TopLevelDestination(Routes.SETTINGS, R.string.nav_settings, Icons.Filled.Settings),
     TopLevelDestination(Routes.PROFILE, R.string.nav_profile, Icons.Filled.Person)
 )
 
@@ -181,7 +178,6 @@ private fun AdskipShell() {
             composable(Routes.HOME) { HomeScreen() }
             composable(Routes.APPS) { AppsScreen() }
             composable(Routes.LOGS) { LogsScreen() }
-            composable(Routes.SETTINGS) { SettingsScreen() }
             composable(Routes.PROFILE) { ProfileScreen() }
         }
     }
