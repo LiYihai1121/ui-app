@@ -101,7 +101,7 @@
 
 | 路由 | 说明 |
 | --- | --- |
-| `GET /` | 产品落地页 |
+| `GET /` | 产品落地页（服务端把 `{{APP_VERSION}}` 占位符替换为 `server/package.json` 的版本号，避免文案与发布版本漂移） |
 | `GET /admin` | 管理后台（登录 + diff 预览 + 规则模拟器 + 统计看板） |
 | `GET /download` | 下载 APK（`APK_FILE`，默认仓库根 `AdSkip-latest.apk`） |
 

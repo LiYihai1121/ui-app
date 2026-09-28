@@ -15,6 +15,22 @@ export interface StartOptions {
   dataDir?: string;
 }
 
+/**
+ * 落地页版本占位符 `{{APP_VERSION}}` 的数据源。
+ * 以 `server/package.json` 为单一事实源（发布流程会同步 bump），
+ * 避免静态 HTML 写死版本号导致落地页与已发布版本漂移。
+ */
+function readAppVersion(): string {
+  try {
+    const raw = fs.readFileSync(path.join(import.meta.dir, "package.json"), "utf8");
+    return (JSON.parse(raw) as { version?: string }).version ?? "dev";
+  } catch {
+    return "dev";
+  }
+}
+
+const APP_VERSION = readAppVersion();
+
 /** 模块级引用，供优雅停机使用（仅 import.meta.main 场景赋值） */
 let server: Bun.Server<undefined> | null = null;
 
@@ -91,8 +107,14 @@ export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
     // ---------- 静态资源 ----------
     if (req.method === "GET") {
       if (url.pathname === "/") {
+        // 落地页按当前版本渲染：替换 {{APP_VERSION}} 占位符，保证下载入口与发布版本一致
+        const html = await Bun.file(
+          path.join(config.PUBLIC_DIR, "index.html")
+        ).text();
         return withCors(
-          new Response(Bun.file(path.join(config.PUBLIC_DIR, "index.html"))),
+          new Response(html.replaceAll("{{APP_VERSION}}", APP_VERSION), {
+            headers: { "Content-Type": "text/html; charset=utf-8" },
+          }),
           origin
         );
       }

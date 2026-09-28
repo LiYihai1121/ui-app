@@ -31,10 +31,18 @@ afterAll(() => {
 const TOKEN = "test123";
 
 describe("smoke", () => {
-  it("GET / 返回 HTML", async () => {
+  it("GET / 返回 HTML 并注入当前版本号", async () => {
     const res = await fetch(`${base}/`);
+    const html = await res.text();
+    const pkgVersion = (
+      JSON.parse(
+        fs.readFileSync(path.join(import.meta.dir, "..", "package.json"), "utf8")
+      ) as { version: string }
+    ).version;
     expect(res.status).toBe(200);
-    expect(await res.text()).toContain("<");
+    expect(res.headers.get("content-type")).toContain("text/html");
+    expect(html).toContain(`v${pkgVersion}`);
+    expect(html).not.toContain("{{APP_VERSION}}");
   });
 
   it("GET /admin 返回 200", async () => {
