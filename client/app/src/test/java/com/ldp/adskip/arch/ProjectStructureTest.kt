@@ -297,12 +297,18 @@ class ProjectStructureTest {
             .map { it.groupValues[1] }
             .toSet()
         assertTrue(
-            "Routes 应恰好登记 5 个一级路由（首页/应用/日志/设置/我的），实际为 ${declared.sorted()}",
-            declared.size == 5
+            "Routes 应恰好登记 4 个一级路由（首页/应用/日志/我的），实际为 ${declared.sorted()}",
+            declared.size == 4
         )
         assertTrue(
             "Routes 缺少 PROFILE（「我的」页路由）",
             declared.contains("PROFILE")
+        )
+        // 设置已内嵌进「我的」页，不再是一级路由：若有人再加回 SETTINGS 并挂到底部导航，
+        // 就回到了「设置与关于本机分成两页」的老结构。
+        assertTrue(
+            "Routes 不应再声明 SETTINGS：设置内容已内嵌于「我的」页（v3.2 起底部导航为 4 项）",
+            !declared.contains("SETTINGS")
         )
 
         val inBottomBar = TOP_LEVEL_ITEM_REGEX.findAll(navSource)
@@ -340,6 +346,29 @@ class ProjectStructureTest {
         assertTrue(
             "NavHost 缺少 Routes.PROFILE → ProfileScreen 的注册",
             navSource.contains("composable(Routes.PROFILE) { ProfileScreen() }")
+        )
+    }
+
+    @Test
+    fun `profile page embeds the accessibility entry and the settings content`() {
+        val profile = readUiSource("profile/ProfileScreen.kt")
+        assertTrue(
+            "「我的」页应内嵌设置内容 SettingsContent()，否则移除独立设置页后设置将无处可达",
+            profile.contains("SettingsContent()")
+        )
+        assertTrue(
+            "「我的」页应提供「打开无障碍设置」入口 AccessibilityCard",
+            profile.contains("AccessibilityCard(")
+        )
+        assertTrue(
+            "无障碍跳转须经 device/ 层（KeepAliveNavigator），UI 不得自行拼 Intent",
+            profile.contains("KeepAliveNavigator.openAccessibilitySettings")
+        )
+
+        val settings = readUiSource("settings/SettingsScreen.kt")
+        assertTrue(
+            "设置内容应以 SettingsContent 暴露供「我的」页内嵌",
+            settings.contains("fun SettingsContent(")
         )
     }
 

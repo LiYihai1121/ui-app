@@ -1,30 +1,20 @@
-package com.ldp.adskip.ui.settings
+﻿package com.ldp.adskip.ui.settings
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,7 +37,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
 import com.ldp.adskip.device.KeepAliveNavigator
 import com.ldp.adskip.ui.UiEffect
-import com.ldp.adskip.ui.components.PageHeader
 import com.ldp.adskip.ui.components.SectionCard
 import com.ldp.adskip.ui.components.SectionHint
 import com.ldp.adskip.ui.components.SectionTitle
@@ -55,14 +44,20 @@ import com.ldp.adskip.ui.vendorLabelRes
 import java.util.Locale
 
 /**
- * 设置页：云端规则同步、免打扰时段、电池优化、厂商保活引导与快捷磁贴。
+ * 设置内容区：云端规则同步、免打扰时段、电池优化、厂商保活引导与快捷磁贴。
  *
  * 所有系统设置跳转统一经 [KeepAliveNavigator]（`device/` 层唯一跳转出口），
  * UI 不直接拼装 `Intent`。
+ *
+ * 自 v3.2 起本内容**内嵌于「我的」页**（见 [com.ldp.adskip.ui.profile.ProfileScreen]），
+ * 不再是独立一级页面：
+ * - 底部导航从 5 项收敛为 4 项（首页 / 应用管理 / 跳过日志 / 我的）；
+ * - 因此这里**不自带** `PageHeader` 与滚动容器——标题与滚动由宿主页负责，
+ *   否则会出现「我的」页里嵌一个自带标题的滚动列，滑动时标题重复且滚动冲突。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(
+fun SettingsContent(
     viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -81,20 +76,7 @@ fun SettingsScreen(
     var pickingStart by remember { mutableStateOf(false) }
     var pickingEnd by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        PageHeader(
-            title = stringResource(R.string.settings_title),
-            subtitle = stringResource(R.string.settings_subtitle)
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .imePadding()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             SectionCard {
                 SectionTitle(stringResource(R.string.settings_cloud_section))
                 Spacer(Modifier.height(12.dp))
@@ -225,7 +207,6 @@ fun SettingsScreen(
                     Text(stringResource(R.string.settings_tile_add))
                 }
             }
-        }
     }
 
     if (pickingStart) {

@@ -144,4 +144,5 @@
     <string name="profile_active_apps_label">Apps skipped for</string>
     <string name="profile_value_unknown">Unknown</string>
     <string name="profile_privacy_hint">Skip logs and statistics stay on this device and are never uploaded.</string>
+    <string name="profile_accessibility_section">Accessibility service</string>
 </resources>

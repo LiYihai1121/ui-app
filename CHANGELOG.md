@@ -19,10 +19,16 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **设置并入「我的」页，底部导航收敛为四项**：原独立的「设置」一级页签已移除，云端规则、免打扰时段、系统保活与快捷磁贴等内容整体内嵌进「我的」页。理由是设置与「关于本机」属同一心智模型，分成两页会让用户为改一个免打扰时段而去第三个页签。底部导航现为 首页 / 应用管理 / 跳过日志 / 我的 四项。实现上 `SettingsScreen` 改造为 `SettingsContent`——**去掉自带标题与滚动容器**，避免在「我的」页里嵌一个自带标题的滚动列（标题重复 + 滚动冲突）；全部既有 ViewModel 与逻辑原样复用，不做复制。
+- **「打开无障碍」入口移入「我的」页**：新增「无障碍服务」卡片与「打开无障碍设置」按钮。首页状态环的主按钮保留（服务未开启时的首屏行动不变），「我的」页作为第二入口，覆盖服务被系统强杀后用户直接翻到末页找设置的路径。跳转仍统一经 `KeepAliveNavigator`，UI 不自行拼 `Intent`。
+
 ### Added
 
-- **「我的」用户页**：底部导航新增第五个一级入口（本页），展示本机使用概览（累计跳过 / 已跳过应用数 / 服务状态）与应用、设备信息（应用版本、系统版本、设备型号、ROM 厂商），并明示「跳过记录与统计均只保存在本机」。实现遵循既有单向下行数据流：`ui/profile/ProfileScreen` + `ProfileViewModel`（StateFlow 驱动），统计经 `StatsRepository`、版本经 `SettingsRepository` 读取，UI 不自行查 `PackageManager`（遵守 ARCHITECTURE.md 2.1 边界）。
-- **导航契约守护测试**：`ProjectStructureTest` 新增三项断言，把「路由声明 ↔ 底部导航 ↔ NavHost」三方对齐与「新增页面必须在每个 locale 声明文案」升级为 CI 可执行规则。此规则源于本仓库的真实缺陷——`Routes.SETTINGS` 与 `SettingsScreen` 曾早已存在却无任何入口，用户进不去保活与磁贴设置。
+- **「我的」用户页**：底部导航新增一级入口（本页），展示本机使用概览（累计跳过 / 已跳过应用数 / 服务状态）与应用、设备信息（应用版本、系统版本、设备型号、ROM 厂商），并明示「跳过记录与统计均只保存在本机」。实现遵循既有单向下行数据流：`ui/profile/ProfileScreen` + `ProfileViewModel`（StateFlow 驱动），统计经 `StatsRepository`、版本经 `SettingsRepository` 读取，UI 不自行查 `PackageManager`（遵守 ARCHITECTURE.md 2.1 边界）。
+- **导航契约守护测试**：`ProjectStructureTest` 新增断言，把「一级路由恰为 4 项且不再声明 `SETTINGS`」「「我的」页必须内嵌 `SettingsContent()` 与无障碍入口、且跳转须经 `device/` 层」「新增页面必须在每个 locale 声明文案」升级为 CI 可执行规则。此规则源于本仓库的真实缺陷——`Routes.SETTINGS` 与 `SettingsScreen` 曾早已存在却无任何入口，用户进不去保活与磁贴设置；本次重构反过来又可能把「设置删了却忘了接回」写成新缺陷，故一并守护。
+
 
 ### Fixed
 
