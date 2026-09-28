@@ -311,6 +311,7 @@ class ProjectStructureTest {
         val ALLOWED_ROOT_DIRS = setOf(
             ".github",   // CI 工作流
             ".opencode", // Agent 技能（skills/ 受版本控制，node_modules 等被忽略）
+            ".worktrees", // 多 Agent worktree 落点（AGENT-WORKFLOW 第 2.1 节强制约定，已被 .gitignore 忽略）
             "client",    // Android 工程根
             "docs",      // 文档
             "server"     // Bun + TypeScript 服务端
