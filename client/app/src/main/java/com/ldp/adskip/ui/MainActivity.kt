@@ -9,8 +9,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -93,6 +91,10 @@ private val TopLevelDestinations = listOf(
  *
  * 把 `Scaffold` 提到这里之后，四个页面都不再自带 `Scaffold`，
  * inset（状态栏 / 导航栏 / 输入法）由本层一次性分发，页面只管内容。
+ *
+ * 转场只保留淡入淡出：四个目的地是**同级 tab**，不是层级导航。
+ * 水平滑动暗示「进入下一层」，在 tab 切换时会给出错误的深度感；
+ * 只有将来真的出现「列表 → 详情」这类二级页面时，才应恢复方向性转场。
  */
 @Composable
 private fun AdskipShell() {
@@ -101,11 +103,15 @@ private fun AdskipShell() {
     val currentDestination = backStackEntry?.destination
     val currentRoute = currentDestination?.route
 
-    // 系统返回键：在非首页时回到首页，而不是逐级退出应用
+    // 系统返回键：在非首页时回到首页，而不是逐级退出应用。
+    // 用 popBackStack 而非 popUpTo(inclusive) + 重新 navigate：后者会销毁并重建首页，
+    // 用户按返回后滚动位置、输入的关键词草稿全部丢失——「回首页」不该等价于「重开首页」。
     BackHandler(enabled = currentRoute != null && currentRoute != Routes.HOME) {
-        navController.navigate(Routes.HOME) {
-            popUpTo(Routes.HOME) { inclusive = true }
-            launchSingleTop = true
+        if (!navController.popBackStack(Routes.HOME, inclusive = false)) {
+            navController.navigate(Routes.HOME) {
+                popUpTo(Routes.HOME) { inclusive = true }
+                launchSingleTop = true
+            }
         }
     }
 
@@ -161,14 +167,10 @@ private fun AdskipShell() {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            enterTransition = {
-                slideInHorizontally(tween(260)) { it / 6 } + fadeIn(tween(220))
-            },
-            exitTransition = { fadeOut(tween(160)) },
-            popEnterTransition = { fadeIn(tween(220)) },
-            popExitTransition = {
-                slideOutHorizontally(tween(240)) { it / 6 } + fadeOut(tween(200))
-            },
+            enterTransition = { fadeIn(tween(160)) },
+            exitTransition = { fadeOut(tween(120)) },
+            popEnterTransition = { fadeIn(tween(160)) },
+            popExitTransition = { fadeOut(tween(120)) },
         ) {
             composable(Routes.HOME) { HomeScreen() }
             composable(Routes.APPS) { AppsScreen() }
