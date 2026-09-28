@@ -438,11 +438,11 @@ class ProjectStructureTest {
         // 的门禁等于没有门禁。与 PRUNED_DIRS 保持同族登记。
         val ALLOWED_ROOT_DIRS = setOf(
             ".github", // CI 工作流
-            ".opencode", // Agent 技能（skills/ 受版本控制，node_modules 等被忽略）
             ".kilo", // Kilo / Agent Manager 状态（agent-manager.json 等本机数据）
             ".kilocode", // 同族工具目录
             ".agents", // 同族工具目录
             ".worktrees", // 多 Agent worktree 落点（AGENT-WORKFLOW 第 2.1 节强制约定，已被 .gitignore 忽略）
+            "skills", // 随仓库版本控制的 Agent 技能（kilo.json 的 skills.paths 挂载点）
             "client", // Android 工程根
             "docs", // 文档
             "server", // Bun + TypeScript 服务端
@@ -452,7 +452,7 @@ class ProjectStructureTest {
         val ALLOWED_ROOT_FILES = setOf(
             ".editorconfig", ".gitattributes", ".gitignore",
             "AGENTS.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "README.md",
-            "opencode.json",
+            "kilo.json", // Agent 工具的项目级配置（技能挂载 + 权限）；原 opencode.json 已是 legacy 路径
         )
 
         // client/ 白名单：末尾几项为本机生成/被忽略的目录，允许存在但不强制
