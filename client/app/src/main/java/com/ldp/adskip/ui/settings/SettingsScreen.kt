@@ -37,6 +37,7 @@ import com.ldp.adskip.R
 import com.ldp.adskip.device.KeepAliveNavigator
 import com.ldp.adskip.ui.Messenger
 import com.ldp.adskip.ui.UiEffect
+import com.ldp.adskip.ui.components.LabeledSwitch
 import com.ldp.adskip.ui.components.SectionCard
 import com.ldp.adskip.ui.components.SectionHint
 import com.ldp.adskip.ui.components.SectionTitle
@@ -131,13 +132,16 @@ fun SettingsContent(
 
         SectionCard {
             SectionTitle(stringResource(R.string.settings_schedule_section))
-            SwitchRow(
+            // 统一走 components/LabeledSwitch：此前本页自带的 SwitchRow 只让开关本身
+            // 可点，而 LabeledSwitch 整行可点（命中区域远大于开关）。同一个「设置开关」
+            // 在应用列表里整行可点、在设置页只能点小开关，用户会当成其中一个是 bug。
+            LabeledSwitch(
                 title = stringResource(R.string.settings_auto_sync),
                 checked = state.autoSync,
                 onCheckedChange = viewModel::setAutoSync,
             )
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            SwitchRow(
+            LabeledSwitch(
                 title = stringResource(R.string.settings_dnd),
                 checked = state.dndEnabled,
                 onCheckedChange = viewModel::setDndEnabled,
@@ -233,18 +237,6 @@ fun SettingsContent(
                 pickingEnd = false
             },
         )
-    }
-}
-
-@Composable
-private fun SwitchRow(title: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge)
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

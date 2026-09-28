@@ -67,6 +67,7 @@
     <string name="apps_empty">No manageable apps found</string>
     <string name="apps_no_match">No matching apps</string>
     <string name="apps_no_match_hint">Try another keyword, or turn off the “Enabled only” filter</string>
+    <string name="apps_clear_filters">Clear search and filters</string>
 
     <!-- Skip Logs -->
     <string name="logs_title">Skip Logs</string>
