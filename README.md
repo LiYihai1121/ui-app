@@ -125,7 +125,7 @@ client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，
 └── sync/
     └── SyncJobService.kt           # JobScheduler 定时同步（三合一，跨重启持久化）
 
-client/app/src/test/java/com/ldp/adskip/   # JVM 单测（引擎/护栏/日志环/事件总线/选择器，121 项）
+client/app/src/test/java/com/ldp/adskip/   # JVM 单测（引擎/护栏/边界与清单契约守护/选择器），随门禁运行
 
 server/                             # 后端（Bun + TypeScript，零运行时依赖）
 ├── server.ts                       # Bun.serve 入口、路由分发、优雅停机

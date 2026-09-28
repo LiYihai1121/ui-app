@@ -12,11 +12,13 @@ docs/
 ├── architecture/      系统架构与模块职责
 │   └── ARCHITECTURE.md
 ├── development/       开发环境与工具链
-│   └── DEV-ENVIRONMENT.md
+│   ├── DEV-ENVIRONMENT.md
+│   └── AGENT-WORKFLOW.md         多 Agent 协作：隔离 / 所有权 / 契约 / 交接
 ├── planning/          规划与发布记录
 │   ├── ROADMAP.md                 版本序列（唯一事实源）
 │   ├── ROADMAP-ADS.md             里程碑 / 周次 / 出口条件
 │   ├── DESIGN-PHASE1-SELECTOR.md  L1 技术设计与步骤 A–F
+│   ├── DESIGN-BUILD-FRAMEWORK.md  构建框架工程化（version catalog / build-logic / 模块拆分）
 │   └── RELEASE-HISTORY.md         发布链路（tag / 提交 / Release / 制品）
 └── diagrams/          架构图（adskip-architecture.json 源 + .html 渲染）
 ```
@@ -30,9 +32,11 @@ docs/
 | 对接服务端接口 | [api/API.md](api/API.md) |
 | 知道接下来做什么、按什么顺序做 | [planning/ROADMAP.md](planning/ROADMAP.md) → [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) |
 | 看某项能力的技术设计与实施步骤 | [planning/DESIGN-PHASE1-SELECTOR.md](planning/DESIGN-PHASE1-SELECTOR.md) |
+| 了解构建框架演进方案（version catalog / 约定插件 / 模块拆分） | [planning/DESIGN-BUILD-FRAMEWORK.md](planning/DESIGN-BUILD-FRAMEWORK.md) |
 | 配置本机开发环境 | [development/DEV-ENVIRONMENT.md](development/DEV-ENVIRONMENT.md) |
 | 查某版本发布到哪个提交、哪个 tag | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
 | 了解提交/分支/发布/回滚规范 | [CONTRIBUTING.md](../CONTRIBUTING.md)（执行摘要见 [AGENTS.md](../AGENTS.md)） |
+| 多个 Agent / 多分支并行开发时的隔离与协作 | [development/AGENT-WORKFLOW.md](development/AGENT-WORKFLOW.md) |
 | 查用户可见变更 | [CHANGELOG.md](../CHANGELOG.md) |
 
 ## 规划事实源（Single Source of Truth）
@@ -42,14 +46,16 @@ docs/
 | 版本序列与能力意图（`3.0.3` → `3.1.0` → …） | [planning/ROADMAP.md](planning/ROADMAP.md) | 只引用版本号，不另立序列 |
 | 专项里程碑、周次、出口条件 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md)（第 5~6 节） | 引用 ROADMAP 的版本号 |
 | L1 选择器技术方案与步骤 A–F | [planning/DESIGN-PHASE1-SELECTOR.md](planning/DESIGN-PHASE1-SELECTOR.md) | 引用版本号与里程碑编号 |
+| 构建框架演进方案（version catalog / build-logic / 模块拆分） | [planning/DESIGN-BUILD-FRAMEWORK.md](planning/DESIGN-BUILD-FRAMEWORK.md) | 本页不复制其坑位清单；目录结构的**已生效**规则见 [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) 第 2.2 节 |
 | 已发布版本链路（tag / 提交 / Release / 制品） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) | CHANGELOG 只记用户可见变更，不复述链路 |
 | 协议与接口 | [api/API.md](api/API.md) + [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md)（第 7 节） | DESIGN 只描述增量字段 |
 | 客户端/服务端分层与模块职责 | [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) | README 只给目录树摘要 |
 | 流程规范（分支/提交/门禁/发版） | [CONTRIBUTING.md](../CONTRIBUTING.md) | [AGENTS.md](../AGENTS.md) 为执行摘要 |
+| 多 Agent 并行协作（隔离/所有权/契约/交接） | [development/AGENT-WORKFLOW.md](development/AGENT-WORKFLOW.md) | 本页不复制其条款，仅登记入口；其卫生检查由 `RepoHygieneTest` 强制 |
 
 > **改规划的顺序**：先改 `docs/planning/ROADMAP.md`（版本意图）→ 再改同目录的 `ROADMAP-ADS.md` 与 `DESIGN-PHASE1-SELECTOR.md` 的版本归属 → 最后同步 `CHANGELOG.md` 与 `RELEASE-HISTORY.md` 的对应行。`docs/api/API.md`、`docs/architecture/ARCHITECTURE.md` 涉及协议字段时一并更新。
 
-## 当前规划全景（更新于 2026-09-27）
+## 当前规划全景（更新于 2026-09-28）
 
 | 版本 | 状态 | 内容 | 详见 |
 | --- | --- | --- | --- |
@@ -62,6 +68,8 @@ docs/
 | `3.4.0` / `3.5.0` / `4.0.0` | 规划 | L2 DNS 过滤 / L3 防摇一摇 / L4 通知与系统层 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 5~6 节 |
 
 未排期能力见 [planning/ROADMAP.md](planning/ROADMAP.md) 的「候选池」；L2/L3 启动前必须先完成 Phase 0 合规评审（见 [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 3 节）。
+
+> **进行中（未分配版本号）**：系统级体验——下拉快捷磁贴（`TileService`）+ 厂商保活/自启动引导（`device/` 层，含 `<queries>` 可见性声明与无障碍真实状态查询），见 [planning/ROADMAP.md](planning/ROADMAP.md) 的「进行中」小节。
 
 ## 规划中尚未创建的文档
 

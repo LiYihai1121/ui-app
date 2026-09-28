@@ -1,10 +1,17 @@
 package com.ldp.adskip.service
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.accessibilityservice.GestureDescription
+import android.content.BroadcastReceiver
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Path
 import android.graphics.Rect
+import android.os.Build
+import android.view.accessibility.AccessibilityManager
 import android.view.accessibility.AccessibilityEvent
 import android.widget.Toast
 import com.ldp.adskip.AdskipApp
@@ -37,6 +44,7 @@ class SkipAdService : AccessibilityService() {
     companion object {
         const val ACTION_SERVICE_STATE = "com.ldp.adskip.SERVICE_STATE"
         const val ACTION_SKIPPED = "com.ldp.adskip.SKIPPED"
+        const val ACTION_REQUEST_SHUTDOWN = "com.ldp.adskip.REQUEST_SHUTDOWN"
         const val EXTRA_RUNNING = "running"
         const val EXTRA_PKG = "pkg"
 
@@ -49,6 +57,48 @@ class SkipAdService : AccessibilityService() {
 
         private val lastClickMap = HashMap<String, Long>()
         @Volatile private var lastScanAt = 0L
+
+        /**
+         * 无障碍服务在系统设置中是否已启用。
+         *
+         * 供 `device/` 层的快捷磁贴读取**真实状态**：磁贴可能在应用进程刚被拉起、
+         * Service 尚未连接时就被点击，此时 [running] 仍是 `false`，
+         * 只有系统「已启用的无障碍服务」列表才权威。查询异常时回退到进程内运行态。
+         */
+        fun isEnabled(context: Context): Boolean {
+            val manager = context.getSystemService(AccessibilityManager::class.java)
+                ?: return running
+            val self = ComponentName(context.packageName, SkipAdService::class.java.name)
+            return try {
+                manager.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+                    .any { info ->
+                        val serviceInfo = info.resolveInfo?.serviceInfo ?: return@any false
+                        ComponentName(serviceInfo.packageName, serviceInfo.name) == self
+                    }
+            } catch (e: Exception) {
+                LogRing.w("Service", "isEnabled query failed: ${e.message}")
+                running
+            }
+        }
+
+        /**
+         * 请求关闭当前运行中的服务（由快捷磁贴下发），内部走 `disableSelf()`——
+         * 与用户在系统设置里关掉开关等价，会正常回调 [onDestroy] 完成清理与状态广播。
+         *
+         * @return 是否已成功投递关闭请求
+         */
+        fun requestShutdown(context: Context): Boolean {
+            if (!running) return false
+            return try {
+                context.sendBroadcast(
+                    Intent(ACTION_REQUEST_SHUTDOWN).setPackage(context.packageName)
+                )
+                true
+            } catch (e: Exception) {
+                LogRing.w("Service", "requestShutdown failed: ${e.message}")
+                false
+            }
+        }
     }
 
     private val engine = SkipRuleEngine()
@@ -56,6 +106,22 @@ class SkipAdService : AccessibilityService() {
     private lateinit var rulesRepo: RulesRepository
     private lateinit var statsRepo: StatsRepository
     private lateinit var syncClient: SyncClient
+
+    /**
+     * 快捷磁贴的关闭请求接收端（进程内、定向投递）。
+     *
+     * 用广播而非持有 Service 实例的静态引用：`device/` 层只需调用 companion 的
+     * [requestShutdown]，不必反向依赖本类的实例状态，避免跨包持有 Service 造成泄漏。
+     */
+    private val shutdownReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != ACTION_REQUEST_SHUTDOWN) return
+            LogRing.d("Service", "shutdown requested by quick tile")
+            disableSelf()
+        }
+    }
+
+    private var shutdownReceiverRegistered = false
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -66,17 +132,45 @@ class SkipAdService : AccessibilityService() {
         syncClient = container.syncClient
         running = true
         AppEvents.setServiceRunning(true)
-        sendBroadcast(Intent(ACTION_SERVICE_STATE).putExtra(EXTRA_RUNNING, true))
+        registerShutdownReceiver()
+        sendBroadcast(Intent(ACTION_SERVICE_STATE).setPackage(packageName).putExtra(EXTRA_RUNNING, true))
         LogRing.d("Service", "onServiceConnected")
     }
 
     override fun onDestroy() {
         running = false
         AppEvents.setServiceRunning(false)
-        sendBroadcast(Intent(ACTION_SERVICE_STATE).putExtra(EXTRA_RUNNING, false))
+        unregisterShutdownReceiver()
+        sendBroadcast(Intent(ACTION_SERVICE_STATE).setPackage(packageName).putExtra(EXTRA_RUNNING, false))
         // 强制落盘待写统计
         if (::statsRepo.isInitialized) statsRepo.flush()
         super.onDestroy()
+    }
+
+    private fun registerShutdownReceiver() {
+        if (shutdownReceiverRegistered) return
+        val filter = IntentFilter(ACTION_REQUEST_SHUTDOWN)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(shutdownReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                @Suppress("DEPRECATION")
+                registerReceiver(shutdownReceiver, filter)
+            }
+            shutdownReceiverRegistered = true
+        } catch (e: Exception) {
+            LogRing.w("Service", "register shutdown receiver failed: ${e.message}")
+        }
+    }
+
+    private fun unregisterShutdownReceiver() {
+        if (!shutdownReceiverRegistered) return
+        shutdownReceiverRegistered = false
+        try {
+            unregisterReceiver(shutdownReceiver)
+        } catch (e: IllegalArgumentException) {
+            // 已注销，忽略
+        }
     }
 
     override fun onInterrupt() {
@@ -127,7 +221,9 @@ class SkipAdService : AccessibilityService() {
         }
         syncClient.reportSkip(Prefs.getServerUrl(this), pkg, label, Prefs.getDeviceId(this))
         AppEvents.emitSkipped(label)
-        sendBroadcast(Intent(ACTION_SKIPPED).putExtra(EXTRA_PKG, label))
+        // 广播一律 setPackage 收窄到本应用：ACTION_SKIPPED 携带用户正在使用的应用名，
+        // 不加限制会让任意第三方应用注册同名 action 即可监听（隐私泄露）。
+        sendBroadcast(Intent(ACTION_SKIPPED).setPackage(packageName).putExtra(EXTRA_PKG, label))
     }
 
     private fun isInDoNotDisturbPeriod(): Boolean {

@@ -70,6 +70,19 @@ class ArchitectureBoundaryTest {
         banned = listOf("com.ldp.adskip.ui.")
     )
 
+    // ---------- device：系统集成层可向下取系统状态，不可反向依赖 ui/业务层 ----------
+
+    @Test
+    fun `device never imports ui data net or sync`() = assertNoBannedImports(
+        pkgDir = "device",
+        banned = listOf(
+            "com.ldp.adskip.ui.",
+            "com.ldp.adskip.data.",
+            "com.ldp.adskip.net.",
+            "com.ldp.adskip.sync."
+        )
+    )
+
     // ---------- 工具 ----------
 
     private fun assertNoBannedImports(pkgDir: String, banned: List<String>, allowed: List<String> = emptyList()) {

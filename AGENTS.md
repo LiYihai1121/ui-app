@@ -34,6 +34,18 @@
 - 通过完整 CI 和发布验收后，创建不可移动的带注释标签 `vX.Y.Z`，制品必须可追溯到 commit/tag 并记录校验和。
 - 禁止删除或移动已推送的版本标签；故障优先回滚已验证制品或使用 `git revert`，不得对受保护分支执行 reset 或 force-push。
 
+## 多 Agent 协作
+
+细则见 [docs/development/AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md)，本节为执行摘要。
+
+- **一人一工作区**：每个 Agent 用真正的 `git worktree`（落点 `.worktrees/<agent>-<slug>/`，内有 `.git` 元数据）；禁止在仓库内复制整仓当工作区。
+- **忽略规则要共享**：Agent 产物目录（`.kilo/`、`.kilocode/`、`.worktrees/`、`.agents/`、`.mimosa/`、`.workbuddy/`）必须写进根 `.gitignore`，不得只藏在本机 `.git/info/exclude`——否则会出现「git 干净但文件检索仍命中」的双重真相。
+- **唯一写入者**：同一文件同一时间只有一个 Agent 写；开工前在协作规范的认领板登记路径；`CHANGELOG.md`、`ROADMAP*.md`、`ARCHITECTURE.md`、`docs/README.md` 为单写者事实源。
+- **一任务一分支**：分支与 Agent 一一绑定，禁止共用分支；禁止对他人分支 rebase/reset/force-push/amend。
+- **契约先行**：跨包、跨端边界的改动必须同时给出可执行契约测试（`ArchitectureBoundaryTest` / `ManifestContractTest` / `ProjectStructureTest` / `RepoHygieneTest`），先写失败的测试再写实现。
+- **目录结构**：`client/` 与仓库根的目录布局由 `ProjectStructureTest` 强制；新增根级条目需先更新其白名单并在 PR 说明理由，细则见 [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) 第 2.2 节。
+- **自跑门禁并交接**：各自跑通相关门禁，交接时给出「改了什么 / 边界变化 / 验证数字 / 遗留风险 / 下一步命令」五项。
+
 ## 文档与规划
 
 - 文档入口与事实源见 [docs/README.md](docs/README.md)：版本序列以 `docs/planning/ROADMAP.md` 为准，里程碑与出口条件见 `docs/planning/ROADMAP-ADS.md`，技术步骤见 `docs/planning/DESIGN-PHASE1-SELECTOR.md`，发布链路见 `docs/planning/RELEASE-HISTORY.md`。

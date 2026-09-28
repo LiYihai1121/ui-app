@@ -96,4 +96,33 @@
     <string name="settings_battery">电池优化</string>
     <string name="settings_battery_allow">允许后台运行</string>
     <string name="settings_battery_done">当前已允许后台运行</string>
+
+    <!-- 厂商保活与快捷磁贴（device/ 层） -->
+    <string name="settings_keepalive_title">系统保活与快捷入口</string>
+    <string name="settings_keepalive_vendor">当前设备：%1$s</string>
+    <string name="settings_keepalive_hint">部分厂商系统会在切后台一段时间后强杀无障碍服务，导致「跳过」静默失效。请在本页开启自启动，并把净启动 AdSkip 加入后台运行白名单。</string>
+    <string name="settings_keepalive_open">打开自启动 / 后台管理</string>
+    <string name="settings_keepalive_opened">已打开「%1$s」设置，请允许自启动与后台运行</string>
+    <string name="settings_keepalive_failed">未能自动打开系统设置，请手动前往「设置 → 应用管理 → %1$s → 自启动」并允许本应用</string>
+    <string name="settings_tile_hint">快捷磁贴：下拉通知栏 → 点编辑按钮 → 从「未激活磁贴」拖动「%1$s」到快捷开关区，即可一眼看状态、一次点击启停。</string>
+    <string name="settings_tile_add">添加快捷磁贴到下拉栏</string>
+    <string name="settings_tile_added">磁贴已添加，请下拉通知栏查看</string>
+    <string name="settings_tile_exists">磁贴已在快捷设置中</string>
+    <string name="settings_tile_not_foreground">请保持本页面在前台后重试，或手动从「编辑磁贴」中拖动添加</string>
+    <string name="settings_tile_manual">当前系统不支持自动添加，请下拉通知栏 → 编辑磁贴 → 拖动「%1$s」</string>
+    <string name="tile_label">净启动</string>
+    <string name="tile_state_on">运行中 · 点击关闭</string>
+    <string name="tile_state_off">已停止 · 点击开启</string>
+    <string name="tile_disabled">已关闭跳过服务</string>
+
+    <!-- 厂商名称（Vendor 枚举 → 显示名） -->
+    <string name="vendor_xiaomi">小米 / Redmi（MIUI）</string>
+    <string name="vendor_huawei">华为（EMUI / HarmonyOS）</string>
+    <string name="vendor_honor">荣耀（MagicOS）</string>
+    <string name="vendor_oppo">OPPO / 一加系（ColorOS，含 realme）</string>
+    <string name="vendor_vivo">vivo / iQOO（OriginOS）</string>
+    <string name="vendor_meizu">魅族（Flyme）</string>
+    <string name="vendor_oneplus">一加（OxygenOS / ColorOS）</string>
+    <string name="vendor_samsung">三星（One UI）</string>
+    <string name="vendor_generic">其他系统（通用入口）</string>
 </resources>

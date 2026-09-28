@@ -106,6 +106,11 @@
 
 - **验收**：通知过滤误杀率 < 1%（白名单机制），提供手动恢复入口。
 
+> **已提前交付的部分**（`feature/ui-ux-modernization`，版本号待冻结）：第 3 条的「厂商 ROM 关闭路径 + 设置页一键跳转」骨架已落地——
+> 新增 `client/.../device/` 层（`VendorKeepAlive` 厂商入口表 + `KeepAliveNavigator` 逐级降级跳转 + `<queries>` 可见性声明），
+> 并附带下拉通知栏磁贴（`SkipTileService`）用于一眼查看/一键启停服务。
+> M4 剩余范围不变：通知过滤本体 + 通知类（锁屏/负一屏/厂商推送）图文库 + 白名单恢复入口。
+
 ### Phase 5 — L5 规则生态与运营（第 7 周起持续，P1）
 
 参考 GKD 订阅 topics / SKIP PR 共建：

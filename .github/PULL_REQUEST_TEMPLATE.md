@@ -41,3 +41,6 @@
 - [ ] 未修改已发布版本标签，未复用 Android `versionCode`
 - [ ] 需要发布时已创建 `release/vX.Y.Z`，并同步 Android 与服务端版本
 - [ ] 涉及安全、协议或数据变更时已请求领域负责人审查
+
+<!-- 规则（分支模型、提交格式、审批与发布要求）见 CONTRIBUTING.md；此处不复制，避免两份真相。 -->
+- [ ] 已确认本次变更未违反 [CONTRIBUTING.md](../CONTRIBUTING.md) 的分支与合并规则

@@ -1,104 +1,48 @@
 ---
 name: branch-guard
-description: Enforce enterprise branch governance — every change uses a traceable branch, passes CI and review, then enters protected main or a release branch.
+description: Enforce branch governance for every change - traceable branch, self-run gates, then PR into protected main. This skill only triggers and self-checks the rules; the rules themselves live in CONTRIBUTING.md.
 metadata:
   audience: all-contributors
   workflow: github-flow
 ---
 
-## Branch Workflow Rules
+## 规则唯一事实源（此处不复述规则）
 
-You MUST follow this workflow for ALL code changes in this project. No exceptions.
+| 关注点 | 规范文件（唯一事实源） |
+| --- | --- |
+| 分支模型、提交格式、PR 门禁、版本发布 | [CONTRIBUTING.md](../../../CONTRIBUTING.md) |
+| 日常执行摘要（分支/门禁/文档顺序） | [AGENTS.md](../../../AGENTS.md) |
+| 并行多 Agent 协作（隔离/所有权/契约/交接） | [docs/development/AGENT-WORKFLOW.md](../../../docs/development/AGENT-WORKFLOW.md) |
+| 本机工具链与命令 | [docs/development/DEV-ENVIRONMENT.md](../../../docs/development/DEV-ENVIRONMENT.md) |
 
-### 1. Always create a new branch before editing
+> 本文件**刻意不复制**规则表格与命令清单：复制出去的规则会静默漂移，并成为第二份（往往是错的）真相。
+> 新规则一律加到上表的规范文件里，这里只保留指针与自检动作。
 
-Before making ANY code change, you MUST:
+## 开工前自检
 
-```bash
-# Check current branch and worktree before starting
-git branch --show-current
-git status --short --branch
+1. `git status --short --branch` —— 工作区干净、位于可追踪分支
+2. `git worktree list` —— 你在**已登记的 worktree** 内（含 `.git` 元数据）
+3. 读 [AGENTS.md](../../../AGENTS.md)，从最新 `main` 创建 `type/<id>-<slug>` 分支
+4. 并行协作时，另读 [AGENT-WORKFLOW.md](../../../docs/development/AGENT-WORKFLOW.md) 并在认领板登记路径
 
-# Create a new branch from the latest main
-git switch main
-git pull --ff-only origin main
-git switch -c <branch-name>
-```
+## 提交前自检
 
-**Branch naming convention:**
+- 跑通 [AGENTS.md](../../../AGENTS.md)「验证与合并」小节列出的门禁命令（**自行执行**，不把验证推给 CI）
+- 一个提交一件事；Conventional Commits；标题 ≤ 72 字符；正文说明原因、影响与验证方式
 
-| 类型 | 格式 | 示例 |
-|---|---|---|
-| 新功能 | `feature/<简述>` | `feature/compose-migration`, `feature/bun-server` |
-| 修复 Bug | `fix/<简述>` | `fix/rate-limit-off-by-one`, `fix/cors-null-header` |
-| 重构 | `refactor/<简述>` | `refactor/server-ts`, `refactor/ui-layer` |
-| 文档 | `docs/<简述>` | `docs/architecture-update` |
-| CI/构建 | `ci/<简述>` | `ci/bun-workflow` |
-| 测试 | `test/<简述>` | `test/smoke-in-process` |
-| 发布 | `release/vX.Y.Z` | `release/v3.1.0` |
-| 紧急修复 | `hotfix/<id>-<简述>` | `hotfix/456-crash-on-start` |
+## 合并前自检
 
-### 2. Make changes on the branch
+- PR 目标为 `main`（或当前 `release/*`），关联 Issue，自审栏填写完整
+- Squash Merge，合并后删除源分支
+- 绝不 push / force-push / amend / rebase 他人分支；不在 `main` 上直接提交
+- 涉及安全、协议、数据、发布配置时请求领域负责人审查
 
-Work ONLY on the new branch. Commit with descriptive messages:
+## 会被构建拦下的硬规则
 
-```bash
-git add -A
-git commit -m "type(scope): description"
-```
+- 架构边界 → `ArchitectureBoundaryTest`
+- 清单与入口表对齐（磁贴、`<queries>`）、广播收窄、开机权限 → `ManifestContractTest`
+- 目录结构（根白名单、产物、模块、包路径、文档登记） → `ProjectStructureTest`
+- 仓库卫生（忽略规则、无元数据仓库副本、文档登记、分支命名） → `RepoHygieneTest`
 
-### 3. Test before merging
+以上任一违反都会在 `testDebugUnitTest` 阶段失败，**不依赖代码评审才发现**。
 
-You MUST verify the code works before merging:
-
-**Android 客户端：**
-```bash
-cd client
-./gradlew assembleDebug        # 编译通过
-./gradlew testDebugUnitTest    # 单测通过
-```
-
-**服务端（Bun）：**
-```bash
-cd server && bun install && bun test
-bun run typecheck
-```
-
-If ANY test fails, fix the issue on the same branch before proceeding.
-
-### 4. Pull Request and merge
-
-Only after ALL tests pass and required reviewers approve:
-
-```bash
-gh pr create --base main --head <branch-name>
-# Merge through the protected repository UI using Squash Merge.
-git switch main
-git pull --ff-only origin main
-git branch -d <branch-name>
-```
-
-### 5. Main branch protection rules
-
-**NEVER do these on main directly:**
-
-- `git commit` directly on main
-- `git push origin main` without going through a branch
-- Merging code that has not passed required CI or review
-- Skipping the branch workflow for "small" changes
-
-**"Small" changes still require a branch:**
-- Typo fixes
-- Comment additions
-- Config tweaks
-- Documentation updates
-
-The ONLY exception is merging a completed feature branch back to main (step 4).
-
-### 6. Workflow summary
-
-```
-main → create traceable branch → edit → test → PR review → squash merge → delete branch → main
-```
-
-Every cycle follows this pattern. No shortcuts.

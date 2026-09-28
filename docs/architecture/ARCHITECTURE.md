@@ -63,12 +63,14 @@
 | **data/** | Prefs / RulesRepository / StatsRepository / SettingsRepository | 存储原语 + 领域仓库（合并/LruCache/合批落盘）+ 设置门面（收口 net/sync 委托） | 不感知 UI 与网络格式 |
 | **net/** | SyncClient | HTTP 传输（v1: ETag/304/批量补报） | 不直接改存储键值 |
 | **core/** | AppEvents / AppExecutors / Clock / LogRing | 进程内事件总线、线程域收口、时钟注入、环形日志 | 不含业务逻辑 |
+| **device/** | VendorKeepAlive（纯数据）/ QuickTileLogic（纯逻辑）/ KeepAliveNavigator（跳转出口）/ SkipTileService（快捷磁贴） | 系统级入口：厂商 ROM 识别与自启动/后台管理跳转、下拉磁贴、系统设置页跳转 | 不读业务数据、不发起网络/同步、不依赖 `ui/`（允许依赖 `core/` 与 `service/` 的只读状态查询） |
 | **sync/** | SyncJobService | JobScheduler 周期同步 | 不含同步逻辑（委托 SyncClient） |
 
 **关键设计**：
 - **MVVM + StateFlow + UiEffect 单向数据流**：ViewModel 通过 `viewModelFactory { initializer { } }` 从 `AppContainer` 取依赖，可回退状态聚合为单一 `UiState` 暴露 `StateFlow`（Compose `collectAsStateWithLifecycle()` 收集）；Toast 等一次性事件统一经 `effects: SharedFlow<UiEffect>` 下发，由 Screen 在 `LaunchedEffect` 中消费，四个页面同一套模式。
 - **AppEvents**：`Service` 层通过 `AppEvents.setServiceRunning()` / `AppEvents.emitSkipped()` 推送状态，ViewModel 通过 `StateFlow` / `SharedFlow` 收集，取代旧架构中 UI 直接注册 `BroadcastReceiver` 的方式；模拟测试标记 `testActive` 同样经 AppEvents 中转，ui 与 service 互不依赖。
 - **RulesRepository.ruleSetFor(pkg)** 是规则的唯一组装点——全局关键词 + 应用专属关键词 + 全局 ViewID + 应用专属 ViewID + 选择器（全局/应用级，`3.0.3` 起）+ 禁用开关，合并为一个不可变的 `RuleSet` 交给引擎。
+- **系统入口收口**：`device/` 是唯一允许触碰系统设置页与磁贴的层。`KeepAliveNavigator` 做「Intent 组装 + `PackageManager` 可解析性探测 + 逐级降级」，UI 只调用它、不再自行拼 `Intent`；`VendorKeepAlive`（ROM 识别 + 入口表）与 `QuickTileLogic`（磁贴点击决策）是零 Android 依赖的纯数据/纯函数，故可在 JVM 中单测，而 `TileService` 只做 API 落地。
 
 ### 2.1 边界契约
 
@@ -85,6 +87,7 @@
 | `net/` | `data/`、Android SDK、org.json | `ui/`、`service/` |
 | `sync/` | `data/`、`core/`、Android SDK | `ui/`、`service/` |
 | `service/` | `core/`、`data/`、`engine/`、`net/`、组合根 | `ui/` |
+| `device/` | `core/`（LogRing）、`service/`（无障碍真实状态 `isEnabled` 与关闭请求 `requestShutdown`）、Android SDK | `ui/`、`data/`、`net/`、`sync/` |
 | 组合根（`AdskipApp`/`AppContainer`） | 全部（唯一 DI 装配点） | —（不承载业务逻辑） |
 
 规则解读：
@@ -92,6 +95,43 @@
 - **ui 单向取值**：UI 只经 `StateFlow`/`UiEffect` 收状态与事件、经 `AppContainer` 拿仓库；不直连网络、后台调度与原始偏好。`data/SettingsRepository` 是设置页的唯一数据出口（收口 `SyncClient`/`SyncJobService`/`Prefs`）。
 - **core 零业务依赖**：`AppEvents` 初值不再引用 `SkipAdService`，Service 连接时主动写入真实状态；ui/service 双向都只经 core 中转。
 - **组合根兜底**：进程级初始化（如 JobScheduler 周期任务重注册）在 `AdskipApp.onCreate` 完成，不进 UI 层。
+- **device 单向向下**：`device/` 只允许「读系统状态 + 拉起系统页面」，因此可以依赖 `service/` 的只读查询，但不得反向依赖 `ui/`；磁贴关闭服务走 `SkipAdService.requestShutdown()` 发出的进程内定向广播，而非跨包持有 Service 实例。
+
+> 另一条由测试守护的隐式约定：保活入口表依赖 Android 11+ 的包可见性，`<queries>` 声明必须与 `device/VendorKeepAlive.kt` 的入口表逐条对齐，
+> 由 `client/app/src/test/java/com/ldp/adskip/arch/ManifestContractTest.kt` 校验（漏声明只会让跳转静默失败，不会编译报错）。
+
+> **广播必须收窄到本应用**：所有 `sendBroadcast` 都要带 `setPackage(...)`。
+> `ACTION_SKIPPED` 携带用户正在使用的应用名，未收窄的隐式广播可被任意第三方应用注册同名 action 监听；
+> 同样由 `ManifestContractTest` 强制。
+
+> ⚠️ **`RECEIVE_BOOT_COMPLETED` 不是可清理的残留权限**：同步任务用 `setPersisted(true)` 跨重启恢复，
+> 而 `JobInfo.Builder.setPersisted` 标注了 `@RequiresPermission(RECEIVE_BOOT_COMPLETED)`——
+> 缺少该权限时 `JobScheduler.schedule()` **静默返回 0**，表现为「重启后规则不再自动同步」，无崩溃无日志。
+> 「已删除 BootReceiver」指的是不再需要广播接收器，**不代表**可以删除该权限。
+> 该耦合由 `ManifestContractTest` 的 `boot permission is kept while a persisted job is used` 强制。
+
+### 2.2 目录结构契约
+
+2.1 管的是**包之间的依赖**，2.2 管的是**仓库与工程结构本身**。后者同样由
+`client/app/src/test/java/com/ldp/adskip/arch/ProjectStructureTest.kt` 强制，
+随 `testDebugUnitTest` 运行，并在 CI 中作为独立 job（`Structure Contract`）最先执行——让结构问题在几分钟内失败，而不是等完整构建结束。
+
+| 契约 | 强制内容 | 背景（实测故障） |
+| --- | --- | --- |
+| 根目录白名单 | 只允许 `.github/` `.opencode/` `client/` `docs/` `server/` 与 9 个治理文件 | 根目录曾长期滞留 `AdSkip-latest.apk` 与 `.kilo/`、`.mimosa/` 工具残留目录 |
+| 产物不入库 | 禁止 `*.apk/*.aab/*.aar/*.log/*.zip/*.keystore/*.iml`、`.DS_Store` 等（仅放行 `gradle-wrapper.jar`） | 分发以 Releases + `SHA256SUMS` 为准；构建产物属于被忽略目录 |
+| 模块双向一致 | `settings.gradle.kts` 的 `include(":x")` ↔ 磁盘模块目录**双向**校验 | 模块目录被删却仍注册，或建了目录忘注册（代码写了但不编译） |
+| Gradle 工程根 | `client/` 只保留 wrapper、构建脚本与模块目录 | 防止脚本/产物随手落进工程根 |
+| 标准源集布局 | `src/main/{java,res}` + `AndroidManifest.xml`（应用模块）、`src/test/java`；非常规源集须在 `build.gradle.kts` 声明 | 非常规源集目录默认不参与编译，属静默失效 |
+| 包声明对位 | 每个 `.kt` 的 `package` 必须与其目录路径一致 | 包路径错位会让 2.1 的包级扫描按错误边界生效 |
+| 文档登记 | `docs/` 子目录限 `api/ architecture/ development/ planning/ diagrams/`，且每份文档必须出现在 `docs/README.md` | 与文档地图的单一事实源要求对齐 |
+
+> **白名单是刻意收紧的**：确需新增根级条目时，先更新 `ProjectStructureTest` 的
+> `ALLOWED_ROOT_DIRS` / `ALLOWED_ROOT_FILES` 并在 PR 说明理由——让结构调整成为一次显式决策，
+> 而不是一次顺手拖拽。若条目属于本机生成物，正确做法是写入根 `.gitignore` 而非加白名单。
+
+> 尚未落地的工程化演进（version catalog、build-logic 约定插件、模块拆分）见
+> [DESIGN-BUILD-FRAMEWORK.md](../planning/DESIGN-BUILD-FRAMEWORK.md)，其中已标注各项的具体坑位与迁移顺序。
 
 ## 3. 数据流
 
@@ -123,6 +163,22 @@ SyncJobService / 设置页触发 → SyncClient GET /api/v1/rules/latest
           → JobScheduler.setPeriodic(12h) + setPersisted(true) + setRequiredNetworkType(ANY)
 设备重启 → 系统自动恢复持久化 Job（无需 BootReceiver）
 Doze 模式 → 系统推迟到维护窗口执行
+```
+
+**系统级入口（快捷磁贴 / 厂商保活引导）：**
+
+```text
+下拉磁贴点击 → QuickTileLogic.decide(SkipAdService.isEnabled(ctx))   // 纯函数决策
+            ├─ 运行中 → SkipAdService.requestShutdown(ctx) → 进程内定向广播
+            │        → SkipAdService.disableSelf() → onDestroy（刷盘 + 状态广播）
+            │        → 磁贴乐观置为「已停止」并在 600ms 后复查系统真实状态
+            └─ 未运行 → KeepAliveNavigator.openAccessibilitySettings() → 系统无障碍设置
+
+设置页「打开自启动/后台管理」→ KeepAliveNavigator.openKeepAliveSettings(ctx)
+          → VendorKeepAlive.detect(Build.MANUFACTURER, Build.BRAND)   // 纯数据识别
+          → candidates(vendor)：厂商入口 → 通用兜底（应用详情 / 无障碍 / 电池优化）
+          → 逐条 PackageManager.resolveActivity 复核 → 首个可解析者 startActivity
+          → 全部不可解析 → UiEffect 提示手动路径（不静默失败）
 ```
 
 ## 4. 服务端分层职责
@@ -203,7 +259,7 @@ Doze 模式 → 系统推迟到维护窗口执行
 
 **客户端：**
 
-- JVM 单测：`cd client && ./gradlew testDebugUnitTest`（引擎匹配 + SafetyGuard 护栏 + 架构边界守护 `ArchitectureBoundaryTest`）
+- JVM 单测：`cd client && ./gradlew testDebugUnitTest`（引擎匹配 + SafetyGuard 护栏 + 架构边界守护 `ArchitectureBoundaryTest` + 清单契约守护 `ManifestContractTest` + 仓库卫生守护 `RepoHygieneTest` + 厂商识别/磁贴决策 `VendorKeepAliveTest`/`QuickTileLogicTest`）
 - 构建验证：`cd client && ./gradlew assembleDebug`
 
 **服务端（bun:test）：**
@@ -223,6 +279,9 @@ AdSkip/                            全栈 monorepo
 │       ├── ui/                   Compose UI（单 Activity + 4 Screen + ViewModel + UiEffect）
 │       ├── core/                 AppEvents / Clock / AppExecutors / LogRing
 │       ├── service/              SkipAdService + FrameworkAdNode（无障碍服务/节点适配）
+│   │       ├── device/               系统级入口：VendorKeepAlive（ROM 识别 + 入口表）
+│   │       │                         / QuickTileLogic（磁贴决策）/ KeepAliveNavigator（跳转出口）
+│   │       │                         / SkipTileService（下拉磁贴）
 │       ├── engine/               规则引擎（纯 JVM 可测：AdNode / RuleSet / SkipRuleEngine / SafetyGuard）
 │       │   └── selector/         选择器引擎（SelectorAst / SelectorParser / SelectorMatcher）
 │       ├── data/                 Prefs / RulesRepository / StatsRepository / SettingsRepository

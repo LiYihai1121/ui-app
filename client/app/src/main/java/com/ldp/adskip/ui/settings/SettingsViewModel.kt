@@ -11,7 +11,11 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.AppContainer
 import com.ldp.adskip.R
+import com.ldp.adskip.device.KeepAliveNavigator
+import com.ldp.adskip.device.TileAddResult
+import com.ldp.adskip.device.Vendor
 import com.ldp.adskip.ui.UiEffect
+import com.ldp.adskip.ui.vendorLabelRes
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -39,7 +43,9 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         val dndEnabled: Boolean = false,
         val dndStartMinute: Int = 23 * 60,
         val dndEndMinute: Int = 7 * 60,
-        val batteryExempt: Boolean = false
+        val batteryExempt: Boolean = false,
+        /** 当前设备所属 ROM，用于保活引导文案与手动路径提示（device/VendorKeepAlive） */
+        val keepAliveVendor: Vendor = Vendor.GENERIC
     )
 
     private val _uiState = MutableStateFlow(
@@ -50,7 +56,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             dndEnabled = container.settingsRepo.isDoNotDisturbEnabled(),
             dndStartMinute = container.settingsRepo.getDoNotDisturbStart(),
             dndEndMinute = container.settingsRepo.getDoNotDisturbEnd(),
-            batteryExempt = queryBatteryExempt()
+            batteryExempt = queryBatteryExempt(),
+            keepAliveVendor = KeepAliveNavigator.detectVendor()
         )
     )
     val uiState: StateFlow<UiState> = _uiState
@@ -107,6 +114,53 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun refreshBatteryStatus() {
         _uiState.value = _uiState.value.copy(batteryExempt = queryBatteryExempt())
     }
+
+    // ---------- 厂商保活引导与快捷磁贴 ----------
+
+    /** 打开厂商「自启动 / 后台管理」设置页；候选入口均不可用时提示手动路径。 */
+    fun openKeepAliveSettings() {
+        val vendorName = vendorName(_uiState.value.keepAliveVendor)
+        val opened = KeepAliveNavigator.openKeepAliveSettings(container.app) != null
+        val messageRes = if (opened) {
+            R.string.settings_keepalive_opened
+        } else {
+            R.string.settings_keepalive_failed
+        }
+        send(container.app.getString(messageRes, vendorName))
+    }
+
+    /** Android 13+ 请求系统弹出「添加到快捷设置」；低版本或系统服务缺失时提示手动添加。 */
+    fun requestAddTile() {
+        val tileLabel = container.app.getString(R.string.tile_label)
+        if (!KeepAliveNavigator.canRequestAddTile()) {
+            send(container.app.getString(R.string.settings_tile_manual, tileLabel))
+            return
+        }
+        val started = KeepAliveNavigator.requestAddTile(
+            context = container.app,
+            label = tileLabel
+        ) { result -> send(tileAddMessage(result)) }
+        if (!started) {
+            send(container.app.getString(R.string.settings_tile_manual, tileLabel))
+        }
+    }
+
+    private fun tileAddMessage(result: TileAddResult): String {
+        val messageRes = when (result) {
+            TileAddResult.ADDED -> R.string.settings_tile_added
+            TileAddResult.ALREADY_ADDED -> R.string.settings_tile_exists
+            TileAddResult.NOT_FOREGROUND -> R.string.settings_tile_not_foreground
+            TileAddResult.FAILED -> R.string.settings_tile_manual
+        }
+        return if (messageRes == R.string.settings_tile_manual) {
+            container.app.getString(messageRes, container.app.getString(R.string.tile_label))
+        } else {
+            container.app.getString(messageRes)
+        }
+    }
+
+    private fun vendorName(vendor: Vendor): String =
+        container.app.getString(vendorLabelRes(vendor))
 
     fun formatLastSync(ts: Long): String = if (ts > 0L) {
         SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(ts))

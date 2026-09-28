@@ -8,11 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 // 品牌色板（延续 v2.x 视觉）
+// UI 配色的唯一事实源：运行时一律走 MaterialTheme.colorScheme；
+// 下面的字面量仅供状态强调等无法走 colorScheme 的场景使用，且与 res/values/colors.xml 互不重复维护。
 val BrandBlue = Color(0xFF1565C0)
 val StatusOn = Color(0xFF2E7D32)
 val StatusOff = Color(0xFFC62828)
 val TextPrimary = Color(0xFF1F2937)
-val TextSecondary = Color(0xFF9CA3AF)
 
 private val LightColors = lightColorScheme(
     primary = BrandBlue,
