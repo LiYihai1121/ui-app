@@ -2,7 +2,7 @@
   "name": "adskip-server",
   "version": "3.1.0",
   "private": true,
-  "description": "净启动 AdSkip 后端：规则中心 + 统计 API + 管理后台 + 落地页（Bun + TypeScript，零运行时依赖）",
+  "description": "轻启后端：规则中心 + 统计 API + 管理后台 + 落地页（Bun + TypeScript，零运行时依赖）",
   "module": "server.ts",
   "type": "module",
   "scripts": {

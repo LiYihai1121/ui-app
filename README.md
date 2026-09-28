@@ -1,4 +1,4 @@
-# 净启动 AdSkip
+# 轻启
 
 [![CI](https://github.com/LiYihai1121/ui-app/actions/workflows/ci.yml/badge.svg)](https://github.com/LiYihai1121/ui-app/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/LiYihai1121/ui-app?sort=semver)](https://github.com/LiYihai1121/ui-app/releases)
@@ -58,7 +58,7 @@
 ### 安装与配置（Android 8.0+）
 
 1. 安装 APK 后打开应用
-2. 点「打开无障碍设置」→ 开启「净启动 AdSkip」服务
+2. 点「打开无障碍设置」→ 开启「轻启」服务
 3. （建议）将应用加入电池优化白名单，防止后台被清理
 4. 点「云端规则同步」→ 服务器地址填 `http://<本机IP>:3210` → 「立即同步云端规则」
 5. 打开任意带开屏广告的 App 即可自动跳过；可先用「测试：模拟开屏广告」验证
