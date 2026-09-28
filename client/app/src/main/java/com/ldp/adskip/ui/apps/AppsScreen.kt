@@ -26,6 +26,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -61,6 +62,12 @@ fun AppsScreen(viewModel: AppsViewModel = viewModel(factory = AppsViewModel.Fact
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val visible = remember(state.items, state.query, state.onlyEnabled) { state.visibleItems }
     val focusManager = LocalFocusManager.current
+
+    // 底部导航 saveState/restoreState 会让本页 ViewModel 跨 tab 存活，搜索与筛选
+    // 会一直留着。离开本页即重置——它们是视图级临时状态，不是会话级偏好。
+    DisposableEffect(Unit) {
+        onDispose { viewModel.clearTransientFilters() }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         PageHeader(

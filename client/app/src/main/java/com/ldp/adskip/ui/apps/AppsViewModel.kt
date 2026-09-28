@@ -58,6 +58,22 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
         _uiState.update { it.copy(onlyEnabled = onlyEnabled) }
     }
 
+    /**
+     * 离开本页时清掉临时筛选态。
+     *
+     * 底部导航用了 `saveState/restoreState`，因此页面 ViewModel 实例会跨 tab 存活：
+     * 用户搜过某个应用、切去别的页再回来，搜索框里还留着上次的关键词，
+     * 「只看已启用」也还开着——列表凭空少了一大半而没有任何提示，
+     * 绝大多数用户会当成 bug。搜索与筛选属于**视图级临时状态**，不是会话级偏好，
+     * 离开就该重置；真正需要跨会话保留的是「跳过开关」这类真实配置，
+     * 它们存在仓库层，不受此影响。
+     *
+     * 由页面在离开时调用（见 [com.ldp.adskip.ui.apps.AppsScreen] 的 DisposableEffect）。
+     */
+    fun clearTransientFilters() {
+        _uiState.update { if (it.query.isEmpty() && !it.onlyEnabled) it else it.copy(query = "", onlyEnabled = false) }
+    }
+
     init {
         load()
     }
