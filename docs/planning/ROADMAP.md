@@ -81,6 +81,22 @@
   厂商跳转与系统权限面，而发布时尚无可用真机（`adb devices` 为空），厂商入口表与磁贴行为**尚未在
   MIUI / HarmonyOS / ColorOS / OriginOS / Android 13 上实测**。真机验收通过后再发 `v3.1.0` 正式版。
 
+  **模拟器部分验证（2026-09-28，Android 15 / API 35，`google_apis;android-34;x86_64`）**：
+  ✅ 安装成功且 `versionCode 10 / versionName 3.1` 正确；
+  ✅ `MainActivity` 启动并成为前台 Activity，无崩溃、无 error 级日志；
+  ✅ **无障碍服务已绑定并启用**——`dumpsys accessibility` 显示
+  `Bound services:{Service[label=AdSkip · Skip Splash Ads, feedbackType[FEEDBACK_GENERIC],
+  eventTypes=[TYPE_WINDOW_STATE_CHANGED, TYPE_WINDOW_CONTENT_CHANGED], ...]}`，
+  说明 `AndroidManifest.xml` 声明与 `res/xml/skip_service_config.xml` 解析均正确；
+  ✅ 厂商识别按预期落到 `Vendor.GENERIC`（`manufacturer=unknown` / `brand=Android`）；
+  ✅ GENERIC 降级链的 Intent 均可解析：`ACCESSIBILITY_SETTINGS`、`IGNORE_BATTERY_OPTIMIZATION_SETTINGS`、
+  `APPLICATION_DETAILS_SETTINGS`（带 `package:` data URI，实测跳转到 `InstalledAppDetails`）。
+
+  > ⚠️ **模拟器不能替代厂商 ROM 验收**：MIUI / HarmonyOS / ColorOS / OriginOS 的自启动入口、
+  > 电池管理 Intent、OEM 后台限制策略，以及磁贴在 OEM 快捷设置中的真实行为，**均无法在 AOSP 镜像上验证**。
+  > 升级为 `v3.1.0` 正式版仍需真机矩阵（Android 8/13/14/15 + 上述 4 家厂商）。
+  > 磁贴在模拟器上未验证（需先在快捷设置中手动添加，headless 环境无法完成该交互）。
+
 ### 🧩 进行中（未分配版本号）
 
 - [ ] **系统级体验：快捷磁贴 + 厂商保活引导**（已并入 `main`，随 `v3.1.0-rc.1` 预发布，版本号在发版冻结时按 SemVer 确认）：
