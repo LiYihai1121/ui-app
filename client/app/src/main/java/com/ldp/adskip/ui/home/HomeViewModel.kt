@@ -34,7 +34,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         val lastApp: String = "",
         val keywords: List<String> = emptyList(),
         val fakeAdVisible: Boolean = false,
-        val countdown: Int = FAKE_AD_SECONDS
+        val countdown: Int = FAKE_AD_SECONDS,
     ) {
         val testActive: Boolean get() = fakeAdVisible
     }
@@ -46,6 +46,9 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     val effects: SharedFlow<UiEffect> = _effects
 
     private var countdownJob: Job? = null
+
+    /** 最近一次删除的关键词与其原索引，供 [undoRemoveKeyword] 撤销。只保留一份。 */
+    private var lastRemoved: Pair<Int, String>? = null
 
     init {
         refreshAll()
@@ -60,7 +63,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
                 if (_uiState.value.testActive) {
                     endTest()
                     _effects.emit(
-                        UiEffect.ShowMessage(container.app.getString(R.string.test_success, label))
+                        UiEffect.ShowMessage(container.app.getString(R.string.test_success, label)),
                     )
                 }
                 refreshStats()
@@ -89,8 +92,24 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         if (index >= current.size) return
         val removed = current.removeAt(index)
         container.rulesRepo.saveKeywords(current)
+        lastRemoved = index to removed
         refreshKeywords()
-        send(R.string.keyword_removed, removed)
+        // 文案由界面侧生成（需带「撤销」），这里只报告发生了什么。
+        // 用 tryEmit 而非 emit：本函数是普通（非 suspend）回调，界面此时
+        // 尚未保证有收集者，emit 会在无订阅者时直接挂起。
+        _effects.tryEmit(UiEffect.KeywordRemoved(removed))
+    }
+
+    /** 撤销上一次 [removeKeyword]：按原索引插回，避免顺序变化。 */
+    fun undoRemoveKeyword() {
+        val (index, keyword) = lastRemoved ?: return
+        lastRemoved = null
+        val current = container.rulesRepo.keywords()
+        if (current.any { it.equals(keyword, ignoreCase = true) }) return
+        val restored = current.toMutableList()
+        restored.add(index.coerceIn(0, restored.size), keyword)
+        container.rulesRepo.saveKeywords(restored)
+        refreshKeywords()
     }
 
     /** 模拟一个带「跳过」按钮的开屏广告，验证无障碍链路。 */
@@ -135,7 +154,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     private fun refreshStats() {
         _uiState.value = _uiState.value.copy(
             totalSkips = container.statsRepo.total(),
-            lastApp = container.statsRepo.lastApp()
+            lastApp = container.statsRepo.lastApp(),
         )
     }
 

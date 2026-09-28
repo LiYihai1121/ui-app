@@ -13,10 +13,7 @@ import com.ldp.adskip.sync.SyncJobService
  *
  * @param rulesRepo 同步结果落地规则仓库（[SyncClient.syncRules] 需要）
  */
-class SettingsRepository(
-    private val context: Context,
-    private val rulesRepo: RulesRepository
-) {
+class SettingsRepository(private val context: Context, private val rulesRepo: RulesRepository) {
 
     // ---------- 服务器地址与手动同步 ----------
 
@@ -83,7 +80,6 @@ class SettingsRepository(
          * 模板不求值、编译照过，界面上却直接显示 `${info.versionName} (10)` 字面量。
          * 这类错误编译期无法发现，只能靠测试与真机走查兜底。
          */
-        fun formatVersion(versionName: String?, versionCode: Long): String =
-            "${versionName ?: "?"} ($versionCode)"
+        fun formatVersion(versionName: String?, versionCode: Long): String = "${versionName ?: "?"} ($versionCode)"
     }
 }

@@ -1,0 +1,20 @@
+{
+  // 推荐扩展：让「追一个功能到源码」这件事在所有人的编辑器里表现一致。
+  // 属于建议而非强制——缺少某扩展不应该导致项目无法构建或测试。
+  "recommendations": [
+    // Kotlin 语言服务器：跳转定义 / 查找引用 / hover / 语义高亮 / 补全。
+    // 装上后本仓库的 .editorconfig（import 排序、120 行宽）才能被正确应用。
+    "fwcd.kotlin",
+
+    // Java 语言服务器：redhat.jdt.ls 只管 Java；同时带来 XML 支持，
+    // 读 AndroidManifest.xml 的 <queries> 与权限声明时用得上。
+    "vscjava.vscode-java-pack",
+
+    // 行级 blame 与提交历史：回答「这行为什么这样写」——这层信息只存在于提交历史里。
+    "eamodio.gitlens",
+
+    // Logcat 过滤。注意：本应用有自研 LogRing（应用内「跳过日志」页），
+    // 排查无障碍逻辑要看 LogRing 而不是 Logcat，两者互补。
+    "vitalijp.vscode-logcat"
+  ]
+}

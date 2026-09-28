@@ -16,6 +16,8 @@ object Prefs {
     private const val KEY_KEYWORDS_JSON = "keywords_json"
     private const val KEY_VIEW_IDS = "view_ids"
     private const val KEY_VIEW_IDS_JSON = "view_ids_json"
+    private const val KEY_GLOBAL_SELECTORS = "global_selectors"
+    private const val KEY_GLOBAL_SELECTORS_JSON = "global_selectors_json"
     private const val KEY_DISABLED = "disabled_packages"
     private const val KEY_TOTAL = "total_skips"
     private const val KEY_LAST_APP = "last_app"
@@ -31,6 +33,7 @@ object Prefs {
 
     private const val PREFIX_PKG_KEYWORDS = "pkg_kw:"
     private const val PREFIX_PKG_VIEW_IDS = "pkg_vid:"
+    private const val PREFIX_PKG_SELECTORS = "pkg_sel:"
     private const val PREFIX_PKG_COUNT = "pkg_count:"
 
     private const val LOG_CAP = 200
@@ -73,6 +76,22 @@ object Prefs {
         sp(context).edit().putString(KEY_VIEW_IDS_JSON, stringListToJson(ordered)).apply()
     }
 
+    fun getGlobalSelectors(context: Context): MutableList<String> {
+        val prefs = sp(context)
+        if (prefs.contains(KEY_GLOBAL_SELECTORS_JSON)) {
+            return jsonToStringList(prefs.getString(KEY_GLOBAL_SELECTORS_JSON, null)).toMutableList()
+        }
+        val saved = prefs.getStringSet(KEY_GLOBAL_SELECTORS, null)?.toList() ?: emptyList()
+        val ordered = saved.filter { it.isNotBlank() }.distinct()
+        saveGlobalSelectors(context, ordered)
+        return ordered.toMutableList()
+    }
+
+    fun saveGlobalSelectors(context: Context, list: List<String>) {
+        val ordered = list.filter { it.isNotBlank() }.distinct()
+        sp(context).edit().putString(KEY_GLOBAL_SELECTORS_JSON, stringListToJson(ordered)).apply()
+    }
+
     // ---------- 按应用规则 ----------
     fun getPkgKeywords(context: Context, pkg: String): List<String> =
         sp(context).getStringSet(PREFIX_PKG_KEYWORDS + pkg, null)?.toList() ?: emptyList()
@@ -88,12 +107,21 @@ object Prefs {
         sp(context).edit().putStringSet(PREFIX_PKG_VIEW_IDS + pkg, list.toSet()).apply()
     }
 
+    fun getPkgSelectors(context: Context, pkg: String): List<String> =
+        sp(context).getStringSet(PREFIX_PKG_SELECTORS + pkg, null)?.toList() ?: emptyList()
+
+    fun savePkgSelectors(context: Context, pkg: String, list: List<String>) {
+        sp(context).edit().putStringSet(PREFIX_PKG_SELECTORS + pkg, list.toSet()).apply()
+    }
+
     /** 清空所有云端下发的应用专属规则，用于同步时先做完整覆盖。 */
     fun clearAllPkgRules(context: Context) {
         val prefs = sp(context)
         val editor = prefs.edit()
         for (key in prefs.all.keys) {
-            if (key.startsWith(PREFIX_PKG_KEYWORDS) || key.startsWith(PREFIX_PKG_VIEW_IDS)) {
+            if (key.startsWith(PREFIX_PKG_KEYWORDS) || key.startsWith(PREFIX_PKG_VIEW_IDS) ||
+                key.startsWith(PREFIX_PKG_SELECTORS)
+            ) {
                 editor.remove(key)
             }
         }
@@ -118,8 +146,7 @@ object Prefs {
 
     fun getLastApp(context: Context): String = sp(context).getString(KEY_LAST_APP, "") ?: ""
 
-    fun getPkgSkipCount(context: Context, pkg: String): Int =
-        sp(context).getInt(PREFIX_PKG_COUNT + pkg, 0)
+    fun getPkgSkipCount(context: Context, pkg: String): Int = sp(context).getInt(PREFIX_PKG_COUNT + pkg, 0)
 
     fun recordSkip(context: Context, pkg: String, label: String): Int {
         val total = getTotalSkips(context) + 1
@@ -170,9 +197,30 @@ object Prefs {
         sp(context).edit().putString(KEY_LOGS, "[]").apply()
     }
 
+    /**
+     * 整体写回日志，仅用于「清空后撤销」把原数据原样放回。
+     *
+     * 与 [addLog] 的区别：addLog 是追加并按 [LOG_CAP] 裁剪、保持时间序；
+     * 本方法**原样覆盖**，因此调用方必须传入清空前读到的完整快照，
+     * 且快照自身应已由 [getLogs] 保证长度 ≤ LOG_CAP。
+     * 之所以需要它：清空日志是不可逆操作，没有恢复途径就等于「删了就没了」；
+     * 提供写回能力后，界面才能给出真正的「撤销」而不仅是二次确认。
+     */
+    fun restoreLogs(context: Context, entries: List<Triple<Long, String, String>>) {
+        if (entries.size > LOG_CAP) return
+        val next = JSONArray()
+        for ((ts, pkg, label) in entries) {
+            val o = JSONObject()
+            o.put("ts", ts)
+            o.put("pkg", pkg)
+            o.put("label", label)
+            next.put(o)
+        }
+        sp(context).edit().putString(KEY_LOGS, next.toString()).apply()
+    }
+
     // ---------- 云同步 ----------
-    fun getServerUrl(context: Context): String =
-        sp(context).getString(KEY_SERVER_URL, DEFAULT_SERVER) ?: DEFAULT_SERVER
+    fun getServerUrl(context: Context): String = sp(context).getString(KEY_SERVER_URL, DEFAULT_SERVER) ?: DEFAULT_SERVER
 
     fun saveServerUrl(context: Context, url: String) {
         sp(context).edit().putString(KEY_SERVER_URL, url).apply()
@@ -185,25 +233,21 @@ object Prefs {
     }
 
     // ---------- 体验设置 ----------
-    fun isAutoSyncEnabled(context: Context): Boolean =
-        sp(context).getBoolean(KEY_AUTO_SYNC, false)
+    fun isAutoSyncEnabled(context: Context): Boolean = sp(context).getBoolean(KEY_AUTO_SYNC, false)
 
     fun setAutoSyncEnabled(context: Context, enabled: Boolean) {
         sp(context).edit().putBoolean(KEY_AUTO_SYNC, enabled).apply()
     }
 
-    fun isDoNotDisturbEnabled(context: Context): Boolean =
-        sp(context).getBoolean(KEY_DND_ENABLED, false)
+    fun isDoNotDisturbEnabled(context: Context): Boolean = sp(context).getBoolean(KEY_DND_ENABLED, false)
 
     fun setDoNotDisturbEnabled(context: Context, enabled: Boolean) {
         sp(context).edit().putBoolean(KEY_DND_ENABLED, enabled).apply()
     }
 
-    fun getDoNotDisturbStart(context: Context): Int =
-        sp(context).getInt(KEY_DND_START, 23 * 60)
+    fun getDoNotDisturbStart(context: Context): Int = sp(context).getInt(KEY_DND_START, 23 * 60)
 
-    fun getDoNotDisturbEnd(context: Context): Int =
-        sp(context).getInt(KEY_DND_END, 7 * 60)
+    fun getDoNotDisturbEnd(context: Context): Int = sp(context).getInt(KEY_DND_END, 7 * 60)
 
     fun setDoNotDisturbTimes(context: Context, startMinute: Int, endMinute: Int) {
         sp(context).edit()
@@ -224,8 +268,7 @@ object Prefs {
     }
 
     // ---------- 规则哈希（If-None-Match 同步） ----------
-    fun getRulesHash(context: Context): String =
-        sp(context).getString(KEY_RULES_HASH, "") ?: ""
+    fun getRulesHash(context: Context): String = sp(context).getString(KEY_RULES_HASH, "") ?: ""
     fun setRulesHash(context: Context, hash: String) {
         sp(context).edit().putString(KEY_RULES_HASH, hash).apply()
     }

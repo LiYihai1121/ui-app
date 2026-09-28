@@ -20,9 +20,9 @@ import com.ldp.adskip.net.SyncClient
 class AppContainer(val app: Application, context: Context) {
     val clock: Clock = SystemClockAdapter
     val executors = AppExecutors()
-    val prefs = Prefs  // object 单例，不需构造
+    val prefs = Prefs // object 单例，不需构造
     val rulesRepo = RulesRepository(context.applicationContext)
     val statsRepo = StatsRepository(context.applicationContext, executors.io)
     val settingsRepo = SettingsRepository(context.applicationContext, rulesRepo)
-    val syncClient = SyncClient  // object 单例
+    val syncClient = SyncClient // object 单例
 }

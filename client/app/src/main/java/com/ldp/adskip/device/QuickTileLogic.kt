@@ -12,7 +12,7 @@ enum class QuickTileAction {
     OPEN_ACCESSIBILITY_SETTINGS,
 
     /** 服务运行中：请求服务自行关闭（等价于用户去设置里关掉开关）。 */
-    DISABLE_SERVICE
+    DISABLE_SERVICE,
 }
 
 /** 磁贴的完整呈现模型：[enabled] 为 true 时磁贴高亮。 */
@@ -35,15 +35,17 @@ enum class TileAddResult {
     NOT_FOREGROUND,
 
     /** 其他失败（无状态栏服务、组件不匹配等）。 */
-    FAILED
+    FAILED,
 }
 
 object QuickTileLogic {
 
     /** 磁贴点击后的动作决策：运行中 → 关闭；未运行 → 去开启。 */
-    fun decide(serviceEnabled: Boolean): QuickTileAction =
-        if (serviceEnabled) QuickTileAction.DISABLE_SERVICE
-        else QuickTileAction.OPEN_ACCESSIBILITY_SETTINGS
+    fun decide(serviceEnabled: Boolean): QuickTileAction = if (serviceEnabled) {
+        QuickTileAction.DISABLE_SERVICE
+    } else {
+        QuickTileAction.OPEN_ACCESSIBILITY_SETTINGS
+    }
 
     /** 磁贴呈现模型（状态 + 点击动作保持同源推导，避免两处判空分叉）。 */
     fun model(serviceEnabled: Boolean): QuickTileModel =

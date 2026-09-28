@@ -13,7 +13,10 @@ val signingProps = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 val releaseSigningReady = listOf(
-    "adskip.storeFile", "adskip.storePassword", "adskip.keyAlias", "adskip.keyPassword"
+    "adskip.storeFile",
+    "adskip.storePassword",
+    "adskip.keyAlias",
+    "adskip.keyPassword",
 ).all { !signingProps.getProperty(it).isNullOrBlank() }
 
 /**
@@ -31,7 +34,7 @@ if (!releaseSigningReady) {
         } else {
             "[adskip] release 未配置签名：已回退 debug 签名以保证 APK 可安装；正式分发请在 local.properties 配置 " +
                 "adskip.storeFile / adskip.storePassword / adskip.keyAlias / adskip.keyPassword"
-        }
+        },
     )
 }
 
@@ -39,7 +42,9 @@ android {
     // namespace/compileSdk/minSdk/targetSdk 等公共项由 adskip.android.application 约定插件统一提供
     defaultConfig {
         applicationId = "com.ldp.adskip"
-        versionCode = 10
+        // 单调递增，禁止复用已发布编号（下一个版本必须 > 10）
+        versionCode = 11
+        // 展示值用 X.Y（与 CONTRIBUTING「版本策略」一致；server 侧用完整 X.Y.Z）
         versionName = "3.1"
     }
 
@@ -59,11 +64,14 @@ android {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             signingConfig = when {
                 releaseSigningReady -> signingConfigs.getByName("release")
-                unsignedRelease -> null // 仅在显式选择时产出未签名包
+
+                unsignedRelease -> null
+
+                // 仅在显式选择时产出未签名包
                 else -> signingConfigs.getByName("debug") // 回退：产物必须可安装
             }
         }

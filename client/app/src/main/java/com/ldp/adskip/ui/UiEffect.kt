@@ -9,6 +9,15 @@ package com.ldp.adskip.ui
  */
 sealed interface UiEffect {
 
-    /** 展示一条一次性文案（Toast） */
+    /** 展示一条一次性文案（Snackbar，无 action） */
     data class ShowMessage(val message: String) : UiEffect
+
+    /**
+     * 关键词被删除，**可撤销**。
+     *
+     * 单独成类型而不是复用 [ShowMessage]：删除是不可逆操作，界面必须能拿到
+     * 「撤销」入口；把撤销能力混进通用消息里，调用方就会退化成只弹一条无退路的提示。
+     * 文案由界面侧生成（需要拼接与本地化资源），ViewModel 只报告事实。
+     */
+    data class KeywordRemoved(val keyword: String) : UiEffect
 }

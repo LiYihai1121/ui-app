@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  启动器图标背景层：对角线性渐变（#1E88E5 → #0D47A1），两端都取品牌蓝家族色，
+  视觉上夹住 M3 主色 #1565C0，保证图标与应用内主题是同一个「蓝」而不是两套配色。
+
+  为什么用矢量渐变而不是 @color：改成矢量后即可在不改前景层的前提下做夜间版或品牌换色；
+  代价是背景层的 color 资源不再被引用（见 colors.xml 的说明）。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path android:pathData="M0,0 h108 v108 h-108 z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="0"
+                android:startY="0"
+                android:endX="108"
+                android:endY="108">
+                <item android:offset="0" android:color="#1E88E5" />
+                <item android:offset="1" android:color="#0D47A1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

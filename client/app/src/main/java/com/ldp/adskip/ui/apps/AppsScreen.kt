@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -21,12 +24,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -35,6 +43,8 @@ import com.ldp.adskip.ui.components.EmptyState
 import com.ldp.adskip.ui.components.PageHeader
 import com.ldp.adskip.ui.components.SkeletonList
 import com.ldp.adskip.ui.components.TwoLineRow
+import com.ldp.adskip.ui.theme.Spacing
+import com.ldp.adskip.ui.theme.UiSizes
 
 /**
  * 应用管理：所有可启动应用，逐项开关自动跳过并显示跳过次数。
@@ -50,49 +60,75 @@ import com.ldp.adskip.ui.components.TwoLineRow
  * - 搜索无结果与列表为空是两种语义，空态文案分开。
  */
 @Composable
-fun AppsScreen(
-    viewModel: AppsViewModel = viewModel(factory = AppsViewModel.Factory)
-) {
+fun AppsScreen(viewModel: AppsViewModel = viewModel(factory = AppsViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val visible = remember(state.items, state.query, state.onlyEnabled) { state.visibleItems }
+    val focusManager = LocalFocusManager.current
+
+    // 底部导航 saveState/restoreState 会让本页 ViewModel 跨 tab 存活，搜索与筛选
+    // 会一直留着。离开本页即重置——它们是视图级临时状态，不是会话级偏好。
+    DisposableEffect(Unit) {
+        onDispose { viewModel.clearTransientFilters() }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         PageHeader(
             title = stringResource(R.string.apps_title),
-            subtitle = stringResource(R.string.apps_hint)
+            subtitle = stringResource(R.string.apps_hint),
         )
 
         SearchField(
             query = state.query,
             onQueryChange = viewModel::setQuery,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            onSearchDone = { focusManager.clearFocus() },
+            modifier = Modifier.padding(horizontal = Spacing.lg),
         )
 
         FilterChip(
             selected = state.onlyEnabled,
             onClick = { viewModel.setOnlyEnabled(!state.onlyEnabled) },
             label = { Text(stringResource(R.string.apps_filter_enabled)) },
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm),
         )
 
         when {
             state.loading && state.items.isEmpty() -> SkeletonList(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm),
             )
 
             visible.isEmpty() -> EmptyState(
                 icon = Icons.Default.Search,
                 title = stringResource(
-                    if (state.items.isEmpty()) R.string.apps_empty else R.string.apps_no_match
+                    if (state.items.isEmpty()) R.string.apps_empty else R.string.apps_no_match,
                 ),
                 subtitle = stringResource(
-                    if (state.items.isEmpty()) R.string.apps_loading else R.string.apps_no_match_hint
+                    if (state.items.isEmpty()) R.string.apps_loading else R.string.apps_no_match_hint,
                 ),
-                modifier = Modifier.fillMaxSize()
+                // 空态不能只说「没有」还得给出路：搜索无结果时提供一个一键清除的入口，
+                // 否则用户要手动清空输入框并关掉筛选才能看到全部应用。
+                action = if (state.items.isNotEmpty()) {
+                    {
+                        TextButton(onClick = {
+                            viewModel.setQuery("")
+                            viewModel.setOnlyEnabled(false)
+                        }) {
+                            Text(stringResource(R.string.apps_clear_filters))
+                        }
+                    }
+                } else {
+                    null
+                },
+                modifier = Modifier.fillMaxSize(),
             )
 
             else -> LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+                // 底部留白：最后一行紧贴导航栏会被系统的底部 inset 压住
+                contentPadding = PaddingValues(
+                    start = Spacing.lg,
+                    end = Spacing.lg,
+                    top = Spacing.xs,
+                    bottom = Spacing.xl,
+                ),
             ) {
                 items(visible, key = { it.pkg }) { row ->
                     AppRowItem(row = row, onToggle = viewModel::setEnabled)
@@ -103,12 +139,18 @@ fun AppsScreen(
     }
 }
 
-/** 应用搜索框：即时过滤，输入非空时提供一键清除。 */
+/**
+ * 应用搜索框：即时过滤，输入非空时提供一键清除。
+ *
+ * 回车收键盘：搜索是「即时过滤」，按回车没有提交语义，但软键盘会一直挡住下半屏列表——
+ * 与首页关键词框（ImeAction.Done）保持一致，否则用户在两页得到不同的输入体验。
+ */
 @Composable
 private fun SearchField(
     query: String,
     onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+    onSearchDone: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     OutlinedTextField(
         value = query,
@@ -117,10 +159,12 @@ private fun SearchField(
         singleLine = true,
         shape = MaterialTheme.shapes.small,
         placeholder = { Text(stringResource(R.string.apps_search_placeholder)) },
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { onSearchDone() }),
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = null
+                contentDescription = null,
             )
         },
         trailingIcon = {
@@ -128,17 +172,25 @@ private fun SearchField(
                 IconButton(onClick = { onQueryChange("") }) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.apps_search_clear)
+                        contentDescription = stringResource(R.string.apps_search_clear),
                     )
                 }
             }
-        }
+        },
     )
 }
 
 @Composable
 private fun AppRowItem(row: AppsViewModel.AppRow, onToggle: (String, Boolean) -> Unit) {
+    // 整行可点：命中区域从「只有开关那 40dp」扩大到整行高度。开关本身改为
+    // onCheckedChange = null（不再自行响应），由整行的 toggleable 统一处理，
+    // 否则一次点击会同时触发两处回调、把开关拨两次。
     TwoLineRow(
+        modifier = Modifier.toggleable(
+            value = !row.disabled,
+            role = Role.Switch,
+            onValueChange = { checked -> onToggle(row.pkg, checked) },
+        ),
         title = row.label,
         subtitle = subtitle(row),
         leading = {
@@ -147,18 +199,15 @@ private fun AppRowItem(row: AppsViewModel.AppRow, onToggle: (String, Boolean) ->
                 Image(
                     bitmap = bitmap,
                     contentDescription = null,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(UiSizes.listIcon),
                 )
             } else {
-                Spacer(Modifier.size(40.dp))
+                Spacer(Modifier.size(UiSizes.listIcon))
             }
         },
         trailing = {
-            Switch(
-                checked = !row.disabled,
-                onCheckedChange = { checked -> onToggle(row.pkg, checked) }
-            )
-        }
+            Switch(checked = !row.disabled, onCheckedChange = null)
+        },
     )
 }
 
@@ -170,8 +219,7 @@ private fun subtitle(row: AppsViewModel.AppRow): String = when {
 }
 
 /** Drawable 转 ImageBitmap（无 accompanist 依赖的轻量转换） */
-private fun android.graphics.drawable.Drawable.toImageBitmap():
-        androidx.compose.ui.graphics.ImageBitmap {
+private fun android.graphics.drawable.Drawable.toImageBitmap(): androidx.compose.ui.graphics.ImageBitmap {
     val size = 128
     val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
     val canvas = android.graphics.Canvas(bitmap)

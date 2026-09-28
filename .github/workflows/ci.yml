@@ -28,7 +28,25 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platforms;android-35 build-tools;35.0.0'
+          # 只装稳定通道的工具：build-tools 36.0.0 是 AGP 9.x 的最低要求（已在稳定通道）。
+          # platform 37 单独在下一步装——它当前是 Beta，不在稳定通道里。
+          packages: 'platform-tools build-tools;36.0.0'
+
+      - name: Install Android 17 (API 37) platform from beta channel
+        # Compose 1.12（BOM 2026.08.00）硬性要求 compileSdk 37，而 Android 17 截至
+        # 2026-09 仍是 Beta：官方仓库清单里，stable（repository2-1.xml）没有它，
+        # 只有 beta（repository2-3.xml）里有。setup-android 默认只解析稳定通道，
+        # 直接在 packages 里写 platforms;android-37 必然失败。
+        #
+        # **包名带次版本号**：正确写法是 platforms;android-37.0（同级还有 37.1 / 37.2）。
+        # 写成 platforms;android-37 会得到
+        # `Failed to find package 'platforms;android-37'`——与「没加通道」时的报错
+        # 完全一样，极易误判为通道问题而反复试错。
+        #
+        # 稳定性说明：Compose 1.13.0-alpha01 的发布说明写着
+        # 「Remove requirement for compileSdk 37」——这个硬性要求本身是临时状态。
+        # Android 17 转正后本步骤可简化回 packages 里直接声明。
+        run: sdkmanager --install "platforms;android-37.0" --channel=1
 
       - name: Run architecture & structure contract tests
         # 只跑 arch 包下的守护测试：失败要在几分钟内暴露，而不是等完整 Android 构建跑完。
@@ -66,7 +84,13 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platforms;android-35 build-tools;35.0.0'
+          # 与上面 Structure Contract job 保持一致：只装稳定通道工具，
+          # platform 37 走下面的 beta 通道安装步骤。
+          packages: 'platform-tools build-tools;36.0.0'
+
+      - name: Install Android 17 (API 37) platform from beta channel
+        # 原因与包名（注意带次版本号 .0）见上方同名步骤的注释。
+        run: sdkmanager --install "platforms;android-37.0" --channel=1
 
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
@@ -78,6 +102,12 @@ jobs:
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
           validate-wrappers: true
+
+      - name: Run ktlint (formatting & static checks)
+        # 放在构建之前：格式/静态问题无需等 assembleDebug 跑完两分钟就能失败
+        run: |
+          set -o pipefail
+          ./gradlew ktlintCheck --no-daemon 2>&1 | tee /tmp/android-ktlint.log
 
       - name: Build debug APK
         run: |
@@ -105,9 +135,11 @@ jobs:
         with:
           name: android-logs
           path: |
+            /tmp/android-ktlint.log
             /tmp/android-build.log
             /tmp/android-test.log
             /tmp/android-release-build.log
+            app/build/reports/ktlint/
           if-no-files-found: ignore
 
   server:

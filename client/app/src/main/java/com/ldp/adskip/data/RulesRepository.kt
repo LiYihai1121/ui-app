@@ -3,6 +3,7 @@ package com.ldp.adskip.data
 import android.content.Context
 import android.util.LruCache
 import com.ldp.adskip.engine.RuleSet
+import com.ldp.adskip.engine.selector.SelectorParser
 
 /**
  * 规则仓库：所有「规则」读写的唯一入口。
@@ -18,7 +19,8 @@ class RulesRepository(private val context: Context) {
     data class PkgRule(
         val keywords: List<String>,
         val viewIds: List<String>,
-        val disabled: Boolean
+        val disabled: Boolean = false,
+        val selectors: List<String> = emptyList(),
     )
 
     private var version = 0
@@ -36,7 +38,10 @@ class RulesRepository(private val context: Context) {
             .filter { it.isNotBlank() }
         val viewIds = (Prefs.getViewIds(context) + Prefs.getPkgViewIds(context, pkg))
             .filter { it.length >= 3 }
-        val ruleSet = RuleSet(keywords, viewIds)
+        val selectors = (Prefs.getGlobalSelectors(context) + Prefs.getPkgSelectors(context, pkg))
+            .filter { it.isNotBlank() }
+            .mapNotNull { SelectorParser.parse(it) }
+        val ruleSet = RuleSet(keywords, viewIds, selectors)
         cache.put(cacheKey, ruleSet)
         return ruleSet
     }
@@ -60,7 +65,8 @@ class RulesRepository(private val context: Context) {
         keywords: List<String>?,
         viewIds: List<String>?,
         pkgRules: Map<String, PkgRule>,
-        schemaVersion: Int = RuleSet.SCHEMA_VERSION
+        schemaVersion: Int = RuleSet.SCHEMA_VERSION,
+        selectors: List<String>? = null,
     ): Boolean {
         // 校验 schemaVersion：低于客户端支持的版本拒载
         if (schemaVersion < RuleSet.MIN_SCHEMA_VERSION) {
@@ -68,11 +74,13 @@ class RulesRepository(private val context: Context) {
         }
         keywords?.let { Prefs.saveKeywords(context, it) }
         viewIds?.let { Prefs.saveViewIds(context, it) }
+        selectors?.let { Prefs.saveGlobalSelectors(context, it) }
         Prefs.clearAllPkgRules(context)
         val disabled = mutableListOf<String>()
         for ((pkg, rule) in pkgRules) {
             Prefs.savePkgKeywords(context, pkg, rule.keywords)
             Prefs.savePkgViewIds(context, pkg, rule.viewIds)
+            Prefs.savePkgSelectors(context, pkg, rule.selectors)
             if (rule.disabled) disabled.add(pkg)
         }
         Prefs.replaceDisabledPackages(context, disabled)

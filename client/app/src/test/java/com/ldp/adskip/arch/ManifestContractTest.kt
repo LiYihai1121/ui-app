@@ -26,15 +26,15 @@ class ManifestContractTest {
         val block = tileServiceBlock()
         assertTrue(
             "磁贴必须声明 BIND_QUICK_SETTINGS_TILE，否则系统无法绑定",
-            block.contains("android.permission.BIND_QUICK_SETTINGS_TILE")
+            block.contains("android.permission.BIND_QUICK_SETTINGS_TILE"),
         )
         assertTrue(
             "磁贴必须声明 QS_TILE intent-filter，否则不会出现在可添加磁贴列表",
-            block.contains("android.service.quicksettings.action.QS_TILE")
+            block.contains("android.service.quicksettings.action.QS_TILE"),
         )
         assertTrue(
             "磁贴必须 exported=true（由系统绑定）",
-            Regex("""android:exported\s*=\s*"true"""").containsMatchIn(block)
+            Regex("""android:exported\s*=\s*"true"""").containsMatchIn(block),
         )
         assertTrue("磁贴需提供图标", block.contains("@drawable/ic_qs_skip"))
         assertTrue("磁贴需提供本地化标题", block.contains("@string/tile_label"))
@@ -49,7 +49,7 @@ class ManifestContractTest {
             "以下保活入口包未在 AndroidManifest.xml 的 <queries> 中声明，Android 11+ 将无法解析：\n" +
                 missing.joinToString("\n") +
                 "\n（入口表见 device/VendorKeepAlive.kt，契约见本测试）",
-            missing.isEmpty()
+            missing.isEmpty(),
         )
     }
 
@@ -59,7 +59,7 @@ class ManifestContractTest {
         assertTrue(
             "以下保活入口 action 未在 <queries> 中声明，Android 11+ 将无法解析：\n" +
                 missing.joinToString("\n"),
-            missing.isEmpty()
+            missing.isEmpty(),
         )
     }
 
@@ -85,7 +85,7 @@ class ManifestContractTest {
                 "\n未收窄的隐式广播可被任意第三方应用注册同名 action 监听。" +
                 "ACTION_SKIPPED 携带用户正在使用的应用名，泄露后果最严重。" +
                 "\n修法：Intent(...).setPackage(packageName)，与 ACTION_REQUEST_SHUTDOWN 保持一致。",
-            offenders.isEmpty()
+            offenders.isEmpty(),
         )
     }
 
@@ -97,7 +97,7 @@ class ManifestContractTest {
         assertTrue(
             "未找到 .setPersisted( 调用；若同步调度已改为其他机制，请同步更新本测试与" +
                 "ARCHITECTURE.md 的同步流程图",
-            syncSource.contains(".setPersisted(")
+            syncSource.contains(".setPersisted("),
         )
         assertTrue(
             "同步任务使用了 setPersisted(true)，但清单缺少 RECEIVE_BOOT_COMPLETED 权限。\n" +
@@ -106,7 +106,7 @@ class ManifestContractTest {
                 "表现为「设备重启后规则不再自动同步」——没有任何崩溃或日志。\n" +
                 "注意：该权限由 JobScheduler 的持久化能力要求，与是否存在 BootReceiver 无关；" +
                 "架构文档中「已删除 BootReceiver」不等于可以删除此权限。",
-            manifest.contains("android.permission.RECEIVE_BOOT_COMPLETED")
+            manifest.contains("android.permission.RECEIVE_BOOT_COMPLETED"),
         )
     }
 
@@ -138,7 +138,7 @@ class ManifestContractTest {
                 continue
             }
             val end = matchingParenEnd(source, open)
-            if (end < 0) {            // 未闭合：视为异常源码，继续向后扫描
+            if (end < 0) { // 未闭合：视为异常源码，继续向后扫描
                 idx = at + 1
                 continue
             }
@@ -155,10 +155,12 @@ class ManifestContractTest {
         while (i < source.length) {
             when (source[i]) {
                 '(' -> depth++
+
                 ')' -> {
                     depth--
                     if (depth == 0) return i + 1
                 }
+
                 // 跳过字符串字面量，避免其中的括号干扰配平（含反斜杠转义）
                 '"', '\'' -> {
                     val quote = source[i]
@@ -186,7 +188,7 @@ class ManifestContractTest {
         val start = manifest.indexOf(TILE_SERVICE)
         assertTrue(
             "清单未注册快捷磁贴服务 $TILE_SERVICE（device/SkipTileService.kt）",
-            start >= 0
+            start >= 0,
         )
         val end = manifest.indexOf("</service>", start)
         assertTrue("磁贴 <service> 标签未闭合", end > start)
@@ -208,6 +210,7 @@ class ManifestContractTest {
         const val MANIFEST_RELATIVE_PATH = "src/main/AndroidManifest.xml"
         // 匹配完整的 sendBroadcast(...) 调用体（允许一层嵌套括号），
         // 以便判断 setPackage 是否真的出现在这处调用里。
+
         /** sendBroadcast 调用名（配合括号配平扫描使用）。 */
         const val CALL_NAME = "sendBroadcast"
     }

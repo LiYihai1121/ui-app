@@ -24,19 +24,13 @@ import kotlinx.coroutines.withContext
  */
 class AppsViewModel(private val container: AppContainer) : ViewModel() {
 
-    data class AppRow(
-        val pkg: String,
-        val label: String,
-        val icon: Drawable?,
-        val disabled: Boolean,
-        val count: Int
-    )
+    data class AppRow(val pkg: String, val label: String, val icon: Drawable?, val disabled: Boolean, val count: Int)
 
     data class UiState(
         val items: List<AppRow> = emptyList(),
         val loading: Boolean = true,
         val query: String = "",
-        val onlyEnabled: Boolean = false
+        val onlyEnabled: Boolean = false,
     ) {
         /** 搜索 + 筛选后的可见列表；匹配包名与应用名，大小写不敏感。 */
         val visibleItems: List<AppRow>
@@ -44,9 +38,11 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
                 val q = query.trim().lowercase()
                 return items.filter { row ->
                     (onlyEnabled.not() || row.disabled.not()) &&
-                        (q.isEmpty() ||
-                            row.label.lowercase().contains(q) ||
-                            row.pkg.lowercase().contains(q))
+                        (
+                            q.isEmpty() ||
+                                row.label.lowercase().contains(q) ||
+                                row.pkg.lowercase().contains(q)
+                            )
                 }
             }
     }
@@ -60,6 +56,22 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
 
     fun setOnlyEnabled(onlyEnabled: Boolean) {
         _uiState.update { it.copy(onlyEnabled = onlyEnabled) }
+    }
+
+    /**
+     * 离开本页时清掉临时筛选态。
+     *
+     * 底部导航用了 `saveState/restoreState`，因此页面 ViewModel 实例会跨 tab 存活：
+     * 用户搜过某个应用、切去别的页再回来，搜索框里还留着上次的关键词，
+     * 「只看已启用」也还开着——列表凭空少了一大半而没有任何提示，
+     * 绝大多数用户会当成 bug。搜索与筛选属于**视图级临时状态**，不是会话级偏好，
+     * 离开就该重置；真正需要跨会话保留的是「跳过开关」这类真实配置，
+     * 它们存在仓库层，不受此影响。
+     *
+     * 由页面在离开时调用（见 [com.ldp.adskip.ui.apps.AppsScreen] 的 DisposableEffect）。
+     */
+    fun clearTransientFilters() {
+        _uiState.update { if (it.query.isEmpty() && !it.onlyEnabled) it else it.copy(query = "", onlyEnabled = false) }
     }
 
     init {
@@ -81,9 +93,13 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
                         AppRow(
                             pkg = pkg,
                             label = it.loadLabel(pm).toString(),
-                            icon = try { it.loadIcon(pm) } catch (_: Exception) { null },
+                            icon = try {
+                                it.loadIcon(pm)
+                            } catch (_: Exception) {
+                                null
+                            },
                             disabled = container.rulesRepo.isDisabled(pkg),
-                            count = container.statsRepo.countFor(pkg)
+                            count = container.statsRepo.countFor(pkg),
                         )
                     }
                     .sortedBy { it.label.lowercase() }
@@ -97,7 +113,7 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
         _uiState.value = _uiState.value.copy(
             items = _uiState.value.items.map {
                 if (it.pkg == pkg) it.copy(disabled = !enabled) else it
-            }
+            },
         )
     }
 

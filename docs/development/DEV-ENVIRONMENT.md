@@ -23,6 +23,14 @@
 - **公共构建配置在 `client/build-logic/convention/`**（`adskip.android.application` 约定插件）：
   `:app` 只保留它自己的 `applicationId` / `versionCode` / `versionName` / 签名 / 依赖。改动公共配置后，
   先跑 `client/build-logic` 的约定插件编译再整体验证（`./gradlew testDebugUnitTest assembleDebug`）。
+- **格式与静态检查 `ktlint`**：规则集与行宽的**唯一事实源是仓库根 `.editorconfig`**（ktlint 从被检查文件逐级向上查找），
+  插件由约定插件应用，ktlint 本体版本在 `client/build.gradle.kts` 的 `subprojects` 块里锁定（用 `plugins.withId` 触发，
+  因为约定插件是在子项目求值阶段才应用它）。两个易踩的坑：
+  - ktlint 本体版本必须显式锁定。插件版本虽已固定，但其默认内含的 ktlint 版本会随补丁版变动，规则集随之变化，
+    会让「同一份代码在不同时刻跑出不同结论」；
+  - Gradle 插件本体（`org.jlleitschuh.gradle:ktlint-gradle`）发布在插件仓库而非 Maven Central，
+    `build-logic/settings.gradle.kts` 的 `dependencyResolutionManagement` 因此额外挂了阿里云
+    `gradle-plugin` 镜像；`*.gradle.plugin` marker 只在插件门户，解析普通依赖时不可用。
 
 ## 启动
 
@@ -39,6 +47,7 @@ Android 客户端：
 
 ```powershell
 cd client
+.\gradlew.bat ktlintCheck
 .\gradlew.bat assembleDebug
 .\gradlew.bat testDebugUnitTest
 ```

@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 快捷磁贴图标：白色单色快进/跳过符号，由系统按磁贴主题着色 -->
+<!--
+  快捷磁贴图标：与启动器图标同源的「跳过箭头」符号（去掉外圈圆盘，只留核心符号）。
+
+  磁贴只有 24dp 且由系统按主题着色（可能是纯白、纯黑或半透明单色），因此：
+  - 必须是单色纯形状，无渐变、无描边、无透明叠加；
+  - 24dp 下圆盘 + 箭头会糊成一团，故只保留箭头；
+  - 坐标已按 24 视口重新排布（与启动器图标的 108 视口不是同一套坐标）。
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
@@ -8,5 +15,5 @@
     android:tint="#FFFFFF">
     <path
         android:fillColor="@android:color/white"
-        android:pathData="M4,18 L14.5,12 L4,6 Z M16,6 h3 v12 h-3 Z" />
+        android:pathData="M4.0,8.0 L10.5,8.0 L10.5,4.0 L19.0,12.0 L10.5,20.0 L10.5,16.0 L4.0,16.0 Z" />
 </vector>

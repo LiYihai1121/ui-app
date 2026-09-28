@@ -1,6 +1,8 @@
 package com.ldp.adskip.core
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -48,7 +50,7 @@ class LogRingTest {
         LogRing.d("T", "m")
         val first = LogRing.export().lineSequence().first()
         assertTrue(
-            Regex("""^\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} D/T: m$""").matches(first)
+            Regex("""^\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} D/T: m$""").matches(first),
         )
     }
 }

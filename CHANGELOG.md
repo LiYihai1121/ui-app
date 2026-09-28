@@ -7,6 +7,7 @@
 ## 目录
 
 - [Unreleased](#unreleased)
+- [3.1.0](#310---2026-09-28)
 - [3.1.0-rc.1](#310-rc1---2026-09-28)
 - [3.0.4](#304---2026-09-27)
 - [3.0.3](#303---2026-09-26)
@@ -19,8 +20,37 @@
 
 ## [Unreleased]
 
+（本节为空：待发布的变更已归入下方各版本）
+
+## [3.1.0] - 2026-09-28
+
+正式版。相对 3.1.0-rc.1 的变更：协议升到 schema 2 并接入选择器第三通道、品牌更名为「轻启」并重设计图标、UI 规范对齐、引入静态检查门禁。
+
+> **发布验收覆盖声明（重要）**：按 CONTRIBUTING.md「发布验收」，触及无障碍服务、快捷磁贴、厂商跳转、后台调度、系统权限的变更**必须完成真机验收后才能发正式版**。本次发布的真机矩阵（Android 8/13/14/15 × MIUI/HarmonyOS/ColorOS/OriginOS）**尚未完成**，已知验证仅覆盖模拟器（Android 15 / API 35）。本次由维护者显式决定覆盖该规则先行发布正式版。
+> 已知风险：磁贴与厂商保活路径在真实 ROM 上的行为可能与模拟器不同；如出现问题，按 CONTRIBUTING「紧急变更与回滚」走 hotfix/*（制品回滚或 git revert）。
+
+### Added
+
+- **更名：净启动 AdSkip → 轻启**（仅用户可见名称；`applicationId` 仍为 `com.ldp.adskip`，可覆盖升级，无需卸载）：
+  - 桌面名称 `app_name`、无障碍服务名 `service_name`、快捷磁贴名 `tile_label` 三方同步改为「轻启」——这三处分别显示在桌面、系统无障碍列表和快捷设置里，只改其中一处就会出现「同一个应用两个名字」；
+  - 全部 locale（`values` / `values-en`）内的用户可见提示同步清理旧品牌（无障碍引导「开启「轻启」」、保活提示「把轻启加入后台运行白名单」等）；
+  - 新增守护测试 `ProjectStructureTest.product brand is declared consistently across every locale`：把「品牌名唯一事实源」「每个 locale 都必须声明 `app_name` / `service_name` / `tile_label`」「旧品牌名不得复活」升级为可执行门禁，防止后续再出现只改一种语言的「改一半」改名；
+  - 包名、`Theme.AdSkip`、`rootProject.name`、服务端英文标识与文档中的历史命名**刻意保持不变**：它们不面向用户，改动会破坏升级链与发布脚本追溯。
+
+- **静态检查门禁 ktlint**：新增仓库根 `.editorconfig` 作为「代码长什么样」的机器可读事实源（charset/行尾/缩进/行宽 + ktlint 规则集），并接入 `ktlintCheck` 任务——CI 的 `Android Build & Test` job 与发布流水线均已纳入，AGENTS.md、PR 模板、ARCHITECTURE、ROADMAP-ADS、DEV-ENVIRONMENT 的门禁清单同步更新。此前客户端**没有任何格式或静态检查工具**，`ArchitectureBoundaryTest` 只管 import 边界，不管单文件内的写法一致性。启用即修掉存量违规：6 处 `import org.junit.Assert.*` 通配导入改为显式导入，`Color.kt` 与 `Feedback.kt` 的文件级说明由悬空 KDoc 改为块注释。
+
 ### Changed
 
+- **启动器图标与快捷磁贴图标重设计**：原图标是通用的「快进」符号（两个三角加一根竖条），与任意播放器/音乐类应用撞脸，在 48dp 下细节已糊成一条白杠。现改为**实心圆盘 + 负空间「跳过」箭头**——箭头从圆盘中穿出的形态直指「开屏广告被跳过」，负空间在小尺寸下对比度最高，磁贴 24dp 与主题图标下同样可辨。
+  - 背景层由纯色改为品牌蓝对角渐变（#1E88E5 → #0D47A1，夹住 M3 主色 #1565C0），删除不再被引用的 `ic_launcher_background` 颜色资源；
+  - **新增 `monochrome` 单色层**：此前缺失，Android 13+ 开启主题图标后本应用不会出现在主题图标选择器中；
+  - 磁贴图标改为与启动器同源的箭头符号（原为另一套坐标的独立图形，24dp 下圆盘会糊，只保留符号）；
+  - 几何按自适应图标的 66dp 安全区校核：圆盘直径 62（23..85）落在安全区内，负空间完全包含于圆盘内——否则 evenOdd 填充会把箭头重新填上，负空间消失。
+- **Jetpack Compose BOM 2026.06.01 → 2026.08.00（Compose 1.12 / material3 1.5 Expressive）**：官方明确要求「always use the latest Compose BOM」——BOM 是各 Compose 库互相兼容的同一时刻快照，单独升某个库反而会制造不匹配组合。因 Compose 1.12 强制要求 `compileSdk 37`，`compileSdk` 同步 36 → 37；`targetSdk` 刻意仍留 35（升 36 会引入 Android 16 强制 edge-to-edge 等行为变更，与 UI 改动耦合会让「这次界面为什么变了」难以归因）。
+- **CI 的 Android SDK 声明与约定插件收口同源**：`ci.yml` 两处 `packages` 由长期滞后的 `platforms;android-35 build-tools;35.0.0` 改为 `platform-tools build-tools;36.0.0` + 单独的 beta 通道安装步骤。此前靠 Gradle 自动解析兜住，属于「靠工具兜底」而非「显式声明」，AGP 一收紧校验就会在 CI 上突然失败。
+  **注意**：Compose 1.12 硬性要求 `compileSdk 37`，而 Android 17 截至 2026-09 仍是 **Beta**、只发布在 beta/canary 通道，且**包名带次版本号**（正确写法是 platforms;android-37.0，同级还有 37.1 / 37.2）。`setup-android` 默认只解析稳定通道，直接在 `packages` 里写 `platforms;android-37` 会报 `Failed to find package`——因此必须用 `sdkmanager --install "platforms;android-37.0" --channel=1` 显式安装。Compose 1.13.0-alpha01 的发布说明已写「Remove requirement for compileSdk 37」，Android 17 转正后这一步可简化。
+- **Agent 工具配置收敛到 `kilo.json`**：`opencode.json` 已是 legacy 路径（Kilo 仍会加载，但排在 `kilo.json` 之后），其唯一有效内容是 `permission.skill."*": "allow"`，现迁至根 `kilo.json` 并补 `skills.paths: ["./skills"]`，原文件删除。顺带根治「工具每次运行都重写配置、把工作区改脏」——扩展写入的 `commit_message.prompt` 之类的字段会随文件一起消失。
+- **Agent 技能从 `.opencode/skills/` 迁到受版本控制的 `skills/`**：Kilo 只扫描 `.kilo` 与 `.kilocode` 两个配置目录，**`.opencode` 目录不会被加载**，其中的 `branch-guard` 技能在当前工具链下从不生效；而 `.kilo/` 已被根 `.gitignore` 整体忽略（Agent Manager 状态目录），技能放进去无法入库，等于每个人的技能集各不相同——那正是「第二份真相」的另一种形态。现随仓库版本控制并由 `kilo.json` 显式挂载；`ProjectStructureTest` 与 `ARCHITECTURE.md` 2.2 的根白名单同步更新（移除 `.opencode`、登记 `skills/` 与 `kilo.json`，治理文件仍为 9 个）。
 - **首页重设计（信息层级 + 动作分级）**：依据 v3.1 真机截图在 1080×2340 上的实测——旧版状态卡就占掉首屏约 60% 高度，**关键词输入框必须滑过一次才看得到**，而关键词是这个 app 唯一需要用户主动操作的东西。据此重排：
   - `StatusHero` 由竖排改为**横排**，状态环 108dp → 56dp，状态卡高度从约 300dp 降到约 150dp，整页内容**无需滚动即全部可见**；
   - **动作分级**：服务未开启时主 CTA 用 filled（这是用户必须做的事），运行中降级为 tonal（避免让用户误以为还有必须点的操作）；「测试」由独立全宽按钮收进状态卡并降为 `TextButton`，它是可选的验证动作，不该和「去开启服务」抢焦点；测试按钮同时受 `enabled = running` 约束；

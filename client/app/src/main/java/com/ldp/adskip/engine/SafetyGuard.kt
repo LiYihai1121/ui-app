@@ -13,7 +13,7 @@ object SafetyGuard {
     // 硬编码黑名单，云规则不可覆盖
     private val DENY_WORDS = listOf(
         "支付", "付款", "确认", "同意", "购买", "下单",
-        "授权", "登录", "免密", "开通", "安装", "下载"
+        "授权", "登录", "免密", "开通", "安装", "下载",
     )
     private const val SELF_PKG = "com.ldp.adskip"
 

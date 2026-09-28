@@ -7,6 +7,15 @@ export const PKG_RE = /^[a-zA-Z][\w]*(\.[a-zA-Z][\w]*)+$/;
 // ViewID：形如 com.example:id/skip_view
 export const VID_RE = /^[\w.$]+:id\/[\w]+$/;
 
+/**
+ * 选择器字符白名单（DESIGN-PHASE1 §6.2）。
+ *
+ * 必须放行 Unicode 字母/数字：默认全局关键词就是中文（「跳过」「跳過」），
+ * 用 ASCII 的 `\w` 会把 `[text*="跳过"]` 这类最常见的规则整条丢掉，第三通道形同虚设。
+ * 语义字符仅限文法本身用到的：空白 `.` `^` `$` `+` `*` `>` `=` `[` `]` `"` `'` `:` `-` `/`。
+ */
+const SELECTOR_CHARS_RE = /^[\p{L}\p{N}_\s.^$+*>\[\]"'=:\/-]+$/u;
+
 export function isValidKeyword(kw: unknown): boolean {
   const s = String(kw ?? "").trim();
   const len = s.length;
@@ -17,6 +26,14 @@ export function isValidViewIdRule(vid: unknown): boolean {
   const s = String(vid ?? "").trim();
   const len = s.length;
   return len >= 3 && len <= config.MAX_VIEWID_RULE_LEN;
+}
+
+export function isValidSelector(selector: unknown): boolean {
+  const s = String(selector ?? "").trim();
+  if (!s || s.length > config.MAX_SELECTOR_LEN) return false;
+  const quoteBalanced = s.split('"').length % 2 === 1;
+  const okBracket = s.split("[").length === s.split("]").length;
+  return quoteBalanced && okBracket && SELECTOR_CHARS_RE.test(s);
 }
 
 export function isValidPackage(pkg: unknown): boolean {
@@ -41,6 +58,24 @@ function cleanStringList(value: unknown, maxLen = 256): string[] {
   return out;
 }
 
+function cleanSelectorList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const item of value) {
+    if (typeof item !== "string") continue;
+    const s = item.trim();
+    if (!s || s.length > config.MAX_SELECTOR_LEN) continue;
+    if (!isValidSelector(s)) continue;
+    const low = s.toLowerCase();
+    if (seen.has(low)) continue;
+    seen.add(low);
+    out.push(s);
+    if (out.length >= config.MAX_SELECTORS_PER_LIST) break;
+  }
+  return out;
+}
+
 /** 校验并清洗规则载荷（v1/v0 兼容），非法返回 null */
 export function cleanRules(input: unknown): CleanedRules | null {
   if (
@@ -54,7 +89,7 @@ export function cleanRules(input: unknown): CleanedRules | null {
   }
   const packages: Record<
     string,
-    { keywords: string[]; viewIds: string[]; disabled: boolean }
+    { keywords: string[]; viewIds: string[]; selectors: string[]; disabled: boolean }
   > = Object.create(null);
   let count = 0;
   for (const [pkg, rule] of Object.entries((input as any).packages)) {
@@ -64,6 +99,7 @@ export function cleanRules(input: unknown): CleanedRules | null {
     packages[pkg] = {
       keywords: cleanStringList((rule as any).keywords, config.MAX_KEYWORD_LEN),
       viewIds: cleanStringList((rule as any).viewIds, config.MAX_VIEWID_RULE_LEN),
+      selectors: cleanSelectorList((rule as any).selectors),
       disabled: (rule as any).disabled === true,
     };
     count++;
@@ -71,6 +107,7 @@ export function cleanRules(input: unknown): CleanedRules | null {
   return {
     keywords: cleanStringList((input as any).keywords, config.MAX_KEYWORD_LEN),
     viewIds: cleanStringList((input as any).viewIds, config.MAX_VIEWID_RULE_LEN),
+    selectors: cleanSelectorList((input as any).selectors ?? (input as any).globalSelectors),
     packages,
   };
 }

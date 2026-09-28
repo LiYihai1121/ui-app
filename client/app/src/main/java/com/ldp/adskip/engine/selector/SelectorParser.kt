@@ -32,9 +32,20 @@ object SelectorParser {
             val hadWs = scanner.skipWs()
             if (scanner.atEnd()) break
             val combinator = when {
-                scanner.peek() == '>' -> { scanner.skipOne(); scanner.skipWs(); Combinator.CHILD }
-                scanner.peek() == '+' -> { scanner.skipOne(); scanner.skipWs(); Combinator.PREV_SIBLING }
+                scanner.peek() == '>' -> {
+                    scanner.skipOne()
+                    scanner.skipWs()
+                    Combinator.CHILD
+                }
+
+                scanner.peek() == '+' -> {
+                    scanner.skipOne()
+                    scanner.skipWs()
+                    Combinator.PREV_SIBLING
+                }
+
                 hadWs -> Combinator.DESCENDANT
+
                 else -> return null // 紧邻垃圾字符（如 `[text]x`）
             }
             if (compounds.size >= MAX_COMPOUNDS) return null
@@ -50,7 +61,9 @@ object SelectorParser {
 
         fun atEnd(): Boolean = pos >= s.length
         fun peek(): Char = s[pos]
-        fun skipOne() { pos++ }
+        fun skipOne() {
+            pos++
+        }
 
         /** 跳过空白；返回是否消耗过空白 */
         fun skipWs(): Boolean {
@@ -96,15 +109,33 @@ object SelectorParser {
             if (key == AttrKey.CLICK &&
                 !value.equals("true", ignoreCase = true) &&
                 !value.equals("false", ignoreCase = true)
-            ) return null
+            ) {
+                return null
+            }
             return SimpleSelector(AttrMatcher(key, op, value))
         }
 
         private fun parseKey(): AttrKey? = when {
-            s.startsWith("text", pos) -> { pos += 4; AttrKey.TEXT }
-            s.startsWith("desc", pos) -> { pos += 4; AttrKey.DESC }
-            s.startsWith("vid", pos) -> { pos += 3; AttrKey.VID }
-            s.startsWith("click", pos) -> { pos += 5; AttrKey.CLICK }
+            s.startsWith("text", pos) -> {
+                pos += 4
+                AttrKey.TEXT
+            }
+
+            s.startsWith("desc", pos) -> {
+                pos += 4
+                AttrKey.DESC
+            }
+
+            s.startsWith("vid", pos) -> {
+                pos += 3
+                AttrKey.VID
+            }
+
+            s.startsWith("click", pos) -> {
+                pos += 5
+                AttrKey.CLICK
+            }
+
             else -> null
         }
 
@@ -120,7 +151,12 @@ object SelectorParser {
                         else -> MatchOp.SUFFIX
                     }
                 }
-                '=' -> { skipOne(); MatchOp.EQ }
+
+                '=' -> {
+                    skipOne()
+                    MatchOp.EQ
+                }
+
                 else -> null
             }
         }

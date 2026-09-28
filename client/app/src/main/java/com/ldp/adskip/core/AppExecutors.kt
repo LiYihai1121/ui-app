@@ -1,8 +1,8 @@
 package com.ldp.adskip.core
 
-import java.util.concurrent.Executors
 import android.os.Handler
 import android.os.Looper
+import java.util.concurrent.Executors
 
 /**
  * 线程域收口：IO 单线程 + Main 单线程。

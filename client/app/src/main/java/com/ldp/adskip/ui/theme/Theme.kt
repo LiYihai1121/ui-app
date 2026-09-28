@@ -50,7 +50,7 @@ private val LightColors = lightColorScheme(
     surfaceVariant = LightSurfaceVariant,
     onSurfaceVariant = LightOnSurfaceVariant,
     outline = LightOutline,
-    outlineVariant = LightOutlineVariant
+    outlineVariant = LightOutlineVariant,
 )
 
 private val DarkColors = darkColorScheme(
@@ -77,39 +77,55 @@ private val DarkColors = darkColorScheme(
     surfaceVariant = DarkSurfaceVariant,
     onSurfaceVariant = DarkOnSurfaceVariant,
     outline = DarkOutline,
-    outlineVariant = DarkOutlineVariant
+    outlineVariant = DarkOutlineVariant,
 )
 
 private val LightStatusPalette = StatusPalette(
     on = StatusOn,
     onContainer = StatusOnContainer,
     off = StatusOff,
-    offContainer = StatusOffContainer
+    offContainer = StatusOffContainer,
 )
 
 private val DarkStatusPalette = StatusPalette(
     on = Color(0xFF7ED98A),
     onContainer = Color(0xFF1B4A22),
     off = Color(0xFFFFB4AB),
-    offContainer = Color(0xFF5C1416)
+    offContainer = Color(0xFF5C1416),
 )
 
 /** 圆角尺度：卡片 20dp（比 M3 默认更柔和），控件 12dp，胶囊全圆。 */
 private val AdskipShapes = Shapes(
-    extraSmall = RoundedCornerShape(6.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
+    extraSmall = RoundedCornerShape(Spacing.sm),
+    small = RoundedCornerShape(Spacing.md),
+    medium = RoundedCornerShape(Spacing.lg),
     large = RoundedCornerShape(20.dp),
-    extraLarge = RoundedCornerShape(28.dp)
+    extraLarge = RoundedCornerShape(28.dp),
 )
 
 val LocalStatusPalette = staticCompositionLocalOf { LightStatusPalette }
 
+/**
+ * 应用主题。
+ *
+ * [dynamicColor] 默认 **false**，这是一次有代价的取舍，记录理由以便日后复核：
+ *
+ * 开启壁纸取色时（Android 12+），`Color.kt` 里维护的品牌蓝 #1565C0 与整套 M3 明暗
+ * 方案会被整体绕过。于是一次运行中会同时存在三套互相独立的色彩来源：
+ *  - 应用底色 = 壁纸取色（colorScheme）
+ *  - 启动器图标 = 固定品牌蓝渐变（不参与主题）
+ *  - 状态语义色 = 固定绿/红（LocalStatusPalette，同样不参与主题）
+ * 换一张紫色壁纸，就会得到「紫色应用 + 蓝色图标 + 绿/红状态点」的三色割裂。
+ *
+ * Material 把动态色定位为**可选的个性化增强**，品牌敏感产品通常关闭；
+ * 本应用刚完成改名与品牌重建，图标与配色是它最外露的识别物，因此以品牌一致性优先。
+ * 参数保留：若日后希望跟随壁纸，只需把它改回 true 即可，无需改动任何调用方。
+ */
 @Composable
 fun AdskipTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
+    dynamicColor: Boolean = false,
+    content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
     val supportsDynamic = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -121,13 +137,13 @@ fun AdskipTheme(
     }
 
     CompositionLocalProvider(
-        LocalStatusPalette provides if (darkTheme) DarkStatusPalette else LightStatusPalette
+        LocalStatusPalette provides if (darkTheme) DarkStatusPalette else LightStatusPalette,
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = AdskipTypography,
             shapes = AdskipShapes,
-            content = content
+            content = content,
         )
     }
 }
@@ -135,23 +151,21 @@ fun AdskipTheme(
 /** 便捷访问：服务运行中的前景 / 容器色。 */
 object StatusColors {
     val on: Color
-        @Composable @ReadOnlyComposable get() = LocalStatusPalette.current.on
+        @Composable @ReadOnlyComposable
+        get() = LocalStatusPalette.current.on
 
     val onContainer: Color
-        @Composable @ReadOnlyComposable get() = LocalStatusPalette.current.onContainer
+        @Composable @ReadOnlyComposable
+        get() = LocalStatusPalette.current.onContainer
 
     val off: Color
-        @Composable @ReadOnlyComposable get() = LocalStatusPalette.current.off
+        @Composable @ReadOnlyComposable
+        get() = LocalStatusPalette.current.off
 
     val offContainer: Color
-        @Composable @ReadOnlyComposable get() = LocalStatusPalette.current.offContainer
+        @Composable @ReadOnlyComposable
+        get() = LocalStatusPalette.current.offContainer
 }
 
 @Immutable
-data class StatusPalette(
-    val on: Color,
-    val onContainer: Color,
-    val off: Color,
-    val offContainer: Color
-)
-
+data class StatusPalette(val on: Color, val onContainer: Color, val off: Color, val offContainer: Color)

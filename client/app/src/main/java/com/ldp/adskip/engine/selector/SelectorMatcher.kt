@@ -30,7 +30,9 @@ object SelectorMatcher {
                 }
                 false
             }
+
             Combinator.CHILD -> matchAt(sel, i - 1, node.parent)
+
             Combinator.PREV_SIBLING -> matchAt(sel, i - 1, node.previousSibling())
         }
     }

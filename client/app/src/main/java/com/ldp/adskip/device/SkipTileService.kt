@@ -74,8 +74,8 @@ class SkipTileService : TileService() {
                     this,
                     REQ_OPEN_SETTINGS,
                     intent,
-                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                )
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+                ),
             )
         } else {
             @Suppress("DEPRECATION")
@@ -91,7 +91,7 @@ class SkipTileService : TileService() {
         tile.label = getString(R.string.tile_label)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             tile.subtitle = getString(
-                if (model.enabled) R.string.tile_state_on else R.string.tile_state_off
+                if (model.enabled) R.string.tile_state_on else R.string.tile_state_off,
             )
         }
         tile.icon = Icon.createWithResource(this, R.drawable.ic_qs_skip)
