@@ -40,6 +40,7 @@ import com.ldp.adskip.ui.components.ConfirmDialog
 import com.ldp.adskip.ui.components.EmptyState
 import com.ldp.adskip.ui.components.PageHeader
 import com.ldp.adskip.ui.components.TwoLineRow
+import com.ldp.adskip.ui.theme.Spacing
 
 /**
  * 跳过日志：最近 200 条自动跳过记录，支持清空与分享。
@@ -88,8 +89,8 @@ fun LogsScreen(messenger: Messenger, viewModel: LogsViewModel = viewModel(factor
         )
 
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = Spacing.lg),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
         ) {
             // 破坏性操作降级到最轻的 TextButton：清空不可逆，且无频率价值，
             // 不该和「分享」这种日常操作同权重并列在操作行里（视觉权重 = 出错概率）。
@@ -102,7 +103,7 @@ fun LogsScreen(messenger: Messenger, viewModel: LogsViewModel = viewModel(factor
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
                 )
-                Spacer(Modifier.width(6.dp))
+                Spacer(Modifier.width(Spacing.sm))
                 Text(stringResource(R.string.logs_clear))
             }
             FilledTonalButton(
@@ -133,7 +134,7 @@ fun LogsScreen(messenger: Messenger, viewModel: LogsViewModel = viewModel(factor
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
                 )
-                Spacer(Modifier.width(6.dp))
+                Spacer(Modifier.width(Spacing.sm))
                 Text(stringResource(R.string.logs_share))
             }
         }
@@ -148,7 +149,7 @@ fun LogsScreen(messenger: Messenger, viewModel: LogsViewModel = viewModel(factor
                 modifier = Modifier.fillMaxSize(),
             )
         } else {
-            LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp)) {
+            LazyColumn(contentPadding = PaddingValues(start = Spacing.lg, end = Spacing.lg, bottom = Spacing.xl)) {
                 items(state.logs, key = { "${it.ts}:${it.pkg}:${it.label}" }) { entry ->
                     TwoLineRow(
                         title = entry.label,

@@ -96,9 +96,9 @@ private val DarkStatusPalette = StatusPalette(
 
 /** 圆角尺度：卡片 20dp（比 M3 默认更柔和），控件 12dp，胶囊全圆。 */
 private val AdskipShapes = Shapes(
-    extraSmall = RoundedCornerShape(6.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
+    extraSmall = RoundedCornerShape(Spacing.sm),
+    small = RoundedCornerShape(Spacing.md),
+    medium = RoundedCornerShape(Spacing.lg),
     large = RoundedCornerShape(20.dp),
     extraLarge = RoundedCornerShape(28.dp),
 )

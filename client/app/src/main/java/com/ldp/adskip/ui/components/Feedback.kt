@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.ldp.adskip.R
+import com.ldp.adskip.ui.theme.Spacing
 
 /*
  * 通用 UI 组件第二批（v3.1 重设计后续）。
@@ -72,7 +73,7 @@ fun EmptyState(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 32.dp, vertical = 48.dp),
+            .padding(horizontal = Spacing.xxl, vertical = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (icon != null) {
@@ -82,7 +83,7 @@ fun EmptyState(
                 modifier = Modifier.size(48.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.lg))
         }
         Text(
             text = title,
@@ -90,7 +91,7 @@ fun EmptyState(
             color = MaterialTheme.colorScheme.onSurface,
         )
         if (subtitle != null) {
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(Spacing.sm))
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
@@ -161,7 +162,7 @@ fun TwoLineRow(
     ) {
         if (leading != null) {
             leading()
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(Spacing.md))
         }
         Column(Modifier.weight(1f)) {
             Text(
@@ -171,7 +172,7 @@ fun TwoLineRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(Spacing.xs))
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
@@ -181,7 +182,7 @@ fun TwoLineRow(
             )
         }
         if (trailing != null) {
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(Spacing.md))
             trailing()
         }
     }
@@ -198,7 +199,7 @@ fun TwoLineRow(
  * 纯 DrawScope 渐变，不引入 shimmer 三方库（依赖清单保持零外部依赖）。
  */
 @Composable
-fun SkeletonList(modifier: Modifier = Modifier, rows: Int = 8, rowHeight: Dp = 60.dp, avatarSize: Dp = 40.dp) {
+fun SkeletonList(modifier: Modifier = Modifier, rows: Int = 8, rowHeight: Dp = 60.dp, avatarSize: Dp = Spacing.xxxl) {
     val transition = rememberInfiniteTransition(label = "skeleton")
     val shift by transition.animateFloat(
         initialValue = 0f,
@@ -219,7 +220,7 @@ fun SkeletonList(modifier: Modifier = Modifier, rows: Int = 8, rowHeight: Dp = 6
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
         repeat(rows) {
             SkeletonRow(brush = brush, height = rowHeight, avatarSize = avatarSize)
@@ -241,7 +242,7 @@ private fun SkeletonRow(brush: Brush, height: Dp, avatarSize: Dp) {
                 .clip(CircleShape)
                 .background(brush),
         )
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(Spacing.md))
         Column(Modifier.weight(1f)) {
             Box(
                 Modifier
@@ -250,7 +251,7 @@ private fun SkeletonRow(brush: Brush, height: Dp, avatarSize: Dp) {
                     .clip(MaterialTheme.shapes.extraSmall)
                     .background(brush),
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.sm))
             Box(
                 Modifier
                     .fillMaxWidth(0.35f)
@@ -283,7 +284,7 @@ fun InfoRow(label: String, value: String, modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(start = 16.dp),
+            modifier = Modifier.padding(start = Spacing.lg),
         )
     }
 }

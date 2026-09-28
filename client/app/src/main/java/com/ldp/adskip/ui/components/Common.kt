@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.ldp.adskip.ui.theme.Spacing
 
 /**
  * 统一卡片容器。
@@ -72,7 +73,7 @@ fun PageHeader(title: String, modifier: Modifier = Modifier, subtitle: String? =
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 12.dp),
+            .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = Spacing.md),
     ) {
         Text(text = title, style = MaterialTheme.typography.headlineSmall)
         if (subtitle != null) {
@@ -114,7 +115,7 @@ fun StatTile(value: String, label: String, modifier: Modifier = Modifier) {
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
-        Spacer(Modifier.height(2.dp))
+        Spacer(Modifier.height(Spacing.xs))
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
@@ -140,7 +141,7 @@ fun LabeledSwitch(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(Modifier.weight(1f).padding(end = 16.dp)) {
+        Column(Modifier.weight(1f).padding(end = Spacing.lg)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,

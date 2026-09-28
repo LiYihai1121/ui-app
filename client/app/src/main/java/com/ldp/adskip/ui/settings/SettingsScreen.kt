@@ -41,6 +41,7 @@ import com.ldp.adskip.ui.components.LabeledSwitch
 import com.ldp.adskip.ui.components.SectionCard
 import com.ldp.adskip.ui.components.SectionHint
 import com.ldp.adskip.ui.components.SectionTitle
+import com.ldp.adskip.ui.theme.Spacing
 import com.ldp.adskip.ui.vendorLabelRes
 import java.util.Locale
 
@@ -80,10 +81,10 @@ fun SettingsContent(
     var pickingStart by remember { mutableStateOf(false) }
     var pickingEnd by remember { mutableStateOf(false) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.lg)) {
         SectionCard {
             SectionTitle(stringResource(R.string.settings_cloud_section))
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Spacing.md))
             OutlinedTextField(
                 value = state.serverUrlInput,
                 onValueChange = viewModel::onServerUrlChanged,
@@ -92,8 +93,8 @@ fun SettingsContent(
                 placeholder = { Text(stringResource(R.string.settings_server_hint)) },
                 singleLine = true,
             )
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Spacer(Modifier.height(Spacing.md))
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 FilledTonalButton(onClick = { viewModel.saveServerUrl(state.serverUrlInput) }) {
                     Text(stringResource(R.string.settings_save))
                 }
@@ -110,10 +111,10 @@ fun SettingsContent(
                 }
             }
             state.syncResult?.let {
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(Spacing.md))
                 Text(text = it, style = MaterialTheme.typography.bodyMedium)
             }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.sm))
             Text(
                 text = if (state.lastSyncAt > 0L) {
                     stringResource(
@@ -126,7 +127,7 @@ fun SettingsContent(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.sm))
             SectionHint(stringResource(R.string.settings_desc))
         }
 
@@ -140,14 +141,14 @@ fun SettingsContent(
                 checked = state.autoSync,
                 onCheckedChange = viewModel::setAutoSync,
             )
-            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(Modifier.padding(vertical = Spacing.sm))
             LabeledSwitch(
                 title = stringResource(R.string.settings_dnd),
                 checked = state.dndEnabled,
                 onCheckedChange = viewModel::setDndEnabled,
             )
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Spacer(Modifier.height(Spacing.md))
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 FilledTonalButton(onClick = { pickingStart = true }, enabled = state.dndEnabled) {
                     Text(stringResource(R.string.settings_dnd_start))
                 }
@@ -155,7 +156,7 @@ fun SettingsContent(
                     Text(stringResource(R.string.settings_dnd_end))
                 }
             }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.sm))
             Text(
                 text = formatMinuteRange(state.dndStartMinute, state.dndEndMinute),
                 style = MaterialTheme.typography.bodyMedium,
@@ -165,7 +166,7 @@ fun SettingsContent(
 
         SectionCard {
             SectionTitle(stringResource(R.string.settings_keepalive_title))
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.sm))
             Text(
                 text = stringResource(
                     R.string.settings_keepalive_vendor,
@@ -174,16 +175,16 @@ fun SettingsContent(
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.sm))
             SectionHint(stringResource(R.string.settings_keepalive_hint))
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.lg))
             Button(
                 onClick = viewModel::openKeepAliveSettings,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.settings_keepalive_open))
             }
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Spacing.md))
             Button(
                 onClick = { KeepAliveNavigator.openBatteryOptimizationSettings(context) },
                 modifier = Modifier.fillMaxWidth(),
@@ -199,14 +200,14 @@ fun SettingsContent(
                 )
             }
             Spacer(Modifier.height(20.dp))
-            HorizontalDivider(Modifier.padding(bottom = 16.dp))
+            HorizontalDivider(Modifier.padding(bottom = Spacing.lg))
             SectionHint(
                 stringResource(
                     R.string.settings_tile_hint,
                     stringResource(R.string.tile_label),
                 ),
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Spacing.lg))
             Button(
                 onClick = viewModel::requestAddTile,
                 modifier = Modifier.fillMaxWidth(),

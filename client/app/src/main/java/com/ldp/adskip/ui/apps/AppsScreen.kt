@@ -43,6 +43,8 @@ import com.ldp.adskip.ui.components.EmptyState
 import com.ldp.adskip.ui.components.PageHeader
 import com.ldp.adskip.ui.components.SkeletonList
 import com.ldp.adskip.ui.components.TwoLineRow
+import com.ldp.adskip.ui.theme.Spacing
+import com.ldp.adskip.ui.theme.UiSizes
 
 /**
  * 应用管理：所有可启动应用，逐项开关自动跳过并显示跳过次数。
@@ -79,19 +81,19 @@ fun AppsScreen(viewModel: AppsViewModel = viewModel(factory = AppsViewModel.Fact
             query = state.query,
             onQueryChange = viewModel::setQuery,
             onSearchDone = { focusManager.clearFocus() },
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = Spacing.lg),
         )
 
         FilterChip(
             selected = state.onlyEnabled,
             onClick = { viewModel.setOnlyEnabled(!state.onlyEnabled) },
             label = { Text(stringResource(R.string.apps_filter_enabled)) },
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm),
         )
 
         when {
             state.loading && state.items.isEmpty() -> SkeletonList(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm),
             )
 
             visible.isEmpty() -> EmptyState(
@@ -121,7 +123,12 @@ fun AppsScreen(viewModel: AppsViewModel = viewModel(factory = AppsViewModel.Fact
 
             else -> LazyColumn(
                 // 底部留白：最后一行紧贴导航栏会被系统的底部 inset 压住
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
+                contentPadding = PaddingValues(
+                    start = Spacing.lg,
+                    end = Spacing.lg,
+                    top = Spacing.xs,
+                    bottom = Spacing.xl,
+                ),
             ) {
                 items(visible, key = { it.pkg }) { row ->
                     AppRowItem(row = row, onToggle = viewModel::setEnabled)
@@ -192,10 +199,10 @@ private fun AppRowItem(row: AppsViewModel.AppRow, onToggle: (String, Boolean) ->
                 Image(
                     bitmap = bitmap,
                     contentDescription = null,
-                    modifier = Modifier.size(40.dp),
+                    modifier = Modifier.size(UiSizes.listIcon),
                 )
             } else {
-                Spacer(Modifier.size(40.dp))
+                Spacer(Modifier.size(UiSizes.listIcon))
             }
         },
         trailing = {
