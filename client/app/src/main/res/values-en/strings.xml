@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AdSkip</string>
     <string name="btn_back">Back</string>
@@ -145,4 +145,6 @@
     <string name="profile_value_unknown">Unknown</string>
     <string name="profile_privacy_hint">Skip logs and statistics stay on this device and are never uploaded.</string>
     <string name="profile_accessibility_section">Accessibility service</string>
+    <string name="stats_total_short">Skipped %1$d times</string>
+    <string name="stats_recent_short">Last: %1$s</string>
 </resources>
