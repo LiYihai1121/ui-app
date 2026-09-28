@@ -105,10 +105,26 @@ private val AdskipShapes = Shapes(
 
 val LocalStatusPalette = staticCompositionLocalOf { LightStatusPalette }
 
+/**
+ * 应用主题。
+ *
+ * [dynamicColor] 默认 **false**，这是一次有代价的取舍，记录理由以便日后复核：
+ *
+ * 开启壁纸取色时（Android 12+），`Color.kt` 里维护的品牌蓝 #1565C0 与整套 M3 明暗
+ * 方案会被整体绕过。于是一次运行中会同时存在三套互相独立的色彩来源：
+ *  - 应用底色 = 壁纸取色（colorScheme）
+ *  - 启动器图标 = 固定品牌蓝渐变（不参与主题）
+ *  - 状态语义色 = 固定绿/红（LocalStatusPalette，同样不参与主题）
+ * 换一张紫色壁纸，就会得到「紫色应用 + 蓝色图标 + 绿/红状态点」的三色割裂。
+ *
+ * Material 把动态色定位为**可选的个性化增强**，品牌敏感产品通常关闭；
+ * 本应用刚完成改名与品牌重建，图标与配色是它最外露的识别物，因此以品牌一致性优先。
+ * 参数保留：若日后希望跟随壁纸，只需把它改回 true 即可，无需改动任何调用方。
+ */
 @Composable
 fun AdskipTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
