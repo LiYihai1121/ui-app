@@ -1,0 +1,51 @@
+# Version Catalog —— 本项目所有插件/依赖版本的唯一事实源。
+#
+# 修订方式：升级前先核对阿里云镜像 maven-metadata（docs/development/DEV-ENVIRONMENT.md），
+# 再改本文件；禁止在模块 build 脚本里硬编码任何版本号。
+# 设计依据见 docs/planning/DESIGN-BUILD-FRAMEWORK.md 阶段 B。
+
+[versions]
+# 构建工具链（版本互相有硬性兼容关系，升级前先对照官方兼容矩阵）
+agp = "8.7.3"                       # Android Gradle Plugin（Gradle 8.9+，compileSdk 35）
+kotlin = "2.0.21"                   # Kotlin + Compose 编译器 Gradle 插件（同版本推进）
+
+# AndroidX（BOM 之外的坐标也统一收口）
+composeBom = "2024.12.01"           # Jetpack Compose BOM（ui / ui-tooling / material3 统一版本）
+activityCompose = "1.9.3"
+lifecycle = "2.8.7"                 # lifecycle-viewmodel-compose / lifecycle-runtime-compose
+navigationCompose = "2.8.5"
+
+# 测试
+junit = "4.13.2"
+
+# 约定插件自身版本（随发布节奏递增；被 libs.plugins.adskip-android-application 引用）
+adskipPlugins = "1.0.0"
+
+[libraries]
+# AndroidX Compose（版本由 BOM 控制，此处不写版本号）
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+
+# AndroidX MVVM + 导航
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+
+# 测试
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+
+# build-logic 约定插件运行时依赖（供 build-logic/convention 将 AGP/KGP 应用到目标工程）
+# 注意：id 标注的插件应用走 pluginManagement 仓库解析，这里要求的是构成 classpath 的实际制品坐标
+android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-compose-compiler-plugin = { group = "org.jetbrains.kotlin", name = "compose-compiler-gradle-plugin", version.ref = "kotlin" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+adskip-android-application = { id = "adskip.android.application", version.ref = "adskipPlugins" }

@@ -28,6 +28,7 @@
 
 ### Added (3.1.0-rc.1)
 
+- **构建框架工程化（阶段 B）**：仓库构建体系切换为 version catalog + build-logic 约定插件——所有插件/依赖版本收口到 `gradle/libs.versions.toml` 单一事实源；公共构建配置下沉到 `client/build-logic/convention` 复合构建中的 `adskip.android.application` 约定插件（namespace/compileSdk/minSdk/targetSdk、Java 17 与 `jvmTarget`、`buildFeatures.compose`、单测返回默认值、release lint 关闭），`:app` 只保留 applicationId/版本号/签名/依赖等模块自有内容。`gradle.properties` 同步硬化（并行、构建缓存、configuration cache、`nonTransitiveRClass`、`nonFinalResClass`），wrapper 补齐 `distributionSha256Sum`（官方发行版校验和，防下载中途篡改）。CI 引入 `gradle/actions/setup-gradle` 自动缓存与 wrapper-validation，覆盖新版「第二事实源」（`.toml` 与 `build-logic/`），详见 [DESIGN-BUILD-FRAMEWORK.md](docs/planning/DESIGN-BUILD-FRAMEWORK.md) 阶段 B。
 - 目录结构守护测试 `ProjectStructureTest`（随 `testDebugUnitTest` 运行，CI 独立 job `Structure Contract` 最先执行）：把「仓库长什么样」升级为门禁——根目录白名单、构建产物与临时文件不得入库（仅放行 `gradle-wrapper.jar`）、`settings.gradle.kts` 的 `include()` 与磁盘模块目录双向一致、`client/` 工程根整洁、标准 Android 源集布局、Kotlin `package` 声明与目录对位、文档必须登记到 `docs/README.md`。这直接堵住根目录再次长出 `*.apk` 与工具残留目录的路径。
 - 构建框架工程化设计文档 [docs/planning/DESIGN-BUILD-FRAMEWORK.md](docs/planning/DESIGN-BUILD-FRAMEWORK.md)：version catalog、`build-logic` 约定插件、Gradle 硬化与模块拆分的完整方案，含 5 个具体坑位（included build 镜像、CI 缓存键不覆盖 `.toml`、wrapper 缺 SHA-256、`checkReleaseBuilds=false` 继承、签名路径漂移）与分步回滚策略。
 - 多 Agent 协作规范（[docs/development/AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md)）：一人一 worktree 的隔离约定、文件级唯一写入者与认领板、文档单写者事实源、契约先行、最小交接信息与冲突裁决规则。
@@ -39,6 +40,7 @@
 
 ### Changed (3.1.0-rc.1)
 
+- **构建体系重构（阶段 B，工程基础设施、面向开发者）**：`.gradle.kts` 中不再出现任何版本号硬编码（改由 `gradle/libs.versions.toml` 承载）；`client/build-logic/` 新增为 included build 并纳入 `ProjectStructureTest` 的 `NON_MODULE_DIRS` 白名单；「运行时无任何用户可见行为变化」（依赖解析到同一版本集合，`app-debug.apk` 可对比安装）。
 - 规范去重为单一事实源：`.opencode/skills/branch-guard` 不再复述分支命名表与门禁命令，改为指向 [CONTRIBUTING.md](CONTRIBUTING.md)（流程规范）、[AGENTS.md](AGENTS.md)（执行摘要）与 [docs/development/AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md)（并行协作）；[AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md) 的门禁命令也改为引用 `AGENTS.md`，PR 模板只保留勾选项加规则指针。
 - 清理无人引用的重复定义：`res/values/colors.xml` 删除 4 个与 `ui/theme/Theme.kt` 品牌色板重复的色值（同时消除与 `R.string.status_on/off` 的命名撞车），`Theme.kt` 删除死变量 `TextSecondary`。
 - 去除会随迭代漂移的绝对数字：README 目录说明与 CHANGELOG 不再写死单测总数（当前值以门禁输出为准），历史条目中的数字保持原样作为版本记录。

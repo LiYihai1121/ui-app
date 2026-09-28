@@ -121,8 +121,9 @@
 | 根目录白名单 | 只允许 `.github/` `.opencode/` `client/` `docs/` `server/` 与 9 个治理文件 | 根目录曾长期滞留 `AdSkip-latest.apk` 与 `.kilo/`、`.mimosa/` 工具残留目录 |
 | 产物不入库 | 禁止 `*.apk/*.aab/*.aar/*.log/*.zip/*.keystore/*.iml`、`.DS_Store` 等（仅放行 `gradle-wrapper.jar`） | 分发以 Releases + `SHA256SUMS` 为准；构建产物属于被忽略目录 |
 | 模块双向一致 | `settings.gradle.kts` 的 `include(":x")` ↔ 磁盘模块目录**双向**校验 | 模块目录被删却仍注册，或建了目录忘注册（代码写了但不编译） |
-| Gradle 工程根 | `client/` 只保留 wrapper、构建脚本与模块目录 | 防止脚本/产物随手落进工程根 |
+| Gradle 工程根 | `client/` 只保留 wrapper、构建脚本、`gradle/libs.versions.toml`、`build-logic/` 与模块目录 | 防止脚本/产物随手落进工程根 |
 | 标准源集布局 | `src/main/{java,res}` + `AndroidManifest.xml`（应用模块）、`src/test/java`；非常规源集须在 `build.gradle.kts` 声明 | 非常规源集目录默认不参与编译，属静默失效 |
+| 约定插件复合构建 | `client/build-logic/` 是 included build（托管 `adskip.android.application` 约定插件），不是主构建模块，列入 `NON_MODULE_DIRS` 白名单 | 约定插件若被误当模块注册，会出现「include 但无 src」或重复配置的双重真相 |
 | 包声明对位 | 每个 `.kt` 的 `package` 必须与其目录路径一致 | 包路径错位会让 2.1 的包级扫描按错误边界生效 |
 | 文档登记 | `docs/` 子目录限 `api/ architecture/ development/ planning/ diagrams/`，且每份文档必须出现在 `docs/README.md` | 与文档地图的单一事实源要求对齐 |
 
@@ -130,8 +131,9 @@
 > `ALLOWED_ROOT_DIRS` / `ALLOWED_ROOT_FILES` 并在 PR 说明理由——让结构调整成为一次显式决策，
 > 而不是一次顺手拖拽。若条目属于本机生成物，正确做法是写入根 `.gitignore` 而非加白名单。
 
-> 尚未落地的工程化演进（version catalog、build-logic 约定插件、模块拆分）见
-> [DESIGN-BUILD-FRAMEWORK.md](../planning/DESIGN-BUILD-FRAMEWORK.md)，其中已标注各项的具体坑位与迁移顺序。
+> version catalog 与 build-logic 约定插件（阶段 B）已完成，模块拆分（阶段 C）待排期；
+> 迁移细节、具体坑位与回滚策略见
+> [DESIGN-BUILD-FRAMEWORK.md](../planning/DESIGN-BUILD-FRAMEWORK.md)。
 
 ## 3. 数据流
 
