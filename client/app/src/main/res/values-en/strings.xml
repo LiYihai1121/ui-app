@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">轻启</string>
-    <string name="btn_back">Back</string>
-    <string name="app_slogan">Auto-skip splash ads</string>
     <string name="service_name">轻启 · Skip Splash Ads</string>
     <string name="service_desc">Automatically detects and clicks the "Skip" button on splash ads. Supports text keyword and ViewID matching. Runs locally only.</string>
 
@@ -14,15 +12,10 @@
     <string name="btn_open_settings">Open Accessibility Settings</string>
     <string name="btn_test">Test: Simulate Splash Ad</string>
     <string name="settings_open_failed">Cannot open accessibility settings. Go to Settings → Accessibility manually</string>
-    <string name="stats_title">Skip Statistics</string>
-    <string name="stats_format">Total skips: %1$d | Recent: %2$s</string>
-    <string name="stats_none">None</string>
     <string name="stats_total_label">Total skips</string>
-    <string name="stats_recent_label">Recent app</string>
     <string name="nav_home">Home</string>
     <string name="nav_apps">Apps</string>
     <string name="nav_logs">Logs</string>
-    <string name="nav_settings">Settings</string>
     <string name="btn_confirm">OK</string>
     <string name="btn_cancel">Cancel</string>
     <string name="action_undo">Undo</string>
@@ -33,12 +26,10 @@
     <string name="keyword_input_hint">Add keyword, e.g.: skip</string>
     <string name="btn_add">Add</string>
     <string name="how_it_works">How it works: The accessibility service monitors app launches and automatically finds and clicks the "Skip" button. Data stays on device.</string>
-    <string name="btn_add_keyword">Add</string>
     <string name="keyword_empty">Please enter a keyword</string>
     <string name="keyword_exists">Keyword already exists</string>
     <string name="keyword_added">Added "%1$s"</string>
     <string name="keyword_removed">Removed "%1$s"</string>
-    <string name="keyword_item">%1$s　✕</string>
     <string name="keyword_remove_cd">Remove keyword “%1$s”</string>
 
     <!-- Test -->
@@ -79,12 +70,8 @@
     <string name="logs_cleared">Logs cleared</string>
     <string name="logs_share">Share</string>
     <string name="logs_item_subtitle">%1$s | %2$s</string>
-    <string name="logs_format">%1$s</string>
-    <string name="logs_pkg_format">%1$s</string>
 
     <!-- Cloud Sync Settings -->
-    <string name="settings_title">Cloud Rule Sync</string>
-    <string name="settings_subtitle">Cloud rules, do-not-disturb hours, background keep-alive and quick tile</string>
     <string name="settings_cloud_section">Cloud Rules</string>
     <string name="settings_schedule_section">Sync &amp; Do Not Disturb</string>
     <string name="settings_server_label">Server Address</string>

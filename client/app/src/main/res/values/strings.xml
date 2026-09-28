@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">轻启</string>
-    <string name="btn_back">返回</string>
-    <string name="app_slogan">自动跳过开屏广告</string>
     <string name="service_name">轻启 · 跳过开屏广告</string>
     <string name="service_desc">自动识别并点击开屏广告的「跳过」按钮。支持文本关键词与控件 ID 两种匹配方式，仅在本机运行。</string>
 
@@ -14,15 +12,10 @@
     <string name="btn_open_settings">打开无障碍设置</string>
     <string name="btn_test">测试：模拟开屏广告</string>
     <string name="settings_open_failed">无法打开无障碍设置页，请手动前往 设置 → 无障碍</string>
-    <string name="stats_title">跳过统计</string>
-    <string name="stats_format">累计跳过 %1$d 次 ｜ 最近：%2$s</string>
-    <string name="stats_none">暂无</string>
     <string name="stats_total_label">累计跳过（次）</string>
-    <string name="stats_recent_label">最近应用</string>
     <string name="nav_home">首页</string>
     <string name="nav_apps">应用管理</string>
     <string name="nav_logs">跳过日志</string>
-    <string name="nav_settings">设置</string>
     <string name="btn_confirm">确定</string>
     <string name="btn_cancel">取消</string>
     <string name="action_undo">撤销</string>
@@ -33,12 +26,10 @@
     <string name="keyword_input_hint">添加关键词，如：跳过</string>
     <string name="btn_add">添加</string>
     <string name="how_it_works">原理：通过无障碍服务监听应用启动，自动查找并点击「跳过」按钮。数据仅存本机。</string>
-    <string name="btn_add_keyword">添加</string>
     <string name="keyword_empty">请输入关键词</string>
     <string name="keyword_exists">关键词已存在</string>
     <string name="keyword_added">已添加「%1$s」</string>
     <string name="keyword_removed">已删除「%1$s」</string>
-    <string name="keyword_item">%1$s　✕</string>
     <string name="keyword_remove_cd">删除关键词「%1$s」</string>
 
     <!-- 默认规则 -->
@@ -92,12 +83,8 @@
     <string name="logs_cleared">日志已清空</string>
     <string name="logs_share">分享</string>
     <string name="logs_item_subtitle">%1$s ｜ %2$s</string>
-    <string name="logs_format">%1$s</string>
-    <string name="logs_pkg_format">%1$s</string>
 
     <!-- 云同步设置 -->
-    <string name="settings_title">云端规则同步</string>
-    <string name="settings_subtitle">云端规则、免打扰时段、后台保活与快捷磁贴</string>
     <string name="settings_cloud_section">云端规则</string>
     <string name="settings_schedule_section">同步与免打扰</string>
     <string name="settings_url_invalid">地址需为 http:// 或 https:// 开头的有效地址</string>
