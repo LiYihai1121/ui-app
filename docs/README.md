@@ -12,7 +12,8 @@ docs/
 ├── architecture/      系统架构与模块职责
 │   └── ARCHITECTURE.md
 ├── development/       开发环境与工具链
-│   └── DEV-ENVIRONMENT.md
+│   ├── DEV-ENVIRONMENT.md
+│   └── AGENT-WORKFLOW.md         多 Agent 协作：隔离 / 所有权 / 契约 / 交接
 ├── planning/          规划与发布记录
 │   ├── ROADMAP.md                 版本序列（唯一事实源）
 │   ├── ROADMAP-ADS.md             里程碑 / 周次 / 出口条件
@@ -33,6 +34,7 @@ docs/
 | 配置本机开发环境 | [development/DEV-ENVIRONMENT.md](development/DEV-ENVIRONMENT.md) |
 | 查某版本发布到哪个提交、哪个 tag | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
 | 了解提交/分支/发布/回滚规范 | [CONTRIBUTING.md](../CONTRIBUTING.md)（执行摘要见 [AGENTS.md](../AGENTS.md)） |
+| 多个 Agent / 多分支并行开发时的隔离与协作 | [development/AGENT-WORKFLOW.md](development/AGENT-WORKFLOW.md) |
 | 查用户可见变更 | [CHANGELOG.md](../CHANGELOG.md) |
 
 ## 规划事实源（Single Source of Truth）
@@ -46,6 +48,7 @@ docs/
 | 协议与接口 | [api/API.md](api/API.md) + [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md)（第 7 节） | DESIGN 只描述增量字段 |
 | 客户端/服务端分层与模块职责 | [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) | README 只给目录树摘要 |
 | 流程规范（分支/提交/门禁/发版） | [CONTRIBUTING.md](../CONTRIBUTING.md) | [AGENTS.md](../AGENTS.md) 为执行摘要 |
+| 多 Agent 并行协作（隔离/所有权/契约/交接） | [development/AGENT-WORKFLOW.md](development/AGENT-WORKFLOW.md) | 本页不复制其条款，仅登记入口；其卫生检查由 `RepoHygieneTest` 强制 |
 
 > **改规划的顺序**：先改 `docs/planning/ROADMAP.md`（版本意图）→ 再改同目录的 `ROADMAP-ADS.md` 与 `DESIGN-PHASE1-SELECTOR.md` 的版本归属 → 最后同步 `CHANGELOG.md` 与 `RELEASE-HISTORY.md` 的对应行。`docs/api/API.md`、`docs/architecture/ARCHITECTURE.md` 涉及协议字段时一并更新。
 

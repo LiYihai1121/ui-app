@@ -20,6 +20,9 @@
 
 ### Added
 
+- 多 Agent 协作规范（[docs/development/AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md)）：一人一 worktree 的隔离约定、文件级唯一写入者与认领板、文档单写者事实源、契约先行、最小交接信息与冲突裁决规则。
+- 新增仓库卫生守护测试 `RepoHygieneTest`（随 `testDebugUnitTest` 运行），把协作约定升级为 CI 门禁：根 `.gitignore` 必须覆盖 Agent 产物/工作区目录、仓库内不得出现无 `.git` 元数据的整仓副本、协作规范必须在文档地图登记、分支名必须可追踪。
+- 根 `.gitignore` 补齐 `.kilo/`、`.kilocode/`、`.worktrees/`、`.agents/`：此前相关规则只存在于本机 `.git/info/exclude`，导致 `git status` 干净但文件检索仍能命中第二份源码（已一并清理该残留副本）。
 - 系统级体验：下拉通知栏快捷磁贴（`SkipTileService`）——一眼查看无障碍服务状态，一次点击即可启停（运行中点按等价于在系统设置中关闭服务）；Android 13+ 可在设置页一键请求系统添加磁贴，低版本引导手动从「编辑磁贴」拖动。
 - 厂商保活引导：设置页新增「系统保活与快捷入口」，自动识别 MIUI / HarmonyOS / MagicOS / ColorOS / OriginOS / Flyme / OxygenOS / One UI 并一键跳转对应的自启动 / 后台管理页面，入口不可用时逐级降级到系统通用页面并提示手动路径——针对「后台被强杀导致跳过静默失效」这一高频问题。
 - 客户端新增 `device/` 系统集成层（ROM 识别与入口表、跳转出口、快捷磁贴），设置页与首页不再自行拼装系统 `Intent`；新增 JVM 单测覆盖厂商识别、磁贴点击决策与 `AndroidManifest.xml` 契约（磁贴注册、`<queries>` 包可见性声明），单测总数 121 → 153。

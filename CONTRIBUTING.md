@@ -67,6 +67,17 @@ fix(client): 避免重复触发跳过点击
 - 分支必须基于最新目标分支，合并使用 Squash；合并后自动删除源分支；
 - CI 使用固定 Action 主版本，依赖和权限按最小权限配置。
 
+## 多 Agent 并行开发
+
+单人开发时按上面的分支模型即可。当**多个 Agent（或多名协作者）同时在一个仓库工作**时，额外遵守 [docs/development/AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md)，核心是四点：
+
+1. **隔离**：每个 Agent 一个真正的 `git worktree`（`.worktrees/<agent>-<slug>/`），禁止在仓库内复制整仓；Agent 产物目录必须写进共享 `.gitignore`，不得只写本机 `.git/info/exclude`。
+2. **所有权**：同一文件同一时间只有一个写入者（开工前认领），`CHANGELOG.md`、`docs/planning/ROADMAP*.md`、`docs/architecture/ARCHITECTURE.md`、`docs/README.md` 为单写者事实源。
+3. **契约**：跨包/跨端边界的改动必须附带可执行契约测试（客户端由 `ArchitectureBoundaryTest`、`ManifestContractTest`、`RepoHygieneTest` 守护），先写失败测试再写实现。
+4. **交接与合并**：分支与 Agent 一一绑定，禁止对他人分支 rebase/force-push；交接给出「改了什么 / 边界变化 / 验证结果 / 遗留风险 / 下一步」五项；合并仍走 PR + Squash，顺序上先合依赖方。
+
+违反上述约定时，仓库卫生类问题会由 `RepoHygieneTest` 直接判失败（如仓库内出现无 `.git` 元数据的整仓副本、忽略规则缺失、协作文档未登记、分支名不合规）。
+
 ## 版本策略与发布
 
 版本号遵循 Semantic Versioning：`MAJOR.MINOR.PATCH`。

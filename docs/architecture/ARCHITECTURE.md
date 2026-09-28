@@ -226,7 +226,7 @@ Doze 模式 → 系统推迟到维护窗口执行
 
 **客户端：**
 
-- JVM 单测：`cd client && ./gradlew testDebugUnitTest`（引擎匹配 + SafetyGuard 护栏 + 架构边界守护 `ArchitectureBoundaryTest` + 清单契约守护 `ManifestContractTest` + 厂商识别/磁贴决策 `VendorKeepAliveTest`/`QuickTileLogicTest`）
+- JVM 单测：`cd client && ./gradlew testDebugUnitTest`（引擎匹配 + SafetyGuard 护栏 + 架构边界守护 `ArchitectureBoundaryTest` + 清单契约守护 `ManifestContractTest` + 仓库卫生守护 `RepoHygieneTest` + 厂商识别/磁贴决策 `VendorKeepAliveTest`/`QuickTileLogicTest`）
 - 构建验证：`cd client && ./gradlew assembleDebug`
 
 **服务端（bun:test）：**
