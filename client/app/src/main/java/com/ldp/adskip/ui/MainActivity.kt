@@ -9,8 +9,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
@@ -25,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -161,21 +164,45 @@ private fun AdskipShell() {
             }
         },
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = Routes.HOME,
+        // 内容宽度封顶 + 居中：三家的规范在这里是同一个结论。
+        // - Material：WindowSizeClass 提示 expanded 宽度下应改用 NavigationRail / ListDetail；
+        // - Ant Design：Row/Col 栅格 + Container 居中 + max-width 封顶；
+        // - Tailwind：max-w-* 居中 + 断点。
+        // 本应用是单列信息流，不需要栅格分栏，但**需要封顶**：否则平板、折叠屏展开态
+        // 与横屏下卡片会被拉成整屏宽的条带，一行文字横跨上千 dp。
+        // 先只做封顶（改动一处、四个页面全部受益）；等真的引入列表-详情式布局时，
+        // 再在 expanded 宽度把底部 NavigationBar 换成 NavigationRail。
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            enterTransition = { fadeIn(tween(160)) },
-            exitTransition = { fadeOut(tween(120)) },
-            popEnterTransition = { fadeIn(tween(160)) },
-            popExitTransition = { fadeOut(tween(120)) },
+            contentAlignment = Alignment.TopCenter,
         ) {
-            composable(Routes.HOME) { HomeScreen() }
-            composable(Routes.APPS) { AppsScreen() }
-            composable(Routes.LOGS) { LogsScreen() }
-            composable(Routes.PROFILE) { ProfileScreen() }
+            NavHost(
+                navController = navController,
+                startDestination = Routes.HOME,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .widthIn(max = CONTENT_MAX_WIDTH),
+                enterTransition = { fadeIn(tween(160)) },
+                exitTransition = { fadeOut(tween(120)) },
+                popEnterTransition = { fadeIn(tween(160)) },
+                popExitTransition = { fadeOut(tween(120)) },
+            ) {
+                composable(Routes.HOME) { HomeScreen() }
+                composable(Routes.APPS) { AppsScreen() }
+                composable(Routes.LOGS) { LogsScreen() }
+                composable(Routes.PROFILE) { ProfileScreen() }
+            }
         }
     }
 }
+
+/**
+ * 页面内容最大宽度。
+ *
+ * 640dp 约等于「平板竖屏一半」与「手机横屏」的舒适阅读宽度；再宽则单行中文超过
+ * 30 个字，阅读时视线回到行首的行程过长。底部导航栏**不**受此约束——它是系统级
+ * 导航，全宽是 Material 与 Ant Design 的共同做法，内容封顶而栏不封顶。
+ */
+private val CONTENT_MAX_WIDTH = 640.dp
