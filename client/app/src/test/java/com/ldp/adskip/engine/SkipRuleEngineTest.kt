@@ -185,12 +185,13 @@ class SkipRuleEngineTest {
     }
 
     @Test
-    fun `ruleset default schemaVersion is 1`() {
-        assertEquals(1, RuleSet(emptyList(), emptyList()).schemaVersion)
+    fun `ruleset default schemaVersion is 2`() {
+        assertEquals(2, RuleSet(emptyList(), emptyList()).schemaVersion)
     }
 
     @Test
-    fun `ruleset min schemaVersion is 1`() {
+    fun `ruleset min schemaVersion stays 1`() {
+        // 兼容矩阵：MIN 保持 1，服务端发 schema 2 时旧客户端仍照常加载并忽略 selectors
         assertEquals(1, RuleSet.MIN_SCHEMA_VERSION)
     }
 

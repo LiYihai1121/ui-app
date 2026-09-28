@@ -27,6 +27,8 @@ export interface RulesPackage {
   keywords: string[];
   /** v0 兼容：与 rules.globalViewIds 同引用 */
   viewIds: string[];
+  /** v0 兼容：与 rules.globalSelectors 同引用（管理后台按 legacy 形状编辑选择器） */
+  selectors: string[];
   /** v0 兼容：与 rules.apps 同引用 */
   packages: Record<string, AppRule>;
 }

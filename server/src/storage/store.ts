@@ -82,7 +82,11 @@ export function computeHash(rules: any): string {
 function ensureCompatShape(input: unknown): RulesPackage {
   let rules: any = input;
   if (!rules || typeof rules !== "object") rules = defaultRules();
-  if (typeof rules.schemaVersion !== "number") rules.schemaVersion = config.SCHEMA_VERSION;
+  // 存量 rules.json 可能停在旧 schema；载荷已带 selectors，故单向补齐到当前版本。
+  // hash 的计算输入含 schemaVersion（computeHash），客户端会因此多同步一次，符合预期。
+  if (typeof rules.schemaVersion !== "number" || rules.schemaVersion < config.SCHEMA_VERSION) {
+    rules.schemaVersion = config.SCHEMA_VERSION;
+  }
   if (!rules.rules || typeof rules.rules !== "object") rules.rules = {};
   const r = rules.rules;
   const legacyKw: string[] = Array.isArray(rules.keywords) ? rules.keywords : [];

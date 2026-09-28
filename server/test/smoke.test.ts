@@ -64,11 +64,12 @@ describe("smoke", () => {
     expect(typeof j.packages).toBe("object");
   });
 
-  it("v1 规则形状（含 hash）", async () => {
+  it("v1 规则形状（含 hash 与选择器通道）", async () => {
     const res = await fetch(`${base}/api/v1/rules/latest`);
     const j = (await res.json()) as any;
-    expect(j.schemaVersion).toBe(1);
+    expect(j.schemaVersion).toBe(2);
     expect(typeof j.rules).toBe("object");
+    expect(Array.isArray(j.rules.globalSelectors)).toBe(true);
     expect(typeof j.hash).toBe("string");
     expect(j.hash.startsWith("sha256:")).toBe(true);
   });

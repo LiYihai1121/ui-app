@@ -64,7 +64,9 @@ export const config: Config = {
   RATE_LIMIT_READ_PER_MIN: 120,
   RATE_LIMIT_REPORT_PER_MIN: 30,
   RATE_LIMIT_WRITE_PER_MIN: 10,
-  SCHEMA_VERSION: 1,
+  // 2 = 载荷含选择器通道（rules.globalSelectors / apps.*.selectors）；
+  // MIN 保持 1，旧客户端（不识 selectors）对 schema 2 载荷行为不变。
+  SCHEMA_VERSION: 2,
   SCHEMA_VERSION_MIN: 1,
   MAX_KEYWORD_LEN: 12,
   MAX_VIEWID_LEN: 256,
