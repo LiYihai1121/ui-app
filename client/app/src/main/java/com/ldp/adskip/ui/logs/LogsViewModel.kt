@@ -1,4 +1,4 @@
-﻿package com.ldp.adskip.ui.logs
+package com.ldp.adskip.ui.logs
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

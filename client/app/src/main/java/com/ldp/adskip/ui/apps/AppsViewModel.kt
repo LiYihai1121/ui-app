@@ -1,4 +1,4 @@
-﻿package com.ldp.adskip.ui.apps
+package com.ldp.adskip.ui.apps
 
 import android.content.Intent
 import android.graphics.drawable.Drawable

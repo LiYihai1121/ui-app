@@ -17,9 +17,14 @@
     <string name="stats_title">Skip Statistics</string>
     <string name="stats_format">Total skips: %1$d | Recent: %2$s</string>
     <string name="stats_none">None</string>
-    <string name="nav_apps">App Manager</string>
-    <string name="nav_logs">Skip Logs</string>
-    <string name="nav_settings">Cloud Rule Sync</string>
+    <string name="stats_total_label">Total skips</string>
+    <string name="stats_recent_label">Recent app</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_apps">Apps</string>
+    <string name="nav_logs">Logs</string>
+    <string name="nav_settings">Settings</string>
+    <string name="btn_confirm">OK</string>
+    <string name="btn_cancel">Cancel</string>
 
     <!-- Keywords -->
     <string name="keywords_title">Detection Keywords</string>
@@ -33,6 +38,7 @@
     <string name="keyword_added">Added "%1$s"</string>
     <string name="keyword_removed">Removed "%1$s"</string>
     <string name="keyword_item">%1$s　✕</string>
+    <string name="keyword_remove_cd">Remove keyword “%1$s”</string>
 
     <!-- Test -->
     <string name="fake_ad_title">Sample Splash Ad</string>
@@ -66,6 +72,9 @@
 
     <!-- Cloud Sync Settings -->
     <string name="settings_title">Cloud Rule Sync</string>
+    <string name="settings_subtitle">Cloud rules, do-not-disturb hours, background keep-alive and quick tile</string>
+    <string name="settings_cloud_section">Cloud Rules</string>
+    <string name="settings_schedule_section">Sync &amp; Do Not Disturb</string>
     <string name="settings_server_label">Server Address</string>
     <string name="settings_server_hint">http://your-pc-ip:3210</string>
     <string name="settings_save">Save Address</string>

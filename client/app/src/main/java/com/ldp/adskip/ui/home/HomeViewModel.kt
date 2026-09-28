@@ -1,4 +1,4 @@
-﻿package com.ldp.adskip.ui.home
+package com.ldp.adskip.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
