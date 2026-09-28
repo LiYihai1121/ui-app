@@ -40,7 +40,8 @@ metadata:
 ## 会被构建拦下的硬规则
 
 - 架构边界 → `ArchitectureBoundaryTest`
-- 清单与入口表对齐（磁贴、`<queries>`） → `ManifestContractTest`
+- 清单与入口表对齐（磁贴、`<queries>`）、广播收窄、开机权限 → `ManifestContractTest`
+- 目录结构（根白名单、产物、模块、包路径、文档登记） → `ProjectStructureTest`
 - 仓库卫生（忽略规则、无元数据仓库副本、文档登记、分支命名） → `RepoHygieneTest`
 
 以上任一违反都会在 `testDebugUnitTest` 阶段失败，**不依赖代码评审才发现**。
