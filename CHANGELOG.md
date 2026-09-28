@@ -31,6 +31,7 @@
 
 ### Added
 
+- **上架规划 Agent 技能**：新增 [skills/store-listing-plan/SKILL.md](skills/store-listing-plan/SKILL.md)——软件上架（应用商店发布）的规划流程技能：Gate 0 合规边界先决（本项目当前声明不上架，边界修订须与计划同一 PR）、目标商店与制品形态、上架材料与隐私声明对齐、审核风险对照、灰度与回滚、上架后运营边界；规则一律以指针引用事实源，不复制条款。技能随仓库版本控制于 `skills/`：本分支仅把 `skills/` 纳入 `ProjectStructureTest` 根白名单（行文本与工具链迁移分支逐字一致），`skills.paths` 挂载点由迁移分支的 `kilo.json` 承接——本分支刻意不改任何配置文件，避免与迁移分支产生修改/删除型冲突。**已用 `git merge-tree --write-tree` 干跑验证**：与迁移线合并时本分支预计仅 `ProjectStructureTest.kt` 一处冲突（迁移线重构了整块根白名单，两处改动相邻），解决方式为取迁移侧版本——其已登记同一 `skills/` 条目（文本一致），本行在合并后冗余。
 - **「我的」用户页**：底部导航新增一级入口（本页），展示本机使用概览（累计跳过 / 已跳过应用数 / 服务状态）与应用、设备信息（应用版本、系统版本、设备型号、ROM 厂商），并明示「跳过记录与统计均只保存在本机」。实现遵循既有单向下行数据流：`ui/profile/ProfileScreen` + `ProfileViewModel`（StateFlow 驱动），统计经 `StatsRepository`、版本经 `SettingsRepository` 读取，UI 不自行查 `PackageManager`（遵守 ARCHITECTURE.md 2.1 边界）。
 - **导航契约守护测试**：`ProjectStructureTest` 新增断言，把「一级路由恰为 4 项且不再声明 `SETTINGS`」「「我的」页必须内嵌 `SettingsContent()` 与无障碍入口、且跳转须经 `device/` 层」「新增页面必须在每个 locale 声明文案」升级为 CI 可执行规则。此规则源于本仓库的真实缺陷——`Routes.SETTINGS` 与 `SettingsScreen` 曾早已存在却无任何入口，用户进不去保活与磁贴设置；本次重构反过来又可能把「设置删了却忘了接回」写成新缺陷，故一并守护。
 
