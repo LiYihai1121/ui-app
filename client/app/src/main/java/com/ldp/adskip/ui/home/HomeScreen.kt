@@ -63,6 +63,7 @@ import com.ldp.adskip.ui.components.SectionHint
 import com.ldp.adskip.ui.components.SectionTitle
 import com.ldp.adskip.ui.components.StatusOrb
 import com.ldp.adskip.ui.components.rememberAppLabel
+import com.ldp.adskip.ui.theme.Spacing
 import com.ldp.adskip.ui.theme.StatusColors
 
 /**
@@ -115,12 +116,12 @@ fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factor
                 .fillMaxSize()
                 .imePadding(),
             contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = 16.dp,
-                bottom = 24.dp,
+                start = Spacing.lg,
+                end = Spacing.lg,
+                top = Spacing.lg,
+                bottom = Spacing.xl,
             ),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         ) {
             item {
                 StatusHero(
@@ -147,7 +148,7 @@ fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factor
             item {
                 SectionHint(
                     text = stringResource(R.string.how_it_works),
-                    modifier = Modifier.padding(horizontal = 4.dp),
+                    modifier = Modifier.padding(horizontal = Spacing.xs),
                 )
             }
         }
@@ -187,14 +188,14 @@ private fun StatusHero(running: Boolean, onPrimaryAction: () -> Unit, onTest: ()
                 ),
                 diameter = 56.dp,
             )
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(Spacing.lg))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(if (running) R.string.status_on else R.string.status_off),
                     style = MaterialTheme.typography.titleLarge,
                     color = if (running) StatusColors.on else StatusColors.off,
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(Spacing.xs))
                 Text(
                     text = stringResource(
                         if (running) R.string.status_on_hint else R.string.status_off_hint,
@@ -226,7 +227,7 @@ private fun StatusHero(running: Boolean, onPrimaryAction: () -> Unit, onTest: ()
         }
 
         HorizontalDivider(
-            modifier = Modifier.padding(vertical = 4.dp),
+            modifier = Modifier.padding(vertical = Spacing.xs),
             color = MaterialTheme.colorScheme.outlineVariant,
         )
 
@@ -258,7 +259,7 @@ private fun StatusHero(running: Boolean, onPrimaryAction: () -> Unit, onTest: ()
  */
 @Composable
 private fun StatsRow(state: HomeViewModel.UiState, lastAppLabel: String) {
-    SectionCard(contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp)) {
+    SectionCard(contentPadding = PaddingValues(horizontal = 20.dp, vertical = Spacing.lg)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(R.string.stats_total_short, state.totalSkips),
@@ -266,7 +267,7 @@ private fun StatsRow(state: HomeViewModel.UiState, lastAppLabel: String) {
                 color = MaterialTheme.colorScheme.onSurface,
             )
             if (lastAppLabel.isNotBlank()) {
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(Spacing.sm))
                 Text(
                     text = stringResource(R.string.stats_recent_short, lastAppLabel),
                     style = MaterialTheme.typography.bodySmall,
@@ -301,9 +302,9 @@ private fun KeywordsCard(keywords: List<String>, onAdd: (String) -> Unit, onRemo
 
     SectionCard {
         SectionTitle(stringResource(R.string.keywords_title))
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(Spacing.xs))
         SectionHint(stringResource(R.string.keywords_hint))
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Spacing.lg))
 
         OutlinedTextField(
             value = input,
@@ -332,8 +333,8 @@ private fun KeywordsCard(keywords: List<String>, onAdd: (String) -> Unit, onRemo
                 modifier = Modifier
                     .fillMaxWidth()
                     .animateContentSize(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
             ) {
                 keywords.forEachIndexed { index, keyword ->
                     InputChip(
@@ -371,7 +372,7 @@ private fun FakeAdOverlay(countdown: Int, onSkipClicked: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp),
+                .padding(Spacing.xxl),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -380,13 +381,13 @@ private fun FakeAdOverlay(countdown: Int, onSkipClicked: () -> Unit) {
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(Spacing.md))
             Text(
                 text = stringResource(R.string.fake_ad_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(Spacing.xxxl))
             Button(onClick = onSkipClicked) {
                 Text(stringResource(R.string.fake_ad_skip))
             }

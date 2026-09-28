@@ -1,4 +1,4 @@
-﻿package com.ldp.adskip.ui
+package com.ldp.adskip.ui
 
 import android.os.Build
 import android.os.Bundle
@@ -46,6 +46,7 @@ import com.ldp.adskip.ui.home.HomeScreen
 import com.ldp.adskip.ui.logs.LogsScreen
 import com.ldp.adskip.ui.profile.ProfileScreen
 import com.ldp.adskip.ui.theme.AdskipTheme
+import com.ldp.adskip.ui.theme.UiSizes
 
 /**
  * 唯一 Activity：承载 Navigation Compose 导航的四个页面。
@@ -214,4 +215,4 @@ private fun AdskipShell() {
  * 30 个字，阅读时视线回到行首的行程过长。底部导航栏**不**受此约束——它是系统级
  * 导航，全宽是 Material 与 Ant Design 的共同做法，内容封顶而栏不封顶。
  */
-private val CONTENT_MAX_WIDTH = 640.dp
+private val CONTENT_MAX_WIDTH = UiSizes.contentMaxWidth

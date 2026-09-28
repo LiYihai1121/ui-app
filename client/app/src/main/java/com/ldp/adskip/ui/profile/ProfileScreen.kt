@@ -38,6 +38,7 @@ import com.ldp.adskip.ui.components.SectionHint
 import com.ldp.adskip.ui.components.SectionTitle
 import com.ldp.adskip.ui.components.StatTile
 import com.ldp.adskip.ui.settings.SettingsContent
+import com.ldp.adskip.ui.theme.Spacing
 
 /**
  * 「我的」页：本机使用概览 + 无障碍入口 + 设置 + 应用与设备信息。
@@ -71,8 +72,8 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
             modifier = Modifier
                 .fillMaxSize()
                 .imePadding(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(start = Spacing.lg, end = Spacing.lg, bottom = Spacing.xl),
+            verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         ) {
             item { UsageCard(state = state) }
             // 设置（云端规则 / 免打扰 / 保活 / 磁贴）排在「关于」之前：
@@ -109,13 +110,13 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
 private fun AccessibilityCard(running: Boolean, onOpen: () -> Unit) {
     SectionCard {
         SectionTitle(stringResource(R.string.profile_accessibility_section))
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Spacing.sm))
         SectionHint(
             stringResource(
                 if (running) R.string.status_on_hint else R.string.status_off_hint,
             ),
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Spacing.lg))
         FilledTonalButton(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.btn_open_settings))
         }
@@ -126,10 +127,10 @@ private fun AccessibilityCard(running: Boolean, onOpen: () -> Unit) {
 private fun UsageCard(state: ProfileViewModel.UiState) {
     SectionCard {
         SectionTitle(stringResource(R.string.profile_usage_section))
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Spacing.lg))
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.lg),
         ) {
             StatTile(
                 value = state.totalSkips.toString(),
@@ -152,7 +153,7 @@ private fun UsageCard(state: ProfileViewModel.UiState) {
 private fun AboutCard(state: ProfileViewModel.UiState, vendorName: (Vendor) -> String) {
     SectionCard {
         SectionTitle(stringResource(R.string.profile_about_section))
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Spacing.sm))
 
         InfoRow(
             label = stringResource(R.string.profile_version_label),
@@ -174,7 +175,7 @@ private fun AboutCard(state: ProfileViewModel.UiState, vendorName: (Vendor) -> S
             value = vendorName(state.vendor),
         )
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(Spacing.md))
         SectionHint(stringResource(R.string.profile_privacy_hint))
     }
 }
