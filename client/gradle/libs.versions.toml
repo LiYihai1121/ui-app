@@ -28,6 +28,9 @@ androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+# 注意：底部导航栏**刻意不使用** material-icons-extended。该制品体积巨大，
+# 实测让 assembleDebug 的 dex 合并多花数分钟、debug APK 增大 ~7 MB，
+# 对本项目（轻量工具 + assembleDebug 作为 CI 门禁）不划算；改用 core 图标集。
 
 # AndroidX MVVM + 导航
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }

@@ -1,4 +1,4 @@
-﻿package com.ldp.adskip.ui.settings
+package com.ldp.adskip.ui.settings
 
 import android.net.Uri
 import android.os.PowerManager

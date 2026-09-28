@@ -1,4 +1,4 @@
-﻿package com.ldp.adskip.ui.apps
+package com.ldp.adskip.ui.apps
 
 import android.content.Intent
 import androidx.compose.foundation.Image
@@ -38,59 +38,42 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
+import com.ldp.adskip.ui.components.PageHeader
 
 /**
  * 应用管理：所有可启动应用，逐项开关自动跳过并显示跳过次数。
  */
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * 应用管理：所有可启动应用，逐项开关自动跳过并显示跳过次数。
+ *
+ * 页面不再自带 `Scaffold` 与返回箭头——导航由外壳底部栏统一承载，
+ * 本页只负责内容（含一个轻量标题，见 [PageHeader]）。
+ */
 @Composable
 fun AppsScreen(
-    onBack: () -> Unit,
     viewModel: AppsViewModel = viewModel(factory = AppsViewModel.Factory)
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(stringResource(R.string.apps_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.btn_back)
-                        )
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            Text(
-                text = stringResource(R.string.apps_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-            if (state.loading && state.items.isEmpty()) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    CircularProgressIndicator()
-                    Spacer(Modifier.height(12.dp))
-                    Text(stringResource(R.string.apps_loading))
-                }
-            } else {
-                LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
-                    items(state.items, key = { it.pkg }) { row ->
-                        AppRowItem(row = row, onToggle = viewModel::setEnabled)
-                    }
+    Column(modifier = Modifier.fillMaxSize()) {
+        PageHeader(
+            title = stringResource(R.string.apps_title),
+            subtitle = stringResource(R.string.apps_hint)
+        )
+        if (state.loading && state.items.isEmpty()) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator()
+                Spacer(Modifier.height(12.dp))
+                Text(stringResource(R.string.apps_loading))
+            }
+        } else {
+            LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
+                items(state.items, key = { it.pkg }) { row ->
+                    AppRowItem(row = row, onToggle = viewModel::setEnabled)
                 }
             }
         }

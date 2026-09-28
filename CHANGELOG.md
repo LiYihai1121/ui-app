@@ -19,6 +19,23 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **首页边到边缺陷**：`targetSdk = 35` 在 Android 15 起强制边到边，而四个页面中只有 `HomeScreen` 没有 `Scaffold`，标题会压在状态栏时钟上（已在 Android 15 / API 35 模拟器复现）。inset 改由外壳统一分发，页面只消费 `innerPadding`。
+- **软键盘遮挡**：首页关键词输入框、设置页服务器地址输入框在键盘弹出后被完全遮住（实测）。两页补 `imePadding()`。
+- **设置页不可达**：`Routes.SETTINGS` 与 `SettingsScreen` 早已存在却无任何入口，用户进不去保活与磁贴设置。改用底部导航栏后四个一级页面均可达。
+- **统计区直显包名**：改为经 PackageManager 解析应用显示名，查不到时回退包名；同时修复长文本被硬截断（无省略号）的问题。
+- **时间选择器硬编码 `OK` / `Cancel`**，未走 `strings.xml`。
+- 清除 `ui/` 下 10 个源文件的 UTF-8 BOM（仓库规则要求外部工具文件 UTF-8 无 BOM）。
+
+### Changed
+
+- **完整视觉重设计**：新增 `ui/theme`（Material You 动态取色、完整深色色板、自定义字阶与圆角）与 `ui/components`（`SectionCard` / `PageHeader` / `StatTile` / `StatusOrb`）两层。
+- 首页改为「自绘状态环 + 结论式文案 + 主行动按钮」主视觉；关键词由整行 `Text` 改为 `InputChip` 平铺，删除命中区域从数个字符扩大到 48dp。
+- 四个页面统一由底部 `NavigationBar` 承载一级导航，不再各自重复 `Scaffold` + `TopAppBar`。
+- 关闭 Android 10+ 三键导航栏的对比度强制，消除边到边下底部突兀白带。
+- 底部导航栏**刻意不使用** `material-icons-extended`：实测令 `assembleDebug` 的 dex 合并多耗数分钟、debug APK 增大约 7 MB，对以 `assembleDebug` 为 CI 门禁的轻量工程不划算，改用 core 图标集。
+
 ## [3.1.0-rc.1] - 2026-09-28
 
 > **预发布版本，不是正式版。** 本次触及无障碍服务、快捷磁贴与厂商跳转，发布时无可用真机，
