@@ -6,11 +6,13 @@
 
 [versions]
 # 构建工具链（版本互相有硬性兼容关系，升级前先对照官方兼容矩阵）
-agp = "8.7.3"                       # Android Gradle Plugin（Gradle 8.9+，compileSdk 35）
-kotlin = "2.0.21"                   # Kotlin + Compose 编译器 Gradle 插件（同版本推进）
+agp = "9.4.1"                        # Android Gradle Plugin（Gradle 9.6+ 移除了 AGP 8.x 依赖的内部 API，必须 9.x；
+                                     # AGP 9 内置 Kotlin 2.2.10，kotlin.android 插件不得再单独应用；镜像已核对）
+kotlin = "2.2.10"                   # 仅用于 Compose 编译器插件：必须与 AGP 9.4.1 内置 Kotlin 版本一致
 
 # AndroidX（BOM 之外的坐标也统一收口）
-composeBom = "2024.12.01"           # Jetpack Compose BOM（ui / ui-tooling / material3 统一版本）
+composeBom = "2026.06.01"           # Jetpack Compose BOM（ui 1.11.4 + material3 1.4.0 Expressive；
+                                     # 刻意不用 2026.08+：compose 1.12 起强制 compileSdk 37，超出本次升级范围；镜像已核对）
 activityCompose = "1.9.3"
 lifecycle = "2.8.7"                 # lifecycle-viewmodel-compose / lifecycle-runtime-compose
 navigationCompose = "2.8.5"
@@ -28,6 +30,8 @@ androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+# compose 1.9+ 起 material3 不再传递依赖图标库，需显式声明 core 图标集
+androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
 # 注意：底部导航栏**刻意不使用** material-icons-extended。该制品体积巨大，
 # 实测让 assembleDebug 的 dex 合并多花数分钟、debug APK 增大 ~7 MB，
 # 对本项目（轻量工具 + assembleDebug 作为 CI 门禁）不划算；改用 core 图标集。
@@ -41,14 +45,12 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 # 测试
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 
-# build-logic 约定插件运行时依赖（供 build-logic/convention 将 AGP/KGP 应用到目标工程）
+# build-logic 约定插件运行时依赖（供 build-logic/convention 将 AGP/Compose 编译器插件应用到目标工程）
 # 注意：id 标注的插件应用走 pluginManagement 仓库解析，这里要求的是构成 classpath 的实际制品坐标
 android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
-kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-compose-compiler-plugin = { group = "org.jetbrains.kotlin", name = "compose-compiler-gradle-plugin", version.ref = "kotlin" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 adskip-android-application = { id = "adskip.android.application", version.ref = "adskipPlugins" }
