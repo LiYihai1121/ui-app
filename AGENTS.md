@@ -8,7 +8,7 @@
 - 每项变更从最新 `main` 创建独立短生命周期分支，前缀 ∈ `feature` / `fix` / `docs` / `ci` / `test` / `refactor`，形如 `<type>/<id>-<slug>`；发布用 `release/vX.Y.Z`，线上紧急修复用 `hotfix/<id>-<slug>`。
   前缀清单以 `RepoHygieneTest` 强制的为准（少列会让 Agent 建出被摘要误导的分支，多列则会被门禁判红），逐类用途见 [CONTRIBUTING.md](CONTRIBUTING.md)「分支策略」。
 - 分支只处理一个需求，关联 Issue；合并后删除源分支。
-- 不提交密钥、签名文件、构建产物、运行时数据或个人环境配置。
+- 不提交密钥、签名文件、构建产物、运行时数据或个人环境配置；`.vscode/` 只入库 `settings.json` 与 `extensions.json`（其余个人文件由 `ProjectStructureTest` 判红）。
 
 ## 提交
 

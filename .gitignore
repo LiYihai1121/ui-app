@@ -28,8 +28,22 @@ signing/
 .worktrees/
 .agents/
 
-# 个人 IDE 配置不入库（AGENTS.md：不提交个人环境配置）
-.vscode/
+# IDE 配置：只入库团队共享的两个文件，其余个人文件仍不入库。
+#
+# 规则从「整个 .vscode/ 不入库」改为「选择性入库」，理由是团队需要同一套
+# 编辑器行为（构建输出不参与搜索、Kotlin 行宽标尺、推荐扩展），而这些配置
+# 只存在于各自本机时，任何一条都可能在某台机器上悄悄失效。
+#
+# 写法说明：git 不会进入被忽略的目录，因此不能写 `.vscode/` 再否定其中某个
+# 文件——必须用 `.vscode/*`（逐项）再对要入库的文件写 `!` 例外。
+#
+# 入库：settings.json（编辑器行为）、extensions.json（推荐扩展）
+# 不入库：launch.json / tasks.json / *.code-workspace 等个人调试与工作区状态
+# 规则由 ProjectStructureTest 的 `vscode directory only holds the shared config` 强制：
+# 出现未登记的文件即测试失败，不依赖「靠自觉不提交」。
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # Kotlin 构建会话目录
 .kotlin/

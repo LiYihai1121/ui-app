@@ -1,0 +1,62 @@
+{
+  // 编辑器行为配置。**代码长什么样由 .editorconfig 决定**，本文件只管「VS Code 怎么用」——
+  // 两者刻意不重叠：缩进、缩进宽度、行尾、尾随空格、最大行宽全部只写在 .editorconfig，
+  // 在这里重复一遍就等于制造第二份真相（改了 .editorconfig 而忘了改这里，行为就会分叉）。
+  //
+  // 与 .gitignore 的关系：`.vscode/` 采取「选择性入库」——只入库本文件与
+  // extensions.json（团队共享的推荐配置），其余个人文件（launch.json、tasks.json、
+  // 私有工作区状态）一律忽略。该规则由 ProjectStructureTest 的
+  // `vscode directory only holds the shared config` 用例强制。
+
+  // 构建输出与工具目录：让文件树与全局搜索默认跳过，它们不是「源码找不到」，
+  // 而是「本来就不该搜」。路径需逐条列出——VS Code 的 files.exclude 不读 .gitignore
+  // 里的否定规则（`!.vscode/settings.json` 这类），而 search.exclude 读。
+  "files.exclude": {
+    "**/build": true,
+    "**/.gradle": true,
+    "**/.kotlin": true,
+    "**/node_modules": true,
+    "**/server/data": true,
+    "**/.kilo": true
+  },
+  "search.exclude": {
+    "**/build": true,
+    "**/.gradle": true,
+    "**/.kotlin": true,
+    "**/node_modules": true,
+    "**/server/data": true,
+    "**/.kilo": true
+  },
+
+  // 120 与 .editorconfig 的 max_line_length 对齐。**这是一处必须手工同步的耦合**：
+  // VS Code 不支持从 .editorconfig 读标尺显示，改 max_line_length 时这里要一起改。
+  "[kotlin]": {
+    "editor.rulers": [120]
+  },
+  "[kts]": {
+    "editor.rulers": [120]
+  },
+  "[ts]": {
+    "editor.rulers": [120]
+  },
+
+  // 缩进宽度交给 .editorconfig（Kotlin 4、服务端 2），此处不重复声明：
+  // 一旦在这里写死 "editor.tabSize": 4，服务端的 2 空格就会被覆盖成 4。
+
+  // 本仓库的服务端有类型检查门禁（bun run typecheck = tsc --noEmit），
+  // 但 tsc 自身的报错不经过 VS Code 的 Problems 面板；开启后由编辑器实时提示，
+  // 改错时不必等跑一次门禁才发现。
+  //
+  // 键名从已弃用的 `typescript.tsdk` 迁到新版 `js/ts.` 命名空间——这项迁移是
+  // VS Code 打开工作区时自动完成的，保留迁移后的写法，否则每次打开都会再被改一次。
+  "js/ts.tsserver.experimental.enableProjectDiagnostics": true,
+
+  // 若依赖自定义 GRADLE_USER_HOME（DEV-ENVIRONMENT「构建启动失败排障」记录过
+  // 未设置时回落到无缓存目录、导致发行版下载超时），在这里指明即可；
+  // 也可以直接导出环境变量，两者取其一，不要都设。
+  // "java.import.gradle.user.home": "C:\\path\\to\\gradle-home",
+
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.eol": "\n"
+}
