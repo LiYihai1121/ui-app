@@ -1,4 +1,4 @@
-﻿package com.ldp.adskip.ui
+package com.ldp.adskip.ui
 
 /** 鍗?Activity 瀵艰埅璺敱 */
 object Routes {
