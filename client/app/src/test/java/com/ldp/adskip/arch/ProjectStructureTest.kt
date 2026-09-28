@@ -438,6 +438,7 @@ class ProjectStructureTest {
             ".github",   // CI 工作流
             ".opencode", // Agent 技能（skills/ 受版本控制，node_modules 等被忽略）
             ".worktrees", // 多 Agent worktree 落点（AGENT-WORKFLOW 第 2.1 节强制约定，已被 .gitignore 忽略）
+            "skills", // 随仓库版本控制的 Agent 技能（skills.paths 挂载点，见根 opencode.json / kilo.json）
             "client",    // Android 工程根
             "docs",      // 文档
             "server"     // Bun + TypeScript 服务端
