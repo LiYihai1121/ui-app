@@ -1,7 +1,7 @@
 # Phase 1 技术方案：选择器引擎（DESIGN-PHASE1-SELECTOR）
 
 > 实现 [ROADMAP-ADS.md](ROADMAP-ADS.md) Phase 1（L1 无障碍引擎增强）的详细设计。
-> 状态：已评审通过（2026-09-24）；步骤 A/B 已并入 `main`（PR #12），待随 `3.0.3` 发版；剩余步骤 C–F 分别归属 `3.1.0` / `3.2.0` / `3.3.0`（见 [ROADMAP.md](ROADMAP.md)）；最后更新：2026-09-26。
+> 状态：已评审通过（2026-09-24）；步骤 A/B 已并入 `main`（PR #12），待随 `3.0.3` 发版；步骤 C（协议 v2：服务端字段 + 校验 + 双端契约夹具 + 管理后台）已落地，随 `3.1.0` 发版；步骤 D–F 分别归属 `3.1.0` / `3.2.0` / `3.3.0`（见 [ROADMAP.md](ROADMAP.md)）；最后更新：2026-09-28。
 
 ## 1. 目标与非目标
 
@@ -179,13 +179,22 @@ match(node, i):                          # i = 从右往左的 compound 下标
 // config 新增
 MAX_SELECTOR_LEN = 256; MAX_SELECTORS_PER_LIST = 128;
 
-// cleanSelectors(value): string[]
-// 1) 长度与条数上限  2) 字符白名单 [\w.$:=" *^$>\[\]'+-]
+// cleanSelectorList(value): string[]
+// 1) 长度与条数上限  2) 字符白名单 [\p{L}\p{N}_\s.^$+*>\[\]"'=:\/-]
 // 3) 括号/引号配平快检  4) 去重（大小写不敏感）
 // 注意：服务端不做完整文法解析（避免双实现漂移），深度校验由客户端兜底
+// 字符白名单必须放行 Unicode 字母数字：默认全局关键词就是中文（「跳过」「跳過」），
+// 用 ASCII 的 `\w` 会把 `[text*="跳过"]` 这类最常见的规则整条丢弃，第三通道静默失效。
 ```
 
-- **契约测试防漂移**：新增共享夹具 `server/test/fixtures/selectors.contract.json`（合法/非法向量各 ≥12 条），**bun test 与 Gradle JVM 单测共同消费**——同一批向量两端必须得到一致的「接受/拒绝」判定（客户端以「编译成功」对应「接受」）；
+- **契约测试防漂移**：共享夹具 `server/test/fixtures/selectors.contract.json` 固化了三段向量——
+  `accepted` / `rejected`（两端判定必须一致，合法与非法各 ≥12 条）与 `divergences`（有意判定不同者，写明原因）。
+  **bun test 与 Gradle JVM 单测共同消费**：`server/test/selectors.contract.test.ts` 断言服务端一侧，
+  `client/app/src/test/java/com/ldp/adskip/engine/SelectorContractTest.kt` 断言客户端一侧
+  （客户端「接受」= `SelectorParser.parse` 编译成功）。
+  设计取舍：服务端只做快检，是必要不充分条件，故 `divergences` 段显式登记「服务端放行、客户端拒收」
+  的 7 类向量（未知 key / 缺引号 / 缺 key / 缺中括号 / 括号乱序 / value 超 64 字符 / compound 超 4 段），
+  两端各自断言自己那一侧——差异因此是**被测试固定下来的决策**，而不是随时会漂的意外。
 - 管理后台 `admin.html`：应用规则编辑区增加「选择器（每行一条）」文本域，随 diff 预览展示。
 
 ## 7. 点击结果校验（防劫持回退）
@@ -251,7 +260,7 @@ event.pkg 为其他应用                        → 判定劫持：
 | --- | --- | --- | --- | --- |
 | A | `3.0.3` | W3~W4 | AST + 解析器 + 匹配器 + `AdNode` 扩展（纯 JVM） | ✅ 已并入 `main`：解析/匹配单测全绿（39 + 31 例） |
 | B | `3.0.3` | W4~W5 | `RuleSet`/引擎/`RulesRepository`/`Prefs` 集成 | ✅ 已并入 `main`：存量 44 例零回归，集成新增 7 例（合计 121 例） |
-| C | `3.1.0` | W5~W6 | 协议 v2：服务端字段 + 校验 + 契约夹具 + 管理后台 | `bun test` + `bun run typecheck` 绿；夹具双端一致 |
+| C | `3.1.0` | W5~W6 | 协议 v2：服务端字段 + 校验 + 契约夹具 + 管理后台 | ✅ 已落地：`SCHEMA_VERSION=2`；`bun test` 82 例绿 + `typecheck` 绿；`selectors.contract.json` 17 合法 / 14 非法 / 7 有意差异向量由 bun 与 Gradle 双端消费，判定逐条一致 |
 | D | `3.1.0` | W6 | `SyncClient` 解析 + 点击结果校验状态机 + 黑名单 | 劫持场景单测绿 |
 | E | `3.2.0` | W7 | 快照工具 + 设置页入口 | 真机导出 JSON 可读 |
 | F | `3.3.0` | W7~W8 | Top 30 App 规则编写 + 真机回归 + 性能采样 | 验收指标（下节）全达标 |

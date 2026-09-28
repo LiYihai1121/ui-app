@@ -21,10 +21,12 @@
 
 ```json
 {
-  "schemaVersion": 1, "version": 3, "hash": "sha256:...", "updatedAt": "...",
-  "rules": { "globalKeywords": ["跳过"], "globalViewIds": ["skip"], "apps": {}, "disabled": [] }
+  "schemaVersion": 2, "version": 3, "hash": "sha256:...", "updatedAt": "...",
+  "rules": { "globalKeywords": ["跳过"], "globalViewIds": ["skip"], "globalSelectors": ["[desc*=\"跳过\"] [click=\"true\"]"], "apps": {}, "disabled": [] }
 }
 ```
+
+`selectors` 为**纯增量字段**（schema 2 引入）：`MIN_SCHEMA_VERSION` 保持 1，不识别的旧客户端会照常加载并忽略它。客户端对每条选择器做一次编译，编译失败的条目静默丢弃（见下方「选择器校验的两端分工」）。
 
 响应头：`ETag: <hash>`
 
@@ -33,19 +35,32 @@
 发布规则包（旧包自动备份轮转，保留 5 份）。
 
 ```json
-{ "keywords": ["跳过"], "viewIds": ["skip"], "packages": { "com.x": { "keywords": ["..."], "viewIds": ["..."], "disabled": false } } }
+{ "keywords": ["跳过"], "viewIds": ["skip"], "selectors": ["[vid$=\":id/skip_view\"]"], "packages": { "com.x": { "keywords": ["..."], "viewIds": ["..."], "selectors": ["..."], "disabled": false } } }
 ```
 
 校验：包名须匹配 `^[a-zA-Z][\w]*(\.[a-zA-Z][\w]*)+$`、关键词 ≤12 字、总条目 ≤2000、应用数 ≤2000。响应 `{"ok":true,"version":N,"hash":"sha256:..."}`
 
+### 选择器校验的两端分工
+
+| 环节 | 服务端（`isValidSelector`） | 客户端（`SelectorParser`） |
+| --- | --- | --- |
+| 长度 | 整条 ≤ `MAX_SELECTOR_LEN = 256` | 整条 ≤256、单个 value ≤64 |
+| 字符 | 白名单 `[\p{L}\p{N}_\s.^$+*>\[\]"'=:\/-]`（放行 Unicode 字母数字，否则中文关键词场景会被整条丢弃） | 不做字符白名单，只认文法 token |
+| 结构 | 引号个数、方括号个数配平（快检，不校验顺序） | 完整文法：key ∈ `text/desc/vid/click`、运算符 ∈ `= * ^ $`、组合符、最多 4 段 compound |
+| 不过时 | 丢弃该条 | 丢弃该条（静默） |
+
+**服务端是必要不充分的快检，语法权威在客户端。** 两端判定相同的向量固化在 `server/test/fixtures/selectors.contract.json`，由 `server/test/selectors.contract.test.ts`（服务端一侧）与 `client/app/src/test/java/com/ldp/adskip/engine/SelectorContractTest.kt`（客户端一侧）共同消费；有意判定不同的向量记在夹具的 `divergences` 段并写明原因，防止「有意的差异」被后续改动悄悄抹平。
+
 ### POST /api/v1/rules/test  `[admin]`
 
-规则模拟器——与客户端 `RulesRepository.ruleSetFor(pkg)` 同源：全局 + 应用专属关键词/ViewID 合并匹配，禁用开关置 `hit=false`。
+规则模拟器——与客户端 `RulesRepository.ruleSetFor(pkg)` 同源：全局 + 应用专属关键词/ViewID/选择器合并匹配，禁用开关置 `hit=false`。
 
 ```json
 // 请求 { "pkg": "com.x", "text": "跳过广告", "viewId": "com.x:id/skip" }
-// 响应 { "hits": [{"match":"keyword","keyword":"跳过","field":"text"}], "hit": true, "disabled": false }
+// 响应 { "hits": [{"match":"keyword","keyword":"跳过","field":"text"}], "hit": true, "disabled": false, "selectorNotes": [] }
 ```
+
+选择器通道是**近似判定**：服务端没有节点树，凡是需要上下文关系的表达式（组合符）、或依赖 `desc` / `click` 属性的规则，服务端判不了，会原样列入 `selectorNotes`（`{rule, reason}`）而不是伪装成「未命中」。只有单个 compound、只用 `text`/`vid` 且样本齐备时才会给出 `match: "selector"` 命中；比较语义与客户端 `SelectorMatcher` 对齐（trim + 小写，`=` 全等 / `*` 包含 / `^` 前缀 / `$` 后缀，`text` 样本超 64 字符直接不匹配）。
 
 ### POST /api/v1/reports/batch
 
@@ -83,16 +98,16 @@
 
 | `schemaVersion` | 状态 | 变更 |
 | --- | --- | --- |
-| `1` | **当前** | 本页描述的 v1 载荷（`globalKeywords` / `globalViewIds` / `apps` / `disabled`） |
-| `2` | 规划（随 `3.1.0`） | 新增 `selectors` 字段（全局 + 应用级，类 CSS 选择器子集）；`MIN_SCHEMA_VERSION` 保持 1 |
+| `1` | 历史 | v1 载荷（`globalKeywords` / `globalViewIds` / `apps` / `disabled`） |
+| `2` | **当前** | 新增 `selectors` 字段（`rules.globalSelectors` + `apps.*.selectors`）；`MIN_SCHEMA_VERSION` 保持 1 |
 
-兼容约定：服务端按 `MIN` 校验、客户端按 `schemaVersion` 决定是否解析新字段；选择器是纯增量字段，服务端停发即回退 v1 行为，无数据迁移。语法、校验上限与契约夹具见 [DESIGN-PHASE1-SELECTOR.md](../planning/DESIGN-PHASE1-SELECTOR.md)（步骤 C）。
+兼容约定：服务端按 `MIN` 校验、客户端按 `schemaVersion` 决定是否解析新字段；选择器是纯增量字段，旧客户端照常加载并忽略，停发即回退 schema 1 行为。存量 `rules.json` 的 `schemaVersion` 低于当前值时由兼容层单向补齐（`hash` 的计算输入含 `schemaVersion`，客户端会因此多同步一次，属预期）。语法、校验上限与契约夹具见 [DESIGN-PHASE1-SELECTOR.md](../planning/DESIGN-PHASE1-SELECTOR.md)（步骤 C）。
 
 ## v0 兼容协议（旧客户端，形状不变）
 
 | 路由 | 说明 |
 | --- | --- |
-| `GET /api/rules/latest` | 旧形状规则包（无 hash/ETag） |
+| `GET /api/rules/latest` | 旧形状规则包（无 hash/ETag）；平铺字段含 `selectors`，管理后台按此形状编辑 |
 | `PUT /api/rules` `[admin]` | 发布（与 v1 同一校验管线） |
 | `POST /api/skip` | 单条上报——已与 v1 同源校验：包名须符合 PKG_RE（非法 `400`）、支持 channel 字段 |
 | `GET /api/stats/summary` | 同 v1 响应 |

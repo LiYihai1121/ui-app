@@ -69,7 +69,8 @@
 **关键设计**：
 - **MVVM + StateFlow + UiEffect 单向数据流**：ViewModel 通过 `viewModelFactory { initializer { } }` 从 `AppContainer` 取依赖，可回退状态聚合为单一 `UiState` 暴露 `StateFlow`（Compose `collectAsStateWithLifecycle()` 收集）；Toast 等一次性事件统一经 `effects: SharedFlow<UiEffect>` 下发，由 Screen 在 `LaunchedEffect` 中消费，四个页面同一套模式。
 - **AppEvents**：`Service` 层通过 `AppEvents.setServiceRunning()` / `AppEvents.emitSkipped()` 推送状态，ViewModel 通过 `StateFlow` / `SharedFlow` 收集，取代旧架构中 UI 直接注册 `BroadcastReceiver` 的方式；模拟测试标记 `testActive` 同样经 AppEvents 中转，ui 与 service 互不依赖。
-- **RulesRepository.ruleSetFor(pkg)** 是规则的唯一组装点——全局关键词 + 应用专属关键词 + 全局 ViewID + 应用专属 ViewID + 选择器（全局/应用级，`3.0.3` 起）+ 禁用开关，合并为一个不可变的 `RuleSet` 交给引擎。
+- **RulesRepository.ruleSetFor(pkg)** 是规则的唯一组装点——全局关键词 + 应用专属关键词 + 全局 ViewID + 应用专属 ViewID + 选择器（全局/应用级，`3.0.3` 起）+ 禁用开关，合并为一个不可变的 `RuleSet` 交给引擎。选择器在**合并后才编译**（`SelectorParser.parse`），解析失败的条目在组装期丢弃，不进入 `RuleSet.selectors`。
+- **选择器的两端分工**：服务端只做快检（长度 ≤256、字符白名单、括号引号配平），语法权威在客户端解析器——避免两套文法实现随发布节奏漂移。两端判定相同的向量固化在 `server/test/fixtures/selectors.contract.json`，由 `server/test/selectors.contract.test.ts` 与 `SelectorContractTest.kt` 双端消费；有意判定不同的向量记在 `divergences` 段并写明原因。
 - **系统入口收口**：`device/` 是唯一允许触碰系统设置页与磁贴的层。`KeepAliveNavigator` 做「Intent 组装 + `PackageManager` 可解析性探测 + 逐级降级」，UI 只调用它、不再自行拼 `Intent`；`VendorKeepAlive`（ROM 识别 + 入口表）与 `QuickTileLogic`（磁贴点击决策）是零 Android 依赖的纯数据/纯函数，故可在 JVM 中单测，而 `TileService` 只做 API 落地。
 
 ### 2.1 边界契约
@@ -118,7 +119,7 @@
 
 | 契约 | 强制内容 | 背景（实测故障） |
 | --- | --- | --- |
-| 根目录白名单 | 只允许 `.github/` `.opencode/` `client/` `docs/` `server/` 与 9 个治理文件 | 根目录曾长期滞留 `AdSkip-latest.apk` 与 `.kilo/`、`.mimosa/` 工具残留目录 |
+| 根目录白名单 | 只允许 `.github/` `.opencode/` `.kilo/` `.kilocode/` `.agents/` `.worktrees/` `client/` `docs/` `server/` 与 9 个治理文件 | 根目录曾长期滞留 `AdSkip-latest.apk` 与 `.kilo/`、`.mimosa/` 工具残留目录 |
 | 产物不入库 | 禁止 `*.apk/*.aab/*.aar/*.log/*.zip/*.keystore/*.iml`、`.DS_Store` 等（仅放行 `gradle-wrapper.jar`） | 分发以 Releases + `SHA256SUMS` 为准；构建产物属于被忽略目录 |
 | 模块双向一致 | `settings.gradle.kts` 的 `include(":x")` ↔ 磁盘模块目录**双向**校验 | 模块目录被删却仍注册，或建了目录忘注册（代码写了但不编译） |
 | Gradle 工程根 | `client/` 只保留 wrapper、构建脚本、`gradle/libs.versions.toml`、`build-logic/` 与模块目录 | 防止脚本/产物随手落进工程根 |
@@ -211,7 +212,7 @@ Doze 模式 → 系统推迟到维护窗口执行
 | 层 | 机制 | 说明 |
 | --- | --- | --- |
 | **服务端鉴权** | Bearer token | `ADMIN_TOKEN` 环境变量；未配置时写接口返回 503；规则发布/模拟器需鉴权 |
-| **服务端校验** | validate.ts | 包名正则 `^[a-zA-Z][\w]*(\.[a-zA-Z][\w]*)+$`、关键词 ≤12 字、总条目 ≤2000、body 键数/深度上限 |
+| **服务端校验** | validate.ts | 包名正则 `^[a-zA-Z][\w]*(\.[a-zA-Z][\w]*)+$`、关键词 ≤12 字、总条目 ≤2000、body 键数/深度上限；选择器 ≤256 字符 + 字符白名单（放行 Unicode 字母数字，否则中文关键词场景整条被丢）+ 括号引号配平 |
 | **请求约束** | readBody + maxRequestBodySize | body 必须 application/json（415）；>1MiB 协议层拒绝（413/断连），不进应用内存 |
 | **客户端护栏** | SafetyGuard | 硬编码黑名单（支付/付款/确认/同意/购买/下单/授权/登录/免密/开通/安装/下载），云规则不可覆盖 |
 
