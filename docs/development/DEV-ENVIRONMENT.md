@@ -51,8 +51,12 @@ bun run server.ts
 & "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --print-certs .\app\build\outputs\apk\release\app-release.apk
 
 # 2. 校验分发文件完整性：与 Release 中 SHA256SUMS 比对
-Get-FileHash .\AdSkip-latest.apk -Algorithm SHA256
+#    分发包不入库，需自行从 GitHub Releases 下载到本地任意目录后再校验：
+#    Get-FileHash <下载路径>\AdSkip-latest.apk -Algorithm SHA256
 ```
+
+> **仓库根目录不保留任何构建产物**（含 `*.apk`）：`assembleRelease` 的输出在
+> `client/app/build/outputs/apk/release/`，正式分发以 GitHub Releases + `SHA256SUMS` 为准。
 
 判定要点：
 

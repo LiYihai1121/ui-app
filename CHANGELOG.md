@@ -32,6 +32,7 @@
 - 规范去重为单一事实源：`.opencode/skills/branch-guard` 不再复述分支命名表与门禁命令，改为指向 [CONTRIBUTING.md](CONTRIBUTING.md)（流程规范）、[AGENTS.md](AGENTS.md)（执行摘要）与 [docs/development/AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md)（并行协作）；[AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md) 的门禁命令也改为引用 `AGENTS.md`，PR 模板只保留勾选项加规则指针。
 - 清理无人引用的重复定义：`res/values/colors.xml` 删除 4 个与 `ui/theme/Theme.kt` 品牌色板重复的色值（同时消除与 `R.string.status_on/off` 的命名撞车），`Theme.kt` 删除死变量 `TextSecondary`。
 - 去除会随迭代漂移的绝对数字：README 目录说明与 CHANGELOG 不再写死单测总数（当前值以门禁输出为准），历史条目中的数字保持原样作为版本记录。
+- 工作目录卫生：移除根目录遗留的构建产物 `AdSkip-latest.apk`（分发以 GitHub Releases + `SHA256SUMS` 为准，[DEV-ENVIRONMENT.md](docs/development/DEV-ENVIRONMENT.md) 的校验步骤同步改为「下载到本地后校验」），并在交付说明中明确仓库根不保留任何构建产物。
 
 ### Fixed
 
