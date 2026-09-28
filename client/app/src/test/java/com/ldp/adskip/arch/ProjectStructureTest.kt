@@ -434,9 +434,16 @@ class ProjectStructureTest {
         val COMPOSABLE_REGEX = Regex("""composable\(\s*Routes\.(\w+)""")
 
         // 仓库根白名单：目录
+        // 工具产物目录整族放行：它们已被根 .gitignore 忽略（不入库），
+        // 但会真实存在于每个开发者的工作区，缺席白名单会让本守护测试在
+        // 「装了 Agent 工具的机器上必然红、CI 上必然绿」——这种双端不一致
+        // 的门禁等于没有门禁。与 PRUNED_DIRS 保持同族登记。
         val ALLOWED_ROOT_DIRS = setOf(
             ".github",   // CI 工作流
             ".opencode", // Agent 技能（skills/ 受版本控制，node_modules 等被忽略）
+            ".kilo",     // Kilo / Agent Manager 状态（agent-manager.json 等本机数据）
+            ".kilocode", // 同族工具目录
+            ".agents",   // 同族工具目录
             ".worktrees", // 多 Agent worktree 落点（AGENT-WORKFLOW 第 2.1 节强制约定，已被 .gitignore 忽略）
             "client",    // Android 工程根
             "docs",      // 文档
