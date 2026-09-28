@@ -78,19 +78,14 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 /** 一级目的地：底部导航栏的唯一数据源。 */
-private data class TopLevelDestination(
-    val route: String,
-    val labelRes: Int,
-    val icon: ImageVector
-)
+private data class TopLevelDestination(val route: String, val labelRes: Int, val icon: ImageVector)
 
 private val TopLevelDestinations = listOf(
     TopLevelDestination(Routes.HOME, R.string.nav_home, Icons.Filled.Home),
     TopLevelDestination(Routes.APPS, R.string.nav_apps, Icons.AutoMirrored.Filled.List),
     TopLevelDestination(Routes.LOGS, R.string.nav_logs, Icons.Filled.DateRange),
-    TopLevelDestination(Routes.PROFILE, R.string.nav_profile, Icons.Filled.Person)
+    TopLevelDestination(Routes.PROFILE, R.string.nav_profile, Icons.Filled.Person),
 )
 
 /**
@@ -119,7 +114,7 @@ private fun AdskipShell() {
         bottomBar = {
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                tonalElevation = 0.dp
+                tonalElevation = 0.dp,
             ) {
                 TopLevelDestinations.forEach { destination ->
                     val selected = currentDestination?.hierarchy
@@ -138,14 +133,14 @@ private fun AdskipShell() {
                         icon = {
                             Icon(
                                 imageVector = destination.icon,
-                                contentDescription = stringResource(destination.labelRes)
+                                contentDescription = stringResource(destination.labelRes),
                             )
                         },
                         label = {
                             Text(
                                 text = stringResource(destination.labelRes),
                                 style = MaterialTheme.typography.labelMedium,
-                                maxLines = 1
+                                maxLines = 1,
                             )
                         },
                         colors = NavigationBarItemDefaults.colors(
@@ -153,12 +148,12 @@ private fun AdskipShell() {
                             selectedTextColor = MaterialTheme.colorScheme.onSurface,
                             indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
                             unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
                     )
                 }
             }
-        }
+        },
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -173,7 +168,7 @@ private fun AdskipShell() {
             popEnterTransition = { fadeIn(tween(220)) },
             popExitTransition = {
                 slideOutHorizontally(tween(240)) { it / 6 } + fadeOut(tween(200))
-            }
+            },
         ) {
             composable(Routes.HOME) { HomeScreen() }
             composable(Routes.APPS) { AppsScreen() }
@@ -182,4 +177,3 @@ private fun AdskipShell() {
         }
     }
 }
-

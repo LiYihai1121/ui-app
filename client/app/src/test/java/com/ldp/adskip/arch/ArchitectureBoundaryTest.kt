@@ -19,7 +19,7 @@ class ArchitectureBoundaryTest {
     fun `engine depends only on itself and the JVM`() = assertNoBannedImports(
         pkgDir = "engine",
         banned = listOf("android.", "androidx.", "com.ldp.adskip."),
-        allowed = listOf("com.ldp.adskip.engine.")
+        allowed = listOf("com.ldp.adskip.engine."),
     )
 
     // ---------- core：零业务包依赖（事件总线/时钟/日志均为横切设施） ----------
@@ -28,7 +28,7 @@ class ArchitectureBoundaryTest {
     fun `core depends on no other business package`() = assertNoBannedImports(
         pkgDir = "core",
         banned = listOf("com.ldp.adskip."),
-        allowed = listOf("com.ldp.adskip.core.")
+        allowed = listOf("com.ldp.adskip.core."),
     )
 
     // ---------- ui：不直连 service / net / sync / 原始偏好 Prefs ----------
@@ -40,8 +40,8 @@ class ArchitectureBoundaryTest {
             "com.ldp.adskip.service.",
             "com.ldp.adskip.net.",
             "com.ldp.adskip.sync.",
-            "com.ldp.adskip.data.Prefs"
-        )
+            "com.ldp.adskip.data.Prefs",
+        ),
     )
 
     // ---------- 下层永不反向依赖 ui（依赖倒置：经 StateFlow/组合根向上供值） ----------
@@ -49,25 +49,25 @@ class ArchitectureBoundaryTest {
     @Test
     fun `data never imports ui or service`() = assertNoBannedImports(
         pkgDir = "data",
-        banned = listOf("com.ldp.adskip.ui.", "com.ldp.adskip.service.")
+        banned = listOf("com.ldp.adskip.ui.", "com.ldp.adskip.service."),
     )
 
     @Test
     fun `net never imports ui or service`() = assertNoBannedImports(
         pkgDir = "net",
-        banned = listOf("com.ldp.adskip.ui.", "com.ldp.adskip.service.")
+        banned = listOf("com.ldp.adskip.ui.", "com.ldp.adskip.service."),
     )
 
     @Test
     fun `sync never imports ui or service`() = assertNoBannedImports(
         pkgDir = "sync",
-        banned = listOf("com.ldp.adskip.ui.", "com.ldp.adskip.service.")
+        banned = listOf("com.ldp.adskip.ui.", "com.ldp.adskip.service."),
     )
 
     @Test
     fun `service never imports ui`() = assertNoBannedImports(
         pkgDir = "service",
-        banned = listOf("com.ldp.adskip.ui.")
+        banned = listOf("com.ldp.adskip.ui."),
     )
 
     // ---------- device：系统集成层可向下取系统状态，不可反向依赖 ui/业务层 ----------
@@ -79,8 +79,8 @@ class ArchitectureBoundaryTest {
             "com.ldp.adskip.ui.",
             "com.ldp.adskip.data.",
             "com.ldp.adskip.net.",
-            "com.ldp.adskip.sync."
-        )
+            "com.ldp.adskip.sync.",
+        ),
     )
 
     // ---------- 工具 ----------
@@ -90,7 +90,7 @@ class ArchitectureBoundaryTest {
         val dir = File(root, pkgDir)
         assertTrue(
             "边界契约违规：源码目录不存在 $dir（目录结构变化需同步更新本测试与 ARCHITECTURE.md 2.1）",
-            dir.isDirectory
+            dir.isDirectory,
         )
 
         val violations = mutableListOf<String>()
@@ -109,7 +109,7 @@ class ArchitectureBoundaryTest {
             "边界契约违规（ARCHITECTURE.md 第 2.1 节，包 $pkgDir/ 禁止以下依赖）：\n" +
                 violations.joinToString("\n") + "\n" +
                 "若确为合理演进，请先更新 ARCHITECTURE.md 边界契约与本测试规则。",
-            violations.isEmpty()
+            violations.isEmpty(),
         )
     }
 

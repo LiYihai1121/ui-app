@@ -11,8 +11,8 @@ import android.content.IntentFilter
 import android.graphics.Path
 import android.graphics.Rect
 import android.os.Build
-import android.view.accessibility.AccessibilityManager
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityManager
 import android.widget.Toast
 import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.R
@@ -51,11 +51,12 @@ class SkipAdService : AccessibilityService() {
         @Volatile var running = false
             private set
 
-        private const val CLICK_INTERVAL_MS = 1200L   // 同一应用点击去抖
-        private const val SCAN_INTERVAL_MS = 150L     // 全局扫描节流
+        private const val CLICK_INTERVAL_MS = 1200L // 同一应用点击去抖
+        private const val SCAN_INTERVAL_MS = 150L // 全局扫描节流
         private const val IGNORE_PACKAGES = "com.android.systemui"
 
         private val lastClickMap = HashMap<String, Long>()
+
         @Volatile private var lastScanAt = 0L
 
         /**
@@ -91,7 +92,7 @@ class SkipAdService : AccessibilityService() {
             if (!running) return false
             return try {
                 context.sendBroadcast(
-                    Intent(ACTION_REQUEST_SHUTDOWN).setPackage(context.packageName)
+                    Intent(ACTION_REQUEST_SHUTDOWN).setPackage(context.packageName),
                 )
                 true
             } catch (e: Exception) {
@@ -186,7 +187,8 @@ class SkipAdService : AccessibilityService() {
 
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
-            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> trySkip(pkg)
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED,
+            -> trySkip(pkg)
         }
     }
 

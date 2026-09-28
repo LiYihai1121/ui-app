@@ -4,6 +4,8 @@ import com.android.build.api.dsl.ApplicationExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.kotlin.dsl.configure
+import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 /**
  * 约定插件 `adskip.android.application`：Android 应用模块的公共配置一站式收口。
@@ -24,12 +26,15 @@ class AdskipAndroidApplicationPlugin : Plugin<Project> {
         with(target) {
             pluginManager.apply("com.android.application")
             pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
+            // 静态检查同样是跨模块一致的公共约定，与 SDK 版本一起收口在此
+            pluginManager.apply("org.jlleitschuh.gradle.ktlint")
 
             extensions.configure(ApplicationExtension::class.java) {
                 namespace = "com.ldp.adskip"
-                // material3 1.4（Expressive）强制要求 compileSdk 36；targetSdk 暂留 35，
-                // 避免 Android 16 行为变更（强制 edge-to-edge 等）与本次 UI 升级耦合
-                compileSdk = 36
+                // compose 1.12（BOM 2026.08.00）强制 compileSdk 37，两者必须同步抬升；
+                // targetSdk 刻意留在 35：升 36 会引入 Android 16 行为变更（强制 edge-to-edge 等），
+                // 与 UI 改动耦合会让「为什么这次界面变了」难以归因。compileSdk 与 targetSdk 是两件事。
+                compileSdk = 37
 
                 defaultConfig {
                     minSdk = 26
@@ -59,6 +64,26 @@ class AdskipAndroidApplicationPlugin : Plugin<Project> {
                     }
                 }
             }
+
+            configureKtlint()
+        }
+    }
+
+    /**
+     * ktlint 收口：把「怎么检查」也固定下来，避免各模块自行配置出不同结果。
+     *
+     * - 规则集与行宽来自仓库根 `.editorconfig`（唯一事实源），此处不重复定义；
+     * - `android = true` 必须显式打开，否则插件不认识 Android 源集，会「检查了 0 个文件」
+     *   却报通过——这种空门禁比没有门禁更危险；
+     * - ktlint 本体版本不在此处锁定：version catalog 的类型安全访问器只在构建脚本里存在，
+     *   约定插件的 apply() 阶段拿不到 `libs`。该锁定放在 client/build.gradle.kts 的
+     *   subprojects 块里，规则来源仍是同一个 catalog。
+     */
+    private fun Project.configureKtlint() {
+        extensions.configure<KtlintExtension> {
+            android.set(true)
+            // 显式声明：违规必须让构建失败，不能被「先不阻断」悄悄放过
+            ignoreFailures.set(false)
         }
     }
 }

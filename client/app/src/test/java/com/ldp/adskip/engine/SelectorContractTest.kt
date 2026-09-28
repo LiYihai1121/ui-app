@@ -32,7 +32,7 @@ class SelectorContractTest {
         assertTrue(
             "选择器契约夹具结构不完整：accepted=${f.accepted.size} rejected=${f.rejected.size} " +
                 "divergences=${f.divergences.size}（设计要求合法/非法各 ≥12 条）",
-            f.accepted.size >= 12 && f.rejected.size >= 12 && f.divergences.isNotEmpty()
+            f.accepted.size >= 12 && f.rejected.size >= 12 && f.divergences.isNotEmpty(),
         )
     }
 
@@ -48,7 +48,7 @@ class SelectorContractTest {
             "以下向量在服务端被接受，客户端却编译失败（两端判定漂移）：\n" +
                 failed.joinToString("\n") { "  $it" } +
                 "\n客户端以「编译成功」对应「接受」，解析器收紧或文法变更时必须同步夹具。",
-            failed.isEmpty()
+            failed.isEmpty(),
         )
     }
 
@@ -63,7 +63,7 @@ class SelectorContractTest {
         assertTrue(
             "以下向量在服务端被拒绝，客户端却编译通过（两端判定漂移）：\n" +
                 leaked.joinToString("\n") { "  $it" },
-            leaked.isEmpty()
+            leaked.isEmpty(),
         )
     }
 
@@ -84,7 +84,7 @@ class SelectorContractTest {
                 mismatched.joinToString("\n") { "  $it" } +
                 "\n这些向量记录的是「服务端快检放行、语法由客户端兜底」的有意差异，" +
                 "改动任一侧都必须同步夹具，否则差异会从「有意」变成「失控」。",
-            mismatched.isEmpty()
+            mismatched.isEmpty(),
         )
     }
 
@@ -97,7 +97,7 @@ class SelectorContractTest {
             "d01" to "未知属性 key",
             "d02" to "值未加引号",
             "d06" to "值超长",
-            "d07" to "组合符链过长"
+            "d07" to "组合符链过长",
         )
         val missing = cases.keys.filterNot { byId.containsKey(it) }
         assertTrue("夹具缺少客户端独有拒绝理由的向量：${missing.joinToString()}", missing.isEmpty())
@@ -106,7 +106,7 @@ class SelectorContractTest {
         val leaked = cases.keys.filter { SelectorParser.parse(byId.getValue(it).expr) != null }
         assertTrue(
             "以下「客户端独有拒绝」向量被解析器接受了，护栏可能已失效：${leaked.joinToString()}",
-            leaked.isEmpty()
+            leaked.isEmpty(),
         )
     }
 
@@ -116,11 +116,7 @@ class SelectorContractTest {
      * 夹具是**逐行手写**的稳定格式（每行一个向量），因此按行扫描而非引入 JSON 库——
      * 客户端源码坚持零第三方依赖，测试也不例外。
      */
-    private class Fixture(
-        val accepted: List<Vector>,
-        val rejected: List<Vector>,
-        val divergences: List<Vector>
-    )
+    private class Fixture(val accepted: List<Vector>, val rejected: List<Vector>, val divergences: List<Vector>)
 
     private fun fixture(): Fixture {
         val text = File(repoRoot(), FIXTURE_REL_PATH).let {
@@ -163,10 +159,25 @@ class SelectorContractTest {
             val c = raw[i]
             if (c == '\\' && i + 1 < raw.length) {
                 when (raw[i + 1]) {
-                    'n' -> { out.append('\n'); i += 2 }
-                    't' -> { out.append('\t'); i += 2 }
-                    'r' -> { out.append('\r'); i += 2 }
-                    else -> { out.append(raw[i + 1]); i += 2 }
+                    'n' -> {
+                        out.append('\n')
+                        i += 2
+                    }
+
+                    't' -> {
+                        out.append('\t')
+                        i += 2
+                    }
+
+                    'r' -> {
+                        out.append('\r')
+                        i += 2
+                    }
+
+                    else -> {
+                        out.append(raw[i + 1])
+                        i += 2
+                    }
                 }
             } else {
                 out.append(c)

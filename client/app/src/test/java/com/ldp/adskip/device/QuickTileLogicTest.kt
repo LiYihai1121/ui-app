@@ -22,7 +22,7 @@ class QuickTileLogicTest {
     fun `tap while stopped guides the user to accessibility settings`() {
         assertEquals(
             QuickTileAction.OPEN_ACCESSIBILITY_SETTINGS,
-            QuickTileLogic.decide(false)
+            QuickTileLogic.decide(false),
         )
     }
 

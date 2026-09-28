@@ -119,7 +119,9 @@ object Prefs {
         val prefs = sp(context)
         val editor = prefs.edit()
         for (key in prefs.all.keys) {
-            if (key.startsWith(PREFIX_PKG_KEYWORDS) || key.startsWith(PREFIX_PKG_VIEW_IDS) || key.startsWith(PREFIX_PKG_SELECTORS)) {
+            if (key.startsWith(PREFIX_PKG_KEYWORDS) || key.startsWith(PREFIX_PKG_VIEW_IDS) ||
+                key.startsWith(PREFIX_PKG_SELECTORS)
+            ) {
                 editor.remove(key)
             }
         }
@@ -144,8 +146,7 @@ object Prefs {
 
     fun getLastApp(context: Context): String = sp(context).getString(KEY_LAST_APP, "") ?: ""
 
-    fun getPkgSkipCount(context: Context, pkg: String): Int =
-        sp(context).getInt(PREFIX_PKG_COUNT + pkg, 0)
+    fun getPkgSkipCount(context: Context, pkg: String): Int = sp(context).getInt(PREFIX_PKG_COUNT + pkg, 0)
 
     fun recordSkip(context: Context, pkg: String, label: String): Int {
         val total = getTotalSkips(context) + 1
@@ -197,8 +198,7 @@ object Prefs {
     }
 
     // ---------- 云同步 ----------
-    fun getServerUrl(context: Context): String =
-        sp(context).getString(KEY_SERVER_URL, DEFAULT_SERVER) ?: DEFAULT_SERVER
+    fun getServerUrl(context: Context): String = sp(context).getString(KEY_SERVER_URL, DEFAULT_SERVER) ?: DEFAULT_SERVER
 
     fun saveServerUrl(context: Context, url: String) {
         sp(context).edit().putString(KEY_SERVER_URL, url).apply()
@@ -211,25 +211,21 @@ object Prefs {
     }
 
     // ---------- 体验设置 ----------
-    fun isAutoSyncEnabled(context: Context): Boolean =
-        sp(context).getBoolean(KEY_AUTO_SYNC, false)
+    fun isAutoSyncEnabled(context: Context): Boolean = sp(context).getBoolean(KEY_AUTO_SYNC, false)
 
     fun setAutoSyncEnabled(context: Context, enabled: Boolean) {
         sp(context).edit().putBoolean(KEY_AUTO_SYNC, enabled).apply()
     }
 
-    fun isDoNotDisturbEnabled(context: Context): Boolean =
-        sp(context).getBoolean(KEY_DND_ENABLED, false)
+    fun isDoNotDisturbEnabled(context: Context): Boolean = sp(context).getBoolean(KEY_DND_ENABLED, false)
 
     fun setDoNotDisturbEnabled(context: Context, enabled: Boolean) {
         sp(context).edit().putBoolean(KEY_DND_ENABLED, enabled).apply()
     }
 
-    fun getDoNotDisturbStart(context: Context): Int =
-        sp(context).getInt(KEY_DND_START, 23 * 60)
+    fun getDoNotDisturbStart(context: Context): Int = sp(context).getInt(KEY_DND_START, 23 * 60)
 
-    fun getDoNotDisturbEnd(context: Context): Int =
-        sp(context).getInt(KEY_DND_END, 7 * 60)
+    fun getDoNotDisturbEnd(context: Context): Int = sp(context).getInt(KEY_DND_END, 7 * 60)
 
     fun setDoNotDisturbTimes(context: Context, startMinute: Int, endMinute: Int) {
         sp(context).edit()
@@ -250,8 +246,7 @@ object Prefs {
     }
 
     // ---------- 规则哈希（If-None-Match 同步） ----------
-    fun getRulesHash(context: Context): String =
-        sp(context).getString(KEY_RULES_HASH, "") ?: ""
+    fun getRulesHash(context: Context): String = sp(context).getString(KEY_RULES_HASH, "") ?: ""
     fun setRulesHash(context: Context, hash: String) {
         sp(context).edit().putString(KEY_RULES_HASH, hash).apply()
     }

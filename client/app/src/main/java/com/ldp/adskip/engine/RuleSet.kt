@@ -13,7 +13,7 @@ data class RuleSet(
     /** 第三通道：已编译选择器（上游加载时编译一次；解析失败的条目已在上游丢弃） */
     val selectors: List<SelectorAst> = emptyList(),
     val disabled: Boolean = false,
-    val schemaVersion: Int = SCHEMA_VERSION
+    val schemaVersion: Int = SCHEMA_VERSION,
 ) {
     val isEmpty: Boolean
         get() = keywords.isEmpty() && viewIds.isEmpty() && selectors.isEmpty()

@@ -20,7 +20,7 @@ import java.util.Locale
 class SkipRuleEngine(
     private val maxNodes: Int = 500,
     private val maxTextLen: Int = 12,
-    private val minViewIdLen: Int = 3
+    private val minViewIdLen: Int = 3,
 ) {
 
     /** 深度优先遍历，返回第一个命中规则的目标节点；未命中返回 null。 */

@@ -19,7 +19,7 @@ class RulesRepositorySelectorsTest {
             viewIds = emptyList(),
             selectors = listOf(parsed!!),
             disabled = false,
-            schemaVersion = 2
+            schemaVersion = 2,
         )
 
         assertFalse(rules.isEmpty)

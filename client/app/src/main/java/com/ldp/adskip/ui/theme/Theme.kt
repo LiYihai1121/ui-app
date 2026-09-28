@@ -50,7 +50,7 @@ private val LightColors = lightColorScheme(
     surfaceVariant = LightSurfaceVariant,
     onSurfaceVariant = LightOnSurfaceVariant,
     outline = LightOutline,
-    outlineVariant = LightOutlineVariant
+    outlineVariant = LightOutlineVariant,
 )
 
 private val DarkColors = darkColorScheme(
@@ -77,21 +77,21 @@ private val DarkColors = darkColorScheme(
     surfaceVariant = DarkSurfaceVariant,
     onSurfaceVariant = DarkOnSurfaceVariant,
     outline = DarkOutline,
-    outlineVariant = DarkOutlineVariant
+    outlineVariant = DarkOutlineVariant,
 )
 
 private val LightStatusPalette = StatusPalette(
     on = StatusOn,
     onContainer = StatusOnContainer,
     off = StatusOff,
-    offContainer = StatusOffContainer
+    offContainer = StatusOffContainer,
 )
 
 private val DarkStatusPalette = StatusPalette(
     on = Color(0xFF7ED98A),
     onContainer = Color(0xFF1B4A22),
     off = Color(0xFFFFB4AB),
-    offContainer = Color(0xFF5C1416)
+    offContainer = Color(0xFF5C1416),
 )
 
 /** 圆角尺度：卡片 20dp（比 M3 默认更柔和），控件 12dp，胶囊全圆。 */
@@ -100,7 +100,7 @@ private val AdskipShapes = Shapes(
     small = RoundedCornerShape(12.dp),
     medium = RoundedCornerShape(16.dp),
     large = RoundedCornerShape(20.dp),
-    extraLarge = RoundedCornerShape(28.dp)
+    extraLarge = RoundedCornerShape(28.dp),
 )
 
 val LocalStatusPalette = staticCompositionLocalOf { LightStatusPalette }
@@ -109,7 +109,7 @@ val LocalStatusPalette = staticCompositionLocalOf { LightStatusPalette }
 fun AdskipTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
     val supportsDynamic = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -121,13 +121,13 @@ fun AdskipTheme(
     }
 
     CompositionLocalProvider(
-        LocalStatusPalette provides if (darkTheme) DarkStatusPalette else LightStatusPalette
+        LocalStatusPalette provides if (darkTheme) DarkStatusPalette else LightStatusPalette,
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = AdskipTypography,
             shapes = AdskipShapes,
-            content = content
+            content = content,
         )
     }
 }
@@ -135,23 +135,21 @@ fun AdskipTheme(
 /** 便捷访问：服务运行中的前景 / 容器色。 */
 object StatusColors {
     val on: Color
-        @Composable @ReadOnlyComposable get() = LocalStatusPalette.current.on
+        @Composable @ReadOnlyComposable
+        get() = LocalStatusPalette.current.on
 
     val onContainer: Color
-        @Composable @ReadOnlyComposable get() = LocalStatusPalette.current.onContainer
+        @Composable @ReadOnlyComposable
+        get() = LocalStatusPalette.current.onContainer
 
     val off: Color
-        @Composable @ReadOnlyComposable get() = LocalStatusPalette.current.off
+        @Composable @ReadOnlyComposable
+        get() = LocalStatusPalette.current.off
 
     val offContainer: Color
-        @Composable @ReadOnlyComposable get() = LocalStatusPalette.current.offContainer
+        @Composable @ReadOnlyComposable
+        get() = LocalStatusPalette.current.offContainer
 }
 
 @Immutable
-data class StatusPalette(
-    val on: Color,
-    val onContainer: Color,
-    val off: Color,
-    val offContainer: Color
-)
-
+data class StatusPalette(val on: Color, val onContainer: Color, val off: Color, val offContainer: Color)

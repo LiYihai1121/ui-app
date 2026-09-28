@@ -28,7 +28,7 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platforms;android-35 build-tools;35.0.0'
+          packages: 'platforms;android-37 build-tools;36.0.0'
 
       - name: Run architecture & structure contract tests
         # 只跑 arch 包下的守护测试：失败要在几分钟内暴露，而不是等完整 Android 构建跑完。
@@ -66,7 +66,10 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platforms;android-35 build-tools;35.0.0'
+          # 与约定插件同源：compileSdk 37（compose 1.12 强制）+ AGP 9.4 要求的 build-tools 36.0.0。
+          # 曾长期停留在 android-35 / build-tools 35.0.0，靠 Gradle 自动解析兜住——
+          # 那是「靠工具兜底」而不是「显式声明」，AGP 一收紧校验就会在 CI 上突然失败。
+          packages: 'platforms;android-37 build-tools;36.0.0'
 
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
@@ -78,6 +81,12 @@ jobs:
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
           validate-wrappers: true
+
+      - name: Run ktlint (formatting & static checks)
+        # 放在构建之前：格式/静态问题无需等 assembleDebug 跑完两分钟就能失败
+        run: |
+          set -o pipefail
+          ./gradlew ktlintCheck --no-daemon 2>&1 | tee /tmp/android-ktlint.log
 
       - name: Build debug APK
         run: |
@@ -105,9 +114,11 @@ jobs:
         with:
           name: android-logs
           path: |
+            /tmp/android-ktlint.log
             /tmp/android-build.log
             /tmp/android-test.log
             /tmp/android-release-build.log
+            app/build/reports/ktlint/
           if-no-files-found: ignore
 
   server:

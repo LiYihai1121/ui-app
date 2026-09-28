@@ -19,6 +19,7 @@
 ## 验证与合并
 
 - 修改完成后必须运行与变更相关的最小测试；跨模块变更运行完整门禁：
+  - `cd client && ./gradlew ktlintCheck`
   - `cd client && ./gradlew assembleDebug`
   - `cd client && ./gradlew testDebugUnitTest`
   - `cd server && bun test`

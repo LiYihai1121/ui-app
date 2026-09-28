@@ -21,9 +21,7 @@ import java.util.Locale
  */
 class LogsViewModel(private val container: AppContainer) : ViewModel() {
 
-    data class UiState(
-        val logs: List<StatsRepository.LogEntry> = emptyList()
-    )
+    data class UiState(val logs: List<StatsRepository.LogEntry> = emptyList())
 
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState
@@ -49,8 +47,7 @@ class LogsViewModel(private val container: AppContainer) : ViewModel() {
         return text.ifBlank { null }
     }
 
-    fun formatTimestamp(ts: Long): String =
-        SimpleDateFormat("MM-dd HH:mm:ss", Locale.getDefault()).format(Date(ts))
+    fun formatTimestamp(ts: Long): String = SimpleDateFormat("MM-dd HH:mm:ss", Locale.getDefault()).format(Date(ts))
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {

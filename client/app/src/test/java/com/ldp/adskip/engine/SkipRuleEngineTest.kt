@@ -1,7 +1,11 @@
 package com.ldp.adskip.engine
 
 import android.graphics.Rect
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -126,8 +130,8 @@ class SkipRuleEngineTest {
         val target = FakeAdNode.node(text = "跳过")
         val root = FakeAdNode.node(
             children = listOf(
-                FakeAdNode.node(text = "广告", children = listOf(target))
-            )
+                FakeAdNode.node(text = "广告", children = listOf(target)),
+            ),
         )
         val rules = RuleSet(keywords = listOf("跳过"), viewIds = emptyList())
         val result = engine.findTarget(root, rules)
@@ -204,12 +208,12 @@ class SkipRuleEngineTest {
     fun `selector channel finds target`() {
         val root = FakeAdNode.node(
             children = listOf(FakeAdNode.node(viewId = "com.example:id/banner")),
-            text = "广告页"
+            text = "广告页",
         )
         val rules = RuleSet(
             keywords = emptyList(),
             viewIds = emptyList(),
-            selectors = listOf(sel("[vid$=\":id/banner\"]"))
+            selectors = listOf(sel("[vid$=\":id/banner\"]")),
         )
         val result = engine.findTarget(root, rules)
         assertNotNull(result)
@@ -221,7 +225,7 @@ class SkipRuleEngineTest {
         val rules = RuleSet(
             keywords = emptyList(),
             viewIds = emptyList(),
-            selectors = listOf(sel("[click]"))
+            selectors = listOf(sel("[click]")),
         )
         assertFalse(rules.isEmpty)
     }
@@ -232,7 +236,7 @@ class SkipRuleEngineTest {
         val rules = RuleSet(
             keywords = emptyList(),
             viewIds = emptyList(),
-            selectors = listOf(sel("[text*=\"跳过\"]"))
+            selectors = listOf(sel("[text*=\"跳过\"]")),
         )
         assertFalse(engine.matches(node, rules))
     }
@@ -243,7 +247,7 @@ class SkipRuleEngineTest {
         val rules = RuleSet(
             keywords = emptyList(),
             viewIds = emptyList(),
-            selectors = listOf(sel("[text*=\"跳过\"]"))
+            selectors = listOf(sel("[text*=\"跳过\"]")),
         )
         assertFalse(engine.matches(node, rules))
     }
@@ -256,7 +260,7 @@ class SkipRuleEngineTest {
         val rules = RuleSet(
             keywords = listOf("关闭"),
             viewIds = emptyList(),
-            selectors = listOf(sel("[vid$=\":id/skip_btn\"]"))
+            selectors = listOf(sel("[vid$=\":id/skip_btn\"]")),
         )
         // 两通道独立命中：关键词节点与选择器节点都应通过 matches()
         assertTrue(engine.matches(keywordOnly, rules))
@@ -274,7 +278,7 @@ class SkipRuleEngineTest {
             keywords = emptyList(),
             viewIds = emptyList(),
             selectors = listOf(sel("[text*=\"跳过\"]")),
-            disabled = true
+            disabled = true,
         )
         assertNull(engine.findTarget(root, rules))
     }
@@ -290,7 +294,7 @@ class SkipRuleEngineTest {
         val rules = RuleSet(
             keywords = emptyList(),
             viewIds = emptyList(),
-            selectors = listOf(sel("[click]"))
+            selectors = listOf(sel("[click]")),
         )
         // 常规预算内可命中
         assertNotNull(SkipRuleEngine(maxNodes = 500).findTarget(deepest, rules))

@@ -41,7 +41,7 @@ object SyncClient {
         context: Context,
         serverUrl: String,
         rulesRepo: RulesRepository,
-        onResult: (Boolean, String) -> Unit
+        onResult: (Boolean, String) -> Unit,
     ) {
         Thread {
             val result = try {
@@ -79,7 +79,7 @@ object SyncClient {
                                     keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
                                     viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
                                     selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
-                                    disabled = rule.optBoolean("disabled", false)
+                                    disabled = rule.optBoolean("disabled", false),
                                 )
                             }
                         }
@@ -98,7 +98,7 @@ object SyncClient {
                                     keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
                                     viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
                                     selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
-                                    disabled = rule.optBoolean("disabled", false)
+                                    disabled = rule.optBoolean("disabled", false),
                                 )
                             }
                         }
@@ -182,11 +182,7 @@ object SyncClient {
      * 静默同步规则（无 UI 回调，供 JobService 调用）。
      * 在调用方的 IO 线程中直接执行，不另起线程。
      */
-    fun syncRulesSilently(
-        context: Context,
-        serverUrl: String,
-        rulesRepo: RulesRepository
-    ): Boolean {
+    fun syncRulesSilently(context: Context, serverUrl: String, rulesRepo: RulesRepository): Boolean {
         return try {
             val base = serverUrl.trimEnd('/')
             val knownHash = Prefs.getRulesHash(context)
@@ -219,7 +215,7 @@ object SyncClient {
                             keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
                             viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
                             selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
-                            disabled = rule.optBoolean("disabled", false)
+                            disabled = rule.optBoolean("disabled", false),
                         )
                     }
                 }
@@ -237,7 +233,7 @@ object SyncClient {
                             keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
                             viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
                             selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
-                            disabled = rule.optBoolean("disabled", false)
+                            disabled = rule.optBoolean("disabled", false),
                         )
                     }
                 }

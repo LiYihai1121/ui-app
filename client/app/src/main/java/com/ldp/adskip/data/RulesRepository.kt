@@ -20,7 +20,7 @@ class RulesRepository(private val context: Context) {
         val keywords: List<String>,
         val viewIds: List<String>,
         val disabled: Boolean = false,
-        val selectors: List<String> = emptyList()
+        val selectors: List<String> = emptyList(),
     )
 
     private var version = 0
@@ -66,7 +66,7 @@ class RulesRepository(private val context: Context) {
         viewIds: List<String>?,
         pkgRules: Map<String, PkgRule>,
         schemaVersion: Int = RuleSet.SCHEMA_VERSION,
-        selectors: List<String>? = null
+        selectors: List<String>? = null,
     ): Boolean {
         // 校验 schemaVersion：低于客户端支持的版本拒载
         if (schemaVersion < RuleSet.MIN_SCHEMA_VERSION) {

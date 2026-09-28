@@ -1,6 +1,7 @@
 package com.ldp.adskip.engine
 
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**

@@ -23,6 +23,7 @@
 
 ## 验证结果
 
+- [ ] `cd client && ./gradlew ktlintCheck`
 - [ ] `cd client && ./gradlew assembleDebug`
 - [ ] `cd client && ./gradlew testDebugUnitTest`
 - [ ] `cd server && bun test`

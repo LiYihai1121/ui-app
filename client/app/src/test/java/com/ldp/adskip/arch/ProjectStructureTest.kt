@@ -47,7 +47,7 @@ class ProjectStructureTest {
                 "  1. 优先放进既有目录（docs/ 子模块、client/ 模块、server/ 内部）；\n" +
                 "  2. 确属根级治理文件时，把名字加入本测试的 ALLOWED_ROOT_DIRS / ALLOWED_ROOT_FILES；\n" +
                 "  3. 若属于本机生成物或工具产物，应写入根 .gitignore 而不是加白名单。",
-            unexpectedDirs.isEmpty() && unexpectedFiles.isEmpty()
+            unexpectedDirs.isEmpty() && unexpectedFiles.isEmpty(),
         )
     }
 
@@ -81,7 +81,7 @@ class ProjectStructureTest {
                 "\n分发以 GitHub Releases + SHA256SUMS 为准，仓库内不得保留任何 *.apk；" +
                 "调试日志请写到仓库之外，编辑器/系统残留文件请加入 .gitignore。\n" +
                 "详见 ARCHITECTURE.md 第 2.2 节与 docs/development/DEV-ENVIRONMENT.md。",
-            offenders.isEmpty()
+            offenders.isEmpty(),
         )
     }
 
@@ -100,7 +100,7 @@ class ProjectStructureTest {
         assertTrue(
             "未从 client/settings.gradle.kts 解析出任何 include(\":x\")——" +
                 "模块声明格式若变更，必须同步更新本测试的正则。",
-            registered.isNotEmpty()
+            registered.isNotEmpty(),
         )
 
         val missingOnDisk = registered.filterNot { File(client, it).isDirectory }
@@ -108,14 +108,14 @@ class ProjectStructureTest {
             "settings.gradle.kts 注册了磁盘上不存在的模块：\n" +
                 missingOnDisk.joinToString("\n") { "  include(\":$it\")" } +
                 "\n模块目录被删除/改名却未同步注册，Gradle 会以令人费解的方式失败。",
-            missingOnDisk.isEmpty()
+            missingOnDisk.isEmpty(),
         )
 
         val withoutBuildFile = registered.filterNot { File(client, "$it/build.gradle.kts").isFile }
         assertTrue(
             "以下模块目录缺少 build.gradle.kts：\n" +
                 withoutBuildFile.joinToString("\n") { "  $it" },
-            withoutBuildFile.isEmpty()
+            withoutBuildFile.isEmpty(),
         )
 
         val onDiskButNotRegistered = client.listFiles().orEmpty()
@@ -128,7 +128,7 @@ class ProjectStructureTest {
                 onDiskButNotRegistered.joinToString("\n") { "  client/$it" } +
                 "\n未注册的模块不会被编译，代码会「写了但没生效」。\n" +
                 "若该目录并非 Gradle 模块，请改名或加入 NON_MODULE_DIRS 白名单。",
-            onDiskButNotRegistered.isEmpty()
+            onDiskButNotRegistered.isEmpty(),
         )
     }
 
@@ -146,7 +146,7 @@ class ProjectStructureTest {
                 "\nclient/ 是 Gradle 工程根，只应保留 wrapper、构建脚本与模块目录；" +
                 "脚本、文档、工具产物请放到各自归属目录。\n" +
                 "如需长期保留，请加入本测试的 ALLOWED_CLIENT_ENTRIES。",
-            unexpected.isEmpty()
+            unexpected.isEmpty(),
         )
     }
 
@@ -189,7 +189,7 @@ class ProjectStructureTest {
             "模块源码布局不符合标准（ARCHITECTURE.md 第 2.2 节）：\n" +
                 problems.joinToString("\n") { "  $it" } +
                 "\n标准布局：src/main/{java,res} + src/main/AndroidManifest.xml（应用模块）、src/test/java。",
-            problems.isEmpty()
+            problems.isEmpty(),
         )
     }
 
@@ -224,7 +224,7 @@ class ProjectStructureTest {
                 mismatches.joinToString("\n") { "  $it" } +
                 "\n包路径错位会让 ArchitectureBoundaryTest 的包级扫描失效（它按目录定位包边界），" +
                 "也破坏 IDE 的包结构视图。请移动文件到正确目录，或修正 package 声明。",
-            mismatches.isEmpty()
+            mismatches.isEmpty(),
         )
     }
 
@@ -240,7 +240,7 @@ class ProjectStructureTest {
             "docs/ 出现了未登记的子目录：\n" +
                 unexpectedDirs.joinToString("\n") { "  docs/$it" } +
                 "\n新文档请归入既有分类目录，并把目录登记到 docs/README.md 的「目录结构」。",
-            unexpectedDirs.isEmpty()
+            unexpectedDirs.isEmpty(),
         )
 
         val docMap = File(docs, "README.md").readText()
@@ -258,7 +258,7 @@ class ProjectStructureTest {
                 unregistered.joinToString("\n") { "  docs/$it" } +
                 "\n请在 docs/README.md 的「目录结构」与「阅读顺序」中登记，" +
                 "以相对 docs/ 的路径写成 Markdown 链接（如 [planning/ROADMAP.md](planning/ROADMAP.md)）。",
-            unregistered.isEmpty()
+            unregistered.isEmpty(),
         )
     }
 
@@ -273,13 +273,11 @@ class ProjectStructureTest {
     }
 
     /** 应用模块：src/main 下带 AndroidManifest.xml 的模块。 */
-    private fun appModule(): File =
-        registeredModules(File(repoRoot(), "client"))
-            .firstOrNull { File(it, "src/main/AndroidManifest.xml").isFile }
-            ?: File(repoRoot(), "client/app")
+    private fun appModule(): File = registeredModules(File(repoRoot(), "client"))
+        .firstOrNull { File(it, "src/main/AndroidManifest.xml").isFile }
+        ?: File(repoRoot(), "client/app")
 
-    private fun rel(file: File): String =
-        repoRoot().toPath().relativize(file.toPath()).toString().replace('\\', '/')
+    private fun rel(file: File): String = repoRoot().toPath().relativize(file.toPath()).toString().replace('\\', '/')
 
     // ---------- 导航契约：一级路由与页面注册必须一一对应 ----------
     //
@@ -298,17 +296,17 @@ class ProjectStructureTest {
             .toSet()
         assertTrue(
             "Routes 应恰好登记 4 个一级路由（首页/应用/日志/我的），实际为 ${declared.sorted()}",
-            declared.size == 4
+            declared.size == 4,
         )
         assertTrue(
             "Routes 缺少 PROFILE（「我的」页路由）",
-            declared.contains("PROFILE")
+            declared.contains("PROFILE"),
         )
         // 设置已内嵌进「我的」页，不再是一级路由：若有人再加回 SETTINGS 并挂到底部导航，
         // 就回到了「设置与关于本机分成两页」的老结构。
         assertTrue(
             "Routes 不应再声明 SETTINGS：设置内容已内嵌于「我的」页（v3.2 起底部导航为 4 项）",
-            !declared.contains("SETTINGS")
+            !declared.contains("SETTINGS"),
         )
 
         val inBottomBar = TOP_LEVEL_ITEM_REGEX.findAll(navSource)
@@ -321,17 +319,17 @@ class ProjectStructureTest {
         assertTrue(
             "底部导航缺少一级入口：导航=${inBottomBar.sorted()}，路由=${declared.sorted()}\n" +
                 "「页面已存在但用户进不去」是本仓库发生过的真实缺陷，请同步 TopLevelDestinations。",
-            inBottomBar.containsAll(declared)
+            inBottomBar.containsAll(declared),
         )
         assertTrue(
             "NavHost 缺少一级路由注册：宿主=${inNavHost.sorted()}，路由=${declared.sorted()}",
-            inNavHost.containsAll(declared)
+            inNavHost.containsAll(declared),
         )
         // 反向检查：出现未在 Routes 登记的导航项会形成第二份真相。
         val unregistered = (inBottomBar + inNavHost).filterNot { it in declared }
         assertTrue(
             "导航/宿主里出现了未在 Routes 登记的路由：${unregistered.sorted()}",
-            unregistered.isEmpty()
+            unregistered.isEmpty(),
         )
     }
 
@@ -339,13 +337,13 @@ class ProjectStructureTest {
     fun `profile page is implemented under ui profile and wired to navigation`() {
         assertTrue(
             "「我的」页实现应位于 ui/profile/（与其余四屏同级）",
-            File(File(repoRoot(), "client/app/src/main/java/$BASE_PACKAGE_PATH/ui"), "profile").isDirectory
+            File(File(repoRoot(), "client/app/src/main/java/$BASE_PACKAGE_PATH/ui"), "profile").isDirectory,
         )
 
         val navSource = readUiSource("MainActivity.kt")
         assertTrue(
             "NavHost 缺少 Routes.PROFILE → ProfileScreen 的注册",
-            navSource.contains("composable(Routes.PROFILE) { ProfileScreen() }")
+            navSource.contains("composable(Routes.PROFILE) { ProfileScreen() }"),
         )
     }
 
@@ -354,21 +352,21 @@ class ProjectStructureTest {
         val profile = readUiSource("profile/ProfileScreen.kt")
         assertTrue(
             "「我的」页应内嵌设置内容 SettingsContent()，否则移除独立设置页后设置将无处可达",
-            profile.contains("SettingsContent()")
+            profile.contains("SettingsContent()"),
         )
         assertTrue(
             "「我的」页应提供「打开无障碍设置」入口 AccessibilityCard",
-            profile.contains("AccessibilityCard(")
+            profile.contains("AccessibilityCard("),
         )
         assertTrue(
             "无障碍跳转须经 device/ 层（KeepAliveNavigator），UI 不得自行拼 Intent",
-            profile.contains("KeepAliveNavigator.openAccessibilitySettings")
+            profile.contains("KeepAliveNavigator.openAccessibilitySettings"),
         )
 
         val settings = readUiSource("settings/SettingsScreen.kt")
         assertTrue(
             "设置内容应以 SettingsContent 暴露供「我的」页内嵌",
-            settings.contains("fun SettingsContent(")
+            settings.contains("fun SettingsContent("),
         )
     }
 
@@ -388,7 +386,7 @@ class ProjectStructureTest {
             val missing = required.filter { !text.contains("name=\"$it\"") }
             assertTrue(
                 "client/app/src/main/res/$locale/strings.xml 缺少文案：${missing.joinToString()}",
-                missing.isEmpty()
+                missing.isEmpty(),
             )
         }
     }
@@ -439,22 +437,22 @@ class ProjectStructureTest {
         // 「装了 Agent 工具的机器上必然红、CI 上必然绿」——这种双端不一致
         // 的门禁等于没有门禁。与 PRUNED_DIRS 保持同族登记。
         val ALLOWED_ROOT_DIRS = setOf(
-            ".github",   // CI 工作流
+            ".github", // CI 工作流
             ".opencode", // Agent 技能（skills/ 受版本控制，node_modules 等被忽略）
-            ".kilo",     // Kilo / Agent Manager 状态（agent-manager.json 等本机数据）
+            ".kilo", // Kilo / Agent Manager 状态（agent-manager.json 等本机数据）
             ".kilocode", // 同族工具目录
-            ".agents",   // 同族工具目录
+            ".agents", // 同族工具目录
             ".worktrees", // 多 Agent worktree 落点（AGENT-WORKFLOW 第 2.1 节强制约定，已被 .gitignore 忽略）
-            "client",    // Android 工程根
-            "docs",      // 文档
-            "server"     // Bun + TypeScript 服务端
+            "client", // Android 工程根
+            "docs", // 文档
+            "server", // Bun + TypeScript 服务端
         )
 
         // 仓库根白名单：文件（治理类，全部受版本控制）
         val ALLOWED_ROOT_FILES = setOf(
             ".editorconfig", ".gitattributes", ".gitignore",
             "AGENTS.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "README.md",
-            "opencode.json"
+            "opencode.json",
         )
 
         // client/ 白名单：末尾几项为本机生成/被忽略的目录，允许存在但不强制
@@ -463,7 +461,7 @@ class ProjectStructureTest {
             "build-logic", // 复合构建（included build）：托管约定插件，非主构建模块
             "build.gradle.kts", "settings.gradle.kts", "gradle.properties",
             "gradlew", "gradlew.bat", "local.properties",
-            "build", ".gradle", ".kotlin", "signing"
+            "build", ".gradle", ".kotlin", "signing",
         )
 
         /** client/ 下不是 Gradle 模块的目录（不参与「未注册模块」检查）。 */
@@ -474,16 +472,16 @@ class ProjectStructureTest {
             ".git", "node_modules", "build", ".gradle", ".kotlin", ".idea", ".vscode",
             "captures", ".tools", "signing", "dist", "out", "target", "release",
             ".mimosa", ".workbuddy", ".kilo", ".kilocode", ".worktrees", ".agents",
-            ".cxx", ".externalNativeBuild", "data"
+            ".cxx", ".externalNativeBuild", "data",
         )
 
         /** 禁止进入版本控制范围的文件扩展名。 */
         val BANNED_EXTENSIONS = setOf(
-            "apk", "aab", "apks", "aar",                 // Android 制品
+            "apk", "aab", "apks", "aar", // Android 制品
             "log", "tmp", "bak", "orig", "rej", "swp", "hprof", // 调试与编辑残留
-            "zip", "tar", "gz", "7z", "rar", "jar",      // 打包产物
-            "keystore", "jks", "p12", "kdb", "pem",      // 密钥
-            "iml", "exe", "dll", "so", "dylib"           // IDE 与本地二进制
+            "zip", "tar", "gz", "7z", "rar", "jar", // 打包产物
+            "keystore", "jks", "p12", "kdb", "pem", // 密钥
+            "iml", "exe", "dll", "so", "dylib", // IDE 与本地二进制
         )
 
         /** 允许存在的打包产物（Gradle wrapper 必须入库，否则无法构建）。 */

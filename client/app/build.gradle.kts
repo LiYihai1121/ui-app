@@ -13,7 +13,10 @@ val signingProps = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 val releaseSigningReady = listOf(
-    "adskip.storeFile", "adskip.storePassword", "adskip.keyAlias", "adskip.keyPassword"
+    "adskip.storeFile",
+    "adskip.storePassword",
+    "adskip.keyAlias",
+    "adskip.keyPassword",
 ).all { !signingProps.getProperty(it).isNullOrBlank() }
 
 /**
@@ -31,7 +34,7 @@ if (!releaseSigningReady) {
         } else {
             "[adskip] release 未配置签名：已回退 debug 签名以保证 APK 可安装；正式分发请在 local.properties 配置 " +
                 "adskip.storeFile / adskip.storePassword / adskip.keyAlias / adskip.keyPassword"
-        }
+        },
     )
 }
 
@@ -59,11 +62,14 @@ android {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             signingConfig = when {
                 releaseSigningReady -> signingConfigs.getByName("release")
-                unsignedRelease -> null // 仅在显式选择时产出未签名包
+
+                unsignedRelease -> null
+
+                // 仅在显式选择时产出未签名包
                 else -> signingConfigs.getByName("debug") // 回退：产物必须可安装
             }
         }
