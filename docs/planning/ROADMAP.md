@@ -67,7 +67,7 @@
 
 - [x] **v3.0.3（M1a，已发布）**：L1 引擎内核——选择器第三通道（`engine/selector/` AST / 解析器 / 匹配器 + `AdNode.parent` / `previousSibling()`）。纯内核增量、无用户可见行为变化；技术方案见 [DESIGN-PHASE1-SELECTOR.md](DESIGN-PHASE1-SELECTOR.md) 步骤 A/B
 - [x] **v3.0.4（M1a 补丁，已发布）**：安装可用性修复——`assembleRelease` 缺签名配置时回退 debug 签名、发布流水线强制 `apksigner verify` 并支持 Secrets 注入正式密钥，修复发布制品未签名导致手机报「解析软件包时出现问题」（[Issue #23](https://github.com/LiYihai1121/ui-app/issues/23)）；无功能行为变化
-- [x] **v3.1.0（M1b，已定稿）**：协议 v2——服务端 `selectors` 字段与校验 + `SyncClient` 解析 + 点击结果校验与本地规则黑名单（步骤 C/D）；并随本版本一并交付品牌更名「轻启」、启动器/磁贴图标重设计、首页与「我的」页 UI 重设计、ktlint 静态门禁与 Compose BOM/compileSdk 升级（用户可见变更详见 [CHANGELOG.md](../../CHANGELOG.md) 3.1.0）。**真机矩阵（Android 8/13/14/15 × MIUI/HarmonyOS/ColorOS/OriginOS）尚未完成**，维护者显式决定先行发布正式版（见 CHANGELOG 3.1.0 发布验收覆盖声明）；Git tag 与 GitHub Release 待 `release/v3.1.0` 合入 `main` 后创建（见 [RELEASE-HISTORY.md](RELEASE-HISTORY.md)）。
+- [x] **v3.1.0（M1b，已发布）**：协议 v2——服务端 `selectors` 字段与校验 + `SyncClient` 解析 + 点击结果校验与本地规则黑名单（步骤 C/D）；并随本版本一并交付品牌更名「轻启」、启动器/磁贴图标重设计、首页与「我的」页 UI 重设计、ktlint 静态门禁与 Compose BOM/compileSdk 升级（用户可见变更详见 [CHANGELOG.md](../../CHANGELOG.md) 3.1.0）。**真机矩阵（Android 8/13/14/15 × MIUI/HarmonyOS/ColorOS/OriginOS）尚未完成**，维护者显式决定先行发布正式版（见 CHANGELOG 3.1.0 发布验收覆盖声明）；Git tag `v3.1.0` 已创建于 `main` 提交 `ad188b0`（PR #42 经 Squash 合入），制品由正式密钥签名并经 `apksigner verify` 复核（见 [RELEASE-HISTORY.md](RELEASE-HISTORY.md)）。
 - [ ] **v3.2.0（M1c）**：节点快照工具——App 内导出当前界面节点树 JSON，规则编写不再靠猜（步骤 E）
 - [ ] **v3.3.0（M1d）**：Top 30 App 首批选择器规则入库 + 真机回归与性能采样 + 规则审核通道（步骤 F、L5 基础）
 - [ ] **v3.4.0（M2）**：L2 网络过滤层——DNS 过滤 + `filter-rules` 路由
@@ -79,7 +79,7 @@
 - [x] **v3.1.0-rc.1（系统级体验 RC，已发布）**：快捷磁贴 + 厂商保活引导，见下方「已落地」小节。
   **按 [CONTRIBUTING.md](../../CONTRIBUTING.md)「发布验收」规则发预发布而非正式版**：本次触及无障碍服务、快捷磁贴、
   厂商跳转与系统权限面，而发布时尚无可用真机（`adb devices` 为空），厂商入口表与磁贴行为**尚未在
-  MIUI / HarmonyOS / ColorOS / OriginOS / Android 13 上实测**。`v3.1.0` 正式版已定稿先行发布（维护者显式决定覆盖真机验收要求，详见 [CHANGELOG.md](../../CHANGELOG.md) 3.1.0 发布验收覆盖声明）；真机矩阵完成后如发现问题按 [CONTRIBUTING.md](../../CONTRIBUTING.md) 紧急变更与回滚走 hotfix。
+  MIUI / HarmonyOS / ColorOS / OriginOS / Android 13 上实测**。`v3.1.0` 正式版已发布（tag `v3.1.0`）；维护者显式决定覆盖真机验收要求先行发布，详见 [CHANGELOG.md](../../CHANGELOG.md) 3.1.0 发布验收覆盖声明；真机矩阵完成后如发现问题按 [CONTRIBUTING.md](../../CONTRIBUTING.md) 紧急变更与回滚走 hotfix。
 
   **模拟器部分验证（2026-09-28，Android 15 / API 35，`google_apis;android-34;x86_64`）**：
   ✅ 安装成功且 `versionCode 10 / versionName 3.1` 正确；
@@ -94,12 +94,12 @@
 
   > ⚠️ **模拟器不能替代厂商 ROM 验收**：MIUI / HarmonyOS / ColorOS / OriginOS 的自启动入口、
   > 电池管理 Intent、OEM 后台限制策略，以及磁贴在 OEM 快捷设置中的真实行为，**均无法在 AOSP 镜像上验证**。
-  > `v3.1.0` 正式版已定稿先行发布（维护者显式覆盖真机验收要求）；真机矩阵（Android 8/13/14/15 + 上述 4 家厂商）仍需补做，发现问题按 [CONTRIBUTING.md](../../CONTRIBUTING.md) 紧急变更与回滚走 hotfix。
+  > `v3.1.0` 正式版已发布（tag `v3.1.0`）；维护者显式覆盖真机验收要求先行发布，真机矩阵（Android 8/13/14/15 + 上述 4 家厂商）仍需补做，发现问题按 [CONTRIBUTING.md](../../CONTRIBUTING.md) 紧急变更与回滚走 hotfix。
   > 磁贴在模拟器上未验证（需先在快捷设置中手动添加，headless 环境无法完成该交互）。
 
 ### 🧩 已落地（随 v3.1.0 交付）
 
-- [x] **系统级体验：快捷磁贴 + 厂商保活引导**（已随 `v3.1.0-rc.1` 预发布、`v3.1.0` 正式版定稿交付）：
+- [x] **系统级体验：快捷磁贴 + 厂商保活引导**（已随 `v3.1.0-rc.1` 预发布、`v3.1.0` 正式版发布（tag `v3.1.0`））：
   下拉通知栏磁贴（`TileService`：一眼看服务状态、一次点击启停，Android 13+ 支持应用主动请求添加）；
   厂商 ROM 识别与自启动/后台管理一键跳转（MIUI / HarmonyOS / MagicOS / ColorOS / OriginOS / Flyme / OxygenOS / One UI），
   含 Android 11+ `<queries>` 包可见性声明与无障碍真实状态查询。
