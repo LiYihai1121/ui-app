@@ -42,8 +42,8 @@ android {
         applicationId = "com.ldp.adskip"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "3.0"
+        versionCode = 10
+        versionName = "3.1"
     }
 
     signingConfigs {

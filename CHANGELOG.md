@@ -7,6 +7,7 @@
 ## 目录
 
 - [Unreleased](#unreleased)
+- [3.1.0-rc.1](#310-rc1---2026-09-28)
 - [3.0.4](#304---2026-09-27)
 - [3.0.3](#303---2026-09-26)
 - [3.0.2](#302---2026-09-04)
@@ -18,7 +19,14 @@
 
 ## [Unreleased]
 
-### Added (Unreleased)
+## [3.1.0-rc.1] - 2026-09-28
+
+> **预发布版本，不是正式版。** 本次触及无障碍服务、快捷磁贴与厂商跳转，发布时无可用真机，
+> 厂商入口表与磁贴行为尚未在 MIUI / HarmonyOS / ColorOS / OriginOS / Android 13 上实测。
+> 依据 [CONTRIBUTING.md](CONTRIBUTING.md)「发布验收」规则，先发 `rc` 供小范围验证；
+> 真机验收通过后再发 `v3.1.0` 正式版。**不建议分发到应用商店或大范围推送。**
+
+### Added (3.1.0-rc.1)
 
 - 目录结构守护测试 `ProjectStructureTest`（随 `testDebugUnitTest` 运行，CI 独立 job `Structure Contract` 最先执行）：把「仓库长什么样」升级为门禁——根目录白名单、构建产物与临时文件不得入库（仅放行 `gradle-wrapper.jar`）、`settings.gradle.kts` 的 `include()` 与磁盘模块目录双向一致、`client/` 工程根整洁、标准 Android 源集布局、Kotlin `package` 声明与目录对位、文档必须登记到 `docs/README.md`。这直接堵住根目录再次长出 `*.apk` 与工具残留目录的路径。
 - 构建框架工程化设计文档 [docs/planning/DESIGN-BUILD-FRAMEWORK.md](docs/planning/DESIGN-BUILD-FRAMEWORK.md)：version catalog、`build-logic` 约定插件、Gradle 硬化与模块拆分的完整方案，含 5 个具体坑位（included build 镜像、CI 缓存键不覆盖 `.toml`、wrapper 缺 SHA-256、`checkReleaseBuilds=false` 继承、签名路径漂移）与分步回滚策略。
@@ -29,7 +37,7 @@
 - 厂商保活引导：设置页新增「系统保活与快捷入口」，自动识别 MIUI / HarmonyOS / MagicOS / ColorOS / OriginOS / Flyme / OxygenOS / One UI 并一键跳转对应的自启动 / 后台管理页面，入口不可用时逐级降级到系统通用页面并提示手动路径——针对「后台被强杀导致跳过静默失效」这一高频问题。
 - 客户端新增 `device/` 系统集成层（ROM 识别与入口表、跳转出口、快捷磁贴），设置页与首页不再自行拼装系统 `Intent`；新增 JVM 单测覆盖厂商识别、磁贴点击决策与 `AndroidManifest.xml` 契约（磁贴注册、`<queries>` 包可见性声明）。
 
-### Changed (Unreleased)
+### Changed (3.1.0-rc.1)
 
 - 规范去重为单一事实源：`.opencode/skills/branch-guard` 不再复述分支命名表与门禁命令，改为指向 [CONTRIBUTING.md](CONTRIBUTING.md)（流程规范）、[AGENTS.md](AGENTS.md)（执行摘要）与 [docs/development/AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md)（并行协作）；[AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md) 的门禁命令也改为引用 `AGENTS.md`，PR 模板只保留勾选项加规则指针。
 - 清理无人引用的重复定义：`res/values/colors.xml` 删除 4 个与 `ui/theme/Theme.kt` 品牌色板重复的色值（同时消除与 `R.string.status_on/off` 的命名撞车），`Theme.kt` 删除死变量 `TextSecondary`。
@@ -37,7 +45,7 @@
 - 工作目录卫生：移除根目录遗留的构建产物 `AdSkip-latest.apk`（分发以 GitHub Releases + `SHA256SUMS` 为准，[DEV-ENVIRONMENT.md](docs/development/DEV-ENVIRONMENT.md) 的校验步骤同步改为「下载到本地后校验」），并在交付说明中明确仓库根不保留任何构建产物。
 - `ManifestContractTest` 新增两条守护：广播必须收窄到本应用；使用 `setPersisted()` 时必须保留 `RECEIVE_BOOT_COMPLETED` 权限（否则规则跨重启不再自动同步）。判定依据与踩坑记录见 [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) 第 2.1 节。
 
-### Fixed (Unreleased)
+### Fixed (3.1.0-rc.1)
 
 - 修正产品落地页版本信息漂移（[Issue #27](https://github.com/LiYihai1121/ui-app/issues/27)）：导航与 CTA 的下载按钮、Hero 徽章改为 `{{APP_VERSION}}` 占位符，由服务端在响应 `GET /` 时按 `server/package.json` 版本注入，发布时自动同步；同时修正安装包体积（858 KB → 1.5 MB）与路线图状态（v3.0 已完成、v3.1+ 规划中），与 [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md) 对齐。
 - **隐私：跳过行为可被第三方应用监听**。应用此前以未限定接收方的进程内广播上报「服务是否在运行」与「用户刚跳过了哪个应用」，任意第三方应用注册同名广播即可监听这些数据。三个广播已统一收窄到本应用，外部应用不再能观察到使用习惯。
