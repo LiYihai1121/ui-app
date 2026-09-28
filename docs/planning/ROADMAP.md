@@ -91,7 +91,7 @@
 - [ ] 悬浮窗快捷开关（应用内开关，区别于 ADS Phase 4 的「悬浮窗权限引导」）
 - [ ] 服务端 Docker 镜像与一键部署脚本
 - [ ] 多设备规则共享（局域网规则仓库）
-- [ ] 构建框架工程化（version catalog / `build-logic` 约定插件 / 模块拆分，**工程基础设施，不产生用户可见能力**，故不占用版本号）：阶段 A 目录结构契约已落地，阶段 B/C 待排期，含已知坑位与分步回滚策略，见 [DESIGN-BUILD-FRAMEWORK.md](DESIGN-BUILD-FRAMEWORK.md)
+- [ ] 构建框架工程化（**工程基础设施，不产生用户可见能力**，故不占用版本号）：阶段 A（目录结构契约）与**阶段 B（version catalog + `build-logic` 约定插件 + Gradle 硬化）已实施**，阶段 C（`core:common` / `core:engine` 模块拆分）待排期；已知坑位与分步回滚策略见 [DESIGN-BUILD-FRAMEWORK.md](DESIGN-BUILD-FRAMEWORK.md)
 
 > 注：第 3 节「明确不做的」中「不拦截广告内容」与 L2 DNS 过滤的边界张力，已在 [ROADMAP-ADS.md](ROADMAP-ADS.md) 第 3 节列为 Phase 0 合规评审项，L2 启动前必须修订该声明。
 

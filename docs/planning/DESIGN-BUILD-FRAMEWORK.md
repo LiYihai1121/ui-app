@@ -1,9 +1,10 @@
 # 构建框架工程化设计（version catalog / build-logic / 模块拆分）
 
-> **状态**：设计中，未实施。阶段 A（目录结构契约）已落地，见
+> **状态**：阶段 B（version catalog + build-logic 约定插件 + Gradle 硬化）已实施（见 CHANGELOG Unreleased）；
+> 阶段 C（`core:common` / `core:engine` 模块拆分）待排期。阶段 A（目录结构契约）已落地，见
 > [ARCHITECTURE.md 第 2.2 节](../architecture/ARCHITECTURE.md#22-目录结构契约)。
 > **最后更新**：2026-09-28
-> **归属版本**：未分配。实施前需按 [ROADMAP.md](ROADMAP.md) 的「候选池」取版本号。
+> **归属版本**：阶段 B 不产生用户可见能力，随分支 `feature/build-framework-overhaul` 并入 `main`；阶段 C 实施前需按 [ROADMAP.md](ROADMAP.md) 的「候选池」取版本号。
 
 ## 1. 目标与非目标
 
@@ -13,7 +14,7 @@
 | | 事项 | 状态 |
 | --- | --- | --- |
 | A | 目录结构契约（白名单 + 产物 + 模块 + 包结构） | ✅ 已落地 |
-| B | version catalog + build-logic 约定插件 + Gradle 硬化 | 📋 本文档第 3 节 |
+| B | version catalog + build-logic 约定插件 + Gradle 硬化 | ✅ 已实施（本节） |
 | C | 模块拆分（`core:common` / `core:engine`） | 📋 本文档第 4 节 |
 
 **非目标**：不拆分 `:feature:*` 功能模块（理由见 4.3）；不引入 Hilt/KSP 等注解处理器（当前手动 DI 足够，
@@ -72,15 +73,18 @@ junit = { module = "junit:junit", version.ref = "junit" }
 
 ```text
 client/
-├── settings.gradle.kts      # 增 includeBuild("build-logic")
+├── settings.gradle.kts      # includeBuild("build-logic") + 仓库镜像
+├── gradle/
+│   └── libs.versions.toml   # 版本唯一事实源（主工程与 build-logic 共享）
+├── app/
 └── build-logic/
-    ├── settings.gradle.kts  # 必须自带阿里云镜像（见 3.4 坑 1）
+    ├── settings.gradle.kts  # 自带阿里云镜像 + versionCatalogs.from(../gradle/libs.versions.toml)
     └── convention/
-        ├── build.gradle.kts          # 声明依赖、apply false
+        ├── build.gradle.kts          # 声明依赖、gradlePlugin{ id("adskip.android.application") }
         └── src/main/kotlin/
-            ├── AdskipApplicationPlugin.kt   # id("adskip.android.application")
-            ├── AdskipLibraryPlugin.kt       # id("adskip.android.library")
-            └── AdskipJvmPlugin.kt           # id("adskip.jvm")（阶段 C 用）
+            ├── AdskipAndroidApplicationPlugin.kt   # id("adskip.android.application") 已实施
+            ├── AdskipLibraryPlugin.kt               # id("adskip.android.library")（阶段 C 用）
+            └── AdskipJvmPlugin.kt                   # id("adskip.jvm")（阶段 C 用）
 ```
 
 插件编号建议 `adskip.*` 前缀，便于与其他插件区分。`build-logic` 内部通过 `libs` 访问器直接引用主工程的

@@ -20,4 +20,9 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "AdSkip"
+
+// 约定插件复合构建：把「哪些插件/配置属于所有模块」收口到 build-logic/，避免各模块自行粘贴
+// （同目录下 gradle/build-logic 的 docs/planning/DESIGN-BUILD-FRAMEWORK.md 阶段 B 有完整动机）
+includeBuild("build-logic")
+
 include(":app")

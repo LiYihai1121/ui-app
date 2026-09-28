@@ -13,6 +13,16 @@
   缺失时 Gradle 会回落到 `C:\Users\<用户>\.gradle`，那里没有缓存副本，
   于是每次构建都要重新下载发行版；在本网络下会因 `services.gradle.org` / `dl.google.com`
   不可达而直接失败。详见 [构建启动失败排障](#构建启动失败排障)。
+- Gradle wrapper 已固化 `distributionSha256Sum`（Gradle 9.7.0 官方校验和），下载或镜像被篡改时 Gradle 会拒绝启动而非静默换源。
+
+## 构建体系
+
+- **版本唯一事实源 `client/gradle/libs.versions.toml`**：升级 AGP / Kotlin / Compose BOM / AndroidX 时只改这个文件，
+  不要在任意 `.gradle.kts` 里写死版本号（`ProjectStructureTest` 不检查版本号，但 DESIGN-BUILD-FRAMEWORK 约定如此）。
+  升级前先核对阿里云镜像的 `maven-metadata.xml`（本网络直连官方仓库会超时）。
+- **公共构建配置在 `client/build-logic/convention/`**（`adskip.android.application` 约定插件）：
+  `:app` 只保留它自己的 `applicationId` / `versionCode` / `versionName` / 签名 / 依赖。改动公共配置后，
+  先跑 `client/build-logic` 的约定插件编译再整体验证（`./gradlew testDebugUnitTest assembleDebug`）。
 
 ## 启动
 
