@@ -1,6 +1,5 @@
-﻿package com.ldp.adskip.ui.settings
+package com.ldp.adskip.ui.settings
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
 import com.ldp.adskip.device.KeepAliveNavigator
+import com.ldp.adskip.ui.Messenger
 import com.ldp.adskip.ui.UiEffect
 import com.ldp.adskip.ui.components.SectionCard
 import com.ldp.adskip.ui.components.SectionHint
@@ -57,15 +57,20 @@ import java.util.Locale
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsContent(viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)) {
+fun SettingsContent(
+    messenger: Messenger,
+    viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(messenger) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                is UiEffect.ShowMessage ->
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                is UiEffect.ShowMessage -> messenger.show(effect.message)
+
+                // 设置页不涉及关键词删除，KeywordRemoved 在此不会出现
+                is UiEffect.KeywordRemoved -> Unit
             }
         }
     }

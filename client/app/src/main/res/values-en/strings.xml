@@ -25,6 +25,7 @@
     <string name="nav_settings">Settings</string>
     <string name="btn_confirm">OK</string>
     <string name="btn_cancel">Cancel</string>
+    <string name="action_undo">Undo</string>
 
     <!-- Keywords -->
     <string name="keywords_title">Detection Keywords</string>

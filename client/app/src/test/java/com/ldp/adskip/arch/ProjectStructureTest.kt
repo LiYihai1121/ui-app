@@ -341,9 +341,13 @@ class ProjectStructureTest {
         )
 
         val navSource = readUiSource("MainActivity.kt")
+        // 只断言「PROFILE 路由确实映射到 ProfileScreen」，不断言实参为空。
+        // 原断言是整串字面量 `composable(Routes.PROFILE) { ProfileScreen() }`，
+        // 页面一旦需要任何注入（例如 Messenger）就会红——那种失败与本用例的意图
+        // 无关，属于把实现细节写进契约。路由映射错到别的页面仍会失败，护栏没削弱。
         assertTrue(
             "NavHost 缺少 Routes.PROFILE → ProfileScreen 的注册",
-            navSource.contains("composable(Routes.PROFILE) { ProfileScreen() }"),
+            Regex("""composable\(Routes\.PROFILE\)\s*\{\s*ProfileScreen\(""").containsMatchIn(navSource),
         )
     }
 
@@ -351,8 +355,8 @@ class ProjectStructureTest {
     fun `profile page embeds the accessibility entry and the settings content`() {
         val profile = readUiSource("profile/ProfileScreen.kt")
         assertTrue(
-            "「我的」页应内嵌设置内容 SettingsContent()，否则移除独立设置页后设置将无处可达",
-            profile.contains("SettingsContent()"),
+            "「我的」页应内嵌设置内容 SettingsContent(...)，否则移除独立设置页后设置将无处可达",
+            profile.contains("SettingsContent("),
         )
         assertTrue(
             "「我的」页应提供「打开无障碍设置」入口 AccessibilityCard",

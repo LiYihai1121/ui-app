@@ -24,9 +24,12 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -105,6 +108,8 @@ private fun AdskipShell() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val currentRoute = currentDestination?.route
+    val snackbarHostState = remember { SnackbarHostState() }
+    val messenger = rememberMessenger(snackbarHostState)
 
     // 系统返回键：在非首页时回到首页，而不是逐级退出应用。
     // 用 popBackStack 而非 popUpTo(inclusive) + 重新 navigate：后者会销毁并重建首页，
@@ -118,8 +123,12 @@ private fun AdskipShell() {
         }
     }
 
+    // Snackbar 宿主放在外壳：四个页面共用一个 host，消息按顺序排队，
+    // 不再像 Toast 那样「后一条顶掉前一条」。Messenger 显式传参给需要它的页面，
+    // 不用 CompositionLocal——依赖写在签名上，比隐式查找更容易发现遗漏。
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = {
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -189,10 +198,10 @@ private fun AdskipShell() {
                 popEnterTransition = { fadeIn(tween(160)) },
                 popExitTransition = { fadeOut(tween(120)) },
             ) {
-                composable(Routes.HOME) { HomeScreen() }
+                composable(Routes.HOME) { HomeScreen(messenger) }
                 composable(Routes.APPS) { AppsScreen() }
-                composable(Routes.LOGS) { LogsScreen() }
-                composable(Routes.PROFILE) { ProfileScreen() }
+                composable(Routes.LOGS) { LogsScreen(messenger) }
+                composable(Routes.PROFILE) { ProfileScreen(messenger) }
             }
         }
     }

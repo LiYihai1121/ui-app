@@ -1,6 +1,5 @@
-﻿package com.ldp.adskip.ui.profile
+package com.ldp.adskip.ui.profile
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
 import com.ldp.adskip.device.KeepAliveNavigator
 import com.ldp.adskip.device.Vendor
+import com.ldp.adskip.ui.Messenger
 import com.ldp.adskip.ui.components.PageHeader
 import com.ldp.adskip.ui.components.SectionCard
 import com.ldp.adskip.ui.components.SectionHint
@@ -51,7 +51,7 @@ import com.ldp.adskip.ui.settings.SettingsContent
  * - 状态（服务开/关）只用一种强调色表达，其余一律中性色。
  */
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory)) {
+fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -76,18 +76,14 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel(factory = ProfileViewM
             // 设置（云端规则 / 免打扰 / 保活 / 磁贴）排在「关于」之前：
             // 它是用户会反复回来调整的高频项，而版本号、设备型号这类「关于」信息
             // 基本只会在遇到问题时才看。原来的顺序把高频项压在最长的滚动条末尾。
-            item { SettingsContent() }
+            item { SettingsContent(messenger) }
             item {
                 AccessibilityCard(
                     running = state.serviceRunning,
                     onOpen = {
                         // 系统入口统一经 device/ 层探测可解析性后降级，UI 不自行拼 Intent
                         if (!KeepAliveNavigator.openAccessibilitySettings(context)) {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.settings_open_failed),
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            messenger.show(context.getString(R.string.settings_open_failed))
                         }
                     },
                 )
