@@ -45,7 +45,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         val dndEndMinute: Int = 7 * 60,
         val batteryExempt: Boolean = false,
         /** 当前设备所属 ROM，用于保活引导文案与手动路径提示（device/VendorKeepAlive） */
-        val keepAliveVendor: Vendor = Vendor.GENERIC
+        val keepAliveVendor: Vendor = Vendor.GENERIC,
     )
 
     private val _uiState = MutableStateFlow(
@@ -57,8 +57,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             dndStartMinute = container.settingsRepo.getDoNotDisturbStart(),
             dndEndMinute = container.settingsRepo.getDoNotDisturbEnd(),
             batteryExempt = queryBatteryExempt(),
-            keepAliveVendor = KeepAliveNavigator.detectVendor()
-        )
+            keepAliveVendor = KeepAliveNavigator.detectVendor(),
+        ),
     )
     val uiState: StateFlow<UiState> = _uiState
 
@@ -138,7 +138,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         }
         val started = KeepAliveNavigator.requestAddTile(
             context = container.app,
-            label = tileLabel
+            label = tileLabel,
         ) { result -> send(tileAddMessage(result)) }
         if (!started) {
             send(container.app.getString(R.string.settings_tile_manual, tileLabel))
@@ -159,12 +159,13 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    private fun vendorName(vendor: Vendor): String =
-        container.app.getString(vendorLabelRes(vendor))
+    private fun vendorName(vendor: Vendor): String = container.app.getString(vendorLabelRes(vendor))
 
     fun formatLastSync(ts: Long): String = if (ts > 0L) {
         SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(ts))
-    } else ""
+    } else {
+        ""
+    }
 
     private fun refreshLastSync() {
         _uiState.value = _uiState.value.copy(lastSyncAt = container.settingsRepo.lastSyncAt())

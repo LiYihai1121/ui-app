@@ -169,7 +169,7 @@
 
 版本号语义：`3.0.3`（纯内核）与 `3.0.4`（安装/发布链路修复）为 patch，用户可见功能不变；`3.1.0`~`3.5.0` 为 minor（新增能力/协议字段，向后兼容）；`4.0.0` 为 major（新增系统级权限面：通知使用权）。上表是发布意图，冻结时按 SemVer 复核并同步 Android `versionName`/`versionCode` 与 `server/package.json`。
 
-每个里程碑走现有流程：`release/vX.Y.Z` → CI 全门禁（`assembleDebug`、`testDebugUnitTest`、`bun test`、`bun run typecheck`）→ Squash Merge → 签名 Release + `SHA256SUMS`。
+每个里程碑走现有流程：`release/vX.Y.Z` → CI 全门禁（`ktlintCheck`、`assembleDebug`、`testDebugUnitTest`、`bun test`、`bun run typecheck`）→ Squash Merge → 签名 Release + `SHA256SUMS`。
 
 ## 7. 工作量估算
 

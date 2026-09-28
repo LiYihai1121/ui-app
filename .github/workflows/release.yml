@@ -109,7 +109,8 @@ jobs:
         working-directory: client
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease testDebugUnitTest --no-daemon
+          # ktlintCheck 与 CI 保持同一门禁：发布制品不应绕过格式与静态检查
+          ./gradlew ktlintCheck assembleRelease testDebugUnitTest --no-daemon
 
       - name: Test server
         working-directory: server

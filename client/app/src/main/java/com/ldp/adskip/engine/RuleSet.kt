@@ -13,7 +13,7 @@ data class RuleSet(
     /** 第三通道：已编译选择器（上游加载时编译一次；解析失败的条目已在上游丢弃） */
     val selectors: List<SelectorAst> = emptyList(),
     val disabled: Boolean = false,
-    val schemaVersion: Int = SCHEMA_VERSION
+    val schemaVersion: Int = SCHEMA_VERSION,
 ) {
     val isEmpty: Boolean
         get() = keywords.isEmpty() && viewIds.isEmpty() && selectors.isEmpty()
@@ -22,11 +22,12 @@ data class RuleSet(
         /**
          * 当前客户端支持的协议 schema 版本。
          *
-         * selectors 字段已就绪，但 v2 载荷（`globalSelectors` / `apps.*.selectors`）随
-         * DESIGN-PHASE1 步骤 C（服务端字段 + SyncClient 解析）落地时才升为 2——
-         * 提前声明 2 无服务端配合且会让存量断言失真。
+         * 2 = 选择器通道随规则下发生效（DESIGN-PHASE1 步骤 C：服务端下发
+         * `globalSelectors` / `apps.*.selectors`，客户端编译后并入第三通道）。
+         * [MIN_SCHEMA_VERSION] 保持 1，故发布 schema 2 对旧客户端无害——
+         * 它会照常加载并忽略未知字段。
          */
-        const val SCHEMA_VERSION = 1
+        const val SCHEMA_VERSION = 2
 
         /** 低于此版本拒载并提示升级 */
         const val MIN_SCHEMA_VERSION = 1

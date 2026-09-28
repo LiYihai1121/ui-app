@@ -34,7 +34,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         val lastApp: String = "",
         val keywords: List<String> = emptyList(),
         val fakeAdVisible: Boolean = false,
-        val countdown: Int = FAKE_AD_SECONDS
+        val countdown: Int = FAKE_AD_SECONDS,
     ) {
         val testActive: Boolean get() = fakeAdVisible
     }
@@ -60,7 +60,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
                 if (_uiState.value.testActive) {
                     endTest()
                     _effects.emit(
-                        UiEffect.ShowMessage(container.app.getString(R.string.test_success, label))
+                        UiEffect.ShowMessage(container.app.getString(R.string.test_success, label)),
                     )
                 }
                 refreshStats()
@@ -135,7 +135,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     private fun refreshStats() {
         _uiState.value = _uiState.value.copy(
             totalSkips = container.statsRepo.total(),
-            lastApp = container.statsRepo.lastApp()
+            lastApp = container.statsRepo.lastApp(),
         )
     }
 

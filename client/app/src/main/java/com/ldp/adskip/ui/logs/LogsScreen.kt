@@ -52,9 +52,7 @@ import com.ldp.adskip.ui.components.TwoLineRow
  * - 条目行统一走 [TwoLineRow]，与应用管理页共享同一套行高与省略策略。
  */
 @Composable
-fun LogsScreen(
-    viewModel: LogsViewModel = viewModel(factory = LogsViewModel.Factory)
-) {
+fun LogsScreen(viewModel: LogsViewModel = viewModel(factory = LogsViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showClearConfirm by rememberSaveable { mutableStateOf(false) }
@@ -71,28 +69,28 @@ fun LogsScreen(
                 viewModel.clear()
                 Toast.makeText(context, R.string.logs_cleared, Toast.LENGTH_SHORT).show()
             },
-            onDismiss = { showClearConfirm = false }
+            onDismiss = { showClearConfirm = false },
         )
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
         PageHeader(
             title = stringResource(R.string.logs_title),
-            subtitle = stringResource(R.string.logs_subtitle, state.logs.size)
+            subtitle = stringResource(R.string.logs_subtitle, state.logs.size),
         )
 
         Row(
             modifier = Modifier.padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             FilledTonalButton(
                 onClick = { showClearConfirm = true },
-                enabled = state.logs.isNotEmpty()
+                enabled = state.logs.isNotEmpty(),
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp),
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(stringResource(R.string.logs_clear))
@@ -102,7 +100,9 @@ fun LogsScreen(
                     val text = viewModel.shareText()
                     if (text == null) {
                         Toast.makeText(
-                            context, R.string.logs_empty, Toast.LENGTH_SHORT
+                            context,
+                            R.string.logs_empty,
+                            Toast.LENGTH_SHORT,
                         ).show()
                     } else {
                         context.startActivity(
@@ -111,21 +111,21 @@ fun LogsScreen(
                                     type = "text/plain"
                                     putExtra(
                                         Intent.EXTRA_SUBJECT,
-                                        context.getString(R.string.logs_title)
+                                        context.getString(R.string.logs_title),
                                     )
                                     putExtra(Intent.EXTRA_TEXT, text)
                                 },
-                                context.getString(R.string.logs_share)
-                            )
+                                context.getString(R.string.logs_share),
+                            ),
                         )
                     }
                 },
-                enabled = state.logs.isNotEmpty()
+                enabled = state.logs.isNotEmpty(),
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Send,
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp),
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(stringResource(R.string.logs_share))
@@ -137,14 +137,14 @@ fun LogsScreen(
                 icon = Icons.Default.Check,
                 title = stringResource(R.string.logs_empty),
                 subtitle = stringResource(R.string.logs_empty_hint),
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             )
         } else {
             LazyColumn(contentPadding = PaddingValues(16.dp)) {
                 items(state.logs, key = { "${it.ts}:${it.pkg}:${it.label}" }) { entry ->
                     TwoLineRow(
                         title = entry.label,
-                        subtitle = "${viewModel.formatTimestamp(entry.ts)} ｜ ${entry.pkg}"
+                        subtitle = "${viewModel.formatTimestamp(entry.ts)} ｜ ${entry.pkg}",
                     )
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }

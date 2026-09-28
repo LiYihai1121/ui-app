@@ -19,8 +19,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- **静态检查门禁 ktlint**：新增仓库根 `.editorconfig` 作为「代码长什么样」的机器可读事实源（charset/行尾/缩进/行宽 + ktlint 规则集），并接入 `ktlintCheck` 任务——CI 的 `Android Build & Test` job 与发布流水线均已纳入，AGENTS.md、PR 模板、ARCHITECTURE、ROADMAP-ADS、DEV-ENVIRONMENT 的门禁清单同步更新。此前客户端**没有任何格式或静态检查工具**，`ArchitectureBoundaryTest` 只管 import 边界，不管单文件内的写法一致性。启用即修掉存量违规：6 处 `import org.junit.Assert.*` 通配导入改为显式导入，`Color.kt` 与 `Feedback.kt` 的文件级说明由悬空 KDoc 改为块注释。
+
 ### Changed
 
+- **Jetpack Compose BOM 2026.06.01 → 2026.08.00（Compose 1.12 / material3 1.5 Expressive）**：官方明确要求「always use the latest Compose BOM」——BOM 是各 Compose 库互相兼容的同一时刻快照，单独升某个库反而会制造不匹配组合。因 Compose 1.12 强制要求 `compileSdk 37`，`compileSdk` 同步 36 → 37；`targetSdk` 刻意仍留 35（升 36 会引入 Android 16 强制 edge-to-edge 等行为变更，与 UI 改动耦合会让「这次界面为什么变了」难以归因）。
+- **CI 的 Android SDK 声明与约定插件收口同源**：`ci.yml` 两处 `packages` 由长期滞后的 `platforms;android-35 build-tools;35.0.0` 改为 `platforms;android-37 build-tools;36.0.0`。此前靠 Gradle 自动解析兜住，属于「靠工具兜底」而非「显式声明」，AGP 一收紧校验就会在 CI 上突然失败。
 - **首页重设计（信息层级 + 动作分级）**：依据 v3.1 真机截图在 1080×2340 上的实测——旧版状态卡就占掉首屏约 60% 高度，**关键词输入框必须滑过一次才看得到**，而关键词是这个 app 唯一需要用户主动操作的东西。据此重排：
   - `StatusHero` 由竖排改为**横排**，状态环 108dp → 56dp，状态卡高度从约 300dp 降到约 150dp，整页内容**无需滚动即全部可见**；
   - **动作分级**：服务未开启时主 CTA 用 filled（这是用户必须做的事），运行中降级为 tonal（避免让用户误以为还有必须点的操作）；「测试」由独立全宽按钮收进状态卡并降为 `TextButton`，它是可选的验证动作，不该和「去开启服务」抢焦点；测试按钮同时受 `enabled = running` 约束；

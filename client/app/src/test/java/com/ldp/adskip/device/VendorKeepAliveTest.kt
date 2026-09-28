@@ -58,7 +58,7 @@ class VendorKeepAliveTest {
             assertTrue("$vendor 缺少候选入口", entries.isNotEmpty())
             assertTrue(
                 "$vendor 的候选入口必须包含包名限定跳转（否则无法做包可见性声明）",
-                entries.any { it.pkg != null }
+                entries.any { it.pkg != null },
             )
         }
     }
@@ -68,7 +68,7 @@ class VendorKeepAliveTest {
         assertTrue(VendorKeepAlive.entries(Vendor.GENERIC).isEmpty())
         assertEquals(
             VendorKeepAlive.genericEntries(),
-            VendorKeepAlive.candidates(Vendor.GENERIC)
+            VendorKeepAlive.candidates(Vendor.GENERIC),
         )
     }
 
@@ -78,7 +78,7 @@ class VendorKeepAliveTest {
         val genericSize = VendorKeepAlive.genericEntries().size
         assertEquals(
             VendorKeepAlive.entries(Vendor.XIAOMI).size + genericSize,
-            candidates.size
+            candidates.size,
         )
         assertTrue(candidates.take(candidates.size - genericSize).all { it.pkg != null })
     }
@@ -90,11 +90,11 @@ class VendorKeepAliveTest {
                 val cls = entry.cls ?: continue
                 assertFalse(
                     "${entry.key} 的类名必须全限定（不得使用相对 `.Foo` 写法）",
-                    cls.startsWith(".")
+                    cls.startsWith("."),
                 )
                 assertTrue(
                     "${entry.key} 的类名至少两段（包名 + 类名）",
-                    cls.count { it == '.' } >= 2
+                    cls.count { it == '.' } >= 2,
                 )
             }
         }
@@ -116,7 +116,7 @@ class VendorKeepAliveTest {
             for (entry in VendorKeepAlive.entries(vendor)) {
                 assertTrue(
                     "${entry.key} 不应使用 DATA_URI 载荷",
-                    entry.payload != PackagePayload.DATA_URI
+                    entry.payload != PackagePayload.DATA_URI,
                 )
             }
         }
@@ -130,7 +130,7 @@ class VendorKeepAliveTest {
                 if (entry.payload == PackagePayload.EXTRA_NAME) {
                     assertTrue(
                         "${entry.key} 使用 extra 传包名时应配 action",
-                        entry.action != null
+                        entry.action != null,
                     )
                 }
             }

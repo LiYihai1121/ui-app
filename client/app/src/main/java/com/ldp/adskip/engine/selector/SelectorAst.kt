@@ -27,11 +27,7 @@ enum class MatchOp { EQ, CONTAINS, PREFIX, SUFFIX, EXISTS }
  *
  * @param value [MatchOp.EXISTS] 时为 null；其余为引号内原值
  */
-data class AttrMatcher(
-    val key: AttrKey,
-    val op: MatchOp,
-    val value: String? = null
-) {
+data class AttrMatcher(val key: AttrKey, val op: MatchOp, val value: String? = null) {
     /** 预小写值：匹配热路径零次转换 */
     val valueLower: String? = value?.lowercase(Locale.ROOT)
 }
@@ -49,8 +45,8 @@ data class CompoundSelector(val simples: List<SimpleSelector>) {
     val evalOrder: List<SimpleSelector> = simples.sortedWith(
         compareBy(
             { costOf(it.attr.key) },
-            { if (it.attr.op == MatchOp.EQ || it.attr.op == MatchOp.EXISTS) 0 else 1 }
-        )
+            { if (it.attr.op == MatchOp.EQ || it.attr.op == MatchOp.EXISTS) 0 else 1 },
+        ),
     )
 
     private fun costOf(key: AttrKey): Int = when (key) {
@@ -68,10 +64,7 @@ data class CompoundSelector(val simples: List<SimpleSelector>) {
  *
  * 只能经 [SelectorParser.parse] 构造（解析失败返回 null，绝不抛异常）。
  */
-data class SelectorAst(
-    val compounds: List<CompoundSelector>,
-    val combinators: List<Combinator>
-) {
+data class SelectorAst(val compounds: List<CompoundSelector>, val combinators: List<Combinator>) {
     init {
         require(compounds.isNotEmpty()) { "selector must contain at least one compound" }
         require(combinators.size == compounds.size - 1) { "combinators must join adjacent compounds" }

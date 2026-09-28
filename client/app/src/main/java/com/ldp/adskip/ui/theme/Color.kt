@@ -2,7 +2,7 @@ package com.ldp.adskip.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-/**
+/*
  * 配色唯一事实源。
  *
  * 约定（见 docs/architecture/ARCHITECTURE.md）：
@@ -10,6 +10,10 @@ import androidx.compose.ui.graphics.Color
  * - 状态语义色（服务开 / 关）不属于 M3 角色，故单列于文件顶部并由 `AdskipTheme`
  *   通过 CompositionLocal 注入，避免业务代码散落字面量；
  * - 与 res/values/colors.xml 互不重复维护，XML 侧不定义同名色。
+ *
+ * 用普通块注释而非 KDoc：这段是「整个文件的说明」而非某个声明的文档，
+ * 写成 KDoc 会成为悬空注释（dangling toplevel KDoc），既不挂在任何声明上，
+ * 也会被静态检查判为违规。
  */
 
 // ==================== 状态语义色 ====================

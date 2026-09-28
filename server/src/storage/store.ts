@@ -56,11 +56,13 @@ function defaultRules(): any {
     rules: {
       globalKeywords: ["跳过", "跳過", "skip", "跳过广告", "关闭广告"],
       globalViewIds: ["skip", "jump"],
+      globalSelectors: [],
       apps: {},
       disabled: [],
     },
     keywords: ["跳过", "跳過", "skip", "跳过广告", "关闭广告"],
     viewIds: ["skip", "jump"],
+    selectors: [],
     packages: {},
   };
 }
@@ -80,7 +82,11 @@ export function computeHash(rules: any): string {
 function ensureCompatShape(input: unknown): RulesPackage {
   let rules: any = input;
   if (!rules || typeof rules !== "object") rules = defaultRules();
-  if (typeof rules.schemaVersion !== "number") rules.schemaVersion = config.SCHEMA_VERSION;
+  // 存量 rules.json 可能停在旧 schema；载荷已带 selectors，故单向补齐到当前版本。
+  // hash 的计算输入含 schemaVersion（computeHash），客户端会因此多同步一次，符合预期。
+  if (typeof rules.schemaVersion !== "number" || rules.schemaVersion < config.SCHEMA_VERSION) {
+    rules.schemaVersion = config.SCHEMA_VERSION;
+  }
   if (!rules.rules || typeof rules.rules !== "object") rules.rules = {};
   const r = rules.rules;
   const legacyKw: string[] = Array.isArray(rules.keywords) ? rules.keywords : [];
@@ -88,17 +94,25 @@ function ensureCompatShape(input: unknown): RulesPackage {
 
   if (!Array.isArray(r.globalKeywords)) r.globalKeywords = legacyKw.slice();
   if (!Array.isArray(r.globalViewIds)) r.globalViewIds = legacyVid.slice();
+  if (!Array.isArray(r.globalSelectors)) r.globalSelectors = Array.isArray(rules.selectors) ? rules.selectors.slice() : [];
   if (!r.apps || typeof r.apps !== "object" || Array.isArray(r.apps)) r.apps = {};
   if (!Array.isArray(r.disabled)) r.disabled = [];
 
+  for (const [pkg, rule] of Object.entries(r.apps as Record<string, any>)) {
+    if (!rule || typeof rule !== "object" || Array.isArray(rule)) continue;
+    if (!Array.isArray(rule.selectors)) rule.selectors = [];
+  }
+
   if (!Array.isArray(rules.keywords)) rules.keywords = r.globalKeywords.slice();
   if (!Array.isArray(rules.viewIds)) rules.viewIds = r.globalViewIds.slice();
+  if (!Array.isArray(rules.selectors)) rules.selectors = r.globalSelectors.slice();
   if (!rules.packages || typeof rules.packages !== "object" || Array.isArray(rules.packages)) {
     rules.packages = {};
   }
 
   rules.keywords = r.globalKeywords;
   rules.viewIds = r.globalViewIds;
+  rules.selectors = r.globalSelectors;
   rules.packages = r.apps;
 
   if (typeof rules.version !== "number") rules.version = 1;
@@ -128,6 +142,7 @@ export function saveRules(cleaned: CleanedRules): number {
     apps[pkg] = {
       keywords: rule.keywords,
       viewIds: rule.viewIds,
+      selectors: rule.selectors,
       disabled: rule.disabled === true,
     };
     if (rule.disabled === true) disabled.push(pkg);
@@ -140,6 +155,7 @@ export function saveRules(cleaned: CleanedRules): number {
     rules: {
       globalKeywords: cleaned.keywords,
       globalViewIds: cleaned.viewIds,
+      globalSelectors: cleaned.selectors,
       apps,
       disabled,
     },

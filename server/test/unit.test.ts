@@ -322,7 +322,7 @@ describe("seed rules fallback", () => {
       const r = getRules();
       expect(r.keywords).toEqual(["种子词"]);
       expect(r.version).toBe(7);
-      expect(r.schemaVersion).toBe(1); // v0 形状被兼容层补成 v1
+      expect(r.schemaVersion).toBe(2); // v0 形状经兼容层补齐到当前 schema（selectors 通道）
       expect(r.hash.startsWith("sha256:")).toBe(true);
       expect(r.packages).toEqual({}); // legacy packages 指向 v1 apps
       expect(fs.existsSync(config.RULES_FILE)).toBe(false); // 读路径无副作用

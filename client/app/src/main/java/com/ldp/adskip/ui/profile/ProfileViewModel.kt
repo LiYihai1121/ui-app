@@ -43,7 +43,7 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
         /** 设备型号，如 `Pixel 7`。 */
         val deviceModel: String = "",
         /** 当前 ROM 厂商（复用 device/VendorKeepAlive 的识别结果，与设置页一致）。 */
-        val vendor: Vendor = Vendor.GENERIC
+        val vendor: Vendor = Vendor.GENERIC,
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -54,7 +54,7 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
             versionDisplay = container.settingsRepo.appVersionDisplay(),
             androidVersion = "Android ${Build.VERSION.RELEASE}",
             deviceModel = Build.MODEL,
-            vendor = VendorKeepAlive.detect()
+            vendor = VendorKeepAlive.detect(),
         )
         refreshStats()
 
@@ -73,13 +73,12 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
         val logs = container.statsRepo.logs()
         _uiState.value = _uiState.value.copy(
             totalSkips = container.statsRepo.total(),
-            activeAppCount = logs.map { it.pkg }.distinct().size
+            activeAppCount = logs.map { it.pkg }.distinct().size,
         )
     }
 
     /** 厂商的可读名称（与设置页保活引导共用同一套文案）。 */
-    fun vendorName(vendor: Vendor): String =
-        container.app.getString(vendorLabelRes(vendor))
+    fun vendorName(vendor: Vendor): String = container.app.getString(vendorLabelRes(vendor))
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {

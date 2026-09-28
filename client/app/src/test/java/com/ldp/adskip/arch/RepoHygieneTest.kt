@@ -26,12 +26,12 @@ class RepoHygieneTest {
     fun `gitignore covers agent artifact and workspace directories`() {
         val patterns = gitignorePatterns()
         val required = listOf(
-            ".mimosa",    // AI 助手会话产物
+            ".mimosa", // AI 助手会话产物
             ".workbuddy", // 本地工具状态
-            ".kilo",      // Agent 工作区（本次故障来源）
-            ".kilocode",  // 同上（legacy 目录名）
+            ".kilo", // Agent 工作区（本次故障来源）
+            ".kilocode", // 同上（legacy 目录名）
             ".worktrees", // 本项目约定的 worktree 落点
-            ".agents"     // 通用 Agent 产物目录
+            ".agents", // 通用 Agent 产物目录
         )
         val missing = required.filterNot { dir -> patterns.any { it == dir } }
         assertTrue(
@@ -39,7 +39,7 @@ class RepoHygieneTest {
                 "会造出「git status 干净但文件检索仍命中」的双重真相）：\n" +
                 missing.joinToString("\n") { "  $it" } +
                 "\n详见 docs/development/AGENT-WORKFLOW.md 第 2.2 节。",
-            missing.isEmpty()
+            missing.isEmpty(),
         )
     }
 
@@ -73,7 +73,7 @@ class RepoHygieneTest {
                 "\n这类目录会让文件检索返回重复结果，并可能让 Agent 修改到副本而丢失成果。" +
                 "请改用真正的 worktree（git worktree add .worktrees/<agent>-<slug> -b <branch> origin/main），" +
                 "并删除该副本；细则见 docs/development/AGENT-WORKFLOW.md 第 2.1 节。",
-            offenders.isEmpty()
+            offenders.isEmpty(),
         )
     }
 
@@ -86,7 +86,7 @@ class RepoHygieneTest {
         assertTrue(
             "docs/README.md 必须登记 $WORKFLOW_DOC（AGENTS.md 要求新增文档同 PR 登记文档地图；" +
                 "否则协作规范会成为第二份流程真相）",
-            docMap.readText().contains(WORKFLOW_DOC)
+            docMap.readText().contains(WORKFLOW_DOC),
         )
     }
 
@@ -94,8 +94,8 @@ class RepoHygieneTest {
 
     @Test
     fun `current branch follows the naming convention`() {
-        val head = readHeadRef(repoRoot()) ?: return  // 非 git 环境：放行
-        if (head.isBlank()) return                    // detached HEAD（CI 常见）：放行
+        val head = readHeadRef(repoRoot()) ?: return // 非 git 环境：放行
+        if (head.isBlank()) return // detached HEAD（CI 常见）：放行
         val allowed = Regex("^(main|master)$").matches(head) ||
             Regex("^(feature|fix|docs|ci|test|refactor|release|hotfix)/[a-z0-9][a-z0-9._-]*$")
                 .matches(head)
@@ -104,7 +104,7 @@ class RepoHygieneTest {
                 "（type ∈ feature/fix/docs/ci/test/refactor/release/hotfix），或 main/master。" +
                 "分支不可追踪会让多 Agent 的变更无法归属到任务/人；" +
                 "细则见 docs/development/AGENT-WORKFLOW.md 第 4 节。",
-            allowed
+            allowed,
         )
     }
 
@@ -124,26 +124,27 @@ class RepoHygieneTest {
     }
 
     /** 「像仓库」的判据：含根级标记文件与本项目的源码骨架。 */
-    private fun looksLikeRepoCopy(dir: File): Boolean =
-        File(dir, "AGENTS.md").isFile &&
-            File(dir, "client/app/src/main/java/com/ldp/adskip").isDirectory
+    private fun looksLikeRepoCopy(dir: File): Boolean = File(dir, "AGENTS.md").isFile &&
+        File(dir, "client/app/src/main/java/com/ldp/adskip").isDirectory
 
     /** 解析当前分支名；非 git 环境返回 null、detached HEAD 返回空串（均放行）。 */
     private fun readHeadRef(root: File): String? {
         val dotGit = File(root, ".git")
         val gitDir = when {
             dotGit.isDirectory -> dotGit
+
             dotGit.isFile -> {
                 val pointer = dotGit.readText().trim().removePrefix("gitdir:").trim()
                 val resolved = if (File(pointer).isAbsolute) File(pointer) else File(root, pointer)
                 if (resolved.isDirectory) resolved else null
             }
+
             else -> null
         } ?: return null
         val head = File(gitDir, "HEAD")
         if (!head.isFile) return null
         val content = head.readText().trim()
-        if (!content.startsWith("ref:")) return ""   // detached HEAD
+        if (!content.startsWith("ref:")) return "" // detached HEAD
         return content.removePrefix("ref:").trim().removePrefix("refs/heads/")
     }
 
@@ -161,9 +162,14 @@ class RepoHygieneTest {
         const val MAX_SCAN_DEPTH = 4
         const val WORKFLOW_DOC = "AGENT-WORKFLOW.md"
         val PRUNED_DIRS = setOf(
-            ".git", "node_modules", "build", ".gradle", ".kotlin", ".idea", "captures", ".tools"
+            ".git",
+            "node_modules",
+            "build",
+            ".gradle",
+            ".kotlin",
+            ".idea",
+            "captures",
+            ".tools",
         )
     }
 }
-
-

@@ -12,10 +12,7 @@ import com.ldp.adskip.engine.AdNode
  * children() 做深度截断和数量限制，防过度遍历。
  * click() 执行 ACTION_CLICK；false 时由服务层回退坐标手势。
  */
-class FrameworkAdNode(
-    private val node: AccessibilityNodeInfo,
-    private val maxDepth: Int = 30
-) : AdNode {
+class FrameworkAdNode(private val node: AccessibilityNodeInfo, private val maxDepth: Int = 30) : AdNode {
 
     override val text: String? get() = node.text?.toString()
     override val desc: String? get() = node.contentDescription?.toString()
@@ -90,7 +87,5 @@ class FrameworkAdNode(
         return rect.height()
     }
 
-    override fun click(): Boolean {
-        return node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-    }
+    override fun click(): Boolean = node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
 }

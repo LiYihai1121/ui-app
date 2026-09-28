@@ -17,7 +17,7 @@ class FakeAdNode(
     private val h: Int = 100,
     private val cx: Float = 50f,
     private val cy: Float = 50f,
-    private val clickResult: Boolean = true
+    private val clickResult: Boolean = true,
 ) : AdNode {
 
     private var parentNode: FakeAdNode? = null
@@ -55,7 +55,7 @@ class FakeAdNode(
             width: Int = 100,
             height: Int = 100,
             clickResult: Boolean = true,
-            children: List<FakeAdNode> = emptyList()
+            children: List<FakeAdNode> = emptyList(),
         ) = FakeAdNode(text, desc, viewId, visible, clickable, editable, children, width, height, 50f, 50f, clickResult)
     }
 }

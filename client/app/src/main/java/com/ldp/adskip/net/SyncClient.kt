@@ -41,7 +41,7 @@ object SyncClient {
         context: Context,
         serverUrl: String,
         rulesRepo: RulesRepository,
-        onResult: (Boolean, String) -> Unit
+        onResult: (Boolean, String) -> Unit,
     ) {
         Thread {
             val result = try {
@@ -62,11 +62,13 @@ object SyncClient {
                     val rulesObj = json.optJSONObject("rules")
                     val keywords: List<String>?
                     val viewIds: List<String>?
+                    val selectors: List<String>?
                     val pkgRules = mutableMapOf<String, RulesRepository.PkgRule>()
 
                     if (rulesObj != null) {
                         keywords = rulesObj.optJSONArray("globalKeywords")?.toStringList()
                         viewIds = rulesObj.optJSONArray("globalViewIds")?.toStringList()
+                        selectors = rulesObj.optJSONArray("globalSelectors")?.toStringList()
                         val apps = rulesObj.optJSONObject("apps")
                         if (apps != null) {
                             val keys = apps.keys()
@@ -76,7 +78,8 @@ object SyncClient {
                                 pkgRules[pkg] = RulesRepository.PkgRule(
                                     keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
                                     viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
-                                    disabled = rule.optBoolean("disabled", false)
+                                    selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
+                                    disabled = rule.optBoolean("disabled", false),
                                 )
                             }
                         }
@@ -84,6 +87,7 @@ object SyncClient {
                         // v0 回退：读兼容字段
                         keywords = json.optJSONArray("keywords")?.toStringList()
                         viewIds = json.optJSONArray("viewIds")?.toStringList()
+                        selectors = json.optJSONArray("selectors")?.toStringList()
                         val packages = json.optJSONObject("packages")
                         if (packages != null) {
                             val keys = packages.keys()
@@ -93,13 +97,14 @@ object SyncClient {
                                 pkgRules[pkg] = RulesRepository.PkgRule(
                                     keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
                                     viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
-                                    disabled = rule.optBoolean("disabled", false)
+                                    selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
+                                    disabled = rule.optBoolean("disabled", false),
                                 )
                             }
                         }
                     }
 
-                    val ok = rulesRepo.applyCloudRules(keywords, viewIds, pkgRules, schemaVersion)
+                    val ok = rulesRepo.applyCloudRules(keywords, viewIds, pkgRules, schemaVersion, selectors)
                     if (!ok) {
                         Pair(false, "规则协议版本过低，请升级客户端")
                     } else {
@@ -177,11 +182,7 @@ object SyncClient {
      * 静默同步规则（无 UI 回调，供 JobService 调用）。
      * 在调用方的 IO 线程中直接执行，不另起线程。
      */
-    fun syncRulesSilently(
-        context: Context,
-        serverUrl: String,
-        rulesRepo: RulesRepository
-    ): Boolean {
+    fun syncRulesSilently(context: Context, serverUrl: String, rulesRepo: RulesRepository): Boolean {
         return try {
             val base = serverUrl.trimEnd('/')
             val knownHash = Prefs.getRulesHash(context)
@@ -197,11 +198,13 @@ object SyncClient {
             val rulesObj = json.optJSONObject("rules")
             val keywords: List<String>?
             val viewIds: List<String>?
+            val selectors: List<String>?
             val pkgRules = mutableMapOf<String, RulesRepository.PkgRule>()
 
             if (rulesObj != null) {
                 keywords = rulesObj.optJSONArray("globalKeywords")?.toStringList()
                 viewIds = rulesObj.optJSONArray("globalViewIds")?.toStringList()
+                selectors = rulesObj.optJSONArray("globalSelectors")?.toStringList()
                 val apps = rulesObj.optJSONObject("apps")
                 if (apps != null) {
                     val keys = apps.keys()
@@ -211,13 +214,15 @@ object SyncClient {
                         pkgRules[pkg] = RulesRepository.PkgRule(
                             keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
                             viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
-                            disabled = rule.optBoolean("disabled", false)
+                            selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
+                            disabled = rule.optBoolean("disabled", false),
                         )
                     }
                 }
             } else {
                 keywords = json.optJSONArray("keywords")?.toStringList()
                 viewIds = json.optJSONArray("viewIds")?.toStringList()
+                selectors = json.optJSONArray("selectors")?.toStringList()
                 val packages = json.optJSONObject("packages")
                 if (packages != null) {
                     val keys = packages.keys()
@@ -227,13 +232,14 @@ object SyncClient {
                         pkgRules[pkg] = RulesRepository.PkgRule(
                             keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
                             viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
-                            disabled = rule.optBoolean("disabled", false)
+                            selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
+                            disabled = rule.optBoolean("disabled", false),
                         )
                     }
                 }
             }
 
-            val ok = rulesRepo.applyCloudRules(keywords, viewIds, pkgRules, schemaVersion)
+            val ok = rulesRepo.applyCloudRules(keywords, viewIds, pkgRules, schemaVersion, selectors)
             if (ok) {
                 Prefs.setRulesHash(context, hash)
                 Prefs.setLastSyncAt(context, System.currentTimeMillis())

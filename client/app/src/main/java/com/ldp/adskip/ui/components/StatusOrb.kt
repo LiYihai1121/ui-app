@@ -47,16 +47,11 @@ import com.ldp.adskip.ui.theme.StatusColors
  * 无障碍：整颗环带 contentDescription，读屏可读出开 / 关状态。
  */
 @Composable
-fun StatusOrb(
-    running: Boolean,
-    contentDescription: String,
-    modifier: Modifier = Modifier,
-    diameter: Dp = 108.dp
-) {
+fun StatusOrb(running: Boolean, contentDescription: String, modifier: Modifier = Modifier, diameter: Dp = 108.dp) {
     val accent by animateColorAsState(
         targetValue = if (running) StatusColors.on else StatusColors.off,
         animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
-        label = "orb-accent"
+        label = "orb-accent",
     )
     val trackColor = MaterialTheme.colorScheme.surfaceVariant
     val coreColor = remember(running, accent) {
@@ -69,24 +64,24 @@ fun StatusOrb(
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 2600, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
+            repeatMode = RepeatMode.Restart,
         ),
-        label = "orb-sweep"
+        label = "orb-sweep",
     )
     val pulse by transition.animateFloat(
         initialValue = 0.70f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 1100, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
+            repeatMode = RepeatMode.Reverse,
         ),
-        label = "orb-pulse"
+        label = "orb-pulse",
     )
 
     Canvas(
         modifier = modifier
             .size(diameter)
-            .semantics { this.contentDescription = contentDescription }
+            .semantics { this.contentDescription = contentDescription },
     ) {
         val strokeWidth = size.minDimension * 0.085f
         val half = strokeWidth / 2f
@@ -101,7 +96,7 @@ fun StatusOrb(
             useCenter = false,
             topLeft = topLeft,
             size = arcSize,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+            style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
         )
 
         if (running) {
@@ -113,7 +108,7 @@ fun StatusOrb(
                 useCenter = false,
                 topLeft = topLeft,
                 size = arcSize,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
             )
         } else {
             // 关闭态：整圈实色，弱化但仍可辨
@@ -124,7 +119,7 @@ fun StatusOrb(
                 useCenter = false,
                 topLeft = topLeft,
                 size = arcSize,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
             )
         }
 
@@ -132,7 +127,7 @@ fun StatusOrb(
         drawCircle(
             color = coreColor,
             radius = size.minDimension * 0.11f * (if (running) pulse else 1f),
-            center = center
+            center = center,
         )
     }
 }

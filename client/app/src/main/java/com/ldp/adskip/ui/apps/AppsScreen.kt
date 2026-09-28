@@ -50,49 +50,47 @@ import com.ldp.adskip.ui.components.TwoLineRow
  * - 搜索无结果与列表为空是两种语义，空态文案分开。
  */
 @Composable
-fun AppsScreen(
-    viewModel: AppsViewModel = viewModel(factory = AppsViewModel.Factory)
-) {
+fun AppsScreen(viewModel: AppsViewModel = viewModel(factory = AppsViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val visible = remember(state.items, state.query, state.onlyEnabled) { state.visibleItems }
 
     Column(modifier = Modifier.fillMaxSize()) {
         PageHeader(
             title = stringResource(R.string.apps_title),
-            subtitle = stringResource(R.string.apps_hint)
+            subtitle = stringResource(R.string.apps_hint),
         )
 
         SearchField(
             query = state.query,
             onQueryChange = viewModel::setQuery,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp),
         )
 
         FilterChip(
             selected = state.onlyEnabled,
             onClick = { viewModel.setOnlyEnabled(!state.onlyEnabled) },
             label = { Text(stringResource(R.string.apps_filter_enabled)) },
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
 
         when {
             state.loading && state.items.isEmpty() -> SkeletonList(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
 
             visible.isEmpty() -> EmptyState(
                 icon = Icons.Default.Search,
                 title = stringResource(
-                    if (state.items.isEmpty()) R.string.apps_empty else R.string.apps_no_match
+                    if (state.items.isEmpty()) R.string.apps_empty else R.string.apps_no_match,
                 ),
                 subtitle = stringResource(
-                    if (state.items.isEmpty()) R.string.apps_loading else R.string.apps_no_match_hint
+                    if (state.items.isEmpty()) R.string.apps_loading else R.string.apps_no_match_hint,
                 ),
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             )
 
             else -> LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
             ) {
                 items(visible, key = { it.pkg }) { row ->
                     AppRowItem(row = row, onToggle = viewModel::setEnabled)
@@ -105,11 +103,7 @@ fun AppsScreen(
 
 /** 应用搜索框：即时过滤，输入非空时提供一键清除。 */
 @Composable
-private fun SearchField(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
+private fun SearchField(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
@@ -120,7 +114,7 @@ private fun SearchField(
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = null
+                contentDescription = null,
             )
         },
         trailingIcon = {
@@ -128,11 +122,11 @@ private fun SearchField(
                 IconButton(onClick = { onQueryChange("") }) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.apps_search_clear)
+                        contentDescription = stringResource(R.string.apps_search_clear),
                     )
                 }
             }
-        }
+        },
     )
 }
 
@@ -147,7 +141,7 @@ private fun AppRowItem(row: AppsViewModel.AppRow, onToggle: (String, Boolean) ->
                 Image(
                     bitmap = bitmap,
                     contentDescription = null,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(40.dp),
                 )
             } else {
                 Spacer(Modifier.size(40.dp))
@@ -156,9 +150,9 @@ private fun AppRowItem(row: AppsViewModel.AppRow, onToggle: (String, Boolean) ->
         trailing = {
             Switch(
                 checked = !row.disabled,
-                onCheckedChange = { checked -> onToggle(row.pkg, checked) }
+                onCheckedChange = { checked -> onToggle(row.pkg, checked) },
             )
-        }
+        },
     )
 }
 
@@ -170,8 +164,7 @@ private fun subtitle(row: AppsViewModel.AppRow): String = when {
 }
 
 /** Drawable 转 ImageBitmap（无 accompanist 依赖的轻量转换） */
-private fun android.graphics.drawable.Drawable.toImageBitmap():
-        androidx.compose.ui.graphics.ImageBitmap {
+private fun android.graphics.drawable.Drawable.toImageBitmap(): androidx.compose.ui.graphics.ImageBitmap {
     val size = 128
     val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
     val canvas = android.graphics.Canvas(bitmap)
