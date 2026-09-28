@@ -4,8 +4,5 @@
     "skill": {
       "*": "allow"
     }
-  },
-  "skills": {
-    "paths": ["./skills"]
   }
 }
