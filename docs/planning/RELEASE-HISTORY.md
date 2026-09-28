@@ -18,7 +18,7 @@
 
 | 版本 | Git tag | 对应提交 | GitHub Release | 状态 |
 | --- | --- | --- | --- | --- |
-| `3.1.0` | 待创建 `v3.1.0` | 待填（release/v3.1.0 合并后） | 待创建 | **待发布**：分支保护要求经 PR 合入 `main` 后再打 tag，tag 推送即由 `release.yml` 自动签名与发布 |
+| `3.1.0` | [`v3.1.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0) | `ad188b0` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0) | 已发布（`AdSkip-v3.1.0.apk` 1,895,460 bytes，`SHA256=30657f9c…fb6`，`CN=AdSkip Release` 正式签名，`apksigner verify` 通过；厂商保活与磁贴未真机验收，见下「发布基线说明」） |
 | `3.1.0-rc.1` | [`v3.1.0-rc.1`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0-rc.1) | `696ef1e` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0-rc.1) | **预发布**（已签名 APK + `SHA256SUMS`；厂商跳转与磁贴未真机验收，**不可作为正式版分发**） |
 | `3.0.4` | [`v3.0.4`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.4) | `27c3f5c` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.4) | 已发布（已签名 Release APK，`CN=AdSkip Release`，可直接安装） |
 | `3.0.3` | [`v3.0.3`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.3) | `958ce23` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.3) | 已发布；APK 为未签名包，无法安装（见「制品勘误」） |
@@ -51,8 +51,8 @@ Release list 的维护要求：版本变更、tag、合并提交和 GitHub Relea
 
 ## 发布基线说明
 
-- `v3.1.0` 的发布基线由 `release/v3.1.0` 合并提交确定（PR 合入 `main` 后回填）。
-  **本次发布覆盖了 `CONTRIBUTING.md`「发布验收」的强制项**：触及无障碍服务、快捷磁贴、厂商跳转、后台调度、系统权限的变更要求真机验收通过后方可发正式版，而截至发布真机矩阵（Android 8/13/14/15 × MIUI/HarmonyOS/ColorOS/OriginOS）**尚未完成**，已知验证仅覆盖模拟器。覆盖由维护者显式决定，并已同步记入 `CHANGELOG.md` 的发布验收覆盖声明，避免后人误读为「已真机验收」。
+- `v3.1.0`（提交 `ad188b0`，PR #42 经 Squash 合入）：tag、提交与 GitHub Release 均在 `main` 线，制品由正式密钥签名并经 `apksigner verify` 复核（`CN=AdSkip Release`，v2 方案），可直接安装。
+  **本次发布覆盖了 `CONTRIBUTING.md`「发布验收」的强制项**：触及无障碍服务、快捷磁贴、厂商跳转、后台调度、系统权限的变更要求真机验收通过后方可发正式版，而截至发布真机矩阵（Android 8/13/14/15 × MIUI/HarmonyOS/ColorOS/OriginOS）**尚未完成**，已知验证仅覆盖模拟器。覆盖由维护者显式决定，并已同步记入 `CHANGELOG.md` 的发布验收覆盖声明，避免后人误读为「已真机验收」。已知风险：磁贴与厂商保活路径在真实 ROM 上的行为可能与模拟器不同；如出现问题走 `hotfix/*`。
 - `v3.0.4`（提交 `27c3f5c`）是上一**发布基线**：tag、提交与 GitHub Release 均在 `main` 线上，制品由正式密钥签名、可直接安装。`v3.0.2`（提交 `5b85e96`，制品待补传）与 `v3.0.3`（提交 `958ce23`，制品不可安装，见「制品勘误」）同样位于 `main` 线，可追溯。
 - `v3.0.0` 与 `v3.0.1` 是 annotated tag，两者都指向提交 `b7ebabb`；该提交**不是 `origin/main` 的祖先**（`git merge-base --is-ancestor b7ebabb origin/main` 返回非 0），只存在于远程分支 `docs/enterprise-version-governance`、`docs/repository-development-rules` 与本地 `main`。因此：
   - 这两个 tag 不得作为发布基线，其 GitHub Release 不再补建；
