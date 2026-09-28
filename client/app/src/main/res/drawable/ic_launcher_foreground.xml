@@ -1,11 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  启动器图标前景层（108dp 画布，坐标系与 Android 自适应图标一致）。
+
+  设计要点（改动前请先读，避免退化成通用「快进」图形）：
+  - 安全区 66dp（21..87）、可视区 72dp（18..90）。圆盘直径 62（23..85）落在安全区内；
+  - 圆盘 + 负空间「跳过」箭头：负空间在小尺寸下对比度最高，48dp 与磁贴 24dp 仍可辨识，
+    而实心描边方案在 24px 会糊成一团；
+  - 箭头必须**完全位于圆盘内**：evenOdd 填充下「在槽内但在圆盘外」的点会重新被填上，
+    负空间消失。因此箭头尖端正好落在圆盘最右点 (85,54)，不再向外穿出；
+  - 单色层见 ic_launcher_monochrome.xml（Android 13+ 主题图标）。
+
+  预览与本文件使用同一组坐标：渲染脚本输出即为此处的 pathData。
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- 快进/跳过图标 -->
+
+    <!-- 圆盘 + 负空间箭头合并为一条 evenOdd 路径 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M36,38 L58,54 L36,70 Z M62,38 h7 v32 h-7 Z" />
+        android:fillType="evenOdd"
+        android:pathData="M23.0,54.0 a31.0,31.0 0 1,0 62.0,0 a31.0,31.0 0 1,0 -62.0,0 Z
+                          M26,47.5 L61,47.5 L61,35.5 L85,54 L61,72.5 L61,60.5 L26,60.5 Z" />
 </vector>

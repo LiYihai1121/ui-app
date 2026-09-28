@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  启动器图标单色层（Android 13+ 主题图标 / Material You 桌面取形）。
+
+  主题化桌面会把本层用系统色重新着色，因此这里必须是**单色、无渐变、无透明叠加**的纯形状，
+  否则会出现「彩色图标 / 单色图标」两套观感。形状与 ic_launcher_foreground.xml 完全一致，
+  只换颜色：前景层用白（压在品牌蓝背景上），本层用黑（由系统着色）。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:fillColor="#000000"
+        android:fillType="evenOdd"
+        android:pathData="M23.0,54.0 a31.0,31.0 0 1,0 62.0,0 a31.0,31.0 0 1,0 -62.0,0 Z
+                          M26,47.5 L61,47.5 L61,35.5 L85,54 L61,72.5 L61,60.5 L26,60.5 Z" />
+</vector>

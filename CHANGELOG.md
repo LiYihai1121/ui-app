@@ -31,6 +31,11 @@
 
 ### Changed
 
+- **启动器图标与快捷磁贴图标重设计**：原图标是通用的「快进」符号（两个三角加一根竖条），与任意播放器/音乐类应用撞脸，在 48dp 下细节已糊成一条白杠。现改为**实心圆盘 + 负空间「跳过」箭头**——箭头从圆盘中穿出的形态直指「开屏广告被跳过」，负空间在小尺寸下对比度最高，磁贴 24dp 与主题图标下同样可辨。
+  - 背景层由纯色改为品牌蓝对角渐变（#1E88E5 → #0D47A1，夹住 M3 主色 #1565C0），删除不再被引用的 `ic_launcher_background` 颜色资源；
+  - **新增 `monochrome` 单色层**：此前缺失，Android 13+ 开启主题图标后本应用不会出现在主题图标选择器中；
+  - 磁贴图标改为与启动器同源的箭头符号（原为另一套坐标的独立图形，24dp 下圆盘会糊，只保留符号）；
+  - 几何按自适应图标的 66dp 安全区校核：圆盘直径 62（23..85）落在安全区内，负空间完全包含于圆盘内——否则 evenOdd 填充会把箭头重新填上，负空间消失。
 - **Jetpack Compose BOM 2026.06.01 → 2026.08.00（Compose 1.12 / material3 1.5 Expressive）**：官方明确要求「always use the latest Compose BOM」——BOM 是各 Compose 库互相兼容的同一时刻快照，单独升某个库反而会制造不匹配组合。因 Compose 1.12 强制要求 `compileSdk 37`，`compileSdk` 同步 36 → 37；`targetSdk` 刻意仍留 35（升 36 会引入 Android 16 强制 edge-to-edge 等行为变更，与 UI 改动耦合会让「这次界面为什么变了」难以归因）。
 - **CI 的 Android SDK 声明与约定插件收口同源**：`ci.yml` 两处 `packages` 由长期滞后的 `platforms;android-35 build-tools;35.0.0` 改为 `platforms;android-37 build-tools;36.0.0`。此前靠 Gradle 自动解析兜住，属于「靠工具兜底」而非「显式声明」，AGP 一收紧校验就会在 CI 上突然失败。
 - **Agent 工具配置收敛到 `kilo.json`**：`opencode.json` 已是 legacy 路径（Kilo 仍会加载，但排在 `kilo.json` 之后），其唯一有效内容是 `permission.skill."*": "allow"`，现迁至根 `kilo.json` 并补 `skills.paths: ["./skills"]`，原文件删除。顺带根治「工具每次运行都重写配置、把工作区改脏」——扩展写入的 `commit_message.prompt` 之类的字段会随文件一起消失。

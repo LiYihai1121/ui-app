@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  自适应图标：背景（品牌蓝渐变）+ 前景（圆盘与负空间箭头）+ 单色层（Android 13+ 主题图标）。
+
+  三个图层缺一不可：
+  - 缺 monochrome：Android 13+ 开启主题图标后，本应用不会出现在主题图标选择器里；
+  - 缺 background/foreground：旧于 API 26 的系统无法渲染（minSdk 26，故无需位图回退）。
+-->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ic_launcher_background" />
+    <background android:drawable="@drawable/ic_launcher_background" />
     <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <monochrome android:drawable="@drawable/ic_launcher_monochrome" />
 </adaptive-icon>
