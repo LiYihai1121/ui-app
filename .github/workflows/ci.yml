@@ -28,7 +28,21 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platforms;android-37 build-tools;36.0.0'
+          # 只装稳定通道的工具：build-tools 36.0.0 是 AGP 9.x 的最低要求（已在稳定通道）。
+          # platform 37 单独在下一步装——它当前是 Beta，不在稳定通道里。
+          packages: 'platform-tools build-tools;36.0.0'
+
+      - name: Install Android 17 (API 37) platform from beta channel
+        # Compose 1.12（BOM 2026.08.00）硬性要求 compileSdk 37，而 Android 17 截至
+        # 2026-09 仍是 Beta，只发布在 beta/canary 通道。setup-android 默认只解析稳定
+        # 通道，直接在 packages 里写 platforms;android-37 会报
+        # `Failed to find package 'platforms;android-37'`。
+        # 故必须用 sdkmanager 显式带 --channel=1 安装。
+        #
+        # 稳定性说明：Compose 1.13.0-alpha01 的发布说明写着
+        # 「Remove requirement for compileSdk 37」——这个硬性要求本身是临时状态。
+        # Android 17 转正后本步骤可简化回 packages 里直接声明。
+        run: sdkmanager --install "platforms;android-37" --channel=1
 
       - name: Run architecture & structure contract tests
         # 只跑 arch 包下的守护测试：失败要在几分钟内暴露，而不是等完整 Android 构建跑完。
@@ -66,10 +80,14 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          # 与约定插件同源：compileSdk 37（compose 1.12 强制）+ AGP 9.4 要求的 build-tools 36.0.0。
-          # 曾长期停留在 android-35 / build-tools 35.0.0，靠 Gradle 自动解析兜住——
-          # 那是「靠工具兜底」而不是「显式声明」，AGP 一收紧校验就会在 CI 上突然失败。
-          packages: 'platforms;android-37 build-tools;36.0.0'
+          # 与上面 Structure Contract job 保持一致：只装稳定通道工具，
+          # platform 37 走下面的 beta 通道安装步骤。
+          packages: 'platform-tools build-tools;36.0.0'
+
+      - name: Install Android 17 (API 37) platform from beta channel
+        # 原因与理由见上方同名步骤的注释（Compose 1.12 要求 compileSdk 37，
+        # 而 Android 17 截至 2026-09 仍在 Beta 通道）。
+        run: sdkmanager --install "platforms;android-37" --channel=1
 
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
