@@ -71,6 +71,19 @@ class SettingsRepository(
             @Suppress("DEPRECATION")
             info.versionCode.toLong()
         }
-        "$`{info.versionName} ($code)"
+        formatVersion(info.versionName, code)
     }.getOrElse { "" }
+
+    companion object {
+        /**
+         * 版本展示格式：`3.1 (10)`。
+         *
+         * 独立为纯函数是为了能在纯 JVM 单测中断言——本仓库真实踩过的坑：
+         * 该行曾因脚本写入时 `$` 被转义成 `` "$`{info.versionName} ($code)" ``，
+         * 模板不求值、编译照过，界面上却直接显示 `${info.versionName} (10)` 字面量。
+         * 这类错误编译期无法发现，只能靠测试与真机走查兜底。
+         */
+        fun formatVersion(versionName: String?, versionCode: Long): String =
+            "${versionName ?: "?"} ($versionCode)"
+    }
 }
