@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">AdSkip</string>
+    <string name="app_name">轻启</string>
     <string name="btn_back">Back</string>
     <string name="app_slogan">Auto-skip splash ads</string>
-    <string name="service_name">AdSkip · Skip Splash Ads</string>
+    <string name="service_name">轻启 · Skip Splash Ads</string>
     <string name="service_desc">Automatically detects and clicks the "Skip" button on splash ads. Supports text keyword and ViewID matching. Runs locally only.</string>
 
     <!-- Main page -->
     <string name="status_off">Service is off</string>
     <string name="status_on">Service is running</string>
-    <string name="status_off_hint">Please enable "AdSkip" in system Accessibility settings</string>
+    <string name="status_off_hint">Please enable "轻启" in system Accessibility settings</string>
     <string name="status_on_hint">Auto-skip is active. Tap below to test</string>
     <string name="btn_open_settings">Open Accessibility Settings</string>
     <string name="btn_test">Test: Simulate Splash Ad</string>
@@ -92,7 +92,7 @@
     <string name="settings_syncing">Syncing…</string>
     <string name="settings_last_sync">Last sync: %1$s</string>
     <string name="settings_never_sync">Never synced</string>
-    <string name="settings_desc">After sync: cloud keywords / ViewIDs / app-specific rules will overwrite local rules. Apps disabled by cloud rules will stop skipping. Server can be started from the server directory using AdSkip Server.</string>
+    <string name="settings_desc">After sync: cloud keywords / ViewIDs / app-specific rules will overwrite local rules. Apps disabled by cloud rules will stop skipping. The server can be started with the bundled server entry in the server directory.</string>
     <string name="settings_auto_sync">Auto-sync every 12 hours</string>
     <string name="settings_dnd">Do Not Disturb</string>
     <string name="settings_dnd_start">Start Time</string>
@@ -105,7 +105,7 @@
     <!-- Vendor keep-alive guide & quick settings tile (device/ layer) -->
     <string name="settings_keepalive_title">System Keep-alive &amp; Shortcuts</string>
     <string name="settings_keepalive_vendor">Detected ROM: %1$s</string>
-    <string name="settings_keepalive_hint">Some vendor ROMs kill the accessibility service after the app sits in the background, which silently stops ad skipping. Allow auto-start here and add AdSkip to the background-running whitelist.</string>
+    <string name="settings_keepalive_hint">Some vendor ROMs kill the accessibility service after the app sits in the background, which silently stops ad skipping. Allow auto-start here and add 轻启 to the background-running whitelist.</string>
     <string name="settings_keepalive_open">Open Auto-start / Background Manager</string>
     <string name="settings_keepalive_opened">Opened “%1$s”. Allow auto-start and background running.</string>
     <string name="settings_keepalive_failed">Could not open system settings. Please go to Settings → Apps → %1$s → Auto-start and allow this app.</string>
@@ -115,7 +115,7 @@
     <string name="settings_tile_exists">The tile is already in quick settings.</string>
     <string name="settings_tile_not_foreground">Keep this page in the foreground and retry, or drag it from “Edit tiles” manually.</string>
     <string name="settings_tile_manual">This system can\'t add the tile automatically. Pull down the shade → Edit tiles → drag “%1$s”.</string>
-    <string name="tile_label">AdSkip</string>
+    <string name="tile_label">轻启</string>
     <string name="tile_state_on">Running · tap to stop</string>
     <string name="tile_state_off">Stopped · tap to start</string>
     <string name="tile_disabled">Skip service turned off</string>

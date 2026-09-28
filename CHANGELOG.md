@@ -21,6 +21,12 @@
 
 ### Added
 
+- **更名：净启动 AdSkip → 轻启**（仅用户可见名称；`applicationId` 仍为 `com.ldp.adskip`，可覆盖升级，无需卸载）：
+  - 桌面名称 `app_name`、无障碍服务名 `service_name`、快捷磁贴名 `tile_label` 三方同步改为「轻启」——这三处分别显示在桌面、系统无障碍列表和快捷设置里，只改其中一处就会出现「同一个应用两个名字」；
+  - 全部 locale（`values` / `values-en`）内的用户可见提示同步清理旧品牌（无障碍引导「开启「轻启」」、保活提示「把轻启加入后台运行白名单」等）；
+  - 新增守护测试 `ProjectStructureTest.product brand is declared consistently across every locale`：把「品牌名唯一事实源」「每个 locale 都必须声明 `app_name` / `service_name` / `tile_label`」「旧品牌名不得复活」升级为可执行门禁，防止后续再出现只改一种语言的「改一半」改名；
+  - 包名、`Theme.AdSkip`、`rootProject.name`、服务端英文标识与文档中的历史命名**刻意保持不变**：它们不面向用户，改动会破坏升级链与发布脚本追溯。
+
 - **静态检查门禁 ktlint**：新增仓库根 `.editorconfig` 作为「代码长什么样」的机器可读事实源（charset/行尾/缩进/行宽 + ktlint 规则集），并接入 `ktlintCheck` 任务——CI 的 `Android Build & Test` job 与发布流水线均已纳入，AGENTS.md、PR 模板、ARCHITECTURE、ROADMAP-ADS、DEV-ENVIRONMENT 的门禁清单同步更新。此前客户端**没有任何格式或静态检查工具**，`ArchitectureBoundaryTest` 只管 import 边界，不管单文件内的写法一致性。启用即修掉存量违规：6 处 `import org.junit.Assert.*` 通配导入改为显式导入，`Color.kt` 与 `Feedback.kt` 的文件级说明由悬空 KDoc 改为块注释。
 
 ### Changed

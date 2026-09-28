@@ -391,6 +391,76 @@ class ProjectStructureTest {
         }
     }
 
+    // ---------- 产品品牌：改名必须一次改全，不允许「改一半」 ----------
+
+    @Test
+    fun `product brand is declared consistently across every locale`() {
+        val resRoot = File(repoRoot(), "client/app/src/main/res")
+        val locales = resRoot.listFiles()
+            ?.filter { it.isDirectory && it.name.startsWith("values") }
+            ?.map { it.name }
+            .orEmpty()
+        assertTrue("未找到任何 values*/ 资源目录，无法校验产品品牌", locales.isNotEmpty())
+
+        // 用户可见的品牌位：桌面名、无障碍服务名、快捷磁贴名。
+        // 三者都会出现在系统设置界面里，漏改任意一项就会出现「同一个应用两个名字」。
+        val brandKeys = listOf("app_name", "service_name", "tile_label")
+        // 旧品牌（v3.x 及以前）：改名后不得在任何 locale 的用户可见文案里复活。
+        val legacyTokens = listOf("净启动", "AdSkip")
+
+        val problems = mutableListOf<String>()
+        locales.forEach { locale ->
+            val xml = File(File(resRoot, locale), "strings.xml")
+            assertTrue("缺少 ${xml.path}", xml.isFile)
+            val text = xml.readText()
+
+            brandKeys.forEach { key ->
+                val value = stringValue(text, key)
+                when {
+                    value.isNullOrEmpty() ->
+                        problems += "$locale/strings.xml：缺少品牌文案 $key"
+
+                    key == "app_name" && value != BRAND ->
+                        problems += "$locale/strings.xml：app_name 应为「$BRAND」，实际为「$value」"
+
+                    LEGACY_BRAND in value ->
+                        problems += "$locale/strings.xml：$key 仍含旧品牌「$LEGACY_BRAND」（值：$value）"
+                }
+                // service_name / tile_label 允许带副标题（如「轻启 · 跳过开屏广告」），
+                // 但必须由当前品牌开头，否则系统界面会显示旧名字。
+                if (!value.isNullOrEmpty() && key != "app_name" && !value.startsWith(BRAND)) {
+                    problems += "$locale/strings.xml：$key 未以「$BRAND」开头（值：$value）"
+                }
+            }
+
+            // 其余文案里也不应残留旧品牌（如「把净启动 AdSkip 加入白名单」这类提示）。
+            (legacyTokens + LEGACY_BRAND).distinct().forEach { token ->
+                val hit = Regex("""<string\s+name="(\w+)"\s*>[^<]*${Regex.escape(token)}""")
+                    .findAll(text)
+                    .map { it.groupValues[1] }
+                    .filterNot { it in brandKeys }
+                    .toList()
+                if (hit.isNotEmpty()) {
+                    problems += "$locale/strings.xml：以下文案仍含旧品牌「$token」：${hit.joinToString()}"
+                }
+            }
+        }
+
+        assertTrue(
+            "产品品牌改名未改全：\n" + problems.joinToString("\n") { "  $it" } +
+                "\n应用曾在 v3.x 期间名为「净启动 AdSkip」，改名为「$BRAND」后须同步所有 locale 的全部用户可见文案；" +
+                "\n包名（applicationId）与 Theme.AdSkip 等内部标识刻意不变，以保证覆盖升级兼容性，不属本测试范围。",
+            problems.isEmpty(),
+        )
+    }
+
+    /** 取出 `<string name="key">value</string>` 的值；不存在返回 null。 */
+    private fun stringValue(text: String, key: String): String? = Regex("""<string\s+name="$key"\s*>([^<]*)</string>""")
+        .find(text)
+        ?.groupValues
+        ?.get(1)
+        ?.trim()
+
     /** 读取 `ui/` 源目录下的 Kotlin 源文件。 */
     private fun readUiSource(relative: String): String {
         val file = File(repoRoot(), "client/app/src/main/java/$BASE_PACKAGE_PATH/ui/$relative")
@@ -412,6 +482,12 @@ class ProjectStructureTest {
         const val MAX_SCAN_DEPTH = 8
         const val BASE_PACKAGE = "com.ldp.adskip"
         const val BASE_PACKAGE_PATH = "com/ldp/adskip"
+
+        /** 当前产品品牌（用户可见名称的唯一事实源）；改名时先改这里，再改全部 locale 文案。 */
+        const val BRAND = "轻启"
+
+        /** 本仓库曾长期使用的旧品牌名，改名后不得在任何 locale 的用户可见文案里复活。 */
+        const val LEGACY_BRAND = "AdSkip"
 
         val INCLUDE_REGEX = Regex("""include\s*\(\s*"(:[^"]+)"\s*\)""")
         val PACKAGE_REGEX = Regex("""^\s*package\s+([\w.]+)""", RegexOption.MULTILINE)
