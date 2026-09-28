@@ -253,18 +253,27 @@ private fun StatusHero(running: Boolean, onPrimaryAction: () -> Unit, onTest: ()
  *
  * v3.2 降级说明：旧版是两张 `headlineMedium` 大数字卡，和状态主视觉抢注意力。
  * 但统计的真正作用是「佐证服务在干活」，不是用户的主要目标——用户的目标是
- * 让广告别弹。所以累计跳过保留为主数字，最近应用降为次要说明并允许省略。
+ * 让广告别弹。
+ *
+ * 本次再收一层：原来这里用 `titleMedium`（卡片标题级）显示「累计跳过 N 次」，
+ * 而「我的」页的同一指标经 [com.ldp.adskip.ui.components.StatTile] 用
+ * `headlineMedium`。**同一数字在两个页面两种视觉权重**，跨页对比时用户会默认
+ * 认为「我的」页那个更重要——而它并不更重要，只是块数不同。
+ *
+ * 改法：首页降为 `bodyMedium`，把「重要」这件事交给**颜色**（primary）而不是字号。
+ * 字号承担层级、颜色承担强调，是 Material 与 Ant Design 的共同分工；
+ * 用字号做强调必然与页面标题抢层级。
  *
  * 「最近应用」为空时整段不显示：空占位比不显示更糟，它会让用户以为数据丢了。
  */
 @Composable
 private fun StatsRow(state: HomeViewModel.UiState, lastAppLabel: String) {
-    SectionCard(contentPadding = PaddingValues(horizontal = 20.dp, vertical = Spacing.lg)) {
+    SectionCard(contentPadding = PaddingValues(horizontal = Spacing.xl, vertical = Spacing.lg)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(R.string.stats_total_short, state.totalSkips),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
             )
             if (lastAppLabel.isNotBlank()) {
                 Spacer(Modifier.width(Spacing.sm))
