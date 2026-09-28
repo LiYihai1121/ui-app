@@ -16,6 +16,15 @@
 - [Pull Request 门禁](#pull-request-门禁)
 - [多 Agent 并行开发](#多-agent-并行开发)
 - [版本策略与发布](#版本策略与发布)
+  - [版本号语义（Semantic Versioning 2.0.0）](#版本号语义semantic-versioning-200)
+  - [兼容性：客户端、服务端、协议](#兼容性客户端服务端协议)
+  - [发布通道与晋级门槛](#发布通道与晋级门槛)
+  - [发布分支纪律](#发布分支纪律)
+  - [维护窗口与生命周期（EOL）](#维护窗口与生命周期eol)
+  - [弃用策略（Deprecation）](#弃用策略deprecation)
+  - [发布节奏与冻结期](#发布节奏与冻结期)
+  - [供应链与可追溯（SLSA 对齐）](#供应链与可追溯slsa-对齐)
+  - [发布顺序](#发布顺序)
   - [发布验收](#发布验收)
 - [纯工程变更不需要版本号](#纯工程变更不需要版本号)
 - [每次发布完成后的最小核对清单](#每次发布完成后的最小核对清单)
@@ -322,28 +331,120 @@ git rebase -i --autosquash origin/main
 
 ## 版本策略与发布
 
-版本号遵循 Semantic Versioning：`MAJOR.MINOR.PATCH`。
+本章是版本更迭与发布的流程规范（该做什么、什么条件下允许晋级与发版）；命令清单不复述，见[「命令与清单的唯一事实源」](#命令与清单的唯一事实源)。
 
-- `MAJOR`：不兼容的 API、协议、数据格式或行为变更；
-- `MINOR`：向后兼容的新功能；
+### 版本号语义（Semantic Versioning 2.0.0）
+
+版本号 `MAJOR.MINOR.PATCH` 遵循 [SemVer 2.0.0](https://semver.org/)：
+
+- `MAJOR`：不兼容的「公开契约」变更；
+- `MINOR`：向后兼容的新增能力；
 - `PATCH`：向后兼容的缺陷、安全或性能修复；
-- 预发布版本使用 `X.Y.Z-rc.N`，不得覆盖正式版本号。
+- 预发布 `X.Y.Z-rc.N`：`N` 从 `1` 起严格递增、不复用；每个 `rc.N` 必须可独立追溯到一个 annotated tag 与 GitHub Release。
 
-版本发布必须遵循以下顺序：
+「公开契约」在本项目特指下列任一对外稳定面——触及即按其破坏性判定 `MAJOR`/`MINOR`，而非按代码改动量：
 
-1. 从 `main` 创建 `release/vX.Y.Z`，冻结功能并更新 [CHANGELOG.md](CHANGELOG.md)；
-2. 以发布标签 `vX.Y.Z` 为规范版本；Android `versionName` 使用对应的 `X.Y` 展示值，单调递增 `versionCode`，服务端 `package.json` 使用完整 `X.Y.Z`；
-3. 通过完整 CI、发布验收和安全检查；
-4. 合并到 `main` 后创建带注释的、不可移动的 `vX.Y.Z` 标签；
-5. 由 CI 根据标签生成制品和 Release，记录制品校验和；
-6. 发布后观察关键指标，出现问题优先回滚制品；修复代码再通过 hotfix 发布。
+| 公开契约 | 事实源 | 破坏性示例 |
+| --- | --- | --- |
+| 同步协议 | [docs/api/API.md](docs/api/API.md) + `schemaVersion` | 删字段、收紧校验、改变版本协商语义 |
+| 服务端 HTTP API | [docs/api/API.md](docs/api/API.md) | 改端点路径/方法、状态码或鉴权语义 |
+| 持久化数据形态 | `Prefs` / 服务端存储 JSON | 旧版本写入的数据不可读取 |
+| 用户可见行为 | 选择器语法、设置项、磁贴、跳转 | 改变已公布选择器语义、移除已发布设置项 |
 
-版本标签一经推送不得删除或移动。版本号变更不能与无关功能混在同一个 PR 中。Android `versionCode` 必须全局单调递增，禁止复用已发布编号。发布使用带注释的 Git tag：
+仅内部实现重排、不改上述任一契约的，按[纯工程变更](#纯工程变更不需要版本号)处理，不升版本号。
+
+### 兼容性：客户端、服务端、协议
+
+- 客户端必须容忍服务端 `schemaVersion` 比自身**高或低一档**（±1）：低档忽略未知字段，高档触发兼容降级而非崩溃；
+- 服务端读取旧 `schemaVersion` 写入的存量数据时单向补齐，禁止要求客户端先升级（见 [RELEASE-HISTORY.md](docs/planning/RELEASE-HISTORY.md) 对 v3.1.0 协议 v2 的处理）；
+- 提升协议 `schemaVersion` 必须配套兼容降级路径与两端契约测试（`SelectorContractTest` / `selectors.contract.test.ts`），否则不发正式版。
+
+### 发布通道与晋级门槛
+
+本项目只设**预发布 `rc`** 与**正式 `stable`** 两个通道，不引入 Canary/Dev——系统级行为无法靠功能开关兜底，需隔离分支（见[§2 分支策略](#2-分支策略)）。
+
+`rc → stable` 必须满足**发布就绪定义（Definition of Done）**：
+
+- [ ] 该版本最后一个 `rc.N` 的三项必需 CI（Structure Contract / Android Build & Test / Server Tests）全绿；
+- [ ] `CHANGELOG.md` 该版本条目已冻结，无 `TODO`/占位；
+- [ ] 触及系统级范围（无障碍/磁贴/跳转/调度/权限）时，真机验收矩阵已通过（见[发布验收](#发布验收)）；未通过只能维持 `rc`；
+- [ ] 无未关闭的 P0/P1 阻断项；
+- [ ] `versionName` / `versionCode` / `server/package.json` / tag 四处版本一致，且 `versionCode` 全局单调递增、不复用。
+
+**覆盖真机验收先行发布的例外**：仅当触及系统级范围且真机矩阵确未完成时，可由维护者显式决定覆盖。该决定必须**三处同时声明**——`CHANGELOG.md` 发布验收覆盖声明、[RELEASE-HISTORY.md](docs/planning/RELEASE-HISTORY.md)「发布基线说明」、tag `vX.Y.Z` 的 annotated message——并默认转入 hotfix 候补（出问题走[紧急变更与回滚](#紧急变更与回滚)）。`v3.1.0` 即按此例外发布。
+
+晋级失败（`rc` 发现阻断）时发下一个 `rc.N+1`，**不得**把 `rc` 标签改名 stable；`rc` 标签同样不可移动或删除。
+
+### 发布分支纪律
+
+`release/vX.Y.Z` 从 `main` 创建后进入冻结期，仅接受 **cherry-pick 的修复**，不接受新功能：
+
+- 修复必须先在 `main` 或 `fix/*` 验证，再 cherry-pick 进 `release/*`；禁止在 `release/*` 上直接开发；
+- 每个进入 `release/*` 的修复必须**双向落地**：同时回合 `main`，避免主干丢失修复（hotfix 双回合见[紧急变更与回滚](#紧急变更与回滚)）；
+- `release/*` 在 tag 创建且 hotfix 窗口关闭（默认 14 天或下一个 stable 发布，以先到者为准）后删除源分支，tag 与提交保持可达。
+
+本仓库**不引入长期 `develop`**（理由见[§2 分支策略](#2-分支策略)），`release/*` 是唯一的发布隔离分支。
+
+### 维护窗口与生命周期（EOL）
+
+| 版本 | 状态 | 接受变更 |
+| --- | --- | --- |
+| 最新 stable | active | 全部修复 |
+| 上一 stable | maintenance | 仅安全与阻断性修复 |
+| 更早 stable | EOL | 不再修复；tag 与提交保持可达，承载分支不得删除 |
+
+- 承载已发布 tag 的分支**不得删除**：tag 必须保持可达。历史先例见 [RELEASE-HISTORY.md](docs/planning/RELEASE-HISTORY.md)「发布基线说明」对 `v3.0.0`/`v3.0.1`（提交 `b7ebabb`）的处置——tag 保留不动、承载分支不删、版本号不再复用。
+- 指向非 `main` 提交的 tag 视为历史标签：不补建 Release、不复用版本号，其承载分支不得删除。
+- Android 最低支持机型随 `minSdk` 列明（当前 minSdk 26，即 Android 8 下界）；提升 `minSdk` 视为破坏兼容性，走 `MAJOR` 或显式弃用流程。
+
+### 弃用策略（Deprecation）
+
+协议、API 或用户可见行为的弃用必须**先标记、后移除**，给予至少一个 `MINOR` 周期的兼容期：
+
+1. **标记**：在 `CHANGELOG.md` 与 [docs/api/API.md](docs/api/API.md) 标注 `@deprecated`，写明替代方案与拟移除版本；
+2. **共存**：新版本与被弃用项同时可用，客户端按[兼容性矩阵](#兼容性客户端服务端协议)容忍；
+3. **移除**：到 sunset 版本移除；移除即 `MAJOR`。
+
+禁止「标记与移除同版本」——会破坏已发布的客户端。
+
+### 发布节奏与冻结期
+
+- 采用**时间为主、功能为辅**的节奏：`MINOR` 按固定周期切片（目标见 [ROADMAP.md](docs/planning/ROADMAP.md)），切片内未完成的能力顺延，而非阻塞整次发版；
+- 发布前进入**代码冻结**：冻结期内仅接受 release-blocking 修复，新功能改入下一切片；
+- 法定节假日/重大发布设立**发布冻结**，冻结期内仅安全与阻断性修复。
+
+### 供应链与可追溯（SLSA 对齐）
+
+发布制品按供应链成熟度分阶，**已落地项不得回退**：
+
+| 维度 | 当前基线（已落地） | 目标 |
+| --- | --- | --- |
+| Git tag | annotated tag（`git tag -a`） | 带签名 tag（GPG / sigstore） |
+| 制品签名 | `apksigner verify` 强制，缺正式密钥回退 debug 签名 | 正式密钥入 Secrets，CI 全量正式签名 |
+| 制品校验和 | `SHA256SUMS` | + SBOM（CycloneDX/SPDX）+ provenance attestation |
+| 构建环境 | CI 构建，[release.yml](.github/workflows/release.yml) 校验三处版本一致 | SLSA Build L3（可重现、有出处证明） |
+| 制品不可变 | Release 制品不替换，有问题发新 tag | 同左，强约束 |
+
+- `versionCode` 全局单调递增，禁止复用已发布编号；同一设备长期升级须固定签名来源（正式签名或已配置 Secrets 的 Release 制品），混用须卸载重装（见 [RELEASE-HISTORY.md](docs/planning/RELEASE-HISTORY.md) 制品勘误）。
+- 版本号变更**单独成提交**（`chore(release): vX.Y.Z`），不与功能混在同一 PR——便于二分与回滚。
+
+发布使用带注释的 Git tag：
 
 ```bash
 git tag -a vX.Y.Z -m "release: vX.Y.Z"
 git push origin vX.Y.Z
 ```
+
+版本标签一经推送不得删除或移动；指向非 `main` 提交的 tag 不得补建 Release、不得复用版本号。
+
+### 发布顺序
+
+1. 从 `main` 创建 `release/vX.Y.Z`，冻结功能并更新 [CHANGELOG.md](CHANGELOG.md)；
+2. 以发布标签 `vX.Y.Z` 为规范版本；Android `versionName` 用 `X.Y` 展示值，单调递增 `versionCode`，服务端 `package.json` 用完整 `X.Y.Z`；
+3. 通过完整 CI、发布验收与安全检查；
+4. 合并到 `main` 后创建带注释、不可移动的 `vX.Y.Z` 标签；
+5. 由 [release.yml](.github/workflows/release.yml) 根据标签构建制品与 Release，记录 `SHA256SUMS` 与 `apksigner` 证书；
+6. 发布后观察关键指标，出现问题优先回滚制品；修复代码再通过 hotfix 发布。
 
 ### 发布验收
 
@@ -366,13 +467,15 @@ CI 只能证明「编译通过、逻辑符合契约」，**不能证明「在真
 - [ ] GitHub Release 已创建并上传制品与 `SHA256SUMS`；
 - [ ] **制品已用 `apksigner verify` 校验签名并确认可安装**——未签名包在手机上必然报「解析软件包时出现问题」（Issue #23）；命令见 [DEV-ENVIRONMENT.md](docs/development/DEV-ENVIRONMENT.md#apk-安装排障)；
 - [ ] 触及系统集成范围（无障碍/磁贴/跳转/调度/权限）时，真机验收已完成并记录机型与 ROM 版本；
-- [ ] 已确认没有复用或移动历史 tag。
+- [ ] 已确认没有复用或移动历史 tag；
+- [ ] 触及协议或弃用项时，[docs/api/API.md](docs/api/API.md) 已标注 `@deprecated` 或 `schemaVersion` 变更，并保留至少一个 `MINOR` 兼容期；
+- [ ] 若为覆盖验收的例外发布或 P0 修复，无指责复盘（postmortem）已补并链接至 [RELEASE-HISTORY.md](docs/planning/RELEASE-HISTORY.md)。
 
 ## 紧急变更与回滚
 
-生产故障可从最新生产标签创建 `hotfix/*`，PR 描述必须包含事故编号、影响范围、缓解措施和回滚点。紧急变更仍需至少一名维护者批准并通过最小 CI；发布后必须补齐完整测试、变更记录和复盘，并回合并所有维护分支。
+生产故障从最新生产标签创建 `hotfix/<id>-<简述>`，PR 描述必须包含事故编号、影响范围、缓解措施和回滚点。紧急变更仍需至少一名维护者批准并通过最小 CI；发布后必须补齐完整测试、变更记录和复盘，并**双向回合**——修复同时合入 `release/*`（发修复版本）与 `main`（避免主干再丢失），见[发布分支纪律](#发布分支纪律)。
 
-回滚优先选择已验证的上一版本制品或 `git revert`（生成新提交），禁止在受保护分支上 reset、force-push 或删除历史标签。涉及数据库或协议的回滚必须提供向后兼容方案。
+回滚优先选择已验证的上一版本制品（回到最近一个 green tag）或 `git revert`（生成新提交），禁止在受保护分支上 reset、force-push 或删除历史标签。涉及数据库或协议的回滚必须提供向后兼容方案。**任何 P0 事故或覆盖验收的例外发布都必须补一份无指责复盘（blameless postmortem）**：时间线、根因、行动项，链接记入 [RELEASE-HISTORY.md](docs/planning/RELEASE-HISTORY.md) 对应版本行。
 
 ## 仓库管理员配置
 
@@ -383,6 +486,8 @@ CI 只能证明「编译通过、逻辑符合契约」，**不能证明「在真
 - 禁止管理员绕过（bypass）——留后门等于没有门禁；
 - 开启 Dependabot/Renovate，依赖升级走 PR 并保留 lockfile；
 - 发布凭据使用 CI Secret/OIDC，禁止写入仓库和日志；
+- 版本 tag 目标为带签名（GPG / sigstore），CI 制品目标生成 SBOM 与 provenance attestation（见[供应链与可追溯](#供应链与可追溯slsa-对齐)）；
+- 制品保留周期与回滚窗口明确：至少保留最近两个 stable 与全部 rc，便于回到最近 green tag；
 - Release、APK、日志和测试报告保留周期明确，生产制品可追溯到 commit/tag。
 
 ## 命令与清单的唯一事实源
