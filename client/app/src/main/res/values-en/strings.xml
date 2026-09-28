@@ -83,4 +83,33 @@
     <string name="settings_battery_allow">Allow Background</string>
     <string name="settings_battery_done">Background allowed</string>
     <string name="settings_url_invalid">URL must start with http:// or https://</string>
+
+    <!-- Vendor keep-alive guide & quick settings tile (device/ layer) -->
+    <string name="settings_keepalive_title">System Keep-alive &amp; Shortcuts</string>
+    <string name="settings_keepalive_vendor">Detected ROM: %1$s</string>
+    <string name="settings_keepalive_hint">Some vendor ROMs kill the accessibility service after the app sits in the background, which silently stops ad skipping. Allow auto-start here and add AdSkip to the background-running whitelist.</string>
+    <string name="settings_keepalive_open">Open Auto-start / Background Manager</string>
+    <string name="settings_keepalive_opened">Opened “%1$s”. Allow auto-start and background running.</string>
+    <string name="settings_keepalive_failed">Could not open system settings. Please go to Settings → Apps → %1$s → Auto-start and allow this app.</string>
+    <string name="settings_tile_hint">Quick tile: pull down the notification shade → tap Edit → drag “%1$s” from inactive tiles into the quick settings area to see the state and toggle it in one tap.</string>
+    <string name="settings_tile_add">Add Quick Settings Tile</string>
+    <string name="settings_tile_added">Tile added — check your notification shade.</string>
+    <string name="settings_tile_exists">The tile is already in quick settings.</string>
+    <string name="settings_tile_not_foreground">Keep this page in the foreground and retry, or drag it from “Edit tiles” manually.</string>
+    <string name="settings_tile_manual">This system can\'t add the tile automatically. Pull down the shade → Edit tiles → drag “%1$s”.</string>
+    <string name="tile_label">AdSkip</string>
+    <string name="tile_state_on">Running · tap to stop</string>
+    <string name="tile_state_off">Stopped · tap to start</string>
+    <string name="tile_disabled">Skip service turned off</string>
+
+    <!-- Vendor display names (Vendor enum → label) -->
+    <string name="vendor_xiaomi">Xiaomi / Redmi (MIUI)</string>
+    <string name="vendor_huawei">Huawei (EMUI / HarmonyOS)</string>
+    <string name="vendor_honor">HONOR (MagicOS)</string>
+    <string name="vendor_oppo">OPPO-family (ColorOS, incl. realme)</string>
+    <string name="vendor_vivo">vivo / iQOO (OriginOS)</string>
+    <string name="vendor_meizu">Meizu (Flyme)</string>
+    <string name="vendor_oneplus">OnePlus (OxygenOS / ColorOS)</string>
+    <string name="vendor_samsung">Samsung (One UI)</string>
+    <string name="vendor_generic">Other system (generic entries)</string>
 </resources>

@@ -18,6 +18,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- 系统级体验：下拉通知栏快捷磁贴（`SkipTileService`）——一眼查看无障碍服务状态，一次点击即可启停（运行中点按等价于在系统设置中关闭服务）；Android 13+ 可在设置页一键请求系统添加磁贴，低版本引导手动从「编辑磁贴」拖动。
+- 厂商保活引导：设置页新增「系统保活与快捷入口」，自动识别 MIUI / HarmonyOS / MagicOS / ColorOS / OriginOS / Flyme / OxygenOS / One UI 并一键跳转对应的自启动 / 后台管理页面，入口不可用时逐级降级到系统通用页面并提示手动路径——针对「后台被强杀导致跳过静默失效」这一高频问题。
+- 客户端新增 `device/` 系统集成层（ROM 识别与入口表、跳转出口、快捷磁贴），设置页与首页不再自行拼装系统 `Intent`；新增 JVM 单测覆盖厂商识别、磁贴点击决策与 `AndroidManifest.xml` 契约（磁贴注册、`<queries>` 包可见性声明），单测总数 121 → 153。
+
 ### Fixed
 
 - 修正产品落地页版本信息漂移（[Issue #27](https://github.com/LiYihai1121/ui-app/issues/27)）：导航与 CTA 的下载按钮、Hero 徽章改为 `{{APP_VERSION}}` 占位符，由服务端在响应 `GET /` 时按 `server/package.json` 版本注入，发布时自动同步；同时修正安装包体积（858 KB → 1.5 MB）与路线图状态（v3.0 已完成、v3.1+ 规划中），与 [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md) 对齐。

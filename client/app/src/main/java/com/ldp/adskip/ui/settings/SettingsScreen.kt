@@ -1,14 +1,13 @@
 ﻿package com.ldp.adskip.ui.settings
 
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -40,15 +39,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
+import com.ldp.adskip.device.KeepAliveNavigator
 import com.ldp.adskip.ui.UiEffect
+import com.ldp.adskip.ui.vendorLabelRes
 import java.util.Locale
 
 /**
- * 云端规则同步设置：服务器地址、手动/自动同步、免打扰时段、电池优化。
+ * 设置页：云端规则同步、免打扰时段、电池优化、厂商保活引导与快捷磁贴。
+ *
+ * 所有系统设置跳转统一经 [KeepAliveNavigator]（`device/` 层唯一跳转出口），
+ * UI 不直接拼装 `Intent`。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -171,7 +176,7 @@ fun SettingsScreen(
             HorizontalDivider()
 
             // ---------- 电池优化 ----------
-            Button(onClick = { openBatterySettings(context) }) {
+            Button(onClick = { KeepAliveNavigator.openBatteryOptimizationSettings(context) }) {
                 Text(
                     stringResource(
                         if (state.batteryExempt) {
@@ -181,6 +186,45 @@ fun SettingsScreen(
                         }
                     )
                 )
+            }
+
+            HorizontalDivider()
+
+            // ---------- 厂商保活引导 + 快捷磁贴 ----------
+            Text(
+                text = stringResource(R.string.settings_keepalive_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = stringResource(
+                    R.string.settings_keepalive_vendor,
+                    stringResource(vendorLabelRes(state.keepAliveVendor))
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = stringResource(R.string.settings_keepalive_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Button(onClick = viewModel::openKeepAliveSettings) {
+                Text(stringResource(R.string.settings_keepalive_open))
+            }
+
+            Spacer(Modifier.height(4.dp))
+
+            Text(
+                text = stringResource(
+                    R.string.settings_tile_hint,
+                    stringResource(R.string.tile_label)
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Button(onClick = viewModel::requestAddTile) {
+                Text(stringResource(R.string.settings_tile_add))
             }
         }
     }
@@ -248,18 +292,6 @@ private fun MinutePickerDialog(
         },
         text = { TimePicker(state = pickerState) }
     )
-}
-
-private fun openBatterySettings(context: android.content.Context) {
-    try {
-        context.startActivity(
-            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                data = Uri.parse("package:${context.packageName}")
-            }
-        )
-    } catch (_: Exception) {
-        context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-    }
 }
 
 private fun formatMinuteRange(start: Int, end: Int): String =

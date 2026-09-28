@@ -1,7 +1,5 @@
 ﻿package com.ldp.adskip.ui.home
 
-import android.content.Intent
-import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
+import com.ldp.adskip.device.KeepAliveNavigator
 import com.ldp.adskip.ui.Routes
 import com.ldp.adskip.ui.UiEffect
 import com.ldp.adskip.ui.theme.StatusOff
@@ -81,9 +80,7 @@ fun HomeScreen(
                 StatusCard(
                     running = state.serviceRunning,
                     onOpenSettings = {
-                        try {
-                            context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                        } catch (_: Exception) {
+                        if (!KeepAliveNavigator.openAccessibilitySettings(context)) {
                             Toast.makeText(
                                 context,
                                 context.getString(R.string.settings_open_failed),

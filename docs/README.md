@@ -63,6 +63,8 @@ docs/
 
 未排期能力见 [planning/ROADMAP.md](planning/ROADMAP.md) 的「候选池」；L2/L3 启动前必须先完成 Phase 0 合规评审（见 [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 3 节）。
 
+> **进行中（未分配版本号）**：系统级体验——下拉快捷磁贴（`TileService`）+ 厂商保活/自启动引导（`device/` 层，含 `<queries>` 可见性声明与无障碍真实状态查询），见 [planning/ROADMAP.md](planning/ROADMAP.md) 的「进行中」小节。
+
 ## 规划中尚未创建的文档
 
 | 文档 | 归属版本 | 说明 |

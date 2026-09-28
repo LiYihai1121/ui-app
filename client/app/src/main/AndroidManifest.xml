@@ -13,6 +13,42 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+
+        <!--
+          厂商保活引导（device/VendorKeepAlive.kt）：Android 11+ 包可见性声明。
+          这些包/页面不属于本应用，未声明则 PackageManager 无法解析，磁贴与设置页的一键跳转会静默失败。
+          契约由 client/app/src/test/java/com/ldp/adskip/arch/ManifestContractTest.kt 强制校验，
+          新增入口时必须同步补齐对应条目。
+        -->
+        <package android:name="com.miui.securitycenter" />
+        <package android:name="com.huawei.systemmanager" />
+        <package android:name="com.hihonor.systemmanager" />
+        <package android:name="com.coloros.safecenter" />
+        <package android:name="com.oplus.safecenter" />
+        <package android:name="com.vivo.permissionmanager" />
+        <package android:name="com.iqoo.secure" />
+        <package android:name="com.meizu.safe" />
+        <package android:name="com.oneplus.security" />
+        <package android:name="com.samsung.android.lool" />
+        <package android:name="com.samsung.android.sm_cn" />
+        <intent>
+            <action android:name="miui.intent.action.OP_AUTO_START" />
+        </intent>
+        <intent>
+            <action android:name="com.meizu.safe.security.SHOW_APPSEC" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.APPLICATION_DETAILS_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.ACCESSIBILITY_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+        </intent>
     </queries>
 
     <application
@@ -44,6 +80,18 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/skip_service_config" />
+        </service>
+
+        <!-- 下拉通知栏快捷磁贴（系统级状态/启停入口，Android 13+ 支持应用主动请求添加） -->
+        <service
+            android:name=".device.SkipTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_qs_skip"
+            android:label="@string/tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
         </service>
 
         <!-- 规则同步任务（JobScheduler，三合一替代 AlarmManager 套件） -->
