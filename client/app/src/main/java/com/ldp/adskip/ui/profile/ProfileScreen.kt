@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -73,6 +73,10 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel(factory = ProfileViewM
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item { UsageCard(state = state) }
+            // 设置（云端规则 / 免打扰 / 保活 / 磁贴）排在「关于」之前：
+            // 它是用户会反复回来调整的高频项，而版本号、设备型号这类「关于」信息
+            // 基本只会在遇到问题时才看。原来的顺序把高频项压在最长的滚动条末尾。
+            item { SettingsContent() }
             item {
                 AccessibilityCard(
                     running = state.serviceRunning,
@@ -89,9 +93,6 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel(factory = ProfileViewM
                 )
             }
             item { AboutCard(state = state, vendorName = viewModel::vendorName) }
-            // 设置内容整块内嵌：它是本页最长的一段，放进 LazyColumn 的单 item 里，
-            // 使整页只有一条纵向滚动条（内层再嵌滚动会出现滚动冲突）。
-            item { SettingsContent() }
         }
     }
 }
@@ -101,6 +102,10 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel(factory = ProfileViewM
  *
  * 首页的状态环已提供主行动按钮，这里是第二入口：服务被系统强杀后用户往往先落到
  * 「我的」页找设置，单独给出「打开无障碍设置」可少一次返回。
+ *
+ * 按钮用 tonal 而非 filled：首页已经把「去开启服务」做成全应用唯一的主行动，
+ * 本页作为第二入口再用 filled 会在同一屏里出现两个同权重的 filled 按钮，
+ * 把首页建立的优先级抹平。
  */
 @Composable
 private fun AccessibilityCard(running: Boolean, onOpen: () -> Unit) {
@@ -113,7 +118,7 @@ private fun AccessibilityCard(running: Boolean, onOpen: () -> Unit) {
             ),
         )
         Spacer(Modifier.height(16.dp))
-        Button(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
+        FilledTonalButton(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.btn_open_settings))
         }
     }
@@ -139,12 +144,9 @@ private fun UsageCard(state: ProfileViewModel.UiState) {
                 modifier = Modifier.weight(1f),
             )
         }
-        Spacer(Modifier.height(12.dp))
-        SectionHint(
-            stringResource(
-                if (state.serviceRunning) R.string.status_on_hint else R.string.status_off_hint,
-            ),
-        )
+        // 此处不再重复「服务运行中 / 未开启」的状态提示：同一句话在首页状态卡已经
+        // 出现过，页脚再写一遍只会让概览卡变长而不增加信息。服务状态属于「做什么」
+        // 而不是「用得怎么样」，后者才是概览该回答的。
     }
 }
 
