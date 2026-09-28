@@ -55,21 +55,21 @@ docs/
 
 > **改规划的顺序**：先改 `docs/planning/ROADMAP.md`（版本意图）→ 再改同目录的 `ROADMAP-ADS.md` 与 `DESIGN-PHASE1-SELECTOR.md` 的版本归属 → 最后同步 `CHANGELOG.md` 与 `RELEASE-HISTORY.md` 的对应行。`docs/api/API.md`、`docs/architecture/ARCHITECTURE.md` 涉及协议字段时一并更新。
 
-## 当前规划全景（更新于 2026-09-28）
+## 当前规划全景（更新于 2026-09-29）
 
 | 版本 | 状态 | 内容 | 详见 |
 | --- | --- | --- | --- |
 | `3.0.2` | 已发布（tag 已建，制品待补传） | v3.0 系列补丁 | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
 | `3.0.3` | 已发布（tag 已建，CI 制品已归档；制品未签名不可安装，见 [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) 制品勘误） | 选择器第三通道内核（步骤 A/B，无用户可见行为变化） | [planning/DESIGN-PHASE1-SELECTOR.md](planning/DESIGN-PHASE1-SELECTOR.md) 第 10 节 |
 | `3.0.4` | 已发布（tag 已建，制品已签名可直接安装） | 安装可用性修复：release 签名回退 + 发布强制签名校验 + Secrets 注入正式密钥（Issue #23） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
-| `3.1.0` | 规划 | 协议 v2（`selectors` 字段）+ 点击结果校验与本地规则黑名单（步骤 C/D） | 同上 |
+| `3.1.0` | 已定稿（待 tag 发布） | 协议 v2（`selectors` 字段）+ 点击结果校验 + 品牌更名「轻启」+ 图标/UI 重设计 + 快捷磁贴 + 厂商保活 + ktlint 门禁（用户可见变更见 [CHANGELOG.md](../CHANGELOG.md) 3.1.0） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
 | `3.2.0` | 规划 | 节点快照工具 + 设置页入口（步骤 E） | 同上 |
 | `3.3.0` | 规划 | Top 30 规则入库 + 真机回归 + 规则审核通道（步骤 F） | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 6 节 |
 | `3.4.0` / `3.5.0` / `4.0.0` | 规划 | L2 DNS 过滤 / L3 防摇一摇 / L4 通知与系统层 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 5~6 节 |
 
 未排期能力见 [planning/ROADMAP.md](planning/ROADMAP.md) 的「候选池」；L2/L3 启动前必须先完成 Phase 0 合规评审（见 [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 3 节）。
 
-> **进行中（未分配版本号）**：系统级体验——下拉快捷磁贴（`TileService`）+ 厂商保活/自启动引导（`device/` 层，含 `<queries>` 可见性声明与无障碍真实状态查询），见 [planning/ROADMAP.md](planning/ROADMAP.md) 的「进行中」小节。
+> **已落地**：系统级体验——下拉快捷磁贴（`TileService`）+ 厂商保活/自启动引导（`device/` 层，含 `<queries>` 可见性声明与无障碍真实状态查询）已随 `v3.1.0-rc.1` 预发布、`v3.1.0` 正式版定稿交付，见 [planning/ROADMAP.md](planning/ROADMAP.md)。
 
 ## 规划中尚未创建的文档
 
