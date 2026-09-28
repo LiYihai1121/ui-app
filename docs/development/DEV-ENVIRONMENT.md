@@ -63,7 +63,19 @@ bun run server.ts
 - **未签名包**：`assembleRelease` 在 `client/local.properties` 缺少 `adskip.*` 签名配置时会回退 debug 签名；只有显式设置 `adskip.unsignedRelease=true` 才产出未签名包，而发布流水线会拒绝上传这类产物。
 - **`minSdk = 26`**：对应 Android 8.0，低于该版本的设备会直接解析失败。
 - **签名冲突**：与手机上已安装版本签名不一致时报「应用未安装」，需先卸载 `com.ldp.adskip`。
-- **分发完整性**：APK 经聊天工具转发可能被改名或截断，务必比对 SHA-256；本机分发建议把签名后的包放到仓库根并命名 `AdSkip-latest.apk`（`*.apk` 不入库），手机浏览器访问 `http://<本机IP>:3210/download` 下载。
+- **分发完整性**：APK 经聊天工具转发可能被改名或截断，务必比对 SHA-256；本机分发可用 `bun run start` 起本地服务后按 [APK 安装排障](#apk-安装排障) 的方式下载比对。**仓库根不保留任何构建产物**（含 `*.apk`）：`assembleRelease` 的产物在 `client/app/build/outputs/apk/release/`，正式分发以 GitHub Releases + `SHA256SUMS` 为准。
+
+## CI 构建失败排障
+
+**症状**：CI 报 `A problem occurred configuring root project` → `Could not resolve com.android:...` → `Repository maven is disabled due to earlier error` → `There are 28 more failures with identical causes`，**测试一条都没跑**。
+
+**判定**：这是**镜像故障，不是依赖或代码问题**。典型特征是根因里出现 `Received status code 502 from server: Bad Gateway` 或 `Connection reset`，且同一次推送的 `Android Build & Test` 若通过即可佐证（本仓库的仓库源是阿里云镜像优先，见 `client/settings.gradle.kts`）。
+
+**处理**：直接 **Re-run failed jobs**。502 属瞬时故障，无需改代码。
+
+> ⚠️ `settings.gradle.kts` 注释里的「官方仓库回退」**只对 404 生效**：依赖不存在时 Gradle 会顺延到下一个仓库；
+> 而镜像返回 5xx/连接中断时，Gradle 会**直接禁用该仓库并让构建失败**，不会顺延。
+> 因此镜像抖动会整体阻断 CI，这是已知取舍（国内直连官方源会读超时），靠重跑恢复。
 
 ## 环境清理
 
