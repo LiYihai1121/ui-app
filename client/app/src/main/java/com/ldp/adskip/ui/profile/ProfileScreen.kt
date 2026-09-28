@@ -30,6 +30,8 @@ import com.ldp.adskip.R
 import com.ldp.adskip.device.KeepAliveNavigator
 import com.ldp.adskip.device.Vendor
 import com.ldp.adskip.ui.Messenger
+import com.ldp.adskip.ui.components.InfoDivider
+import com.ldp.adskip.ui.components.InfoRow
 import com.ldp.adskip.ui.components.PageHeader
 import com.ldp.adskip.ui.components.SectionCard
 import com.ldp.adskip.ui.components.SectionHint
@@ -175,35 +177,4 @@ private fun AboutCard(state: ProfileViewModel.UiState, vendorName: (Vendor) -> S
         Spacer(Modifier.height(12.dp))
         SectionHint(stringResource(R.string.profile_privacy_hint))
     }
-}
-
-/** 「标签 — 取值」一行；取值过长时省略而非撑破布局。 */
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(start = 16.dp),
-        )
-    }
-}
-
-@Composable
-private fun InfoDivider() {
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }

@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -94,6 +95,20 @@ fun AppsScreen(viewModel: AppsViewModel = viewModel(factory = AppsViewModel.Fact
                 subtitle = stringResource(
                     if (state.items.isEmpty()) R.string.apps_loading else R.string.apps_no_match_hint,
                 ),
+                // 空态不能只说「没有」还得给出路：搜索无结果时提供一个一键清除的入口，
+                // 否则用户要手动清空输入框并关掉筛选才能看到全部应用。
+                action = if (state.items.isNotEmpty()) {
+                    {
+                        TextButton(onClick = {
+                            viewModel.setQuery("")
+                            viewModel.setOnlyEnabled(false)
+                        }) {
+                            Text(stringResource(R.string.apps_clear_filters))
+                        }
+                    }
+                } else {
+                    null
+                },
                 modifier = Modifier.fillMaxSize(),
             )
 

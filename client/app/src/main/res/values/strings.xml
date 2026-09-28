@@ -80,6 +80,7 @@
     <string name="apps_empty">没有找到可管理的应用</string>
     <string name="apps_no_match">没有匹配的应用</string>
     <string name="apps_no_match_hint">换个关键词，或关闭「只看已启用」筛选</string>
+    <string name="apps_clear_filters">清除搜索与筛选</string>
 
     <!-- 跳过日志 -->
     <string name="logs_title">跳过日志</string>
