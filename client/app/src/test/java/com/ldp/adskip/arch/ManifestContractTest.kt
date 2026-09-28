@@ -68,7 +68,57 @@ class ManifestContractTest {
         assertTrue("清单缺少 <queries> 声明块", manifest.contains("<queries>"))
     }
 
+    // ---------- 广播不得越权泄露 ----------
+
+    @Test
+    fun `every broadcast is restricted to this app`() {
+        val service = readMainSource("service/SkipAdService.kt")
+        // 按「整段调用」而非按行匹配：sendBroadcast(\n  Intent(...)\n) 会跨行，
+        // 逐行判断会把 setPackage 在下一行的合法调用误判为违规。
+        val calls = SEND_BROADCAST.findAll(service).map { it.value }.toList()
+        assertTrue("未在 SkipAdService 中找到任何 sendBroadcast 调用", calls.isNotEmpty())
+
+        val offenders = calls.filterNot { it.contains("setPackage(") }
+        assertTrue(
+            "存在未用 setPackage 收窄的 sendBroadcast（${offenders.size}/${calls.size} 处）：\n" +
+                offenders.joinToString("\n") { "  ${it.replace(Regex("\\s+"), " ")}" } +
+                "\n未收窄的隐式广播可被任意第三方应用注册同名 action 监听。" +
+                "ACTION_SKIPPED 携带用户正在使用的应用名，泄露后果最严重。" +
+                "\n修法：Intent(...).setPackage(packageName)，与 ACTION_REQUEST_SHUTDOWN 保持一致。",
+            offenders.isEmpty()
+        )
+    }
+
+    // ---------- setPersisted 依赖 RECEIVE_BOOT_COMPLETED（易被误删） ----------
+
+    @Test
+    fun `boot permission is kept while a persisted job is used`() {
+        val syncSource = readMainSource("sync/SyncJobService.kt")
+        assertTrue(
+            "未找到 .setPersisted( 调用；若同步调度已改为其他机制，请同步更新本测试与" +
+                "ARCHITECTURE.md 的同步流程图",
+            syncSource.contains(".setPersisted(")
+        )
+        assertTrue(
+            "同步任务使用了 setPersisted(true)，但清单缺少 RECEIVE_BOOT_COMPLETED 权限。\n" +
+                "JobInfo.Builder.setPersisted 标注了 @RequiresPermission(RECEIVE_BOOT_COMPLETED)，" +
+                "缺少该权限时 JobScheduler.schedule() 会**静默失败**（返回 0），" +
+                "表现为「设备重启后规则不再自动同步」——没有任何崩溃或日志。\n" +
+                "注意：该权限由 JobScheduler 的持久化能力要求，与是否存在 BootReceiver 无关；" +
+                "架构文档中「已删除 BootReceiver」不等于可以删除此权限。",
+            manifest.contains("android.permission.RECEIVE_BOOT_COMPLETED")
+        )
+    }
+
     // ---------- 工具 ----------
+
+    private fun readMainSource(relative: String): String {
+        val dir = File(System.getProperty("user.dir"), "src/main/java/com/ldp/adskip")
+        assertTrue("未定位到 src/main/java/com/ldp/adskip：无法读取 $relative", dir.isDirectory)
+        val file = File(dir, relative)
+        assertTrue("未找到源文件 $relative", file.isFile)
+        return file.readText()
+    }
 
     private fun tileServiceBlock(): String {
         val start = manifest.indexOf(TILE_SERVICE)
@@ -94,5 +144,8 @@ class ManifestContractTest {
     private companion object {
         const val TILE_SERVICE = ".device.SkipTileService"
         const val MANIFEST_RELATIVE_PATH = "src/main/AndroidManifest.xml"
+        // 匹配完整的 sendBroadcast(...) 调用体（允许一层嵌套括号），
+        // 以便判断 setPackage 是否真的出现在这处调用里。
+        val SEND_BROADCAST = Regex("""sendBroadcast\s*\((?:[^()]|\([^()]*\))*\)""", RegexOption.DOT_MATCHES_ALL)
     }
 }

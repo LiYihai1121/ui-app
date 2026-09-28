@@ -133,7 +133,7 @@ class SkipAdService : AccessibilityService() {
         running = true
         AppEvents.setServiceRunning(true)
         registerShutdownReceiver()
-        sendBroadcast(Intent(ACTION_SERVICE_STATE).putExtra(EXTRA_RUNNING, true))
+        sendBroadcast(Intent(ACTION_SERVICE_STATE).setPackage(packageName).putExtra(EXTRA_RUNNING, true))
         LogRing.d("Service", "onServiceConnected")
     }
 
@@ -141,7 +141,7 @@ class SkipAdService : AccessibilityService() {
         running = false
         AppEvents.setServiceRunning(false)
         unregisterShutdownReceiver()
-        sendBroadcast(Intent(ACTION_SERVICE_STATE).putExtra(EXTRA_RUNNING, false))
+        sendBroadcast(Intent(ACTION_SERVICE_STATE).setPackage(packageName).putExtra(EXTRA_RUNNING, false))
         // 强制落盘待写统计
         if (::statsRepo.isInitialized) statsRepo.flush()
         super.onDestroy()
@@ -221,7 +221,9 @@ class SkipAdService : AccessibilityService() {
         }
         syncClient.reportSkip(Prefs.getServerUrl(this), pkg, label, Prefs.getDeviceId(this))
         AppEvents.emitSkipped(label)
-        sendBroadcast(Intent(ACTION_SKIPPED).putExtra(EXTRA_PKG, label))
+        // 广播一律 setPackage 收窄到本应用：ACTION_SKIPPED 携带用户正在使用的应用名，
+        // 不加限制会让任意第三方应用注册同名 action 即可监听（隐私泄露）。
+        sendBroadcast(Intent(ACTION_SKIPPED).setPackage(packageName).putExtra(EXTRA_PKG, label))
     }
 
     private fun isInDoNotDisturbPeriod(): Boolean {

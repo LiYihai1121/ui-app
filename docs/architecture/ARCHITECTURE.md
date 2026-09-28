@@ -100,6 +100,16 @@
 > 另一条由测试守护的隐式约定：保活入口表依赖 Android 11+ 的包可见性，`<queries>` 声明必须与 `device/VendorKeepAlive.kt` 的入口表逐条对齐，
 > 由 `client/app/src/test/java/com/ldp/adskip/arch/ManifestContractTest.kt` 校验（漏声明只会让跳转静默失败，不会编译报错）。
 
+> **广播必须收窄到本应用**：所有 `sendBroadcast` 都要带 `setPackage(...)`。
+> `ACTION_SKIPPED` 携带用户正在使用的应用名，未收窄的隐式广播可被任意第三方应用注册同名 action 监听；
+> 同样由 `ManifestContractTest` 强制。
+
+> ⚠️ **`RECEIVE_BOOT_COMPLETED` 不是可清理的残留权限**：同步任务用 `setPersisted(true)` 跨重启恢复，
+> 而 `JobInfo.Builder.setPersisted` 标注了 `@RequiresPermission(RECEIVE_BOOT_COMPLETED)`——
+> 缺少该权限时 `JobScheduler.schedule()` **静默返回 0**，表现为「重启后规则不再自动同步」，无崩溃无日志。
+> 「已删除 BootReceiver」指的是不再需要广播接收器，**不代表**可以删除该权限。
+> 该耦合由 `ManifestContractTest` 的 `boot permission is kept while a persisted job is used` 强制。
+
 ### 2.2 目录结构契约
 
 2.1 管的是**包之间的依赖**，2.2 管的是**仓库与工程结构本身**。后者同样由

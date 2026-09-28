@@ -39,6 +39,8 @@
 ### Fixed
 
 - 修正产品落地页版本信息漂移（[Issue #27](https://github.com/LiYihai1121/ui-app/issues/27)）：导航与 CTA 的下载按钮、Hero 徽章改为 `{{APP_VERSION}}` 占位符，由服务端在响应 `GET /` 时按 `server/package.json` 版本注入，发布时自动同步；同时修正安装包体积（858 KB → 1.5 MB）与路线图状态（v3.0 已完成、v3.1+ 规划中），与 [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md) 对齐。
+- 无权限保护的进程内广播：`SkipAdService` 发出的 `ACTION_SERVICE_STATE`（服务运行状态）与 `ACTION_SKIPPED`（**用户刚跳过了哪个应用**）此前未限定接收方，任意第三方应用注册同名 action 即可监听。三个广播统一加 `setPackage(packageName)`，与 `ACTION_REQUEST_SHUTDOWN` 的既有做法一致。
+- `ManifestContractTest` 新增两条契约：广播必须收窄到本应用；`setPersisted(true)` 在用时必须保留 `RECEIVE_BOOT_COMPLETED` 权限。后者源于一次自查纠错——该权限看似「删除 BootReceiver 后的残留」，但 `JobInfo.Builder.setPersisted` 标注了 `@RequiresPermission(RECEIVE_BOOT_COMPLETED)`，删掉会导致 `JobScheduler.schedule()` 静默失败、规则跨重启不再同步。现已由测试与 [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) 双向固定，避免再次误删。
 
 ## [3.0.4] - 2026-09-27
 
