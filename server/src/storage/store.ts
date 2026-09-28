@@ -56,11 +56,13 @@ function defaultRules(): any {
     rules: {
       globalKeywords: ["跳过", "跳過", "skip", "跳过广告", "关闭广告"],
       globalViewIds: ["skip", "jump"],
+      globalSelectors: [],
       apps: {},
       disabled: [],
     },
     keywords: ["跳过", "跳過", "skip", "跳过广告", "关闭广告"],
     viewIds: ["skip", "jump"],
+    selectors: [],
     packages: {},
   };
 }
@@ -88,17 +90,25 @@ function ensureCompatShape(input: unknown): RulesPackage {
 
   if (!Array.isArray(r.globalKeywords)) r.globalKeywords = legacyKw.slice();
   if (!Array.isArray(r.globalViewIds)) r.globalViewIds = legacyVid.slice();
+  if (!Array.isArray(r.globalSelectors)) r.globalSelectors = Array.isArray(rules.selectors) ? rules.selectors.slice() : [];
   if (!r.apps || typeof r.apps !== "object" || Array.isArray(r.apps)) r.apps = {};
   if (!Array.isArray(r.disabled)) r.disabled = [];
 
+  for (const [pkg, rule] of Object.entries(r.apps as Record<string, any>)) {
+    if (!rule || typeof rule !== "object" || Array.isArray(rule)) continue;
+    if (!Array.isArray(rule.selectors)) rule.selectors = [];
+  }
+
   if (!Array.isArray(rules.keywords)) rules.keywords = r.globalKeywords.slice();
   if (!Array.isArray(rules.viewIds)) rules.viewIds = r.globalViewIds.slice();
+  if (!Array.isArray(rules.selectors)) rules.selectors = r.globalSelectors.slice();
   if (!rules.packages || typeof rules.packages !== "object" || Array.isArray(rules.packages)) {
     rules.packages = {};
   }
 
   rules.keywords = r.globalKeywords;
   rules.viewIds = r.globalViewIds;
+  rules.selectors = r.globalSelectors;
   rules.packages = r.apps;
 
   if (typeof rules.version !== "number") rules.version = 1;
@@ -128,6 +138,7 @@ export function saveRules(cleaned: CleanedRules): number {
     apps[pkg] = {
       keywords: rule.keywords,
       viewIds: rule.viewIds,
+      selectors: rule.selectors,
       disabled: rule.disabled === true,
     };
     if (rule.disabled === true) disabled.push(pkg);
@@ -140,6 +151,7 @@ export function saveRules(cleaned: CleanedRules): number {
     rules: {
       globalKeywords: cleaned.keywords,
       globalViewIds: cleaned.viewIds,
+      globalSelectors: cleaned.selectors,
       apps,
       disabled,
     },

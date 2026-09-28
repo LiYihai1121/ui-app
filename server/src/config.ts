@@ -31,6 +31,8 @@ export interface Config {
   MAX_KEYWORD_LEN: number;
   MAX_VIEWID_LEN: number;
   MAX_VIEWID_RULE_LEN: number;
+  MAX_SELECTOR_LEN: number;
+  MAX_SELECTORS_PER_LIST: number;
   MAX_RULES_PER_APP: number;
   MAX_APPS: number;
   MAX_BATCH_EVENTS: number;
@@ -67,6 +69,8 @@ export const config: Config = {
   MAX_KEYWORD_LEN: 12,
   MAX_VIEWID_LEN: 256,
   MAX_VIEWID_RULE_LEN: 256,
+  MAX_SELECTOR_LEN: 256,
+  MAX_SELECTORS_PER_LIST: 128,
   MAX_RULES_PER_APP: 512,
   MAX_APPS: 2000,
   MAX_BATCH_EVENTS: 50,

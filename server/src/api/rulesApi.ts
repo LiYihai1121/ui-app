@@ -157,6 +157,7 @@ export const v1_testRule: Handler = async (req, _url, ctx) => {
     app?.disabled === true || (pkg ? rules.rules.disabled.includes(pkg) : false);
   const keywords = [...rules.rules.globalKeywords, ...(app?.keywords ?? [])];
   const viewIdRules = [...rules.rules.globalViewIds, ...(app?.viewIds ?? [])];
+  const selectorRules = [...rules.rules.globalSelectors, ...(app?.selectors ?? [])];
   const hits: Array<{ match: string; keyword?: string; rule?: string; field?: string }> = [];
   for (const kw of keywords) {
     if (sample.includes(kw.toLowerCase())) {
@@ -166,6 +167,11 @@ export const v1_testRule: Handler = async (req, _url, ctx) => {
   for (const rule of viewIdRules) {
     if (rule.length >= 3 && vid.includes(rule.toLowerCase())) {
       hits.push({ match: "viewId", rule });
+    }
+  }
+  for (const selector of selectorRules) {
+    if (selector.toLowerCase().includes("text") && sample.includes(selector.toLowerCase().replace(/.*text.*?"([^"]+)".*/, "$1"))) {
+      hits.push({ match: "selector", rule: selector });
     }
   }
   return jsonResponse({ hits, hit: !disabled && hits.length > 0, disabled });

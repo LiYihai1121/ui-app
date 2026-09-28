@@ -3,6 +3,7 @@
 export interface AppRule {
   keywords: string[];
   viewIds: string[];
+  selectors: string[];
   disabled: boolean;
 }
 
@@ -10,6 +11,7 @@ export interface AppRule {
 export interface RuleSetV1 {
   globalKeywords: string[];
   globalViewIds: string[];
+  globalSelectors: string[];
   apps: Record<string, AppRule>;
   disabled: string[];
 }
@@ -33,6 +35,7 @@ export interface RulesPackage {
 export interface CleanedRules {
   keywords: string[];
   viewIds: string[];
+  selectors: string[];
   packages: Record<string, AppRule>;
 }
 
