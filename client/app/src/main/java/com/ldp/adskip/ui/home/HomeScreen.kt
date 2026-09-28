@@ -1,6 +1,5 @@
 package com.ldp.adskip.ui.home
 
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
@@ -57,6 +56,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
 import com.ldp.adskip.device.KeepAliveNavigator
+import com.ldp.adskip.ui.Messenger
 import com.ldp.adskip.ui.UiEffect
 import com.ldp.adskip.ui.components.SectionCard
 import com.ldp.adskip.ui.components.SectionHint
@@ -90,16 +90,21 @@ import com.ldp.adskip.ui.theme.StatusColors
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)) {
+fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lastAppLabel = rememberAppLabel(state.lastApp)
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(messenger) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                is UiEffect.ShowMessage ->
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                is UiEffect.ShowMessage -> messenger.show(effect.message)
+
+                is UiEffect.KeywordRemoved -> messenger.showUndoable(
+                    message = context.getString(R.string.keyword_removed, effect.keyword),
+                    undoLabel = context.getString(R.string.action_undo),
+                    onUndo = viewModel::undoRemoveKeyword,
+                )
             }
         }
     }
@@ -122,11 +127,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Fact
                     running = state.serviceRunning,
                     onPrimaryAction = {
                         if (!KeepAliveNavigator.openAccessibilitySettings(context)) {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.settings_open_failed),
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            messenger.show(context.getString(R.string.settings_open_failed))
                         }
                     },
                     onTest = viewModel::startFakeAdTest,

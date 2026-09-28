@@ -1,7 +1,6 @@
 package com.ldp.adskip.ui.logs
 
 import android.content.Intent
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
+import com.ldp.adskip.ui.Messenger
 import com.ldp.adskip.ui.components.ConfirmDialog
 import com.ldp.adskip.ui.components.EmptyState
 import com.ldp.adskip.ui.components.PageHeader
@@ -53,7 +53,7 @@ import com.ldp.adskip.ui.components.TwoLineRow
  * - 条目行统一走 [TwoLineRow]，与应用管理页共享同一套行高与省略策略。
  */
 @Composable
-fun LogsScreen(viewModel: LogsViewModel = viewModel(factory = LogsViewModel.Factory)) {
+fun LogsScreen(messenger: Messenger, viewModel: LogsViewModel = viewModel(factory = LogsViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showClearConfirm by rememberSaveable { mutableStateOf(false) }
@@ -68,7 +68,14 @@ fun LogsScreen(viewModel: LogsViewModel = viewModel(factory = LogsViewModel.Fact
             onConfirm = {
                 showClearConfirm = false
                 viewModel.clear()
-                Toast.makeText(context, R.string.logs_cleared, Toast.LENGTH_SHORT).show()
+                // 二次确认只是最后一道防线，这里再给一条可撤销的消息：
+                // 「删除全部记录」是本应用唯一完全不可逆的操作，只靠确认弹窗
+                // 意味着用户误点后没有任何退路。
+                messenger.showUndoable(
+                    message = context.getString(R.string.logs_cleared),
+                    undoLabel = context.getString(R.string.action_undo),
+                    onUndo = viewModel::undoClear,
+                )
             },
             onDismiss = { showClearConfirm = false },
         )
@@ -102,11 +109,7 @@ fun LogsScreen(viewModel: LogsViewModel = viewModel(factory = LogsViewModel.Fact
                 onClick = {
                     val text = viewModel.shareText()
                     if (text == null) {
-                        Toast.makeText(
-                            context,
-                            R.string.logs_empty,
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        messenger.show(context.getString(R.string.logs_empty))
                     } else {
                         context.startActivity(
                             Intent.createChooser(

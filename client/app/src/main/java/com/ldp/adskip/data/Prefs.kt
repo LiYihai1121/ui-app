@@ -197,6 +197,28 @@ object Prefs {
         sp(context).edit().putString(KEY_LOGS, "[]").apply()
     }
 
+    /**
+     * 整体写回日志，仅用于「清空后撤销」把原数据原样放回。
+     *
+     * 与 [addLog] 的区别：addLog 是追加并按 [LOG_CAP] 裁剪、保持时间序；
+     * 本方法**原样覆盖**，因此调用方必须传入清空前读到的完整快照，
+     * 且快照自身应已由 [getLogs] 保证长度 ≤ LOG_CAP。
+     * 之所以需要它：清空日志是不可逆操作，没有恢复途径就等于「删了就没了」；
+     * 提供写回能力后，界面才能给出真正的「撤销」而不仅是二次确认。
+     */
+    fun restoreLogs(context: Context, entries: List<Triple<Long, String, String>>) {
+        if (entries.size > LOG_CAP) return
+        val next = JSONArray()
+        for ((ts, pkg, label) in entries) {
+            val o = JSONObject()
+            o.put("ts", ts)
+            o.put("pkg", pkg)
+            o.put("label", label)
+            next.put(o)
+        }
+        sp(context).edit().putString(KEY_LOGS, next.toString()).apply()
+    }
+
     // ---------- 云同步 ----------
     fun getServerUrl(context: Context): String = sp(context).getString(KEY_SERVER_URL, DEFAULT_SERVER) ?: DEFAULT_SERVER
 

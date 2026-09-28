@@ -76,4 +76,10 @@ class StatsRepository(private val context: Context, private val ioExecutor: Exec
     fun logs(): List<LogEntry> = Prefs.getLogs(context).map { LogEntry(it.first, it.second, it.third) }
 
     fun clearLogs() = Prefs.clearLogs(context)
+
+    /** 清空后的原样写回，仅供「清空后撤销」使用（见 [Prefs.restoreLogs]） */
+    fun restoreLogs(entries: List<LogEntry>) = Prefs.restoreLogs(
+        context,
+        entries.map { Triple(it.ts, it.pkg, it.label) },
+    )
 }

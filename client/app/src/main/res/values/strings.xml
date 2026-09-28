@@ -25,6 +25,7 @@
     <string name="nav_settings">设置</string>
     <string name="btn_confirm">确定</string>
     <string name="btn_cancel">取消</string>
+    <string name="action_undo">撤销</string>
 
     <!-- 关键词 -->
     <string name="keywords_title">识别关键词</string>
