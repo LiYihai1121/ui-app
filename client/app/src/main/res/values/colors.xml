@@ -5,6 +5,10 @@
   且 status_on/status_off 这类名字与 R.string.status_on/off 撞名，极易误用。
 -->
 <resources>
-    <color name="ic_launcher_background">#1565C0</color>
+    <!--
+      图标背景已改为矢量渐变（drawable/ic_launcher_background.xml），此处的
+      ic_launcher_background 颜色资源不再被任何文件引用，故删除以免留下第二份真相。
+      改配色请改矢量里的 gradient item，不要在此加回同名颜色。
+    -->
     <color name="brand">#1565C0</color>
 </resources>

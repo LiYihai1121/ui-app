@@ -1,7 +1,10 @@
 package com.ldp.adskip.engine.selector
 
 import com.ldp.adskip.engine.FakeAdNode
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -11,8 +14,7 @@ import org.junit.Test
  */
 class SelectorMatcherTest {
 
-    private fun sel(expr: String) =
-        requireNotNull(SelectorParser.parse(expr)) { "invalid test expr: $expr" }
+    private fun sel(expr: String) = requireNotNull(SelectorParser.parse(expr)) { "invalid test expr: $expr" }
 
     // ---------- 运算符：text / desc / vid / click ----------
 
@@ -192,7 +194,7 @@ class SelectorMatcherTest {
         val anchor = FakeAdNode.node(desc = "跳过广告")
         FakeAdNode.node(children = listOf(anchor, target))
         assertTrue(
-            SelectorMatcher.matches(sel("[desc^=\"跳过\"] + [vid$=\"id/iv_close\"]"), target)
+            SelectorMatcher.matches(sel("[desc^=\"跳过\"] + [vid$=\"id/iv_close\"]"), target),
         )
     }
 
@@ -212,7 +214,7 @@ class SelectorMatcherTest {
         val b = FakeAdNode.node(desc = "bbbb", children = listOf(c, d))
         FakeAdNode.node(text = "aaaa", children = listOf(b))
         assertTrue(
-            SelectorMatcher.matches(sel("[text*=\"a\"] [desc*=\"b\"] > [vid$=\"c\"] + [click]"), d)
+            SelectorMatcher.matches(sel("[text*=\"a\"] [desc*=\"b\"] > [vid$=\"c\"] + [click]"), d),
         )
     }
 

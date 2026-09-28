@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.ldp.adskip.R
 
-/**
+/*
  * 通用 UI 组件第二批（v3.1 重设计后续）。
  *
  * [Common.kt] 收口了「卡片 / 标题 / 统计块」等静态元素，本文件收口
@@ -49,6 +49,8 @@ import com.ldp.adskip.R
  * - [TwoLineRow]：主标题 + 副标题的两行列表行（日志条目 / 应用行共用）；
  * - [SkeletonList]：首屏加载骨架，替代孤零零的转圈；
  * - [InfoRow]：「标签 — 取值」信息行（原为「我的」页私有实现）。
+ *
+ * 用普通块注释而非 KDoc：这是「整个文件的说明」，写成 KDoc 会成为悬空注释。
  */
 
 /**
@@ -65,27 +67,27 @@ fun EmptyState(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     subtitle: String? = null,
-    action: @Composable (() -> Unit)? = null
+    action: @Composable (() -> Unit)? = null,
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 32.dp, vertical = 48.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (icon != null) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(16.dp))
         }
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
         if (subtitle != null) {
             Spacer(Modifier.height(6.dp))
@@ -94,7 +96,7 @@ fun EmptyState(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 3,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
         if (action != null) {
@@ -116,7 +118,7 @@ fun ConfirmDialog(
     message: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    confirmText: String = stringResource(R.string.btn_confirm)
+    confirmText: String = stringResource(R.string.btn_confirm),
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -131,7 +133,7 @@ fun ConfirmDialog(
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.btn_cancel))
             }
-        }
+        },
     )
 }
 
@@ -149,13 +151,13 @@ fun TwoLineRow(
     modifier: Modifier = Modifier,
     leading: @Composable (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
-    contentPadding: PaddingValues = PaddingValues(vertical = 10.dp)
+    contentPadding: PaddingValues = PaddingValues(vertical = 10.dp),
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(contentPadding),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         if (leading != null) {
             leading()
@@ -167,7 +169,7 @@ fun TwoLineRow(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(2.dp))
             Text(
@@ -175,7 +177,7 @@ fun TwoLineRow(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
         if (trailing != null) {
@@ -196,33 +198,28 @@ fun TwoLineRow(
  * 纯 DrawScope 渐变，不引入 shimmer 三方库（依赖清单保持零外部依赖）。
  */
 @Composable
-fun SkeletonList(
-    modifier: Modifier = Modifier,
-    rows: Int = 8,
-    rowHeight: Dp = 60.dp,
-    avatarSize: Dp = 40.dp
-) {
+fun SkeletonList(modifier: Modifier = Modifier, rows: Int = 8, rowHeight: Dp = 60.dp, avatarSize: Dp = 40.dp) {
     val transition = rememberInfiniteTransition(label = "skeleton")
     val shift by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
+            repeatMode = RepeatMode.Restart,
         ),
-        label = "skeleton-shift"
+        label = "skeleton-shift",
     )
     val base = MaterialTheme.colorScheme.surfaceVariant
     val highlight = MaterialTheme.colorScheme.surfaceContainerHighest
     val brush = Brush.linearGradient(
         colors = listOf(base, highlight, base),
         start = Offset(shift * 400f - 200f, 0f),
-        end = Offset(shift * 400f + 200f, rowHeight.value)
+        end = Offset(shift * 400f + 200f, rowHeight.value),
     )
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         repeat(rows) {
             SkeletonRow(brush = brush, height = rowHeight, avatarSize = avatarSize)
@@ -236,13 +233,13 @@ private fun SkeletonRow(brush: Brush, height: Dp, avatarSize: Dp) {
         modifier = Modifier
             .fillMaxWidth()
             .height(height),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             Modifier
                 .size(avatarSize)
                 .clip(CircleShape)
-                .background(brush)
+                .background(brush),
         )
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
@@ -251,7 +248,7 @@ private fun SkeletonRow(brush: Brush, height: Dp, avatarSize: Dp) {
                     .fillMaxWidth(0.55f)
                     .height(14.dp)
                     .clip(MaterialTheme.shapes.extraSmall)
-                    .background(brush)
+                    .background(brush),
             )
             Spacer(Modifier.height(8.dp))
             Box(
@@ -259,7 +256,7 @@ private fun SkeletonRow(brush: Brush, height: Dp, avatarSize: Dp) {
                     .fillMaxWidth(0.35f)
                     .height(10.dp)
                     .clip(MaterialTheme.shapes.extraSmall)
-                    .background(brush)
+                    .background(brush),
             )
         }
     }
@@ -273,12 +270,12 @@ fun InfoRow(label: String, value: String, modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Text(
             text = value,
@@ -286,7 +283,7 @@ fun InfoRow(label: String, value: String, modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(start = 16.dp)
+            modifier = Modifier.padding(start = 16.dp),
         )
     }
 }

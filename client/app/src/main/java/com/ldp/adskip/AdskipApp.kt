@@ -27,7 +27,6 @@ class AdskipApp : Application() {
     }
 
     companion object {
-        fun get(context: Context): AppContainer =
-            (context.applicationContext as AdskipApp).container
+        fun get(context: Context): AppContainer = (context.applicationContext as AdskipApp).container
     }
 }

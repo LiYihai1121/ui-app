@@ -10,24 +10,30 @@ metadata:
 
 | 关注点 | 规范文件（唯一事实源） |
 | --- | --- |
-| 分支模型、提交格式、PR 门禁、版本发布 | [CONTRIBUTING.md](../../../CONTRIBUTING.md) |
-| 日常执行摘要（分支/门禁/文档顺序） | [AGENTS.md](../../../AGENTS.md) |
-| 并行多 Agent 协作（隔离/所有权/契约/交接） | [docs/development/AGENT-WORKFLOW.md](../../../docs/development/AGENT-WORKFLOW.md) |
-| 本机工具链与命令 | [docs/development/DEV-ENVIRONMENT.md](../../../docs/development/DEV-ENVIRONMENT.md) |
+| 分支模型、提交格式、PR 门禁、版本发布 | [CONTRIBUTING.md](../../CONTRIBUTING.md) |
+| 日常执行摘要（分支/门禁/文档顺序） | [AGENTS.md](../../AGENTS.md) |
+| 并行多 Agent 协作（隔离/所有权/契约/交接） | [docs/development/AGENT-WORKFLOW.md](../../docs/development/AGENT-WORKFLOW.md) |
+| 本机工具链与命令 | [docs/development/DEV-ENVIRONMENT.md](../../docs/development/DEV-ENVIRONMENT.md) |
 
 > 本文件**刻意不复制**规则表格与命令清单：复制出去的规则会静默漂移，并成为第二份（往往是错的）真相。
 > 新规则一律加到上表的规范文件里，这里只保留指针与自检动作。
+
+## 加载方式
+
+本 skill 不放在 `.kilo/skills/`：`.kilo/` 已被根 `.gitignore` 整体忽略（Agent Manager 状态目录），
+放进去的技能无法入库，等于每个人的技能集都不一样——那正是「第二份真相」的另一种形态。
+改为随仓库版本控制在 `skills/`，并由 `kilo.json` 的 `skills.paths: ["./skills"]` 显式挂载。
 
 ## 开工前自检
 
 1. `git status --short --branch` —— 工作区干净、位于可追踪分支
 2. `git worktree list` —— 你在**已登记的 worktree** 内（含 `.git` 元数据）
-3. 读 [AGENTS.md](../../../AGENTS.md)，从最新 `main` 创建 `type/<id>-<slug>` 分支
-4. 并行协作时，另读 [AGENT-WORKFLOW.md](../../../docs/development/AGENT-WORKFLOW.md) 并在认领板登记路径
+3. 读 [AGENTS.md](../../AGENTS.md)，从最新 `main` 创建 `type/<id>-<slug>` 分支
+4. 并行协作时，另读 [AGENT-WORKFLOW.md](../../docs/development/AGENT-WORKFLOW.md) 并在认领板登记路径
 
 ## 提交前自检
 
-- 跑通 [AGENTS.md](../../../AGENTS.md)「验证与合并」小节列出的门禁命令（**自行执行**，不把验证推给 CI）
+- 跑通 [AGENTS.md](../../AGENTS.md)「验证与合并」小节列出的门禁命令（**自行执行**，不把验证推给 CI）
 - 一个提交一件事；Conventional Commits；标题 ≤ 72 字符；正文说明原因、影响与验证方式
 
 ## 合并前自检
@@ -39,10 +45,10 @@ metadata:
 
 ## 会被构建拦下的硬规则
 
+- 格式与静态检查（`ktlintCheck`，规则事实源为根 `.editorconfig`）
 - 架构边界 → `ArchitectureBoundaryTest`
 - 清单与入口表对齐（磁贴、`<queries>`）、广播收窄、开机权限 → `ManifestContractTest`
 - 目录结构（根白名单、产物、模块、包路径、文档登记） → `ProjectStructureTest`
 - 仓库卫生（忽略规则、无元数据仓库副本、文档登记、分支命名） → `RepoHygieneTest`
 
-以上任一违反都会在 `testDebugUnitTest` 阶段失败，**不依赖代码评审才发现**。
-
+以上任一违反都会在 CI 上失败，**不依赖代码评审才发现**。

@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "note": "选择器双端契约夹具：accepted/rejected 的每一行在服务端（isValidSelector：长度+字符白名单+括号引号配平）与客户端（SelectorParser：完整文法）必须得到一致判定。divergences 刻意记录两端判定不同的向量——服务端只做快检、语法权威在客户端，双端测试分别断言各自那一侧，防止这种有意的差异被后续改动悄悄抹平。请保持每个向量单行一行。",
+  "accepted": [
+    { "id": "a01", "expr": "[text=\"跳过\"]" },
+    { "id": "a02", "expr": "[text*=\"跳过广告\"]" },
+    { "id": "a03", "expr": "[text^=\"Skip\"]" },
+    { "id": "a04", "expr": "[text$=\"Ad\"]" },
+    { "id": "a05", "expr": "[text]" },
+    { "id": "a06", "expr": "[desc=\"广告\"]" },
+    { "id": "a07", "expr": "[desc*=\"关闭\"]" },
+    { "id": "a08", "expr": "[vid=\":id/skip_view\"]" },
+    { "id": "a09", "expr": "[vid$=\":id/skip\"]" },
+    { "id": "a10", "expr": "[click=\"true\"]" },
+    { "id": "a11", "expr": "[click=\"false\"]" },
+    { "id": "a12", "expr": "[click]" },
+    { "id": "a13", "expr": "[text=\"跳过\"] [click=\"true\"]" },
+    { "id": "a14", "expr": "[text=\"A\"]>[text=\"B\"]" },
+    { "id": "a15", "expr": "[text=\"A\"] + [text=\"B\"]" },
+    { "id": "a16", "expr": "[text=\"跳过\"][click=\"true\"]" },
+    { "id": "a17", "expr": "[text=\"跳过\"] > [click=\"true\"]" }
+  ],
+  "rejected": [
+    { "id": "r01", "expr": "[text*=\"跳过\"" },
+    { "id": "r02", "expr": "[text=\"跳过]" },
+    { "id": "r03", "expr": "]" },
+    { "id": "r04", "expr": "[text=\"跳过\"];drop" },
+    { "id": "r05", "expr": "[text={}]" },
+    { "id": "r06", "expr": "[text=\"a\"](" },
+    { "id": "r07", "expr": "[text~=\"a\"]" },
+    { "id": "r08", "expr": "[text=\"a\"] [text=\"b\"" },
+    { "id": "r09", "expr": "" },
+    { "id": "r10", "expr": "   " },
+    { "id": "r11", "expr": "[text=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]" },
+    { "id": "r12", "expr": "[text=\"跳\"过\"]" },
+    { "id": "r13", "expr": "[text=\"a\"]<b>" },
+    { "id": "r14", "expr": "[text=\"a\"]\\[x]" }
+  ],
+  "divergences": [
+    { "id": "d01", "expr": "[foo=\"bar\"]", "server": "accept", "client": "reject", "why": "未知属性 key：服务端不解析文法，由客户端编译期丢弃" },
+    { "id": "d02", "expr": "[text=跳过]", "server": "accept", "client": "reject", "why": "值未加双引号：服务端只查引号个数配平，查不出缺引号" },
+    { "id": "d03", "expr": "[\"跳过\"]", "server": "accept", "client": "reject", "why": "缺属性 key：同上" },
+    { "id": "d04", "expr": "text=\"跳过\"", "server": "accept", "client": "reject", "why": "缺中括号：服务端括号配平按个数计数，0 对 0 视为通过" },
+    { "id": "d05", "expr": "][", "server": "accept", "client": "reject", "why": "括号乱序：服务端只比数量不校验顺序" },
+    { "id": "d06", "expr": "[text=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]", "server": "accept", "client": "reject", "why": "值超 64 字符（MAX_VALUE_LENGTH）：服务端只管整条不超过 256" },
+    { "id": "d07", "expr": "[text=\"a\"] [text=\"b\"] [text=\"c\"] [text=\"d\"] [text=\"e\"]", "server": "accept", "client": "reject", "why": "组合符链超 4 段（MAX_COMPOUNDS）：长度未越界故服务端放行" }
+  ]
+}

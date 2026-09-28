@@ -33,19 +33,19 @@ import androidx.compose.ui.unit.dp
 fun SectionCard(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(20.dp),
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
             modifier = Modifier.padding(contentPadding),
-            content = content
+            content = content,
         )
     }
 }
@@ -57,7 +57,7 @@ fun SectionTitle(text: String, modifier: Modifier = Modifier) {
         text = text,
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurface,
-        modifier = modifier
+        modifier = modifier,
     )
 }
 
@@ -72,19 +72,18 @@ fun PageHeader(title: String, modifier: Modifier = Modifier, subtitle: String? =
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 12.dp)
+            .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 12.dp),
     ) {
         Text(text = title, style = MaterialTheme.typography.headlineSmall)
         if (subtitle != null) {
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
 }
-
 
 /** 卡片内的说明性正文。 */
 @Composable
@@ -93,7 +92,7 @@ fun SectionHint(text: String, modifier: Modifier = Modifier) {
         text = text,
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier
+        modifier = modifier,
     )
 }
 
@@ -106,18 +105,14 @@ fun SectionHint(text: String, modifier: Modifier = Modifier) {
  * 长文本则优雅降级。
  */
 @Composable
-fun StatTile(
-    value: String,
-    label: String,
-    modifier: Modifier = Modifier
-) {
+fun StatTile(value: String, label: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         Text(
             text = value,
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 2,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
         )
         Spacer(Modifier.height(2.dp))
         Text(
@@ -125,7 +120,7 @@ fun StatTile(
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
@@ -138,12 +133,12 @@ fun LabeledSwitch(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(Modifier.weight(1f).padding(end = 16.dp)) {
             Text(
@@ -153,13 +148,13 @@ fun LabeledSwitch(
                     MaterialTheme.colorScheme.onSurface
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
-                }
+                },
             )
             if (subtitle != null) {
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -196,7 +191,7 @@ fun resolveAppLabel(context: Context, pkg: String): String {
         pm.queryIntentActivities(
             android.content.Intent(android.content.Intent.ACTION_MAIN)
                 .addCategory(android.content.Intent.CATEGORY_LAUNCHER),
-            0
+            0,
         )
             .firstOrNull { it.activityInfo?.packageName == pkg }
             ?.let { it.loadLabel(pm).toString() }

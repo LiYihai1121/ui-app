@@ -1,6 +1,5 @@
-﻿package com.ldp.adskip.ui.settings
+package com.ldp.adskip.ui.settings
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
 import com.ldp.adskip.device.KeepAliveNavigator
+import com.ldp.adskip.ui.Messenger
 import com.ldp.adskip.ui.UiEffect
 import com.ldp.adskip.ui.components.SectionCard
 import com.ldp.adskip.ui.components.SectionHint
@@ -58,16 +58,19 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsContent(
-    viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
+    messenger: Messenger,
+    viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(messenger) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                is UiEffect.ShowMessage ->
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                is UiEffect.ShowMessage -> messenger.show(effect.message)
+
+                // 设置页不涉及关键词删除，KeywordRemoved 在此不会出现
+                is UiEffect.KeywordRemoved -> Unit
             }
         }
     }
@@ -77,136 +80,136 @@ fun SettingsContent(
     var pickingEnd by remember { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            SectionCard {
-                SectionTitle(stringResource(R.string.settings_cloud_section))
-                Spacer(Modifier.height(12.dp))
-                OutlinedTextField(
-                    value = state.serverUrlInput,
-                    onValueChange = viewModel::onServerUrlChanged,
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(stringResource(R.string.settings_server_label)) },
-                    placeholder = { Text(stringResource(R.string.settings_server_hint)) },
-                    singleLine = true
-                )
-                Spacer(Modifier.height(12.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilledTonalButton(onClick = { viewModel.saveServerUrl(state.serverUrlInput) }) {
-                        Text(stringResource(R.string.settings_save))
-                    }
-                    Button(onClick = viewModel::syncNow, enabled = !state.syncing) {
-                        Text(
-                            stringResource(
-                                if (state.syncing) {
-                                    R.string.settings_syncing
-                                } else {
-                                    R.string.settings_sync
-                                }
-                            )
-                        )
-                    }
+        SectionCard {
+            SectionTitle(stringResource(R.string.settings_cloud_section))
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = state.serverUrlInput,
+                onValueChange = viewModel::onServerUrlChanged,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.settings_server_label)) },
+                placeholder = { Text(stringResource(R.string.settings_server_hint)) },
+                singleLine = true,
+            )
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilledTonalButton(onClick = { viewModel.saveServerUrl(state.serverUrlInput) }) {
+                    Text(stringResource(R.string.settings_save))
                 }
-                state.syncResult?.let {
-                    Spacer(Modifier.height(12.dp))
-                    Text(text = it, style = MaterialTheme.typography.bodyMedium)
-                }
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = if (state.lastSyncAt > 0L) {
-                        stringResource(
-                            R.string.settings_last_sync,
-                            viewModel.formatLastSync(state.lastSyncAt)
-                        )
-                    } else {
-                        stringResource(R.string.settings_never_sync)
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(8.dp))
-                SectionHint(stringResource(R.string.settings_desc))
-            }
-
-            SectionCard {
-                SectionTitle(stringResource(R.string.settings_schedule_section))
-                SwitchRow(
-                    title = stringResource(R.string.settings_auto_sync),
-                    checked = state.autoSync,
-                    onCheckedChange = viewModel::setAutoSync
-                )
-                HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                SwitchRow(
-                    title = stringResource(R.string.settings_dnd),
-                    checked = state.dndEnabled,
-                    onCheckedChange = viewModel::setDndEnabled
-                )
-                Spacer(Modifier.height(12.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilledTonalButton(onClick = { pickingStart = true }, enabled = state.dndEnabled) {
-                        Text(stringResource(R.string.settings_dnd_start))
-                    }
-                    FilledTonalButton(onClick = { pickingEnd = true }, enabled = state.dndEnabled) {
-                        Text(stringResource(R.string.settings_dnd_end))
-                    }
-                }
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = formatMinuteRange(state.dndStartMinute, state.dndEndMinute),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            SectionCard {
-                SectionTitle(stringResource(R.string.settings_keepalive_title))
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = stringResource(
-                        R.string.settings_keepalive_vendor,
-                        stringResource(vendorLabelRes(state.keepAliveVendor))
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(Modifier.height(8.dp))
-                SectionHint(stringResource(R.string.settings_keepalive_hint))
-                Spacer(Modifier.height(16.dp))
-                Button(
-                    onClick = viewModel::openKeepAliveSettings,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.settings_keepalive_open))
-                }
-                Spacer(Modifier.height(12.dp))
-                Button(
-                    onClick = { KeepAliveNavigator.openBatteryOptimizationSettings(context) },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                Button(onClick = viewModel::syncNow, enabled = !state.syncing) {
                     Text(
                         stringResource(
-                            if (state.batteryExempt) {
-                                R.string.settings_battery_done
+                            if (state.syncing) {
+                                R.string.settings_syncing
                             } else {
-                                R.string.settings_battery_allow
-                            }
-                        )
+                                R.string.settings_sync
+                            },
+                        ),
                     )
-                }
-                Spacer(Modifier.height(20.dp))
-                HorizontalDivider(Modifier.padding(bottom = 16.dp))
-                SectionHint(
-                    stringResource(
-                        R.string.settings_tile_hint,
-                        stringResource(R.string.tile_label)
-                    )
-                )
-                Spacer(Modifier.height(16.dp))
-                Button(
-                    onClick = viewModel::requestAddTile,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.settings_tile_add))
                 }
             }
+            state.syncResult?.let {
+                Spacer(Modifier.height(12.dp))
+                Text(text = it, style = MaterialTheme.typography.bodyMedium)
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = if (state.lastSyncAt > 0L) {
+                    stringResource(
+                        R.string.settings_last_sync,
+                        viewModel.formatLastSync(state.lastSyncAt),
+                    )
+                } else {
+                    stringResource(R.string.settings_never_sync)
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            SectionHint(stringResource(R.string.settings_desc))
+        }
+
+        SectionCard {
+            SectionTitle(stringResource(R.string.settings_schedule_section))
+            SwitchRow(
+                title = stringResource(R.string.settings_auto_sync),
+                checked = state.autoSync,
+                onCheckedChange = viewModel::setAutoSync,
+            )
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+            SwitchRow(
+                title = stringResource(R.string.settings_dnd),
+                checked = state.dndEnabled,
+                onCheckedChange = viewModel::setDndEnabled,
+            )
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilledTonalButton(onClick = { pickingStart = true }, enabled = state.dndEnabled) {
+                    Text(stringResource(R.string.settings_dnd_start))
+                }
+                FilledTonalButton(onClick = { pickingEnd = true }, enabled = state.dndEnabled) {
+                    Text(stringResource(R.string.settings_dnd_end))
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = formatMinuteRange(state.dndStartMinute, state.dndEndMinute),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        SectionCard {
+            SectionTitle(stringResource(R.string.settings_keepalive_title))
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(
+                    R.string.settings_keepalive_vendor,
+                    stringResource(vendorLabelRes(state.keepAliveVendor)),
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+            )
+            Spacer(Modifier.height(8.dp))
+            SectionHint(stringResource(R.string.settings_keepalive_hint))
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = viewModel::openKeepAliveSettings,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.settings_keepalive_open))
+            }
+            Spacer(Modifier.height(12.dp))
+            Button(
+                onClick = { KeepAliveNavigator.openBatteryOptimizationSettings(context) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    stringResource(
+                        if (state.batteryExempt) {
+                            R.string.settings_battery_done
+                        } else {
+                            R.string.settings_battery_allow
+                        },
+                    ),
+                )
+            }
+            Spacer(Modifier.height(20.dp))
+            HorizontalDivider(Modifier.padding(bottom = 16.dp))
+            SectionHint(
+                stringResource(
+                    R.string.settings_tile_hint,
+                    stringResource(R.string.tile_label),
+                ),
+            )
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = viewModel::requestAddTile,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.settings_tile_add))
+            }
+        }
     }
 
     if (pickingStart) {
@@ -217,7 +220,7 @@ fun SettingsContent(
             onConfirm = { minute ->
                 viewModel.setDndTimes(minute, state.dndEndMinute)
                 pickingStart = false
-            }
+            },
         )
     }
     if (pickingEnd) {
@@ -228,7 +231,7 @@ fun SettingsContent(
             onConfirm = { minute ->
                 viewModel.setDndTimes(state.dndStartMinute, minute)
                 pickingEnd = false
-            }
+            },
         )
     }
 }
@@ -238,7 +241,7 @@ private fun SwitchRow(title: String, checked: Boolean, onCheckedChange: (Boolean
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(text = title, style = MaterialTheme.typography.bodyLarge)
         Switch(checked = checked, onCheckedChange = onCheckedChange)
@@ -248,16 +251,11 @@ private fun SwitchRow(title: String, checked: Boolean, onCheckedChange: (Boolean
 /** M3 TimePicker 封装为对话框（分钟粒度，24 小时制） */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MinutePickerDialog(
-    title: String,
-    initialMinute: Int,
-    onDismiss: () -> Unit,
-    onConfirm: (Int) -> Unit
-) {
+private fun MinutePickerDialog(title: String, initialMinute: Int, onDismiss: () -> Unit, onConfirm: (Int) -> Unit) {
     val pickerState = rememberTimePickerState(
         initialHour = initialMinute / 60,
         initialMinute = initialMinute % 60,
-        is24Hour = true
+        is24Hour = true,
     )
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -270,11 +268,14 @@ private fun MinutePickerDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) }
         },
-        text = { TimePicker(state = pickerState) }
+        text = { TimePicker(state = pickerState) },
     )
 }
 
-private fun formatMinuteRange(start: Int, end: Int): String =
-    "%02d:%02d - %02d:%02d".format(
-        Locale.getDefault(), start / 60, start % 60, end / 60, end % 60
-    )
+private fun formatMinuteRange(start: Int, end: Int): String = "%02d:%02d - %02d:%02d".format(
+    Locale.getDefault(),
+    start / 60,
+    start % 60,
+    end / 60,
+    end % 60,
+)

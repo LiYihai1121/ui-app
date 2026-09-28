@@ -67,8 +67,8 @@ object KeepAliveNavigator {
         context,
         GuideEntry(
             action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            payload = PackagePayload.DATA_URI
-        )
+            payload = PackagePayload.DATA_URI,
+        ),
     )
 
     /**
@@ -79,9 +79,9 @@ object KeepAliveNavigator {
     fun openBatteryOptimizationSettings(context: Context): Boolean = listOf(
         GuideEntry(
             action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-            payload = PackagePayload.DATA_URI
+            payload = PackagePayload.DATA_URI,
         ),
-        GuideEntry(action = Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+        GuideEntry(action = Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS),
     ).any { start(context, it) }
 
     // ---------- 快捷磁贴 ----------
@@ -142,8 +142,10 @@ object KeepAliveNavigator {
         entry.cls?.let { intent.setClassName(entry.pkg!!, it) }
         when (entry.payload) {
             PackagePayload.NONE -> Unit
+
             PackagePayload.DATA_URI ->
                 intent.data = Uri.fromParts("package", context.packageName, null)
+
             PackagePayload.EXTRA_NAME ->
                 intent.putExtra("packageName", context.packageName)
         }

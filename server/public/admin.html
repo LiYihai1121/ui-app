@@ -98,6 +98,11 @@
       <div class="hint">匹配控件的资源 ID（如 com.x:id/skip_view），用于纯图片无文字的跳过按钮</div>
     </div>
     <div class="card">
+      <h2>全局选择器（上下文匹配，schema 2）</h2>
+      <textarea id="ta-selectors" rows="3" placeholder='每行一条，如：[desc*="跳过"] [click="true"]'></textarea>
+      <div class="hint">第三通道：用选择器表达「某容器内的跳过按钮」，弥补纯关键词/ViewID 无法表达上下文关系的缺陷。服务端只校验长度、字符白名单与括号引号配平，语法由客户端解析；不合法的条目会在客户端静默丢弃。示例见 <code>server/test/fixtures/selectors.contract.json</code></div>
+    </div>
+    <div class="card">
       <h2>应用专属规则</h2>
       <div class="pkg-head">
         <input type="text" id="new-pkg" placeholder="包名，如 com.tencent.mm" />
@@ -252,7 +257,8 @@ function renderPackages() {
         <button class="danger" style="padding:6px 12px;" onclick="delPackage(this)">删除</button>
       </div>
       <input type="text" class="pkg-kw" data-pkg="${esc(pkg)}" value="${esc((r.keywords || []).join(', '))}" placeholder="专属关键词，逗号分隔" style="margin-bottom:8px;" />
-      <input type="text" class="pkg-vid" data-pkg="${esc(pkg)}" value="${esc((r.viewIds || []).join(', '))}" placeholder="专属 ViewID，逗号分隔" />
+      <input type="text" class="pkg-vid" data-pkg="${esc(pkg)}" value="${esc((r.viewIds || []).join(', '))}" placeholder="专属 ViewID，逗号分隔" style="margin-bottom:8px;" />
+      <textarea class="pkg-sel" data-pkg="${esc(pkg)}" rows="2" placeholder='专属选择器，每行一条，如：[vid$=":id/skip_view"]'>${esc((r.selectors || []).join('\n'))}</textarea>
     `;
     div.dataset.pkg = pkg;
     box.appendChild(div);
@@ -263,11 +269,16 @@ function splitList(s) {
   return s.split(/[,\n，]/).map((x) => x.trim()).filter(Boolean);
 }
 
+/** 选择器按行拆分：语法里没有逗号，按行切可避免把表达式内部的空白当分隔符 */
+function splitLines(s) {
+  return s.split('\n').map((x) => x.trim()).filter(Boolean);
+}
+
 function addPackage() {
   const pkg = $('new-pkg').value.trim();
   if (!pkg) return toast('请输入包名');
   if (rules.packages[pkg]) return toast('该应用已存在');
-  rules.packages[pkg] = { keywords: [], viewIds: [], disabled: false };
+  rules.packages[pkg] = { keywords: [], viewIds: [], selectors: [], disabled: false };
   $('new-pkg').value = '';
   renderPackages();
 }
@@ -284,6 +295,7 @@ async function loadRules() {
   rules = await res.json();
   $('ta-keywords').value = (rules.keywords || []).join('\n');
   $('ta-viewids').value = (rules.viewIds || []).join('\n');
+  $('ta-selectors').value = (rules.selectors || []).join('\n');
   $('rules-meta').textContent = `版本 v${rules.version} ｜ 更新于 ${new Date(rules.updatedAt).toLocaleString()}`;
   renderPackages();
 }
@@ -293,6 +305,7 @@ function collectRules() {
   const newRules = {
     keywords: splitList($('ta-keywords').value),
     viewIds: splitList($('ta-viewids').value),
+    selectors: splitLines($('ta-selectors').value),
     packages: {},
   };
   document.querySelectorAll('#pkg-list > div').forEach((div) => {
@@ -300,6 +313,7 @@ function collectRules() {
     newRules.packages[pkg] = {
       keywords: splitList(div.querySelector('.pkg-kw').value),
       viewIds: splitList(div.querySelector('.pkg-vid').value),
+      selectors: splitLines(div.querySelector('.pkg-sel').value),
       disabled: div.querySelector('.pkg-disabled').checked,
     };
   });
@@ -333,6 +347,17 @@ function showDiff() {
     removedVid.forEach((x) => diff += `  - ${esc(x)}\n`);
   }
 
+  // 选择器 diff（全局 + 各应用专属）
+  diff += selectorDiff('全局选择器', rules.selectors || [], newRules.selectors);
+  const oldPkgMap = rules.packages || {};
+  for (const pkg of Object.keys(newRules.packages)) {
+    const before = (oldPkgMap[pkg] && oldPkgMap[pkg].selectors) || [];
+    const after = newRules.packages[pkg].selectors || [];
+    if (before.length || after.length) {
+      diff += selectorDiff(`${pkg} 选择器`, before, after);
+    }
+  }
+
   // 应用规则 diff
   const oldPkgs = new Set(Object.keys(rules.packages || {}));
   const newPkgs = new Set(Object.keys(newRules.packages));
@@ -347,6 +372,28 @@ function showDiff() {
   if (!diff) diff = '（无变化）';
   $('diff-content').innerHTML = `<div class="diff-col">${esc(diff)}</div>`;
   $('diff-modal').classList.remove('hidden');
+}
+
+/** 选择器增删差异；服务端会丢弃不合法的条目，故这里标出疑似非法行 */
+function selectorDiff(title, before, after) {
+  const oldSet = new Set(before);
+  const newSet = new Set(after);
+  const added = [...newSet].filter((x) => !oldSet.has(x));
+  const removed = [...oldSet].filter((x) => !newSet.has(x));
+  if (!added.length && !removed.length) return '';
+  let out = `${title}:\n`;
+  added.forEach((x) => { out += `  + ${esc(x)}${isAcceptedSelector(x) ? '' : '（服务端校验会丢弃）'}\n`; });
+  removed.forEach((x) => { out += `  - ${esc(x)}\n`; });
+  return out;
+}
+
+/** 与服务端 isValidSelector 同规则的镜像：仅用于编辑期提示，不做语法判定 */
+function isAcceptedSelector(s) {
+  const t = String(s || '').trim();
+  if (!t || t.length > 256) return false;
+  if (t.split('"').length % 2 !== 1) return false;
+  if (t.split('[').length !== t.split(']').length) return false;
+  return /^[\p{L}\p{N}_\s.^$+*>\[\]"'=:\/-]+$/u.test(t);
 }
 
 function closeDiff() {
@@ -401,11 +448,17 @@ async function runSimulator() {
     box.innerHTML = `<span style="color:#DC2626;">错误: ${esc(data.error || res.status)}</span>`;
     return;
   }
+  const notes = (data.selectorNotes || [])
+    .map((n) => `<div style="margin-top:4px;">· <code>${esc(n.rule)}</code>：${esc(n.reason)}</div>`)
+    .join('');
+  const noteBlock = notes
+    ? `<div style="margin-top:8px;font-size:12px;color:#6B7280;">以下选择器服务端无法判定，需在真机验证：${notes}</div>`
+    : '';
   if (data.hit) {
     const hits = data.hits.map((h) => esc(JSON.stringify(h))).join('<br/>');
-    box.innerHTML = `<div class="sim-hit"><strong>命中!</strong><br/>${hits}</div>`;
+    box.innerHTML = `<div class="sim-hit"><strong>命中!</strong><br/>${hits}</div>${noteBlock}`;
   } else {
-    box.innerHTML = '<span style="color:#6B7280;">未命中任何规则</span>';
+    box.innerHTML = `<span style="color:#6B7280;">未命中任何规则</span>${noteBlock}`;
   }
 }
 

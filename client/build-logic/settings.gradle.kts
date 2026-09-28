@@ -17,6 +17,10 @@ dependencyResolutionManagement {
     repositories {
         maven("https://maven.aliyun.com/repository/google")
         maven("https://maven.aliyun.com/repository/public")
+        // gradle-plugin 镜像：build-logic 的 classpath 上有 Gradle 插件本体（如 ktlint-gradle），
+        // 它们发布在插件仓库而非 Maven Central，只配 public 会解析失败；
+        // 加上镜像而不是直接指向 plugins.gradle.org，是为了保持「国内镜像优先」策略一致。
+        maven("https://maven.aliyun.com/repository/gradle-plugin")
         google()
         mavenCentral()
     }

@@ -26,7 +26,7 @@ enum class Vendor(val id: String) {
     MEIZU("meizu"),
     ONEPLUS("oneplus"),
     SAMSUNG("samsung"),
-    GENERIC("generic")
+    GENERIC("generic"),
 }
 
 /** 跳转时如何把「本应用包名」传递给目标界面。 */
@@ -38,7 +38,7 @@ enum class PackagePayload {
     DATA_URI,
 
     /** 以 `packageName` 字符串 extra 传递（少数厂商自定义约定，如魅族）。 */
-    EXTRA_NAME
+    EXTRA_NAME,
 }
 
 /**
@@ -53,7 +53,7 @@ data class GuideEntry(
     val action: String? = null,
     val pkg: String? = null,
     val cls: String? = null,
-    val payload: PackagePayload = PackagePayload.NONE
+    val payload: PackagePayload = PackagePayload.NONE,
 ) {
     init {
         require(action != null || pkg != null) { "GuideEntry 至少需要 action 或 pkg" }
@@ -87,7 +87,7 @@ object VendorKeepAlive {
         "vivo" to Vendor.VIVO,
         "iqoo" to Vendor.VIVO,
         "meizu" to Vendor.MEIZU,
-        "samsung" to Vendor.SAMSUNG
+        "samsung" to Vendor.SAMSUNG,
     )
 
     /** 由厂商/子品牌识别所属 ROM；无法识别或入参为空时返回 [Vendor.GENERIC]。 */
@@ -106,124 +106,122 @@ object VendorKeepAlive {
     fun genericEntries(): List<GuideEntry> = listOf(
         GuideEntry(
             action = "android.settings.APPLICATION_DETAILS_SETTINGS",
-            payload = PackagePayload.DATA_URI
+            payload = PackagePayload.DATA_URI,
         ),
         GuideEntry(action = "android.settings.ACCESSIBILITY_SETTINGS"),
         GuideEntry(action = "android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS"),
         GuideEntry(
             action = "android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
-            payload = PackagePayload.DATA_URI
-        )
+            payload = PackagePayload.DATA_URI,
+        ),
     )
 
     /** 厂商入口 + 通用兜底构成的完整候选链（按顺序尝试）。 */
     fun candidates(vendor: Vendor): List<GuideEntry> = entries(vendor) + genericEntries()
 
     /** 全部候选链中出现的包名集合，用于生成/校验 `<queries>` 包可见性声明。 */
-    fun allPackages(): Set<String> =
-        Vendor.entries.flatMap { candidates(it) }.mapNotNull { it.pkg }.toSet()
+    fun allPackages(): Set<String> = Vendor.entries.flatMap { candidates(it) }.mapNotNull { it.pkg }.toSet()
 
     /** 全部候选链中出现的 action 集合，用于生成/校验 `<queries>` 可见性声明。 */
-    fun allActions(): Set<String> =
-        Vendor.entries.flatMap { candidates(it) }.mapNotNull { it.action }.toSet()
+    fun allActions(): Set<String> = Vendor.entries.flatMap { candidates(it) }.mapNotNull { it.action }.toSet()
 
     /** 指定 ROM 的自启动/后台管理候选入口（按经验成功率排序）。 */
     fun entries(vendor: Vendor): List<GuideEntry> = when (vendor) {
         Vendor.XIAOMI -> listOf(
             GuideEntry(
                 action = "miui.intent.action.OP_AUTO_START",
-                pkg = "com.miui.securitycenter"
+                pkg = "com.miui.securitycenter",
             ),
             GuideEntry(
                 pkg = "com.miui.securitycenter",
-                cls = "com.miui.permcenter.autostart.AutoStartManagementActivity"
+                cls = "com.miui.permcenter.autostart.AutoStartManagementActivity",
             ),
             GuideEntry(
                 pkg = "com.miui.securitycenter",
-                cls = "com.miui.powercenter.PowerSettings"
-            )
+                cls = "com.miui.powercenter.PowerSettings",
+            ),
         )
 
         Vendor.HUAWEI -> listOf(
             GuideEntry(
                 pkg = "com.huawei.systemmanager",
-                cls = "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"
+                cls = "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity",
             ),
             GuideEntry(
                 pkg = "com.huawei.systemmanager",
-                cls = "com.huawei.systemmanager.appcontrol.activity.StartupAppControlActivity"
+                cls = "com.huawei.systemmanager.appcontrol.activity.StartupAppControlActivity",
             ),
             GuideEntry(
                 pkg = "com.huawei.systemmanager",
-                cls = "com.huawei.systemmanager.mainscreen.MainScreenActivity"
-            )
+                cls = "com.huawei.systemmanager.mainscreen.MainScreenActivity",
+            ),
         )
 
         Vendor.HONOR -> listOf(
             GuideEntry(
                 pkg = "com.hihonor.systemmanager",
-                cls = "com.hihonor.systemmanager.startupmgr.ui.StartupNormalAppListActivity"
+                cls = "com.hihonor.systemmanager.startupmgr.ui.StartupNormalAppListActivity",
             ),
             GuideEntry(
                 pkg = "com.hihonor.systemmanager",
-                cls = "com.hihonor.systemmanager.appcontrol.activity.StartupAppControlActivity"
-            )
+                cls = "com.hihonor.systemmanager.appcontrol.activity.StartupAppControlActivity",
+            ),
         )
 
         Vendor.OPPO -> listOf(
             GuideEntry(
                 pkg = "com.coloros.safecenter",
-                cls = "com.coloros.safecenter.permission.startup.StartupAppListActivity"
+                cls = "com.coloros.safecenter.permission.startup.StartupAppListActivity",
             ),
             GuideEntry(
                 pkg = "com.coloros.safecenter",
-                cls = "com.coloros.safecenter.startupapp.StartupAppListActivity"
+                cls = "com.coloros.safecenter.startupapp.StartupAppListActivity",
             ),
             GuideEntry(
                 pkg = "com.oplus.safecenter",
-                cls = "com.oplus.safecenter.startupapp.StartupAppListActivity"
-            )
+                cls = "com.oplus.safecenter.startupapp.StartupAppListActivity",
+            ),
         )
 
         Vendor.VIVO -> listOf(
             GuideEntry(
                 pkg = "com.vivo.permissionmanager",
-                cls = "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"
+                cls = "com.vivo.permissionmanager.activity.BgStartUpManagerActivity",
             ),
             GuideEntry(
                 pkg = "com.iqoo.secure",
-                cls = "com.iqoo.secure.safeguard.PurviewTabActivity"
-            )
+                cls = "com.iqoo.secure.safeguard.PurviewTabActivity",
+            ),
         )
 
         Vendor.MEIZU -> listOf(
             GuideEntry(
                 action = "com.meizu.safe.security.SHOW_APPSEC",
                 pkg = "com.meizu.safe",
-                payload = PackagePayload.EXTRA_NAME
+                payload = PackagePayload.EXTRA_NAME,
             ),
             GuideEntry(
                 pkg = "com.meizu.safe",
-                cls = "com.meizu.safe.permission.SystemAppActivity"
-            )
+                cls = "com.meizu.safe.permission.SystemAppActivity",
+            ),
         )
 
         Vendor.ONEPLUS -> listOf(
             GuideEntry(
                 pkg = "com.oneplus.security",
-                cls = "com.oneplus.security.chainlaunch.view.ChainLaunchAppListActivity"
-            )
+                cls = "com.oneplus.security.chainlaunch.view.ChainLaunchAppListActivity",
+            ),
         )
 
         Vendor.SAMSUNG -> listOf(
             GuideEntry(
                 pkg = "com.samsung.android.lool",
-                cls = "com.samsung.android.sm.battery.ui.BatteryActivity"
+                cls = "com.samsung.android.sm.battery.ui.BatteryActivity",
             ),
             GuideEntry(
                 pkg = "com.samsung.android.sm_cn",
-                cls = "com.samsung.android.sm.ui.battery.BatteryActivity"
-            )
+                cls = "com.samsung.android.sm.ui.battery.BatteryActivity",
+            ),
         )
 
         Vendor.GENERIC -> emptyList()

@@ -1,6 +1,5 @@
 package com.ldp.adskip.ui.home
 
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
@@ -57,6 +56,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
 import com.ldp.adskip.device.KeepAliveNavigator
+import com.ldp.adskip.ui.Messenger
 import com.ldp.adskip.ui.UiEffect
 import com.ldp.adskip.ui.components.SectionCard
 import com.ldp.adskip.ui.components.SectionHint
@@ -90,18 +90,21 @@ import com.ldp.adskip.ui.theme.StatusColors
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun HomeScreen(
-    viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
-) {
+fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lastAppLabel = rememberAppLabel(state.lastApp)
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(messenger) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                is UiEffect.ShowMessage ->
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                is UiEffect.ShowMessage -> messenger.show(effect.message)
+
+                is UiEffect.KeywordRemoved -> messenger.showUndoable(
+                    message = context.getString(R.string.keyword_removed, effect.keyword),
+                    undoLabel = context.getString(R.string.action_undo),
+                    onUndo = viewModel::undoRemoveKeyword,
+                )
             }
         }
     }
@@ -112,23 +115,22 @@ fun HomeScreen(
                 .fillMaxSize()
                 .imePadding(),
             contentPadding = PaddingValues(
-                start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp
+                start = 16.dp,
+                end = 16.dp,
+                top = 16.dp,
+                bottom = 24.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
                 StatusHero(
                     running = state.serviceRunning,
                     onPrimaryAction = {
                         if (!KeepAliveNavigator.openAccessibilitySettings(context)) {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.settings_open_failed),
-                                Toast.LENGTH_LONG
-                            ).show()
+                            messenger.show(context.getString(R.string.settings_open_failed))
                         }
                     },
-                    onTest = viewModel::startFakeAdTest
+                    onTest = viewModel::startFakeAdTest,
                 )
             }
 
@@ -138,14 +140,14 @@ fun HomeScreen(
                 KeywordsCard(
                     keywords = state.keywords,
                     onAdd = viewModel::addKeyword,
-                    onRemoveAt = viewModel::removeKeyword
+                    onRemoveAt = viewModel::removeKeyword,
                 )
             }
 
             item {
                 SectionHint(
                     text = stringResource(R.string.how_it_works),
-                    modifier = Modifier.padding(horizontal = 4.dp)
+                    modifier = Modifier.padding(horizontal = 4.dp),
                 )
             }
         }
@@ -153,16 +155,15 @@ fun HomeScreen(
         AnimatedVisibility(
             visible = state.fakeAdVisible,
             enter = fadeIn(tween(160)),
-            exit = fadeOut(tween(160))
+            exit = fadeOut(tween(160)),
         ) {
             FakeAdOverlay(
                 countdown = state.countdown,
-                onSkipClicked = viewModel::onManualSkipClicked
+                onSkipClicked = viewModel::onManualSkipClicked,
             )
         }
     }
 }
-
 
 /**
  * 状态主视觉：状态环 + 结论式文案 + 主行动按钮。
@@ -176,34 +177,30 @@ fun HomeScreen(
  * 从约 300dp 降到约 150dp，关键词区成为首屏之下第一个完整可见的交互区。
  */
 @Composable
-private fun StatusHero(
-    running: Boolean,
-    onPrimaryAction: () -> Unit,
-    onTest: () -> Unit
-) {
+private fun StatusHero(running: Boolean, onPrimaryAction: () -> Unit, onTest: () -> Unit) {
     SectionCard(contentPadding = PaddingValues(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             StatusOrb(
                 running = running,
                 contentDescription = stringResource(
-                    if (running) R.string.status_on else R.string.status_off
+                    if (running) R.string.status_on else R.string.status_off,
                 ),
-                diameter = 56.dp
+                diameter = 56.dp,
             )
             Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(if (running) R.string.status_on else R.string.status_off),
                     style = MaterialTheme.typography.titleLarge,
-                    color = if (running) StatusColors.on else StatusColors.off
+                    color = if (running) StatusColors.on else StatusColors.off,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = stringResource(
-                        if (running) R.string.status_on_hint else R.string.status_off_hint
+                        if (running) R.string.status_on_hint else R.string.status_off_hint,
                     ),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -215,14 +212,14 @@ private fun StatusHero(
         if (running) {
             FilledTonalButton(
                 onClick = onPrimaryAction,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.btn_open_settings))
             }
         } else {
             Button(
                 onClick = onPrimaryAction,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.btn_open_settings))
             }
@@ -230,15 +227,20 @@ private fun StatusHero(
 
         HorizontalDivider(
             modifier = Modifier.padding(vertical = 4.dp),
-            color = MaterialTheme.colorScheme.outlineVariant
+            color = MaterialTheme.colorScheme.outlineVariant,
         )
 
         // 「测试」是可选的验证动作，用 TextButton 让它明确矮于主行动。
+        //
+        // 这里**不能**用 `enabled = running` 把按钮禁用：那样服务未开启时用户只看到一个
+        // 灰按钮，既没有原因也没有下一步（灰控件不解释自己是常见 UX 反模式）。
+        // HomeViewModel.startFakeAdTest() 已实现「未开启则提示先开启服务」的分支，
+        // 之前被 enabled 挡住而永远不可达；改为始终可点后，那条提示才真正生效。
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.Center,
         ) {
-            TextButton(onClick = onTest, enabled = running) {
+            TextButton(onClick = onTest) {
                 Text(stringResource(R.string.btn_test))
             }
         }
@@ -255,16 +257,13 @@ private fun StatusHero(
  * 「最近应用」为空时整段不显示：空占位比不显示更糟，它会让用户以为数据丢了。
  */
 @Composable
-private fun StatsRow(
-    state: HomeViewModel.UiState,
-    lastAppLabel: String
-) {
+private fun StatsRow(state: HomeViewModel.UiState, lastAppLabel: String) {
     SectionCard(contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(R.string.stats_total_short, state.totalSkips),
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             if (lastAppLabel.isNotBlank()) {
                 Spacer(Modifier.width(8.dp))
@@ -273,14 +272,12 @@ private fun StatsRow(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
     }
 }
-
-
 
 /**
  * 关键词卡片：输入 + 以 Chip 形式平铺已有关键词。
@@ -290,11 +287,7 @@ private fun StatsRow(
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun KeywordsCard(
-    keywords: List<String>,
-    onAdd: (String) -> Unit,
-    onRemoveAt: (Int) -> Unit
-) {
+private fun KeywordsCard(keywords: List<String>, onAdd: (String) -> Unit, onRemoveAt: (Int) -> Unit) {
     var input by remember { mutableStateOf("") }
     val keyboard = LocalSoftwareKeyboardController.current
 
@@ -325,22 +318,22 @@ private fun KeywordsCard(
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = stringResource(R.string.btn_add),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.primary,
                 )
-            }
+            },
         )
 
         AnimatedVisibility(
             visible = keywords.isNotEmpty(),
             enter = fadeIn(tween(180)),
-            exit = fadeOut(tween(180))
+            exit = fadeOut(tween(180)),
         ) {
             FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .animateContentSize(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 keywords.forEachIndexed { index, keyword ->
                     InputChip(
@@ -351,11 +344,12 @@ private fun KeywordsCard(
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = stringResource(
-                                    R.string.keyword_remove_cd, keyword
+                                    R.string.keyword_remove_cd,
+                                    keyword,
                                 ),
-                                modifier = Modifier.size(InputChipDefaults.AvatarSize)
+                                modifier = Modifier.size(InputChipDefaults.AvatarSize),
                             )
-                        }
+                        },
                     )
                 }
             }
@@ -372,25 +366,25 @@ private fun KeywordsCard(
 private fun FakeAdOverlay(countdown: Int, onSkipClicked: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = MaterialTheme.colorScheme.background,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             Text(
                 text = stringResource(R.string.fake_ad_title),
                 style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(12.dp))
             Text(
                 text = stringResource(R.string.fake_ad_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(40.dp))
             Button(onClick = onSkipClicked) {
@@ -400,7 +394,7 @@ private fun FakeAdOverlay(countdown: Int, onSkipClicked: () -> Unit) {
             Text(
                 text = stringResource(R.string.fake_ad_countdown, countdown),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

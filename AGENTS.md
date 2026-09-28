@@ -5,7 +5,8 @@
 ## 分支
 
 - 禁止直接在 `main` 上提交、推送或强制改写历史。
-- 每项变更从最新 `main` 创建独立短生命周期分支：`feature/<id>-<slug>`、`fix/<id>-<slug>`、`docs/<id>-<slug>`、`ci/<id>-<slug>`、`release/vX.Y.Z` 或 `hotfix/<id>-<slug>`。
+- 每项变更从最新 `main` 创建独立短生命周期分支，前缀 ∈ `feature` / `fix` / `docs` / `ci` / `test` / `refactor`，形如 `<type>/<id>-<slug>`；发布用 `release/vX.Y.Z`，线上紧急修复用 `hotfix/<id>-<slug>`。
+  前缀清单以 `RepoHygieneTest` 强制的为准（少列会让 Agent 建出被摘要误导的分支，多列则会被门禁判红），逐类用途见 [CONTRIBUTING.md](CONTRIBUTING.md)「分支策略」。
 - 分支只处理一个需求，关联 Issue；合并后删除源分支。
 - 不提交密钥、签名文件、构建产物、运行时数据或个人环境配置。
 
@@ -19,6 +20,7 @@
 ## 验证与合并
 
 - 修改完成后必须运行与变更相关的最小测试；跨模块变更运行完整门禁：
+  - `cd client && ./gradlew ktlintCheck`
   - `cd client && ./gradlew assembleDebug`
   - `cd client && ./gradlew testDebugUnitTest`
   - `cd server && bun test`

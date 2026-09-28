@@ -1,22 +1,59 @@
-# EditorConfig: https://editorconfig.org
-# 缩进/字符集/空白约定；行尾策略由 .gitattributes 管辖（仓库内一律 LF）。
+# 编辑器与静态检查的共同约定——本文件是「代码长什么样」的机器可读事实源。
+#
+# 为什么放仓库根：ktlint 会从被检查文件所在目录逐级向上寻找 .editorconfig，
+# 根级一份即可同时覆盖 client/（Kotlin/KTS）与 server/（TS/HTML），
+# 避免同一份规则在两个目录各存一份、形成第二份真相。
+#
+# 变更方式：规则调整必须改本文件并同步 ktlint 约定插件（AdskipAndroidApplicationPlugin），
+# 不允许在单文件里用 // ktlint-disable 掩盖问题——那是把检查关掉，不是解决检查。
 root = true
 
 [*]
 charset = utf-8
+end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 indent_style = space
+indent_size = 4
+max_line_length = 120
 
 [*.{kt,kts}]
-indent_size = 4
+# 代码风格用 intellij_idea 而非 ktlint 官方默认的 ktlint_official。
+#
+# 理由（实测数据）：本仓库 Kotlin 源码由 IntelliJ 默认格式化工具产出（4 空格缩进、
+# 不强制尾随逗号、when 分支不强制空行）。ktlint_official 风格与之冲突面极大——
+# 仅「尾随逗号」「多行表达式另起一行」「when 条件间空行」三类规则就产生 1404 处违规，
+# 逐条手改不现实，全量 ktlintFormat 又会把整仓代码重排成一个难以 review 的巨型 diff，
+# 且会破坏那些经过人工调整的中文 KDoc 排版。收益（格式统一）远不匹配代价（可审性）。
+#
+# intellij_idea 与既有风格一致，因此引入 ktlint 的净效果是**新增**真实检查
+# （未使用 import、通配 import、文件命名、缩进、import 顺序、文件末尾换行），
+# 而不是把存量代码全部改写一遍。等风格真正统一后，再评估切换 ktlint_official。
+ktlint_code_style = intellij_idea
+# Compose 官方约定：@Composable 函数用 PascalCase（把「这是个 UI 元素」写进函数名），
+# 与 Kotlin 其余函数的小驼峰约定冲突。仓库内 34 处 @Composable 全部遵循该约定，
+# 逐个加 @Suppress 或 ktlint-disable 只会把规则变成噪音，故整条关闭。
+# 代价是普通函数的命名不再被 ktlint 管——非 @Composable 函数的命名由
+# ArchitectureBoundaryTest 之外的评审与 IDE 提示兜底。
+ktlint_standard_function-naming = disabled
+# 允许尾随逗号：本仓库大量使用参数化 DSL 与多行参数列表，尾随逗号让 diff 保持干净
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+# import 顺序：java/javax/kotlin 在前（IDE 约定），项目自身 import 在后
+ij_kotlin_imports_layout = *,java.**,javax.**,kotlin.**,^
 
-[*.{ts,js,json,yml,yaml}]
+[*.{gradle.kts,kts}]
+# Gradle 构建脚本的 plugins 块在语义上就是通配使用的，禁止通配导入在这里没有收益
+ktlint_standard_no-wildcard-imports = disabled
+ij_kotlin_imports_layout = *,java.**,javax.**,kotlin.**,^
+
+[*.{ts,js,json,html,css,yml,yaml,toml}]
 indent_size = 2
 
-[*.md]
-# Markdown 结尾两个空格是硬换行语法，不裁剪
-trim_trailing_whitespace = false
+[*.{kt,kts,ts,js,json,html,css,yml,yaml,toml}]
+# 缩进用空格；Git 与本文件共同保证行尾统一为 LF（.gitattributes 亦声明 text=auto eol=lf）
+indent_style = space
 
-[*.{bat,cmd}]
-end_of_line = crlf
+[*.md]
+# Markdown 的行尾两个空格是「硬换行」语义，不能被裁掉
+trim_trailing_whitespace = false

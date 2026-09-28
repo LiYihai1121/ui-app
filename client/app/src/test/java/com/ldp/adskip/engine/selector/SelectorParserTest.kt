@@ -1,6 +1,9 @@
 package com.ldp.adskip.engine.selector
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -64,7 +67,7 @@ class SelectorParserTest {
         assertEquals(4, ast!!.compounds.size)
         assertEquals(
             listOf(Combinator.DESCENDANT, Combinator.CHILD, Combinator.PREV_SIBLING),
-            ast.combinators
+            ast.combinators,
         )
     }
 
@@ -78,15 +81,15 @@ class SelectorParserTest {
     fun `contains prefix suffix ops parse`() {
         assertEquals(
             MatchOp.CONTAINS,
-            parse("[text*=\"跳\"]")!!.compounds[0].simples[0].attr.op
+            parse("[text*=\"跳\"]")!!.compounds[0].simples[0].attr.op,
         )
         assertEquals(
             MatchOp.PREFIX,
-            parse("[text^=\"跳\"]")!!.compounds[0].simples[0].attr.op
+            parse("[text^=\"跳\"]")!!.compounds[0].simples[0].attr.op,
         )
         assertEquals(
             MatchOp.SUFFIX,
-            parse("[text$=\"跳\"]")!!.compounds[0].simples[0].attr.op
+            parse("[text$=\"跳\"]")!!.compounds[0].simples[0].attr.op,
         )
     }
 
@@ -102,7 +105,7 @@ class SelectorParserTest {
             "[click]" to AttrKey.CLICK,
             "[text]" to AttrKey.TEXT,
             "[desc]" to AttrKey.DESC,
-            "[vid]" to AttrKey.VID
+            "[vid]" to AttrKey.VID,
         )) {
             val ast = parse(expr)
             assertNotNull("should accept $expr", ast)

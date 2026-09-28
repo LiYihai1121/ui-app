@@ -24,19 +24,13 @@ import kotlinx.coroutines.withContext
  */
 class AppsViewModel(private val container: AppContainer) : ViewModel() {
 
-    data class AppRow(
-        val pkg: String,
-        val label: String,
-        val icon: Drawable?,
-        val disabled: Boolean,
-        val count: Int
-    )
+    data class AppRow(val pkg: String, val label: String, val icon: Drawable?, val disabled: Boolean, val count: Int)
 
     data class UiState(
         val items: List<AppRow> = emptyList(),
         val loading: Boolean = true,
         val query: String = "",
-        val onlyEnabled: Boolean = false
+        val onlyEnabled: Boolean = false,
     ) {
         /** 搜索 + 筛选后的可见列表；匹配包名与应用名，大小写不敏感。 */
         val visibleItems: List<AppRow>
@@ -44,9 +38,11 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
                 val q = query.trim().lowercase()
                 return items.filter { row ->
                     (onlyEnabled.not() || row.disabled.not()) &&
-                        (q.isEmpty() ||
-                            row.label.lowercase().contains(q) ||
-                            row.pkg.lowercase().contains(q))
+                        (
+                            q.isEmpty() ||
+                                row.label.lowercase().contains(q) ||
+                                row.pkg.lowercase().contains(q)
+                            )
                 }
             }
     }
@@ -81,9 +77,13 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
                         AppRow(
                             pkg = pkg,
                             label = it.loadLabel(pm).toString(),
-                            icon = try { it.loadIcon(pm) } catch (_: Exception) { null },
+                            icon = try {
+                                it.loadIcon(pm)
+                            } catch (_: Exception) {
+                                null
+                            },
                             disabled = container.rulesRepo.isDisabled(pkg),
-                            count = container.statsRepo.countFor(pkg)
+                            count = container.statsRepo.countFor(pkg),
                         )
                     }
                     .sortedBy { it.label.lowercase() }
@@ -97,7 +97,7 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
         _uiState.value = _uiState.value.copy(
             items = _uiState.value.items.map {
                 if (it.pkg == pkg) it.copy(disabled = !enabled) else it
-            }
+            },
         )
     }
 
