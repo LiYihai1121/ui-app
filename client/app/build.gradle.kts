@@ -42,7 +42,9 @@ android {
     // namespace/compileSdk/minSdk/targetSdk 等公共项由 adskip.android.application 约定插件统一提供
     defaultConfig {
         applicationId = "com.ldp.adskip"
-        versionCode = 10
+        // 单调递增，禁止复用已发布编号（下一个版本必须 > 10）
+        versionCode = 11
+        // 展示值用 X.Y（与 CONTRIBUTING「版本策略」一致；server 侧用完整 X.Y.Z）
         versionName = "3.1"
     }
 
