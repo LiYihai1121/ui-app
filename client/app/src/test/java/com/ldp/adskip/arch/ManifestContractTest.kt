@@ -75,7 +75,7 @@ class ManifestContractTest {
         val service = readMainSource("service/SkipAdService.kt")
         // 按「整段调用」而非按行匹配：sendBroadcast(\n  Intent(...)\n) 会跨行，
         // 逐行判断会把 setPackage 在下一行的合法调用误判为违规。
-        val calls = SEND_BROADCAST.findAll(service).map { it.value }.toList()
+        val calls = broadcastCallSpans(service)
         assertTrue("未在 SkipAdService 中找到任何 sendBroadcast 调用", calls.isNotEmpty())
 
         val offenders = calls.filterNot { it.contains("setPackage(") }
@@ -112,6 +112,68 @@ class ManifestContractTest {
 
     // ---------- 工具 ----------
 
+    /**
+     * 提取源码中每一处 `sendBroadcast(...)` 的**完整调用片段**（含首尾括号）。
+     *
+     * 不用正则的原因：正则无法正确处理任意层级的括号嵌套
+     * （如 `sendBroadcast(Intent(X).putExtra("k", compute(1)))` 会被漏检），
+     * 也不会跳过字符串字面量里的括号。这里用括号配平扫描，支持任意嵌套。
+     */
+    private fun broadcastCallSpans(source: String): List<String> {
+        val spans = mutableListOf<String>()
+        var idx = 0
+        while (idx < source.length) {
+            val at = source.indexOf(CALL_NAME, idx)
+            if (at < 0) break
+
+            // 避免把 `mySendBroadcast` / `sendBroadcastXxx` 误判为调用
+            val precededByIdent = at > 0 &&
+                (source[at - 1].isLetterOrDigit() || source[at - 1] == '_')
+
+            var open = at + CALL_NAME.length
+            while (open < source.length && source[open].isWhitespace()) open++
+
+            if (precededByIdent || open >= source.length || source[open] != '(') {
+                idx = at + 1
+                continue
+            }
+            val end = matchingParenEnd(source, open)
+            if (end < 0) {            // 未闭合：视为异常源码，继续向后扫描
+                idx = at + 1
+                continue
+            }
+            spans.add(source.substring(at, end))
+            idx = end
+        }
+        return spans
+    }
+
+    /** 从 `openIndex`（指向 `(`）起做括号配平，返回匹配的 `)` 之后一位；未闭合返回 -1。 */
+    private fun matchingParenEnd(source: String, openIndex: Int): Int {
+        var depth = 0
+        var i = openIndex
+        while (i < source.length) {
+            when (source[i]) {
+                '(' -> depth++
+                ')' -> {
+                    depth--
+                    if (depth == 0) return i + 1
+                }
+                // 跳过字符串字面量，避免其中的括号干扰配平（含反斜杠转义）
+                '"', '\'' -> {
+                    val quote = source[i]
+                    i++
+                    while (i < source.length && source[i] != quote) {
+                        if (source[i] == '\\') i++
+                        i++
+                    }
+                }
+            }
+            i++
+        }
+        return -1
+    }
+
     private fun readMainSource(relative: String): String {
         val dir = File(System.getProperty("user.dir"), "src/main/java/com/ldp/adskip")
         assertTrue("未定位到 src/main/java/com/ldp/adskip：无法读取 $relative", dir.isDirectory)
@@ -146,6 +208,7 @@ class ManifestContractTest {
         const val MANIFEST_RELATIVE_PATH = "src/main/AndroidManifest.xml"
         // 匹配完整的 sendBroadcast(...) 调用体（允许一层嵌套括号），
         // 以便判断 setPackage 是否真的出现在这处调用里。
-        val SEND_BROADCAST = Regex("""sendBroadcast\s*\((?:[^()]|\([^()]*\))*\)""", RegexOption.DOT_MATCHES_ALL)
+        /** sendBroadcast 调用名（配合括号配平扫描使用）。 */
+        const val CALL_NAME = "sendBroadcast"
     }
 }

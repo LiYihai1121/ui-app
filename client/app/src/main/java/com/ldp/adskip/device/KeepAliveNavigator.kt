@@ -106,8 +106,16 @@ object KeepAliveNavigator {
                 onResult(toTileAddResult(code))
             }
             true
-        } catch (e: Exception) {
-            LogRing.w(TAG, "requestAddTileService failed: ${e.message}")
+        } catch (e: Throwable) {
+            // 这里必须捕获 Throwable 而非 Exception。
+            //
+            // `StatusBarManager.requestAddTileService` 的第 5 个参数在 AOSP 中经历过
+            // `RemoteCallback` → `Consumer<Integer>` 的变更（已核对：android-34/35 均为
+            // `Consumer<Integer>`；android-33 引入时的形态未能在本机证实）。若目标系统仍是
+            // 旧签名，调用点会抛 `NoSuchMethodError`——它是 **Error**，`catch (Exception)`
+            // 抓不到，会在 `viewModelScope` 协程里直接崩溃，且崩溃栈与「添加磁贴」毫无关联，
+            // 极难归因。降级为提示手动添加，代价远小于崩溃。
+            LogRing.w(TAG, "requestAddTileService failed: ${e.javaClass.simpleName}: ${e.message}")
             false
         }
     }

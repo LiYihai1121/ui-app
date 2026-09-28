@@ -29,8 +29,12 @@ class ProjectStructureTest {
     @Test
     fun `repository root contains only the allowed entries`() {
         val root = repoRoot()
-        val actualDirs = root.listFiles().orEmpty().filter { it.isDirectory && it.name != ".git" }.map { it.name }.toSet()
-        val actualFiles = root.listFiles().orEmpty().filter { it.isFile }.map { it.name }.toSet()
+        // `.git` 形态随场景不同：普通克隆是**目录**，`git worktree` 关联的工作区是**文件**。
+        // 本项目强制 Agent 使用 worktree（AGENT-WORKFLOW 第 2.1 节），两种形态都属正常，
+        // 必须同时从目录与文件两侧排除，否则在 worktree 内会误报。
+        val entries = root.listFiles().orEmpty().filter { it.name != ".git" }
+        val actualDirs = entries.filter { it.isDirectory }.map { it.name }.toSet()
+        val actualFiles = entries.filter { it.isFile }.map { it.name }.toSet()
 
         val unexpectedDirs = (actualDirs - ALLOWED_ROOT_DIRS).sorted()
         val unexpectedFiles = (actualFiles - ALLOWED_ROOT_FILES).sorted()
@@ -240,16 +244,20 @@ class ProjectStructureTest {
         )
 
         val docMap = File(docs, "README.md").readText()
+        // 精确匹配「相对 docs/ 的路径」，而不是子串 contains：
+        // 子串匹配会把 `XROADMAP.md` 误判为 `ROADMAP.md` 已登记（假阴性，门禁形同虚设）。
+        val registered = MarkdownLinkRegex.findAll(docMap).map { it.groupValues[1] }.toSet()
         val unregistered = docs.walkTopDown()
             .filter { it.isFile && it.extension == "md" && it.name != "README.md" }
-            .map { it.name }
-            .filterNot { docMap.contains(it) }
+            .map { docs.toPath().relativize(it.toPath()).toString().replace('\\', '/') }
+            .filterNot { path -> registered.any { it.substringBefore('#') == path } }
             .sorted()
             .toList()
         assertTrue(
             "以下文档未登记到 docs/README.md（文档地图要求登记全部文档，否则会形成第二份真相）：\n" +
-                unregistered.joinToString("\n") { "  docs/…/$it" } +
-                "\n请在 docs/README.md 的「目录结构」与「阅读顺序」中登记。",
+                unregistered.joinToString("\n") { "  docs/$it" } +
+                "\n请在 docs/README.md 的「目录结构」与「阅读顺序」中登记，" +
+                "以相对 docs/ 的路径写成 Markdown 链接（如 [planning/ROADMAP.md](planning/ROADMAP.md)）。",
             unregistered.isEmpty()
         )
     }
@@ -292,6 +300,12 @@ class ProjectStructureTest {
 
         val INCLUDE_REGEX = Regex("""include\s*\(\s*"(:[^"]+)"\s*\)""")
         val PACKAGE_REGEX = Regex("""^\s*package\s+([\w.]+)""", RegexOption.MULTILINE)
+
+        /** Markdown 行内链接的目标，用于精确判定文档是否已登记到文档地图。 */
+        val MarkdownLinkRegex = Regex("""\]\(([^)\s]+)\)""")
+
+        /** sendBroadcast 调用名（配合括号配平扫描使用）。 */
+        const val CALL_NAME = "sendBroadcast"
 
         // 仓库根白名单：目录
         val ALLOWED_ROOT_DIRS = setOf(
