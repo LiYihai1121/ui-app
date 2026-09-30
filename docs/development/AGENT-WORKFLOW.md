@@ -80,6 +80,7 @@ git rev-parse --show-toplevel  # 确认工作区根
 | --- | --- | --- | --- | --- |
 | `agent-a` | `.worktrees/agent-a-tile` | `feature/29-quick-tile` | `client/.../device/**`、`client/.../AndroidManifest.xml` | 进行中 |
 | `agent-b` | `.worktrees/agent-b-protocol` | `feature/30-protocol-v2` | `server/src/**`、`client/.../net/**` | 进行中 |
+| `cline` | `.worktrees/docs-vendor-plan` | `docs/vendor-support-plan` | `docs/planning/VENDOR-SUPPORT.md`、`docs/README.md`、`docs/planning/ROADMAP.md` | 待合并 |
 | — | — | — | `docs/architecture/ARCHITECTURE.md`、`CHANGELOG.md` | 预留：仅集成者写 |
 
 状态取值：`进行中` / `待合并` / `阻塞` / `已完成`。任务认领与状态广播优先使用协作工具的任务清单与信箱，其次才用本表（避免两处状态打架）。
