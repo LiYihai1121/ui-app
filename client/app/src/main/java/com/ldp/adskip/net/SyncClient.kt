@@ -121,36 +121,12 @@ object SyncClient {
         }.start()
     }
 
-    /** 静默上报一次跳过（v1 批量格式）。 */
-    fun reportSkip(serverUrl: String, pkg: String, label: String) {
-        if (serverUrl.isBlank()) return
-        Thread {
-            try {
-                val base = serverUrl.trimEnd('/')
-                // v1 批量上报，回退 v0 单条
-                val payload = JSONObject()
-                val event = JSONObject()
-                event.put("pkg", pkg)
-                event.put("channel", "text")
-                event.put("ts", System.currentTimeMillis())
-                payload.put("deviceId", "pending") // deviceId 在有 context 时设置
-                payload.put("events", JSONArray().put(event))
-                try {
-                    httpPost("$base/api/v1/reports/batch", payload.toString())
-                } catch (e: Exception) {
-                    // 回退 v0
-                    val v0Payload = JSONObject()
-                    v0Payload.put("pkg", pkg)
-                    v0Payload.put("label", label)
-                    httpPost("$base/api/skip", v0Payload.toString())
-                }
-            } catch (e: Exception) {
-                // 静默失败
-            }
-        }.start()
-    }
-
-    /** 静默上报一次跳过（带 deviceId，v1 批量格式）。 */
+    /**
+     * 静默上报一次跳过（v1 批量格式，失败回退 v0 单条）。
+     *
+     * `deviceId` 必须由调用方从 [Prefs.getDeviceId] 取真实 UUID：服务端
+     * `cleanBatchReport` 要求 deviceId 长度 ≥ 8，硬编码占位值会被判 400。
+     */
     fun reportSkip(serverUrl: String, pkg: String, label: String, deviceId: String) {
         if (serverUrl.isBlank()) return
         Thread {
@@ -280,7 +256,11 @@ object SyncClient {
         }
         try {
             BufferedWriter(OutputStreamWriter(conn.outputStream, "UTF-8")).use { it.write(body) }
-            conn.responseCode // 触发发送
+            // 必须读取 responseCode 以真正发送请求体，并据其判定成功与否：
+            // 只取值不判断会让 4xx/5xx 被当作成功，v1 批量上报被服务端拒绝时
+            // 既不回退 v0、也无任何日志，统计静默丢失。
+            val code = conn.responseCode
+            if (code !in 200..299) throw Exception("HTTP $code")
         } finally {
             conn.disconnect()
         }

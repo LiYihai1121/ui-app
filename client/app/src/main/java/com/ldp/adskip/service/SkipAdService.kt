@@ -131,6 +131,11 @@ class SkipAdService : AccessibilityService() {
         rulesRepo = container.rulesRepo
         statsRepo = container.statsRepo
         syncClient = container.syncClient
+        // companion 的节流状态跨 Service 实例存活（低内存被杀后系统会重建实例）。
+        // 不清理会让新实例继承陈旧的 lastScanAt（首帧误判为「刚扫过」而被节流），
+        // 并使 lastClickMap 跨重启累积。
+        lastClickMap.clear()
+        lastScanAt = 0L
         running = true
         AppEvents.setServiceRunning(true)
         registerShutdownReceiver()
