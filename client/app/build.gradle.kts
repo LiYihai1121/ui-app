@@ -76,6 +76,14 @@ android {
             }
         }
     }
+
+    testOptions {
+        unitTests {
+            // Robolectric 需要读取合并后的资源与 manifest 才能正确初始化 Context，
+            // 否则 getString(R.array.*) 之类的调用会在测试期抛空指针。
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -97,4 +105,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     testImplementation(libs.junit)
+    // 让依赖 Context / SharedPreferences 的 data/ 层可在纯 JVM 单测中运行。
+    // 仅测试期使用：Robolectric 在运行期提供 Android 框架桩，不进入发布产物。
+    testImplementation(libs.robolectric)
 }
