@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
@@ -76,7 +77,15 @@ fun SettingsContent(
             }
         }
     }
-    LaunchedEffect(Unit) { viewModel.refreshBatteryStatus() }
+    // 电池优化状态**只在应用外可改**，故必须「回到前台就重查」：
+    // 用户点按钮跳到系统电池设置页改完返回，LaunchedEffect(Unit) 不会重跑
+    // （本内容嵌在「我的」页的 LazyColumn 中，item 未被回收重组），
+    // 于是按钮文案会一直停在改动前的「允许后台运行」，用户以为没生效又去点一次。
+    // 与 ProfileScreen 的权限卡片同一修法，复用同一生命周期语义。
+    LifecycleResumeEffect(Unit) {
+        viewModel.refreshBatteryStatus()
+        onPauseOrDispose { }
+    }
 
     var pickingStart by remember { mutableStateOf(false) }
     var pickingEnd by remember { mutableStateOf(false) }

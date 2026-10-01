@@ -377,12 +377,14 @@ class ProjectStructureTest {
             "「我的」页应内嵌设置内容 SettingsContent(...)，否则移除独立设置页后设置将无处可达",
             profile.contains("SettingsContent("),
         )
+        // 无障碍入口原为独立的 AccessibilityCard，现已并入权限状态中心
+        // （PermissionCard 的第一项即无障碍服务）。契约随之更新：此处只守护
+        // 「用户仍能一键到达无障碍设置」这件事，而不绑定它由哪个组件承载——
+        // 载体可以变，能力不能丢。
         assertTrue(
-            "「我的」页应提供「打开无障碍设置」入口 AccessibilityCard",
-            profile.contains("AccessibilityCard("),
-        )
-        assertTrue(
-            "无障碍跳转须经 device/ 层（KeepAliveNavigator），UI 不得自行拼 Intent",
+            "「我的」页应通过权限状态中心（PermissionCard）或独立卡片提供无障碍设置入口；" +
+                "两者都不可移除，否则用户无处开启服务。跳转须经 KeepAliveNavigator" +
+                "（UI 不得自行拼 Intent），故断言其调用而非组件名。",
             profile.contains("KeepAliveNavigator.openAccessibilitySettings"),
         )
 

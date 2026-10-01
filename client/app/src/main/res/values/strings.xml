@@ -147,7 +147,25 @@
     <string name="profile_active_apps_label">已跳过应用数</string>
     <string name="profile_value_unknown">未知</string>
     <string name="profile_privacy_hint">跳过记录与统计均只保存在本机，不会上传。</string>
-    <string name="profile_accessibility_section">无障碍服务</string>
     <string name="stats_total_short">累计跳过 %1$d 次</string>
     <string name="stats_recent_short">最近：%1$s</string>
+
+    <!-- 权限状态中心 -->
+    <string name="perm_section">权限与系统开关</string>
+    <string name="perm_summary_ready">%1$d / %2$d 项已就绪</string>
+    <string name="perm_summary_attention">%1$d / %2$d 项已就绪，仍有开关未开启</string>
+    <string name="perm_item_accessibility">无障碍服务</string>
+    <string name="perm_item_accessibility_desc">跳过功能的核心开关，必须开启</string>
+    <string name="perm_item_battery">电池优化白名单</string>
+    <string name="perm_item_battery_desc">避免系统在待机时限制后台活动</string>
+    <string name="perm_item_keepalive">自启动 / 后台管理</string>
+    <string name="perm_item_keepalive_desc">部分系统会在切后台后强杀服务</string>
+    <string name="perm_item_tile">快捷磁贴</string>
+    <string name="perm_item_tile_desc">在通知栏一眼看状态、一次点击启停</string>
+    <string name="perm_state_ready">已开启</string>
+    <string name="perm_state_denied">未开启</string>
+    <string name="perm_state_unknown">无法检测，请手动确认</string>
+    <string name="perm_state_unsupported">当前系统无需设置</string>
+    <string name="perm_open">去设置</string>
+    <string name="perm_tile_request">添加</string>
 </resources>

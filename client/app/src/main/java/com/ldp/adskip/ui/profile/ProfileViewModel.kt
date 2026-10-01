@@ -10,6 +10,10 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.AppContainer
 import com.ldp.adskip.core.AppEvents
+import com.ldp.adskip.device.PermissionInspector
+import com.ldp.adskip.device.PermissionItem
+import com.ldp.adskip.device.PermissionKeys
+import com.ldp.adskip.device.PermissionLogic
 import com.ldp.adskip.device.Vendor
 import com.ldp.adskip.device.VendorKeepAlive
 import com.ldp.adskip.ui.vendorLabelRes
@@ -44,6 +48,17 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
         val deviceModel: String = "",
         /** 当前 ROM 厂商（复用 device/VendorKeepAlive 的识别结果，与设置页一致）。 */
         val vendor: Vendor = Vendor.GENERIC,
+        /**
+         * 各权限 / 系统开关的当前探测结果。
+         *
+         * 由 [refreshPermissions] 在进屏与每次 `ON_RESUME` 时重采——用户跳到系统设置
+         * 改完再返回，必须重新探测，否则卡片会一直显示改动前的状态。
+         */
+        val permissions: List<PermissionItem> = emptyList(),
+        /** 已就绪项数（仅统计「确定已开启」，UNKNOWN 不计入）。 */
+        val permissionsReady: Int = 0,
+        /** 是否存在未就绪项，决定汇总文案的语气。 */
+        val permissionsNeedAttention: Boolean = false,
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -57,6 +72,7 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
             vendor = VendorKeepAlive.detect(),
         )
         refreshStats()
+        refreshPermissions()
 
         viewModelScope.launch {
             AppEvents.serviceRunning.collect { running ->
@@ -79,6 +95,29 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
 
     /** 厂商的可读名称（与设置页保活引导共用同一套文案）。 */
     fun vendorName(vendor: Vendor): String = container.app.getString(vendorLabelRes(vendor))
+
+    /**
+     * 重新探测全部权限 / 系统开关状态。
+     *
+     * 幂等且无副作用，可安全地在每次 `ON_RESUME` 调用：
+     * 权限状态的唯一变更来源在应用之外（系统设置页），本进程无法收到通知，
+     * 只能靠「回到前台就重查」保证不陈旧——这是与磁贴
+     * 「关闭是异步的、需延迟复查」同理的做法（见 SkipTileService 的 RESYNC_DELAY_MS）。
+     */
+    fun refreshPermissions() {
+        val items = PermissionInspector.inspectAll(container.app)
+        _uiState.value = _uiState.value.copy(
+            permissions = items,
+            permissionsReady = PermissionLogic.readyCount(items),
+            permissionsNeedAttention = PermissionLogic.needsAttention(items),
+        )
+    }
+
+    /** 单独读取某项权限状态；未知项返回 [com.ldp.adskip.device.PermissionState.UNKNOWN]。 */
+    fun permission(key: String) = _uiState.value.permissions.firstOrNull { it.key == key }
+
+    /** 厂商自启动项在当前 ROM 上是否适用（GENERIC ROM 无此开关）。 */
+    fun supportsVendorKeepAlive(): Boolean = PermissionInspector.supportsVendorKeepAlive(_uiState.value.vendor)
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {

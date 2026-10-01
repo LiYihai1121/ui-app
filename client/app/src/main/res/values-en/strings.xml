@@ -134,7 +134,25 @@
     <string name="profile_active_apps_label">Apps skipped for</string>
     <string name="profile_value_unknown">Unknown</string>
     <string name="profile_privacy_hint">Skip logs and statistics stay on this device and are never uploaded.</string>
-    <string name="profile_accessibility_section">Accessibility service</string>
     <string name="stats_total_short">Skipped %1$d times</string>
     <string name="stats_recent_short">Last: %1$s</string>
+
+    <!-- Permission status center -->
+    <string name="perm_section">Permissions &amp; system switches</string>
+    <string name="perm_summary_ready">%1$d of %2$d ready</string>
+    <string name="perm_summary_attention">%1$d of %2$d ready, some switches are still off</string>
+    <string name="perm_item_accessibility">Accessibility service</string>
+    <string name="perm_item_accessibility_desc">The core switch for skipping; must be on</string>
+    <string name="perm_item_battery">Battery optimization exemption</string>
+    <string name="perm_item_battery_desc">Stops the system restricting background activity</string>
+    <string name="perm_item_keepalive">Auto-start / background management</string>
+    <string name="perm_item_keepalive_desc">Some systems kill the service after it goes to background</string>
+    <string name="perm_item_tile">Quick settings tile</string>
+    <string name="perm_item_tile_desc">See the state at a glance and toggle in one tap</string>
+    <string name="perm_state_ready">On</string>
+    <string name="perm_state_denied">Off</string>
+    <string name="perm_state_unknown">Can\'t be detected, please check manually</string>
+    <string name="perm_state_unsupported">Not needed on this system</string>
+    <string name="perm_open">Open</string>
+    <string name="perm_tile_request">Add</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.ldp.adskip.ui.profile
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -24,10 +25,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
 import com.ldp.adskip.device.KeepAliveNavigator
+import com.ldp.adskip.device.PermissionInspector
+import com.ldp.adskip.device.TileAddResult
 import com.ldp.adskip.device.Vendor
 import com.ldp.adskip.ui.Messenger
 import com.ldp.adskip.ui.components.InfoDivider
@@ -62,6 +66,20 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
     // 进屏重读一次以保证与首页口径一致。
     LaunchedEffect(Unit) { viewModel.refreshStats() }
 
+    // 权限状态**只在应用外可改**，本进程收不到任何通知，只能「回到前台就重查」。
+    //
+    // 这是本卡片存在的必要条件：用户点「去设置」跳到系统页改完返回，若不复查就会看到
+    // 改动前的旧状态，于是反复跳转、反复怀疑是不是没生效。设置页的电池优化按钮此前
+    // 就踩在这个坑里（只有 LaunchedEffect(Unit) 首次组合时读一次）。
+    //
+    // 用 LifecycleResumeEffect 而非 LaunchedEffect：后者只在首次组合跑一次，
+    // 页面在 LazyColumn 中被回收再重建时也不会重跑。RESUME 同时覆盖
+    // 「跳系统设置再返回」与「切到别的 tab 再回来」两种路径。
+    LifecycleResumeEffect(Unit) {
+        viewModel.refreshPermissions()
+        onPauseOrDispose { }
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         PageHeader(
             title = stringResource(R.string.profile_title),
@@ -81,12 +99,48 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
             // 基本只会在遇到问题时才看。原来的顺序把高频项压在最长的滚动条末尾。
             item { SettingsContent(messenger) }
             item {
-                AccessibilityCard(
-                    running = state.serviceRunning,
-                    onOpen = {
-                        // 系统入口统一经 device/ 层探测可解析性后降级，UI 不自行拼 Intent
+                // 权限清单排在设置之后、「关于」之前：它回答的是「为什么还不生效」，
+                // 与设置项同属排查路径，但比静态的版本/型号信息更需要被看到。
+                PermissionCard(
+                    items = state.permissions,
+                    readyCount = state.permissionsReady,
+                    needAttention = state.permissionsNeedAttention,
+                    supportsKeepAlive = viewModel.supportsVendorKeepAlive(),
+                    canRequestTile = PermissionInspector.supportsQuickTileRequest(),
+                    onOpenAccessibility = {
                         if (!KeepAliveNavigator.openAccessibilitySettings(context)) {
                             messenger.show(context.getString(R.string.settings_open_failed))
+                        }
+                    },
+                    onOpenBattery = {
+                        if (!KeepAliveNavigator.openBatteryOptimizationSettings(context)) {
+                            messenger.show(context.getString(R.string.settings_open_failed))
+                        }
+                    },
+                    onOpenKeepAlive = {
+                        // 复用设置页的既有反馈（含厂商名与手动路径兜底提示），不另写一套文案
+                        if (KeepAliveNavigator.openKeepAliveSettings(context) == null) {
+                            messenger.show(
+                                context.getString(
+                                    R.string.settings_keepalive_failed,
+                                    viewModel.vendorName(state.vendor),
+                                ),
+                            )
+                        }
+                    },
+                    onRequestTile = {
+                        if (!KeepAliveNavigator.canRequestAddTile()) {
+                            messenger.show(
+                                context.getString(
+                                    R.string.settings_tile_manual,
+                                    context.getString(R.string.tile_label),
+                                ),
+                            )
+                        } else {
+                            KeepAliveNavigator.requestAddTile(
+                                context = context,
+                                label = context.getString(R.string.tile_label),
+                            ) { messenger.show(tileResultText(context, it)) }
                         }
                     },
                 )
@@ -97,29 +151,19 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
 }
 
 /**
- * 无障碍服务入口卡片。
+ * 把 [com.ldp.adskip.device.TileAddResult] 映射为提示文案。
  *
- * 首页的状态环已提供主行动按钮，这里是第二入口：服务被系统强杀后用户往往先落到
- * 「我的」页找设置，单独给出「打开无障碍设置」可少一次返回。
- *
- * 按钮用 tonal 而非 filled：首页已经把「去开启服务」做成全应用唯一的主行动，
- * 本页作为第二入口再用 filled 会在同一屏里出现两个同权重的 filled 按钮，
- * 把首页建立的优先级抹平。
+ * 与 `SettingsViewModel.tileAddMessage` 同源同文案；放在此处是因为卡片是权限视角的入口，
+ * 那里持有的是设置视角的 ViewModel，两处不共享实例，只能各自映射一次（文案引用同一批
+ * string 资源，故不会出现「一处更新一处没更新」）。
  */
-@Composable
-private fun AccessibilityCard(running: Boolean, onOpen: () -> Unit) {
-    SectionCard {
-        SectionTitle(stringResource(R.string.profile_accessibility_section))
-        Spacer(Modifier.height(Spacing.sm))
-        SectionHint(
-            stringResource(
-                if (running) R.string.status_on_hint else R.string.status_off_hint,
-            ),
-        )
-        Spacer(Modifier.height(Spacing.lg))
-        FilledTonalButton(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.btn_open_settings))
-        }
+private fun tileResultText(context: Context, result: TileAddResult): String {
+    val label = context.getString(R.string.tile_label)
+    return when (result) {
+        TileAddResult.ADDED -> context.getString(R.string.settings_tile_added)
+        TileAddResult.ALREADY_ADDED -> context.getString(R.string.settings_tile_exists)
+        TileAddResult.NOT_FOREGROUND -> context.getString(R.string.settings_tile_not_foreground)
+        TileAddResult.FAILED -> context.getString(R.string.settings_tile_manual, label)
     }
 }
 
