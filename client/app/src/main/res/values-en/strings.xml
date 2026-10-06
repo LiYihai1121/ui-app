@@ -18,6 +18,9 @@
     <string name="nav_logs">Logs</string>
     <string name="btn_confirm">OK</string>
     <string name="btn_cancel">Cancel</string>
+    <string name="btn_retry">Retry</string>
+    <string name="error_generic_title">Couldn\'t load</string>
+    <string name="error_generic_hint">The data didn\'t come through. Try again; if it keeps failing, share the logs.</string>
     <string name="action_undo">Undo</string>
 
     <!-- Keywords -->
@@ -48,7 +51,6 @@
     <!-- App Manager -->
     <string name="apps_title">App Manager</string>
     <string name="apps_hint">Toggle off to stop auto-skipping in that app</string>
-    <string name="apps_loading">Loading app list…</string>
     <string name="apps_count">Skipped %1$d times</string>
     <string name="apps_never">Never skipped</string>
     <string name="apps_disabled">Disabled</string>
@@ -56,6 +58,7 @@
     <string name="apps_search_clear">Clear search</string>
     <string name="apps_filter_enabled">Enabled only</string>
     <string name="apps_empty">No manageable apps found</string>
+    <string name="apps_empty_hint">No third-party app with a launcher icon was detected on this device</string>
     <string name="apps_no_match">No matching apps</string>
     <string name="apps_no_match_hint">Try another keyword, or turn off the “Enabled only” filter</string>
     <string name="apps_clear_filters">Clear search and filters</string>

@@ -34,9 +34,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.ldp.adskip.R
 import com.ldp.adskip.ui.theme.Spacing
 import com.ldp.adskip.ui.theme.UiSizes
@@ -90,6 +91,64 @@ fun EmptyState(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
+        )
+        if (subtitle != null) {
+            Spacer(Modifier.height(Spacing.sm))
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (action != null) {
+            Spacer(Modifier.height(Spacing.lg))
+            action()
+        }
+    }
+}
+
+/**
+ * 错误状态占位：图标 + 结论 + 原因/下一步 + 重试动作。
+ *
+ * 为什么必须与 [EmptyState] 分开：两者对用户意味着完全不同的下一步。
+ * 「暂无内容」是终态，用户该去做别的事；「读取失败」是可恢复态，用户该重试。
+ * 此前全 app 只有空态，于是加载失败会显示成「暂无内容」——用户既不知道出了错，
+ * 也不知道重试有用。
+ *
+ * 无障碍：`error()` 语义把这一块整体标为错误区域，读屏会先报「错误」再读内容，
+ * 不必依赖图形与红色。图标是纯装饰（`contentDescription = null`），
+ * 语义由标题承担，避免图标与标题重复播报。
+ */
+@Composable
+fun ErrorState(
+    title: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    subtitle: String? = null,
+    action: @Composable (() -> Unit)? = null,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics { error(title) }
+            .padding(horizontal = Spacing.xxl, vertical = Spacing.xxxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(UiSizes.emptyStateIcon),
+                tint = MaterialTheme.colorScheme.error,
+            )
+            Spacer(Modifier.height(Spacing.lg))
+        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.error,
         )
         if (subtitle != null) {
             Spacer(Modifier.height(Spacing.sm))
