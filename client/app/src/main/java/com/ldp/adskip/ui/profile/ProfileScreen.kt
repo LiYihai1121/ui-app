@@ -66,7 +66,6 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
         viewModel.refreshAccessibilityStatus()
         viewModel.refreshStats()
     }
-
     Column(modifier = Modifier.fillMaxSize()) {
         PageHeader(
             title = stringResource(R.string.profile_title),

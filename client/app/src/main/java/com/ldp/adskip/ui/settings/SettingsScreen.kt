@@ -31,6 +31,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
@@ -76,7 +78,12 @@ fun SettingsContent(
             }
         }
     }
-    LaunchedEffect(Unit) { viewModel.refreshBatteryStatus() }
+    // 电池豁免是系统侧状态：用户点按钮跳去系统设置允许后再返回，Activity 不重建，
+    // 只在进屏读一次的 LaunchedEffect(Unit) 不会重跑，按钮会一直停在「允许后台运行」。
+    // 因此每次都按 ON_RESUME 重查。
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshBatteryStatus()
+    }
 
     var pickingStart by remember { mutableStateOf(false) }
     var pickingEnd by remember { mutableStateOf(false) }
@@ -191,7 +198,7 @@ fun SettingsContent(
             ) {
                 Text(
                     stringResource(
-                        if (state.batteryExempt) {
+                        if (state.isBatteryExempt) {
                             R.string.settings_battery_done
                         } else {
                             R.string.settings_battery_allow

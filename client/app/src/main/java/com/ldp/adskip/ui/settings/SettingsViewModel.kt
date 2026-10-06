@@ -1,7 +1,6 @@
 package com.ldp.adskip.ui.settings
 
 import android.net.Uri
-import android.os.PowerManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -11,6 +10,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.AppContainer
 import com.ldp.adskip.R
+import com.ldp.adskip.device.BatteryExemption
 import com.ldp.adskip.device.KeepAliveNavigator
 import com.ldp.adskip.device.TileAddResult
 import com.ldp.adskip.device.Vendor
@@ -43,10 +43,17 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         val dndEnabled: Boolean = false,
         val dndStartMinute: Int = 23 * 60,
         val dndEndMinute: Int = 7 * 60,
-        val batteryExempt: Boolean = false,
+        val batteryExemption: BatteryExemption = BatteryExemption.UNKNOWN,
         /** 当前设备所属 ROM，用于保活引导文案与手动路径提示（device/VendorKeepAlive） */
         val keepAliveVendor: Vendor = Vendor.GENERIC,
-    )
+    ) {
+        /**
+         * 已确认豁免电池优化。
+         *
+         * [BatteryExemption.UNKNOWN] 不算已豁免：不确定时不该对用户承诺后台不会被杀。
+         */
+        val isBatteryExempt: Boolean get() = batteryExemption == BatteryExemption.EXEMPT
+    }
 
     private val _uiState = MutableStateFlow(
         UiState(
@@ -56,7 +63,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             dndEnabled = container.settingsRepo.isDoNotDisturbEnabled(),
             dndStartMinute = container.settingsRepo.getDoNotDisturbStart(),
             dndEndMinute = container.settingsRepo.getDoNotDisturbEnd(),
-            batteryExempt = queryBatteryExempt(),
+            batteryExemption = queryBatteryExemption(),
             keepAliveVendor = KeepAliveNavigator.detectVendor(),
         ),
     )
@@ -112,7 +119,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun refreshBatteryStatus() {
-        _uiState.value = _uiState.value.copy(batteryExempt = queryBatteryExempt())
+        _uiState.value = _uiState.value.copy(batteryExemption = queryBatteryExemption())
     }
 
     // ---------- 厂商保活引导与快捷磁贴 ----------
@@ -171,10 +178,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         _uiState.value = _uiState.value.copy(lastSyncAt = container.settingsRepo.lastSyncAt())
     }
 
-    private fun queryBatteryExempt(): Boolean {
-        val pm = container.app.getSystemService(PowerManager::class.java)
-        return pm?.isIgnoringBatteryOptimizations(container.app.packageName) ?: false
-    }
+    /** 查询电池优化豁免；失败时交由 [BatteryExemption] 落成 UNKNOWN，不冒充「未豁免」。 */
+    private fun queryBatteryExemption(): BatteryExemption = BatteryExemption.detect(container.app)
 
     private fun send(message: String) {
         viewModelScope.launch { _effects.emit(UiEffect.ShowMessage(message)) }
