@@ -20,6 +20,8 @@ export interface Config {
   STATS_DIR_CLEANUP_ON_START: boolean;
   BACKUP_DIR: string;
   BACKUP_COUNT: number;
+  /** 统计分片保留的备份份数（rotateStatsBackup 轮转） */
+  STATS_BACKUP_COUNT: number;
   ADMIN_TOKEN: string;
   STATS_READ_AUTH: boolean;
   CORS_ORIGINS: string[] | null;

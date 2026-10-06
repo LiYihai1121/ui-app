@@ -8,7 +8,7 @@
 | # | 问题 | 修复内容 | 文件 |
 |---|------|----------|------|
 | 1 | `reportSkip` 单参重载硬编码 `deviceId="pending"` | 改为直接走 v0 单条上报，避免伪造 deviceId | `SyncClient.kt` |
-| 2 | `usesCleartextTraffic="true"` 默认明文传输 | 关闭默认开关，新增 `network_security_config.xml` 仅允许本地/私有网段 cleartext | `AndroidManifest.xml`, `res/xml/network_security_config.xml` |
+| 2 | `usesCleartextTraffic="true"` 默认明文传输 | 明文策略显式收口到 `network_security_config.xml`；NSC `<domain>` 不支持私有网段前缀（10./172.16./192.168. 无效），base-config 放行明文（行为与旧版等价），HTTPS 迁移后收紧 | `AndroidManifest.xml`, `res/xml/network_security_config.xml` |
 | 3 | 网络请求裸创建 `Thread` | 统一改用 `AppExecutors.io.execute` | `SyncClient.kt` |
 | 4 | `syncRules` 与 `syncRulesSilently` JSON 解析重复 ~70 行 | 提取 `parseRulesResponse()` 统一入口 | `SyncClient.kt` |
 | 5 | 全部 SharedPreferences 明文存储 | 迁移至 `EncryptedSharedPreferences`，首次启动自动迁移旧数据 | `Prefs.kt` |
@@ -68,7 +68,7 @@
 ## 里程碑建议
 
 ### v3.3.0（安全加固版）
-- [x] 关闭 cleartext 默认开关
+- [x] 明文流量策略显式收口（NSC base-config 放行，行为等价；HTTPS 迁移后收紧）
 - [x] EncryptedSharedPreferences 全量迁移
 - [x] `reportSkip` deviceId bug 修复
 - [ ] 服务端启用 HTTPS（或明确标注「仅局域网使用」）
