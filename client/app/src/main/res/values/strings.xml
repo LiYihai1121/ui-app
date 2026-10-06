@@ -157,7 +157,6 @@
     <string name="profile_active_apps_label">已跳过应用数</string>
     <string name="profile_value_unknown">未知</string>
     <string name="profile_privacy_hint">跳过记录与统计均只保存在本机，不会上传。</string>
-    <string name="profile_accessibility_section">无障碍服务</string>
     <string name="permission_section">权限与系统开关</string>
     <string name="permission_summary">已就绪 %1$d / %2$d 项</string>
     <string name="permission_accessibility">无障碍服务</string>

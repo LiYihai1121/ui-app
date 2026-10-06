@@ -159,8 +159,12 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
 /**
  * 无障碍服务入口卡片。
  *
- * 首页的状态环已提供主行动按钮，这里是第二入口：服务被系统强杀后用户往往先落到
- * 「我的」页找设置，单独给出「打开无障碍设置」可少一次返回。
+ * 与权限清单的分工：清单里的「无障碍服务」行只报**状态**（并且刻意不带行内按钮），
+ * 本卡片是它唯一的**行动入口**，服务被系统强杀后用户落到「我的」页可少一次返回。
+ *
+ * 这里只显示状态结论（「服务未开启 / 服务运行中」）。早期它还重复渲染整句
+ * `status_off_hint`，与清单行的状态描述叠在同一屏讲同一件事；去掉重复后，
+ * 清单行 → 本卡片的视觉动线变成「是什么状态 → 怎么改变它」。
  *
  * 按钮用 tonal 而非 filled：首页已经把「去开启服务」做成全应用唯一的主行动，
  * 本页作为第二入口再用 filled 会在同一屏里出现两个同权重的 filled 按钮，
@@ -169,12 +173,8 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
 @Composable
 private fun AccessibilityCard(running: Boolean, onOpen: () -> Unit) {
     SectionCard {
-        SectionTitle(stringResource(R.string.profile_accessibility_section))
-        Spacer(Modifier.height(Spacing.sm))
-        SectionHint(
-            stringResource(
-                if (running) R.string.status_on_hint else R.string.status_off_hint,
-            ),
+        SectionTitle(
+            stringResource(if (running) R.string.status_on else R.string.status_off),
         )
         Spacer(Modifier.height(Spacing.lg))
         FilledTonalButton(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
