@@ -64,6 +64,7 @@ import com.ldp.adskip.R
 import com.ldp.adskip.device.KeepAliveNavigator
 import com.ldp.adskip.ui.Messenger
 import com.ldp.adskip.ui.UiEffect
+import com.ldp.adskip.ui.components.PageHeader
 import com.ldp.adskip.ui.components.SectionCard
 import com.ldp.adskip.ui.components.SectionHint
 import com.ldp.adskip.ui.components.SectionTitle
@@ -133,11 +134,18 @@ fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factor
             contentPadding = PaddingValues(
                 start = Spacing.lg,
                 end = Spacing.lg,
-                top = Spacing.lg,
+                // 顶部留白由 PageHeader 自带：这里再留一次会比其他一级页多出一倍间距。
+                top = 0.dp,
                 bottom = Spacing.xl,
             ),
             verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         ) {
+            item {
+                // 一级页面都要有位置锚点（见 ScreenHeaderContractTest）。
+                // 首页此前是四屏里唯一没有标题的：用户切过来后整屏像浮在空中的仪表盘。
+                PageHeader(title = stringResource(R.string.home_title))
+            }
+
             item {
                 StatusHero(
                     running = state.serviceRunning,

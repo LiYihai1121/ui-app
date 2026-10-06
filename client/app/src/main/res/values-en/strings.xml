@@ -5,6 +5,7 @@
     <string name="service_desc">Automatically detects and clicks the "Skip" button on splash ads. Supports text keyword and ViewID matching. Runs locally only.</string>
 
     <!-- Main page -->
+    <string name="home_title">Home</string>
     <string name="status_off">Service is off</string>
     <string name="status_on">Service is running</string>
     <string name="status_off_hint">Please enable "轻启" in system Accessibility settings</string>
