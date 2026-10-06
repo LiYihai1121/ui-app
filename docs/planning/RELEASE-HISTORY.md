@@ -18,6 +18,7 @@
 
 | 版本 | Git tag | 对应提交 | GitHub Release | 状态 |
 | --- | --- | --- | --- | --- |
+| `3.2.0` | `v3.2.0`（待创建） | 待定 | 待创建 | **待发布**（开发完成于 `refactor/ui-permission-redesign`：节点快照工具 + UI/权限重设计落版；待 Squash 合入 `main` 后打 annotated tag，由 [release.yml](../../.github/workflows/release.yml) 构建并创建 GitHub Release） |
 | `3.1.0` | [`v3.1.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0) | `ad188b0` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0) | 已发布（`AdSkip-v3.1.0.apk` 1,895,460 bytes，`SHA256=30657f9c…fb6`，`CN=AdSkip Release` 正式签名，`apksigner verify` 通过；厂商保活与磁贴未真机验收，见下「发布基线说明」） |
 | `3.1.0-rc.1` | [`v3.1.0-rc.1`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0-rc.1) | `696ef1e` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0-rc.1) | **预发布**（已签名 APK + `SHA256SUMS`；厂商跳转与磁贴未真机验收，**不可作为正式版分发**） |
 | `3.0.4` | [`v3.0.4`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.4) | `27c3f5c` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.0.4) | 已发布（已签名 Release APK，`CN=AdSkip Release`，可直接安装） |
@@ -82,6 +83,7 @@ Release list 的维护要求：版本变更、tag、合并提交和 GitHub Relea
 | v3.0.2 基线 | `5b85e96` | 规范化发布流程与版本对齐 | `v3.0.2` |
 | v3.0.3 | `958ce23` | L1 选择器第三通道内核（纯 JVM 增量） | `v3.0.3` |
 | v3.0.4 | `27c3f5c` | 安装可用性修复：release 签名回退 + 发布强制签名校验 + Secrets 正式签名 | `v3.0.4` |
+| v3.2.0 | 待定（PR 合并后补填） | 节点快照工具 + UI/权限重设计落版（`ServiceIntentContractTest` 守护广播字面量） | `v3.2.0`（待创建） |
 
 ## 验证命令
 
