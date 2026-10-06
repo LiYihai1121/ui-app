@@ -151,6 +151,15 @@
     <string name="profile_value_unknown">未知</string>
     <string name="profile_privacy_hint">跳过记录与统计均只保存在本机，不会上传。</string>
     <string name="profile_accessibility_section">无障碍服务</string>
+    <string name="permission_section">权限与系统开关</string>
+    <string name="permission_summary">已就绪 %1$d / %2$d 项</string>
+    <string name="permission_accessibility">无障碍服务</string>
+    <string name="permission_battery">后台运行（电池优化）</string>
+    <string name="permission_vendor_keepalive">自启动 / 后台白名单</string>
+    <string name="permission_quick_tile">快捷设置磁贴</string>
+    <string name="permission_state_ready">已就绪</string>
+    <string name="permission_state_needs_action">需要处理</string>
+    <string name="permission_state_unknown">无法自动确认，请手动核对</string>
     <string name="stats_total_short">累计跳过 %1$d 次</string>
     <string name="stats_recent_short">最近：%1$s</string>
 </resources>

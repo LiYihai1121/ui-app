@@ -29,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
 import com.ldp.adskip.device.KeepAliveNavigator
+import com.ldp.adskip.device.PermissionKeys
 import com.ldp.adskip.device.Vendor
 import com.ldp.adskip.ui.Messenger
 import com.ldp.adskip.ui.components.InfoDivider
@@ -58,6 +59,7 @@ import com.ldp.adskip.ui.theme.Spacing
 fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val tileLabel = stringResource(R.string.tile_label)
 
     // 每次回到前台都重读：统计可能已变化，且用户可能刚跳去系统无障碍设置改了开关。
     // 用 ON_RESUME 而非 LaunchedEffect(Unit)——后者只在首次进入组合时跑一次，
@@ -65,6 +67,44 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refreshAccessibilityStatus()
         viewModel.refreshStats()
+    }
+
+    /*
+     * 权限清单各行的跳转出口。
+     *
+     * 统一经 device/KeepAliveNavigator（系统入口的唯一出口，含可解析性探测与降级），
+     * UI 不自行拼 Intent。失败时给出「手动路径」提示，而不是静默无事发生。
+     */
+    val onOpenPermission: (String) -> Unit = { key ->
+        val vendorName = viewModel.vendorName(state.vendor)
+        when (key) {
+            PermissionKeys.ACCESSIBILITY -> {
+                if (!KeepAliveNavigator.openAccessibilitySettings(context)) {
+                    messenger.show(context.getString(R.string.settings_open_failed))
+                }
+            }
+
+            PermissionKeys.BATTERY -> {
+                if (!KeepAliveNavigator.openBatteryOptimizationSettings(context)) {
+                    messenger.show(context.getString(R.string.settings_open_failed))
+                }
+            }
+
+            PermissionKeys.VENDOR_KEEPALIVE -> {
+                val opened = KeepAliveNavigator.openKeepAliveSettings(context) != null
+                val res = if (opened) {
+                    R.string.settings_keepalive_opened
+                } else {
+                    R.string.settings_keepalive_failed
+                }
+                messenger.show(context.getString(res, vendorName))
+            }
+
+            PermissionKeys.QUICK_TILE -> {
+                // 低版本无法主动请求添加，退化为文案引导（文案已含手动路径）。
+                messenger.show(context.getString(R.string.settings_tile_manual, tileLabel))
+            }
+        }
     }
     Column(modifier = Modifier.fillMaxSize()) {
         PageHeader(
@@ -84,6 +124,13 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
             // 它是用户会反复回来调整的高频项，而版本号、设备型号这类「关于」信息
             // 基本只会在遇到问题时才看。原来的顺序把高频项压在最长的滚动条末尾。
             item { SettingsContent(messenger) }
+            item {
+                PermissionCard(
+                    items = state.permissionItems,
+                    readyCount = state.permissionReadyCount,
+                    onOpen = { key -> onOpenPermission(key) },
+                )
+            }
             item {
                 AccessibilityCard(
                     running = state.serviceRunning,

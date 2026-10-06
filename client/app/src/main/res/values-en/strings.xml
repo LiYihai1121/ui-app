@@ -138,6 +138,15 @@
     <string name="profile_value_unknown">Unknown</string>
     <string name="profile_privacy_hint">Skip logs and statistics stay on this device and are never uploaded.</string>
     <string name="profile_accessibility_section">Accessibility service</string>
+    <string name="permission_section">Permissions &amp; system switches</string>
+    <string name="permission_summary">%1$d of %2$d ready</string>
+    <string name="permission_accessibility">Accessibility service</string>
+    <string name="permission_battery">Background (battery optimization)</string>
+    <string name="permission_vendor_keepalive">Autostart / background allowlist</string>
+    <string name="permission_quick_tile">Quick Settings tile</string>
+    <string name="permission_state_ready">Ready</string>
+    <string name="permission_state_needs_action">Needs action</string>
+    <string name="permission_state_unknown">Can\'t verify automatically — check manually</string>
     <string name="stats_total_short">Skipped %1$d times</string>
     <string name="stats_recent_short">Last: %1$s</string>
 </resources>

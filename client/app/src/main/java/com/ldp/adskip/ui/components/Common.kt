@@ -1,7 +1,10 @@
 package com.ldp.adskip.ui.components
 
 import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,7 +13,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -20,13 +25,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ldp.adskip.ui.theme.Spacing
+import com.ldp.adskip.ui.theme.UiSizes
 
 /**
  * 统一卡片容器。
@@ -101,6 +109,31 @@ fun PageHeader(title: String, modifier: Modifier = Modifier, subtitle: String? =
             )
         }
     }
+}
+
+/**
+ * 状态圆点：实心 = 就绪，空心环 = 未就绪。
+ *
+ * 用**颜色 + 形状双重编码**：只靠颜色区分对色觉障碍用户不可读，而这是判断
+ * 「功能是否生效」的唯一视觉线索，误判成本很高。
+ *
+ * 圆点自身对无障碍服务隐藏（`clearAndSetSemantics`）：状态结论由相邻文字承担，
+ * 否则读屏会念出一个没有信息的「圆点」。
+ */
+@Composable
+fun StatusDot(ready: Boolean, modifier: Modifier = Modifier) {
+    val color = if (ready) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.outline
+    }
+    Box(
+        modifier = modifier
+            .size(UiSizes.skeletonLineCompact)
+            .clip(CircleShape)
+            .then(if (ready) Modifier.background(color) else Modifier.border(Spacing.xs / 3, color, CircleShape))
+            .clearAndSetSemantics {},
+    )
 }
 
 /** 卡片内的说明性正文。 */
