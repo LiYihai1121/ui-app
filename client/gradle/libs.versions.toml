@@ -23,6 +23,9 @@ navigationCompose = "2.8.5"
 # 测试
 junit = "4.13.2"
 
+# 安全存储（EncryptedSharedPreferences）
+securityCrypto = "1.1.0-alpha07"
+
 # 静态检查（构建期工具，不进运行时依赖，故不影响「客户端零第三方依赖」承诺）
 ktlint = "14.2.0"                   # ktlint-gradle 包装插件；其默认内含的 ktlint 版本会随补丁版变动，
                                     # 故下方显式锁定 ktlint 本体版本，避免「同一提交不同时间跑出不同结果」
@@ -52,6 +55,9 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 
 # 测试
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+
+# 安全存储
+androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 
 # build-logic 约定插件运行时依赖（供 build-logic/convention 将 AGP/Compose 编译器/ktlint 插件应用到目标工程）
 # 注意：id 标注的插件应用走 pluginManagement 仓库解析，这里要求的是构成 classpath 的实际制品坐标
