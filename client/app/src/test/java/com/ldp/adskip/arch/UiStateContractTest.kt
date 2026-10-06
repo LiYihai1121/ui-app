@@ -105,6 +105,31 @@ class UiStateContractTest {
         )
     }
 
+    @Test
+    fun `title components expose heading semantics`() {
+        val common = File(appRoot(), "src/main/java/com/ldp/adskip/ui/components/Common.kt")
+        assertTrue("页面组件文件不存在：${common.path}", common.isFile)
+        val text = common.readText()
+
+        // 用「函数名」而不是「函数名(」定位：签名可能被换行。
+        val missing = listOf("fun PageHeader", "fun SectionTitle").filter { name ->
+            val index = text.indexOf(name)
+            if (index < 0) return@filter true
+            // 取该函数声明到下一个顶层 fun 之间的片段，避免把别的函数的语义算进来。
+            val rest = text.substring(index)
+            val nextFun = rest.indexOf("\nfun ", startIndex = 1)
+            val body = if (nextFun > 0) rest.substring(0, nextFun) else rest
+            "heading()" !in body
+        }
+
+        assertTrue(
+            "标题组件必须声明 heading() 语义，否则读屏无法按标题跳读，视障用户只能线性听完一屏：" +
+                "本应用的关键操作（关键词开关、打开无障碍）都在长列表之后。缺失：\n" +
+                missing.joinToString("\n") { "  $it" },
+            missing.isEmpty(),
+        )
+    }
+
     // ---------- 工具 ----------
 
     /** 四个页面级 Composable 的源码路径（相对仓库根）。 */

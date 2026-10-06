@@ -20,6 +20,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ldp.adskip.ui.theme.Spacing
@@ -51,14 +53,20 @@ fun SectionCard(
     }
 }
 
-/** 卡片内的小节标题。 */
+/**
+ * 卡片内的小节标题。
+ *
+ * 带 `heading()` 语义：读屏可把标题当作导航锚点逐段跳读。此前全项目 0 处
+ * heading，视障用户只能从头线性听完一整屏 —— 而本应用的关键操作（开关关键词、
+ * 打开无障碍）都在长列表之后。
+ */
 @Composable
 fun SectionTitle(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurface,
-        modifier = modifier,
+        modifier = modifier.semantics { heading() },
     )
 }
 
@@ -67,6 +75,9 @@ fun SectionTitle(text: String, modifier: Modifier = Modifier) {
  *
  * 外壳只提供底部导航栏，页面标题由各页自己渲染——四个页面都自带 `Scaffold` + `TopAppBar`
  * 会在底部栏之上再叠一层顶栏，既重复又挤占首屏空间。
+ *
+ * 标题带 `heading()`，副标题不带：副标题是补充说明，列为标题会让读屏的
+ * 标题导航被噪声填满。
  */
 @Composable
 fun PageHeader(title: String, modifier: Modifier = Modifier, subtitle: String? = null) {
@@ -75,7 +86,11 @@ fun PageHeader(title: String, modifier: Modifier = Modifier, subtitle: String? =
             .fillMaxWidth()
             .padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.lg, bottom = Spacing.md),
     ) {
-        Text(text = title, style = MaterialTheme.typography.headlineSmall)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.semantics { heading() },
+        )
         if (subtitle != null) {
             Text(
                 text = subtitle,
