@@ -108,6 +108,52 @@ class ColorSchemeContractTest {
         )
     }
 
+    @Test
+    fun `typography and shape systems stay complete and consistent`() {
+        val type = File(repoRoot(), "client/app/src/main/java/com/ldp/adskip/ui/theme/Type.kt")
+        val theme = File(repoRoot(), "client/app/src/main/java/com/ldp/adskip/ui/theme/Theme.kt")
+        assertTrue("Type.kt 不存在：${type.path}", type.isFile)
+
+        // M3 的 Typography 要求全部 15 个角色，无法只定义用到的那些；
+        // 把「未使用」的角色退回 Material 默认值等于降级（字号/字重/行高都会变），
+        // 而不是精简。故契约固化「体系完整」这一有意的选择。
+        val roles = listOf(
+            "displayLarge", "displayMedium", "displaySmall",
+            "headlineLarge", "headlineMedium", "headlineSmall",
+            "titleLarge", "titleMedium", "titleSmall",
+            "bodyLarge", "bodyMedium", "bodySmall",
+            "labelLarge", "labelMedium", "labelSmall",
+        )
+        val typeText = type.readText()
+        // 匹配 `角色名 = TextStyle(` —— 不用 \b（Kotlin 原始字符串里不转义反斜杠）。
+        val missingRoles = roles.filterNot { role ->
+            Regex("""$role\s*=\s*TextStyle\(""").containsMatchIn(typeText)
+        }
+        assertTrue(
+            "字阶必须显式声明全部 15 个 M3 角色。只声明在用的几个会让其余角色退回 Material " +
+                "默认值——同一次运行里出现两套字阶来源，正是本项目反复出现过的「多份真相」问题：\n" +
+                missingRoles.joinToString("\n") { "  $it" },
+            missingRoles.isEmpty(),
+        )
+
+        // 全项目零 <plurals>、也无自定义字体：字阶必须显式给出 lineHeightStyle，
+        // 否则中文在多行场景下会因字体度量差异出现视觉重心偏移。
+        assertTrue(
+            "字阶应统一声明 lineHeightStyle（中文行高对齐是刻意设置，不是默认值）：\n  ${type.path}",
+            "lineHeightStyle" in typeText,
+        )
+
+        val themeText = theme.readText()
+        val slots = listOf("extraSmall", "small", "medium", "large", "extraLarge")
+        val missingSlots = slots.filter { !Regex("""$it\s*=\s*RoundedCornerShape""").containsMatchIn(themeText) }
+        assertTrue(
+            "形状体系必须声明全部 5 个 M3 槽位。刻意只声明用到的几个会开出不一致的口子——" +
+                "后续新增组件时，作者无法判断「该用哪个」与「为什么少一个」：\n" +
+                missingSlots.joinToString("\n") { "  $it" },
+            missingSlots.isEmpty(),
+        )
+    }
+
     // ---------- 工具 ----------
 
     private fun mainSources(): List<File> = File(
