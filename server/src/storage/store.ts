@@ -193,6 +193,33 @@ function rotateBackup(): void {
   }
 }
 
+function rotateStatsBackup(day: string): void {
+  try {
+    const src = path.join(config.STATS_DIR, `${day}.json`);
+    if (!dirOrFileExists(src)) return;
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const dest = path.join(config.STATS_DIR, "backups", `stats-${day}-${stamp}.json`);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.copyFileSync(src, dest);
+
+    const dir = path.dirname(dest);
+    const files = fs
+      .readdirSync(dir)
+      .filter((f) => f.startsWith(`stats-${day}-`) && f.endsWith(".json"))
+      .sort()
+      .reverse();
+    for (const f of files.slice(config.STATS_BACKUP_COUNT)) {
+      try {
+        fs.unlinkSync(path.join(dir, f));
+      } catch {
+        /* ignore */
+      }
+    }
+  } catch (e) {
+    console.warn("[store] stats backup rotation failed:", e);
+  }
+}
+
 function getDayKey(date: Date = new Date()): string {
   return date.toISOString().slice(0, 10);
 }
@@ -355,6 +382,7 @@ function flushDay(day: string): void {
     c.timer = null;
   }
   if (!c.dirty) return;
+  rotateStatsBackup(day);
   writeJson(path.join(config.STATS_DIR, `${day}.json`), c.data);
   c.dirty = false;
 }

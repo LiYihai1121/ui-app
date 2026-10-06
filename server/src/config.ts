@@ -56,6 +56,7 @@ export const config: Config = {
   STATS_DIR_CLEANUP_ON_START: true,
   BACKUP_DIR: path.join(ROOT, "data", "backups"),
   BACKUP_COUNT: 5,
+  STATS_BACKUP_COUNT: 5,
   ADMIN_TOKEN: process.env.ADMIN_TOKEN ?? "",
   STATS_READ_AUTH: false,
   CORS_ORIGINS: process.env.CORS_ORIGINS
