@@ -40,6 +40,9 @@
 
 ### Fixed
 
+- **英文单复数错误**：四条计数文案（`apps_count` / `logs_subtitle` / `stats_total_short` / `fake_ad_countdown`）此前是普通 `<string>`，英文下会产出 `Skipped 1 times`、`1 records`、`Auto-close in 1 seconds` 这类语法错误。现改为 `<plurals>`（中文只需 `other`，英文补 `one`/`other`），四个读取点同步改用 `pluralStringResource`。
+- **英文默认关键词回落中文**：`default_keywords` / `default_view_ids` 只在默认 locale 声明，英文环境会回落到「跳过 / 跳過 / 跳过广告 / 关闭广告」——对英文广告一个都命不中。现补齐英文数组（`skip` / `skip ad` / `skip ads` / `close ad` / `close ads` / `no ads`）。
+- **「我的」页同一事实说两遍**：权限清单的无障碍行报状态，紧随其后的卡片又渲染整句提示。现清单行负责状态、卡片作为唯一行动入口，并删除失去引用方的 `profile_accessibility_section`。
 - **应用管理页加载失败卡死**：`queryIntentActivities` 无异常保护，抛异常时协程中断、`loading` 永远停在 `true`，用户看到永不消失的骨架屏且无重试入口。现捕获异常并落到可重试的错误态。
 - **应用管理页空态文案错配**：「已加载完且无应用」的空态显示的是「正在加载应用列表…」。
 - **电池豁免跳转后不刷新**：状态只在进屏时读一次，用户点按钮跳去系统设置允许后返回，按钮仍停在「允许后台运行」。
@@ -49,8 +52,10 @@
 
 ### Tests
 
-- 新增契约测试：`PermissionCenterTest`、`AccessibilityStatusTest` / `AccessibilityStatusContractTest`、`BatteryExemptionTest` / `BatteryExemptionContractTest`、`ColorSchemeContractTest`、`ScreenHeaderContractTest`、`VendorDetectionContractTest`、`UiStateContractTest`。
-- 契约总数由 4 条增至 40 余条；`testDebugUnitTest` 由 189 个用例增至 218 个。
+- 新增契约测试：`PermissionCenterTest`、`AccessibilityStatusTest` / `AccessibilityStatusContractTest`、`BatteryExemptionTest` / `BatteryExemptionContractTest`、`ColorSchemeContractTest`、`ScreenHeaderContractTest`、`VendorDetectionContractTest`、`UiStateContractTest`、`PluralFormsContractTest`。
+- 契约文件由 4 个增至 10 个；`testDebugUnitTest` 由 189 个用例增至 223 个。
+
+> **未完成/已知限制**：本轮全部 UI 与交互改动**仅通过编译与契约测试验证，未经真机或模拟器目视确认**（与 `ROADMAP` 中「模拟器不能替代真机验收」的既有保留同类）。字阶 15 个 M3 角色中 7 个、形状 5 个槽位中 2 个当前无调用方——这是 M3 要求完整体系所致，已用契约固化「体系完整」，非遗漏。
 
 ## [3.1.0] - 2026-09-28
 
