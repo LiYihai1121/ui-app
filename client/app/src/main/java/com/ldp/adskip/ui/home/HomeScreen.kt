@@ -123,6 +123,11 @@ fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factor
                     undoLabel = context.getString(R.string.action_undo),
                     onUndo = viewModel::undoRemoveKeyword,
                 )
+
+                // 本页不提供语言切换（在设置里），该 Effect 不会从这里发出。
+                // 显式列出而不加 `else`：将来新增 Effect 时编译器会提醒这里也要处理，
+                // 而不是被 else 静默吞掉。
+                is UiEffect.RecreateActivity -> Unit
             }
         }
     }

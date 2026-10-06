@@ -12,6 +12,8 @@ import com.ldp.adskip.AppContainer
 import com.ldp.adskip.R
 import com.ldp.adskip.device.BatteryExemption
 import com.ldp.adskip.device.KeepAliveNavigator
+import com.ldp.adskip.device.LanguageMode
+import com.ldp.adskip.device.LocaleApplier
 import com.ldp.adskip.device.TileAddResult
 import com.ldp.adskip.device.Vendor
 import com.ldp.adskip.ui.UiEffect
@@ -44,6 +46,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         val dndStartMinute: Int = 23 * 60,
         val dndEndMinute: Int = 7 * 60,
         val batteryExemption: BatteryExemption = BatteryExemption.UNKNOWN,
+        /** 界面语言选择。 */
+        val language: LanguageMode = LanguageMode.DEFAULT,
         /** 当前设备所属 ROM，用于保活引导文案与手动路径提示（device/VendorKeepAlive） */
         val keepAliveVendor: Vendor = Vendor.GENERIC,
     ) {
@@ -64,6 +68,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             dndStartMinute = container.settingsRepo.getDoNotDisturbStart(),
             dndEndMinute = container.settingsRepo.getDoNotDisturbEnd(),
             batteryExemption = queryBatteryExemption(),
+            language = LanguageMode.fromTag(container.settingsRepo.languageTag()),
             keepAliveVendor = KeepAliveNavigator.detectVendor(),
         ),
     )
@@ -116,6 +121,26 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun setDndTimes(startMinute: Int, endMinute: Int) {
         container.settingsRepo.setDoNotDisturbTimes(startMinute, endMinute)
         _uiState.value = _uiState.value.copy(dndStartMinute = startMinute, dndEndMinute = endMinute)
+    }
+
+    /**
+     * 切换界面语言。
+     *
+     * 先落偏好再应用：API 26–32 没有平台 API，`LocaleApplier.apply` 只是把
+     * 生效时机推迟到 Activity 重建，偏好必须先写，重建时才能读到。
+     *
+     * 平台路径（API 33+）会立即改所有 Activity 的资源，故返回 `true` 时
+     * **不需要**重建，避免多余的闪烁。
+     */
+    fun setLanguage(mode: LanguageMode) {
+        container.settingsRepo.setLanguageTag(mode.tag)
+        val appliedImmediately = LocaleApplier.apply(container.app, mode)
+        _uiState.value = _uiState.value.copy(language = mode)
+        if (!appliedImmediately) {
+            // 低版本需要重建 Activity 才能让新语言作用于资源解析。
+            _effects.tryEmit(UiEffect.ShowMessage(container.app.getString(R.string.settings_saved)))
+            _effects.tryEmit(UiEffect.RecreateActivity)
+        }
     }
 
     fun refreshBatteryStatus() {

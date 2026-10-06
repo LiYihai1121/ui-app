@@ -1,5 +1,7 @@
 package com.ldp.adskip.ui.settings
 
+import android.app.Activity
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,6 +9,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -14,7 +18,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -29,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -37,8 +42,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
 import com.ldp.adskip.device.KeepAliveNavigator
+import com.ldp.adskip.device.LanguageMode
 import com.ldp.adskip.ui.Messenger
 import com.ldp.adskip.ui.UiEffect
+import com.ldp.adskip.ui.components.LabeledChoiceRow
 import com.ldp.adskip.ui.components.LabeledSwitch
 import com.ldp.adskip.ui.components.SectionCard
 import com.ldp.adskip.ui.components.SectionHint
@@ -75,6 +82,10 @@ fun SettingsContent(
 
                 // 设置页不涉及关键词删除，KeywordRemoved 在此不会出现
                 is UiEffect.KeywordRemoved -> Unit
+
+                // 低版本切换语言需要重建 Activity 才能让新语言作用于资源解析。
+                // ViewModel 不持有 Activity，故由界面侧执行这个生命周期操作。
+                is UiEffect.RecreateActivity -> (context as? Activity)?.recreate()
             }
         }
     }
@@ -87,8 +98,31 @@ fun SettingsContent(
 
     var pickingStart by remember { mutableStateOf(false) }
     var pickingEnd by remember { mutableStateOf(false) }
+    var pickingLanguage by remember { mutableStateOf(false) }
+
+    if (pickingLanguage) {
+        LanguagePickerDialog(
+            current = state.language,
+            onPick = { mode ->
+                pickingLanguage = false
+                viewModel.setLanguage(mode)
+            },
+            onDismiss = { pickingLanguage = false },
+        )
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.lg)) {
+        SectionCard {
+            SectionTitle(stringResource(R.string.settings_language_section))
+            Spacer(Modifier.height(Spacing.sm))
+            LabeledChoiceRow(
+                title = stringResource(R.string.settings_language_label),
+                subtitle = stringResource(R.string.settings_language_hint),
+                value = stringResource(state.language.labelRes()),
+                onClick = { pickingLanguage = true },
+            )
+        }
+
         SectionCard {
             SectionTitle(stringResource(R.string.settings_cloud_section))
             Spacer(Modifier.height(Spacing.md))
@@ -246,6 +280,61 @@ fun SettingsContent(
             },
         )
     }
+}
+
+/**
+ * 界面语言选择对话框。
+ *
+ * 用单选而非下拉/开关：只有三个取值，一次全列出来比「点开再选」少一步，
+ * 而且用户能直接看到还有哪些可选——语言这种改错了会看不懂界面的设置，
+ * 尤其需要「一眼看到能改回去」。
+ */
+@Composable
+private fun LanguagePickerDialog(current: LanguageMode, onPick: (LanguageMode) -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_language_label)) },
+        text = {
+            Column {
+                LanguageMode.entries.forEach { mode ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = mode == current,
+                                role = Role.RadioButton,
+                                onClick = { onPick(mode) },
+                            )
+                            .padding(vertical = Spacing.sm),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = mode == current, onClick = null)
+                        Spacer(Modifier.width(Spacing.md))
+                        Text(stringResource(mode.labelRes()))
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.btn_cancel))
+            }
+        },
+    )
+}
+
+/**
+ * 语言模式 → 显示名。
+ *
+ * 语言名**不随当前界面语言翻译**（英文环境下也显示「简体中文」）：
+ * 用户看不懂当前语言时，正是靠母语名认路；把「简体中文」译成
+ * "Simplified Chinese" 会让中文用户找不到自己的语言。
+ */
+@StringRes
+private fun LanguageMode.labelRes(): Int = when (this) {
+    LanguageMode.SYSTEM -> R.string.language_system
+    LanguageMode.CHINESE -> R.string.language_zh
+    LanguageMode.ENGLISH -> R.string.language_en
 }
 
 /** M3 TimePicker 封装为对话框（分钟粒度，24 小时制） */

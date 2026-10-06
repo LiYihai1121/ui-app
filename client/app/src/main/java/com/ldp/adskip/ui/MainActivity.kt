@@ -1,5 +1,6 @@
 package com.ldp.adskip.ui
 
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -40,6 +41,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.ldp.adskip.R
+import com.ldp.adskip.device.LocaleApplier
 import com.ldp.adskip.ui.apps.AppsScreen
 import com.ldp.adskip.ui.home.HomeScreen
 import com.ldp.adskip.ui.logs.LogsScreen
@@ -60,6 +62,21 @@ import com.ldp.adskip.ui.theme.screenContentWidth
  * 页面内容统一只消费 `innerPadding`。
  */
 class MainActivity : ComponentActivity() {
+
+    /**
+     * 低版本（API < 33）的界面语言在这里生效。
+     *
+     * 平台级的 `LocaleManager` 从 API 33 才有；在此之前，应用级语言只能靠在
+     * `attachBaseContext` 里包一层带 locale 的 Context，让**资源解析**用新语言。
+     * 必须在这个时机做：晚于它（例如 onCreate 里）资源已经按系统语言解析完了，
+     * 界面会先闪一次旧语言。
+     *
+     * 直接读 SharedPreferences 而不经 AppContainer：`attachBaseContext` 早于
+     * `Application.onCreate`，那时容器可能尚未构建完成。
+     */
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleApplier.wrapContextWithSavedLanguage(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

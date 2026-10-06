@@ -3,6 +3,7 @@ package com.ldp.adskip.ui.components
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -134,6 +135,55 @@ fun StatusDot(ready: Boolean, modifier: Modifier = Modifier) {
             .then(if (ready) Modifier.background(color) else Modifier.border(Spacing.xs / 3, color, CircleShape))
             .clearAndSetSemantics {},
     )
+}
+
+/**
+ * 设置项：标题 + 可选副标题 + 当前取值 + 点击进入选择。
+ *
+ * 与 [LabeledSwitch] 的区别：那是布尔开/关，这是**从若干取值中选一个**。
+ * 单独成组件而不是复用开关：语言这类多选一用开关表达会丢信息
+ * （用户看不到当前选的是哪个），且「点整行」的语义是「打开选择」，不是「切换」。
+ *
+ * 整行是一个 `Role.Button` 语义节点，读屏会念「标题，当前取值，按钮」。
+ */
+@Composable
+fun LabeledChoiceRow(
+    title: String,
+    value: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(vertical = Spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(Modifier.weight(1f).padding(end = Spacing.lg)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
 }
 
 /** 卡片内的说明性正文。 */

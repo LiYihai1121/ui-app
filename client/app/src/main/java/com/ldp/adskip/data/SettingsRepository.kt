@@ -1,6 +1,7 @@
-﻿package com.ldp.adskip.data
+package com.ldp.adskip.data
 
 import android.content.Context
+import com.ldp.adskip.core.LanguagePreferences
 import com.ldp.adskip.net.SyncClient
 import com.ldp.adskip.sync.SyncJobService
 
@@ -46,6 +47,18 @@ class SettingsRepository(private val context: Context, private val rulesRepo: Ru
 
     fun setDoNotDisturbTimes(startMinute: Int, endMinute: Int) =
         Prefs.setDoNotDisturbTimes(context, startMinute, endMinute)
+
+    // ---------- 界面语言 ----------
+
+    /**
+     * 语言选择（`null` = 跟随系统）。
+     *
+     * 存储实体在 `core/LanguagePreferences`：`ui/` 与 `device/` 都被禁止 import `data/`，
+     * 而两侧都要读它，故放在双方都允许依赖的 `core`。此处只做门面转发，不另存一份。
+     */
+    fun languageTag(): String? = LanguagePreferences.languageTag(context)
+
+    fun setLanguageTag(tag: String?) = LanguagePreferences.setLanguageTag(context, tag)
 
     // ---------- 应用元数据（供「我的」页展示） ----------
 
