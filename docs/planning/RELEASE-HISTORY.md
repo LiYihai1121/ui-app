@@ -1,4 +1,4 @@
-# 发布历史与提交链路
+# 发布历史与提交链路（RELEASE-HISTORY）
 
 本文记录版本阶段、Git tag、合并提交和 GitHub Release 的对应关系，避免仅凭短哈希或提交标题判断历史是否断链。每次项目更迭完成后，必须同步更新本页的 Release list，并核对对应的 annotated tag。
 
