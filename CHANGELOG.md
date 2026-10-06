@@ -20,7 +20,37 @@
 
 ## [Unreleased]
 
-（本节为空：待发布的变更已归入下方各版本）
+本轮是「UI 重新设计与权限体系重构」，贯穿三条原则：**权限与系统开关一律三态**（无法确认 ≠ 未开启）、**同一事实只有一份真值源**、**能机器检查的约定都写成门禁**。
+
+### Added
+
+- **权限与系统开关清单**：「我的」页新增一张可核对清单（`device/PermissionCenter` + `ui/profile/PermissionCard`），把此前分散在首页状态环、「我的」页无障碍卡片与设置页三处的四类开关——无障碍服务、电池优化豁免、厂商自启动、快捷磁贴——收敛到一处，每项给出真实状态与直达入口。清单顶部显示「已就绪 N / 4 项」。
+- **错误态组件 `ErrorState`**：此前全 app 只有空态，加载失败会显示成「暂无内容」——用户既不知道出了错，也不知道重试有用。错误态与空态分开，并带 `error()` 语义供读屏播报。
+- **可复用组件**：`StatusDot`（状态点，颜色 + 形状双重编码，色盲用户可辨）、`Modifier.screenContentWidth()`（大屏内容封顶，此前硬编码在 MainActivity）。
+- **`device/AccessibilityStatus` / `device/BatteryExemption`**：把「系统真值 / 进程信号 / 查询失败」收敛为 `ON`/`OFF`/`UNKNOWN` 三态，判定逻辑是纯函数，可 JVM 单测穷举。
+
+### Changed
+
+- **「我的」页按来访目的重排**：权限清单提到首位（唯一会阻塞全部功能的内容），其后依次为使用概览、设置、无障碍入口与关于。此前权限清单被压在设置之后，而权限没配好时设置项几乎都是无效配置。
+- **首页补页面标题**：此前是四个一级页面里唯一没有标题的，用户切过去后没有任何位置锚点。
+- **无障碍状态改读系统真值**：UI 此前只订阅进程信号，用户在系统设置里关掉无障碍而 Service 的 `onDestroy` 回调未到时，首页与「我的」页仍显示「运行中」，而快捷磁贴（读系统真值）已显示「已停止」——同一台设备两个说法。两屏现在都在 `ON_RESUME` 时重查真值。
+- **厂商识别统一入口**：`ProfileViewModel` 改为经 `KeepAliveNavigator.detectVendor()`（含异常保护与日志），与设置页同源；此前直调裸函数，失败时无迹可查。
+- **配色补全**：`Theme.kt` 补上一直走 M3 默认值的 `surfaceContainer` / `surfaceContainerLow` / `surfaceContainerHighest`（默认值是紫调中性色，与品牌蓝不同色相，卡片底色一直与应用配色脱节）。
+- **深色窗口主题**：新增 `values-night/themes.xml`，深色系统下窗口背景与启动闪屏不再沿用浅色主题（Compose 只在首帧绘制后接管，此前中间那段是刺眼白屏）；状态栏由写死品牌蓝改为透明。
+
+### Fixed
+
+- **应用管理页加载失败卡死**：`queryIntentActivities` 无异常保护，抛异常时协程中断、`loading` 永远停在 `true`，用户看到永不消失的骨架屏且无重试入口。现捕获异常并落到可重试的错误态。
+- **应用管理页空态文案错配**：「已加载完且无应用」的空态显示的是「正在加载应用列表…」。
+- **电池豁免跳转后不刷新**：状态只在进屏时读一次，用户点按钮跳去系统设置允许后返回，按钮仍停在「允许后台运行」。
+- **权限清单里重复的无障碍入口**：清单行与紧随其后的无障碍卡片提供同一个跳转按钮，改为状态留在清单、入口归卡片。
+- **无障碍播报缺陷**：底部导航图标与同行文字重复播报 tab 名；状态环与相邻文字重复播报服务状态；骨架屏对读屏是空白；全屏测试浮层未做语义隔离（被遮住的控件仍可被 TalkBack 聚焦激活）；关键词 chip 点本体即删除但删除语义只挂在尾部图标上。
+- **`UiContractTest` 两条守护自上线起从未生效**：间距检查的正则匹配的是 Kotlin 里不存在的 `20dp` 写法，对真实写法 `20.dp` 永不命中（22 处标度外取值长期潜伏）；文案检查用裸子串匹配，死文案 `settings_battery` 被 `settings_battery_allow` 命中而逃检。修复后暴露的违规已全部落到设计令牌。
+
+### Tests
+
+- 新增契约测试：`PermissionCenterTest`、`AccessibilityStatusTest` / `AccessibilityStatusContractTest`、`BatteryExemptionTest` / `BatteryExemptionContractTest`、`ColorSchemeContractTest`、`ScreenHeaderContractTest`、`VendorDetectionContractTest`、`UiStateContractTest`。
+- 契约总数由 4 条增至 40 余条；`testDebugUnitTest` 由 189 个用例增至 218 个。
 
 ## [3.1.0] - 2026-09-28
 
