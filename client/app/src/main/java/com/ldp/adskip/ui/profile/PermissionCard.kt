@@ -66,12 +66,16 @@ fun PermissionCard(
 
 @Composable
 private fun PermissionRow(item: PermissionItem, onOpen: (key: String) -> Unit) {
+    // 无障碍行不给行内按钮：宿主页紧随其后就是无障碍卡片，它带同一跳转且有更完整的
+    // 说明文案。同一屏里两个同样标的按钮会让用户以为是两件事。
+    // 行本身仍完整呈现在清单里——状态是清单的职责，入口归无障碍卡片。
+    val showAction = item.actionable && item.key != PermissionKeys.ACCESSIBILITY
     TwoLineRow(
         title = stringResource(item.titleRes()),
         subtitle = stringResource(item.statusTextRes()),
         leading = { StatusDot(ready = item.status == PermissionStatus.READY) },
         trailing = {
-            if (item.actionable) {
+            if (showAction) {
                 TextButton(onClick = { onOpen(item.key) }) {
                     Text(stringResource(R.string.settings_keepalive_open))
                 }
