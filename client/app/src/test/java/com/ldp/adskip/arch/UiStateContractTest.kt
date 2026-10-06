@@ -155,6 +155,25 @@ class UiStateContractTest {
         )
     }
 
+    @Test
+    fun `the wide screen width cap has a single implementation`() {
+        val token = "UiSizes.contentMaxWidth"
+        val canonical = "client/app/src/main/java/com/ldp/adskip/ui/theme/Spacing.kt"
+        val uiRoot = File(appRoot(), "src/main/java/com/ldp/adskip/ui")
+        val consumers = uiRoot.walkTopDown()
+            .filter { it.isFile && it.extension == "kt" }
+            .filter { token in it.readText() }
+            .map { it.relativeTo(repoRoot()).path.replace('\\', '/') }
+            .toList()
+
+        assertTrue(
+            "大屏内容封顶（$token）应只在 $canonical 定义一次，页面通过 " +
+                "`Modifier.screenContentWidth()` 取用。多处写死会让平板/折叠屏下的版心" +
+                "各自漂移。发现重复引用：\n" + consumers.joinToString("\n") { "  $it" },
+            consumers.size == 1 && consumers.first() == canonical,
+        )
+    }
+
     // ---------- 工具 ----------
 
     /** 四个页面级 Composable 的源码路径（相对仓库根）。 */
