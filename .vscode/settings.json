@@ -103,5 +103,9 @@
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "files.eol": "\n",
-  "java.configuration.updateBuildConfiguration": "interactive"
+
+  // 构建文件（settings.gradle.kts / build.gradle.kts 等）变更时自动重载 Java 项目模型，
+  // 不再逐次弹「build file has been changed」询问。本仓库是单一 gradle 工程
+  // （worktree 副本已被 java.import.exclusions 排除），自动重载没有误伤风险。
+  "java.configuration.updateBuildConfiguration": "automatic"
 }
