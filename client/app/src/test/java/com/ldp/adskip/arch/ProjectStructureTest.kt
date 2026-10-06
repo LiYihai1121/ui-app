@@ -206,7 +206,8 @@ class ProjectStructureTest {
             sourceRoot.walkTopDown()
                 .filter { it.isFile && it.extension == "kt" }
                 .forEach { file ->
-                    val subPath = sourceRoot.toPath().relativize(file.parentFile.toPath())
+                    val parent = file.parentFile ?: return@forEach
+                    val subPath = sourceRoot.toPath().relativize(parent.toPath())
                         .toString().replace('\\', '/').replace('/', '.')
                         .let { if (it == ".") "" else it }
                     val expected = if (subPath.isEmpty()) BASE_PACKAGE else "$BASE_PACKAGE.$subPath"
@@ -381,6 +382,26 @@ class ProjectStructureTest {
                 "新增工具目录时请同时更新这里与本清单常量。\n" +
                 "  ${settings.path}",
             missing.isEmpty(),
+        )
+    }
+
+    @Test
+    fun `gitignore covers nested client ide outputs`() {
+        val gitignore = File(repoRoot(), ".gitignore")
+        assertTrue("未找到根 .gitignore", gitignore.isFile)
+        val text = gitignore.readLines()
+            .map { it.substringBefore('#').trim() }
+            .filter { it.isNotEmpty() }
+            .toSet()
+        assertTrue(
+            "根 .gitignore 必须忽略 client/.vscode/：根级 `.vscode/*` 含中间斜杠，" +
+                "只匹配仓库根，Java 语言服务写到 client/.vscode/ 时会以未跟踪文件出现。\n  ${gitignore.path}",
+            "client/.vscode/" in text,
+        )
+        assertTrue(
+            "根 .gitignore 必须忽略 client/build-logic/**/bin/：" +
+                "JDT 编译 included build 会把源镜像到 convention/bin/，不是 Gradle 产物。\n  ${gitignore.path}",
+            "client/build-logic/**/bin/" in text,
         )
     }
 
@@ -616,6 +637,7 @@ class ProjectStructureTest {
             ".worktrees", // 多 Agent worktree 落点（AGENT-WORKFLOW 第 2.1 节强制约定）
             ".mimosa", // 同族工具目录
             ".workbuddy", // 同族工具目录
+            ".cursor", // Cursor 本机工程状态（不入库；缺席白名单会在装了 Cursor 的机器上误红）
             ".vscode", // 编辑器共享配置（选择性入库，规则见 VSCODE_SHARED_FILES）
         )
 
@@ -659,16 +681,28 @@ class ProjectStructureTest {
             "build.gradle.kts", "settings.gradle.kts", "gradle.properties",
             "gradlew", "gradlew.bat", "local.properties",
             "build", ".gradle", ".kotlin", "signing",
+            ".vscode", // Java LS 以 client/ 为工程根打开时写入，不入库
+            ".idea", // Android Studio / IntelliJ 本机工程元数据，不入库
         )
 
         /** client/ 下不是 Gradle 模块的目录（不参与「未注册模块」检查）。 */
-        val NON_MODULE_DIRS = setOf("gradle", "build", ".gradle", ".kotlin", "signing", "build-logic")
+        val NON_MODULE_DIRS = setOf(
+            "gradle",
+            "build",
+            ".gradle",
+            ".kotlin",
+            "signing",
+            "build-logic",
+            ".vscode",
+            ".idea",
+        )
 
         /** 扫描产物时剪掉的目录：构建输出、依赖与工具/本机生成物。 */
         val PRUNED_DIRS = setOf(
             ".git", "node_modules", "build", ".gradle", ".kotlin", ".idea", ".vscode",
-            "captures", ".tools", "signing", "dist", "out", "target", "release",
+            "captures", ".tools", "signing", "dist", "out", "target", "release", "bin",
             ".mimosa", ".workbuddy", ".kilo", ".kilocode", ".worktrees", ".agents",
+            ".cursor",
             ".cxx", ".externalNativeBuild", "data",
         )
 

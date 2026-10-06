@@ -71,7 +71,7 @@ class VendorDetectionContractTest {
         text.replace(Regex("""/\*[\s\S]*?\*/"""), "").lines().joinToString("\n") { it.substringBefore("//") }
 
     private fun repoRoot(): File {
-        var dir: File? = File(System.getProperty("user.dir"))
+        var dir: File? = System.getProperty("user.dir")?.let { File(it) }
         while (dir != null) {
             if (File(dir, ".gitignore").isFile && File(dir, "docs/README.md").isFile) return dir
             dir = dir.parentFile

@@ -27,6 +27,7 @@ signing/
 .kilocode/
 .worktrees/
 .agents/
+.cursor/
 
 # IDE 配置：只入库团队共享的两个文件，其余个人文件仍不入库。
 #
@@ -44,6 +45,12 @@ signing/
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+# 根级 `.vscode/*` 含中间斜杠，只匹配仓库根。Java 语言服务以 client/ 为 Gradle
+# 工程根打开时会另写 client/.vscode/，必须单独忽略，否则会作为未跟踪文件出现。
+client/.vscode/
+
+# JDT 语言服务编译 included build 时会把源镜像到 convention/bin/，不是 Gradle 产物。
+client/build-logic/**/bin/
 
 # Kotlin 构建会话目录
 .kotlin/

@@ -36,7 +36,7 @@ class PluralFormsContractTest {
             val text = xml.readText()
             countedKeys.forEach { key ->
                 if (!Regex("""<plurals\s+name="$key"\s*>""").containsMatchIn(text)) {
-                    problems += "${xml.parentFile.name}/$key 未声明为 <plurals>"
+                    problems += "${locale.name}/$key 未声明为 <plurals>"
                 }
             }
         }
@@ -157,7 +157,7 @@ class PluralFormsContractTest {
         text.replace(Regex("""/\*[\s\S]*?\*/"""), "").lines().joinToString("\n") { it.substringBefore("//") }
 
     private fun repoRoot(): File {
-        var dir: File? = File(System.getProperty("user.dir"))
+        var dir: File? = System.getProperty("user.dir")?.let { File(it) }
         while (dir != null) {
             if (File(dir, ".gitignore").isFile && File(dir, "docs/README.md").isFile) return dir
             dir = dir.parentFile

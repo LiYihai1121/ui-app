@@ -32,6 +32,7 @@ class RepoHygieneTest {
             ".kilocode", // 同上（legacy 目录名）
             ".worktrees", // 本项目约定的 worktree 落点
             ".agents", // 通用 Agent 产物目录
+            ".cursor", // Cursor 本机工程状态
         )
         val missing = required.filterNot { dir -> patterns.any { it == dir } }
         assertTrue(
@@ -168,8 +169,11 @@ class RepoHygieneTest {
             ".gradle",
             ".kotlin",
             ".idea",
+            ".vscode",
+            ".cursor",
             "captures",
             ".tools",
+            "bin",
         )
     }
 }

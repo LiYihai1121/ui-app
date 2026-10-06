@@ -24,7 +24,8 @@
     "**/.worktrees": true,
     "**/.agents": true,
     "**/.mimosa": true,
-    "**/.workbuddy": true
+    "**/.workbuddy": true,
+    "**/.cursor": true
   },
   "search.exclude": {
     "**/build": true,
@@ -37,7 +38,8 @@
     "**/.worktrees": true,
     "**/.agents": true,
     "**/.mimosa": true,
-    "**/.workbuddy": true
+    "**/.workbuddy": true,
+    "**/.cursor": true
   },
 
   // Java 语言服务（redhat.jdt.ls，由 vscode-java-pack 带入）默认会扫描并导入
@@ -61,7 +63,8 @@
     "**/.worktrees/**",
     "**/.agents/**",
     "**/.mimosa/**",
-    "**/.workbuddy/**"
+    "**/.workbuddy/**",
+    "**/.cursor/**"
   ],
 
   // 120 与 .editorconfig 的 max_line_length 对齐。**这是一处必须手工同步的耦合**：
@@ -86,6 +89,11 @@
   // 键名从已弃用的 `typescript.tsdk` 迁到新版 `js/ts.` 命名空间——这项迁移是
   // VS Code 打开工作区时自动完成的，保留迁移后的写法，否则每次打开都会再被改一次。
   "js/ts.tsserver.experimental.enableProjectDiagnostics": true,
+
+  // Java 空值分析交给语言服务自动判定。Kotlin 侧同样关心 NPE
+  // （`System.getProperty` 可能返回 null），由编辑器实时提示比等门禁快。
+  // 团队开关只写仓库根：client/.vscode 已忽略，写到那里不会入库，但会造成两份真相。
+  "java.compile.nullAnalysis.mode": "automatic",
 
   // 若依赖自定义 GRADLE_USER_HOME（DEV-ENVIRONMENT「构建启动失败排障」记录过
   // 未设置时回落到无缓存目录、导致发行版下载超时），在这里指明即可；

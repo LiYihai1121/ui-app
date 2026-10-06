@@ -41,7 +41,7 @@
 细则见 [docs/development/AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md)，本节为执行摘要。
 
 - **一人一工作区**：每个 Agent 用真正的 `git worktree`（落点 `.worktrees/<agent>-<slug>/`，内有 `.git` 元数据）；禁止在仓库内复制整仓当工作区。
-- **忽略规则要共享**：Agent 产物目录（`.kilo/`、`.kilocode/`、`.worktrees/`、`.agents/`、`.mimosa/`、`.workbuddy/`）必须写进根 `.gitignore`，不得只藏在本机 `.git/info/exclude`——否则会出现「git 干净但文件检索仍命中」的双重真相。
+- **忽略规则要共享**：Agent 产物目录（`.kilo/`、`.kilocode/`、`.worktrees/`、`.agents/`、`.mimosa/`、`.workbuddy/`、`.cursor/`）必须写进根 `.gitignore`，不得只藏在本机 `.git/info/exclude`——否则会出现「git 干净但文件检索仍命中」的双重真相。
 - **唯一写入者**：同一文件同一时间只有一个 Agent 写；开工前在协作规范的认领板登记路径；`CHANGELOG.md`、`ROADMAP*.md`、`ARCHITECTURE.md`、`docs/README.md` 为单写者事实源。
 - **一任务一分支**：分支与 Agent 一一绑定，禁止共用分支；禁止对他人分支 rebase/reset/force-push/amend。
 - **契约先行**：跨包、跨端边界的改动必须同时给出可执行契约测试（`ArchitectureBoundaryTest` / `ManifestContractTest` / `ProjectStructureTest` / `RepoHygieneTest`），先写失败的测试再写实现。

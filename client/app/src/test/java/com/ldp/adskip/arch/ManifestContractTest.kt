@@ -177,7 +177,8 @@ class ManifestContractTest {
     }
 
     private fun readMainSource(relative: String): String {
-        val dir = File(System.getProperty("user.dir"), "src/main/java/com/ldp/adskip")
+        val dir = System.getProperty("user.dir")?.let { File(it, "src/main/java/com/ldp/adskip") }
+            ?: error("user.dir 未设置：无法读取 $relative")
         assertTrue("未定位到 src/main/java/com/ldp/adskip：无法读取 $relative", dir.isDirectory)
         val file = File(dir, relative)
         assertTrue("未找到源文件 $relative", file.isFile)
@@ -196,7 +197,7 @@ class ManifestContractTest {
     }
 
     private fun readManifest(): String {
-        var dir: File? = File(System.getProperty("user.dir"))
+        var dir: File? = System.getProperty("user.dir")?.let { File(it) }
         while (dir != null) {
             val candidate = File(dir, MANIFEST_RELATIVE_PATH)
             if (candidate.isFile) return candidate.readText()
