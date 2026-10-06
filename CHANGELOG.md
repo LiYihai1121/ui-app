@@ -24,6 +24,11 @@
 
 ### Added
 
+- **应用内界面语言选择**：「我的 → 设置」新增语言项，可选**跟随系统 / 简体中文 / English**，默认跟随系统。此前应用语言完全由系统决定，没有开关。
+  - 双路径实现：**API 33+** 走平台 `LocaleManager.setApplicationLocales`（系统级生效，会同步到系统「应用语言」设置，无需重建）；**API 26–32** 无平台 API，靠 `MainActivity.attachBaseContext` 包一层带 locale 的 Context，并在切换后重建 Activity。只做一条路径是本功能最常见的半成品——要么低版本失效，要么高版本与系统设置不同步。
+  - 「跟随系统」映射为**空** LocaleList（平台用它表示清除应用级覆盖）。写错的话用户切回「跟随系统」不会复原，且症状要等用户主动切回才发现，故由契约与单测双重守护。
+  - 语言名**不随当前界面语言翻译**（英文界面下仍显示「简体中文」）：用户看不懂当前语言时正是靠母语名认路。
+  - 新增 `core/LanguagePreferences` 存放语言偏好。放 `core` 而非 `data/Prefs` 是被架构边界逼出来的正解：`ui/` 与 `device/` 都被禁止 import `data/`，而两侧都要读它；`core` 是双方都允许依赖的横切层（`ArchitectureBoundaryTest` 在开发过程中两次拦下我的越界尝试）。
 - **权限与系统开关清单**：「我的」页新增一张可核对清单（`device/PermissionCenter` + `ui/profile/PermissionCard`），把此前分散在首页状态环、「我的」页无障碍卡片与设置页三处的四类开关——无障碍服务、电池优化豁免、厂商自启动、快捷磁贴——收敛到一处，每项给出真实状态与直达入口。清单顶部显示「已就绪 N / 4 项」。
 - **错误态组件 `ErrorState`**：此前全 app 只有空态，加载失败会显示成「暂无内容」——用户既不知道出了错，也不知道重试有用。错误态与空态分开，并带 `error()` 语义供读屏播报。
 - **可复用组件**：`StatusDot`（状态点，颜色 + 形状双重编码，色盲用户可辨）、`Modifier.screenContentWidth()`（大屏内容封顶，此前硬编码在 MainActivity）。
@@ -53,10 +58,10 @@
 
 ### Tests
 
-- 新增契约测试：`PermissionCenterTest`、`AccessibilityStatusTest` / `AccessibilityStatusContractTest`、`BatteryExemptionTest` / `BatteryExemptionContractTest`、`ColorSchemeContractTest`、`ScreenHeaderContractTest`、`VendorDetectionContractTest`、`UiStateContractTest`、`PluralFormsContractTest`。
-- 契约文件由 4 个增至 10 个；`testDebugUnitTest` 由 189 个用例增至 223 个。
+- 新增契约测试：`PermissionCenterTest`、`AccessibilityStatusTest` / `AccessibilityStatusContractTest`、`BatteryExemptionTest` / `BatteryExemptionContractTest`、`ColorSchemeContractTest`、`ScreenHeaderContractTest`、`VendorDetectionContractTest`、`UiStateContractTest`、`PluralFormsContractTest`、`LanguageSelectionContractTest` / `LanguageModeTest`。
+- 契约文件由 4 个增至 11 个；`testDebugUnitTest` 由 189 个用例增至 231 个。
 
-> **验证范围**：已在模拟器（Android 14 / API 34，`AdSkipTest` AVD）上实装并逐屏目视确认首页、应用管理、跳过日志、「我的」四个一级页面；上述「权限清单行按钮」缺陷即由此发现。**厂商 ROM 相关行为（自启动入口、后台管理跳转、磁贴）仍未经真机验证**，与 `ROADMAP` 中「模拟器不能替代厂商 ROM 验收」的既有保留一致。
+> **验证范围**：已在模拟器（Android 14 / API 34，`AdSkipTest` AVD）上实装并逐屏目视确认首页、应用管理、跳过日志、「我的」四个一级页面；并在同一模拟器上实测语言功能：切到「简体中文」后平台侧 `cmd locale get-app-locales` 返回 `[zh-CN]` 且全部界面（含底部导航）转中文；切回「跟随系统」后返回 `[]`（覆盖已清除）且界面回归英文。上述「权限清单行按钮」缺陷亦由此发现。**厂商 ROM 相关行为（自启动入口、后台管理跳转、磁贴）与 API 26–32 的低版本语言路径仍未经真机验证**——前者需真机，后者模拟器仅有 API 34 镜像，与 `ROADMAP` 中「模拟器不能替代厂商 ROM 验收」的既有保留一致。
 >
 > 字阶 15 个 M3 角色中 7 个、形状 5 个槽位中 2 个当前无调用方——这是 M3 要求完整体系所致，已用契约固化「体系完整」，非遗漏。
 
