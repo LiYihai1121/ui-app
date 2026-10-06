@@ -1,4 +1,4 @@
-# 净启动 AdSkip 架构文档
+# 净启动 AdSkip 架构文档（ARCHITECTURE）
 
 ## 1. 系统全景
 

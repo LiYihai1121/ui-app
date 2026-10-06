@@ -1,4 +1,4 @@
-# 开发环境
+# 开发环境（DEV-ENVIRONMENT）
 
 本项目采用本机开发方式，不依赖 VS Code Dev Container。Android 客户端和 Bun 服务端可以分别启动，互不要求同时运行。
 

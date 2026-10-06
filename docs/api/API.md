@@ -1,4 +1,4 @@
-# AdSkip 服务端 API 参考
+# AdSkip 服务端 API 参考（API）
 
 基础地址：`http://<本机IP>:3210`（局域网）或 `http://localhost:3210`（本机，注意 IPv6 解析回退建议用 `127.0.0.1`）。
 
