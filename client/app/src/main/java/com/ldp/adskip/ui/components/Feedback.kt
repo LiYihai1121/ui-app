@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.ldp.adskip.R
 import com.ldp.adskip.ui.theme.Spacing
+import com.ldp.adskip.ui.theme.UiSizes
 
 /*
  * 通用 UI 组件第二批（v3.1 重设计后续）。
@@ -73,14 +74,14 @@ fun EmptyState(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.xxl, vertical = 48.dp),
+            .padding(horizontal = Spacing.xxl, vertical = Spacing.xxxl),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (icon != null) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(UiSizes.emptyStateIcon),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(Spacing.lg))
@@ -101,7 +102,7 @@ fun EmptyState(
             )
         }
         if (action != null) {
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(Spacing.lg))
             action()
         }
     }
@@ -152,7 +153,7 @@ fun TwoLineRow(
     modifier: Modifier = Modifier,
     leading: @Composable (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
-    contentPadding: PaddingValues = PaddingValues(vertical = 10.dp),
+    contentPadding: PaddingValues = PaddingValues(vertical = Spacing.sm),
 ) {
     Row(
         modifier = modifier
@@ -199,7 +200,12 @@ fun TwoLineRow(
  * 纯 DrawScope 渐变，不引入 shimmer 三方库（依赖清单保持零外部依赖）。
  */
 @Composable
-fun SkeletonList(modifier: Modifier = Modifier, rows: Int = 8, rowHeight: Dp = 60.dp, avatarSize: Dp = Spacing.xxxl) {
+fun SkeletonList(
+    modifier: Modifier = Modifier,
+    rows: Int = 8,
+    rowHeight: Dp = UiSizes.skeletonRow,
+    avatarSize: Dp = UiSizes.listIcon,
+) {
     val transition = rememberInfiniteTransition(label = "skeleton")
     val shift by transition.animateFloat(
         initialValue = 0f,
@@ -247,7 +253,7 @@ private fun SkeletonRow(brush: Brush, height: Dp, avatarSize: Dp) {
             Box(
                 Modifier
                     .fillMaxWidth(0.55f)
-                    .height(14.dp)
+                    .height(UiSizes.skeletonLine)
                     .clip(MaterialTheme.shapes.extraSmall)
                     .background(brush),
             )
@@ -255,7 +261,7 @@ private fun SkeletonRow(brush: Brush, height: Dp, avatarSize: Dp) {
             Box(
                 Modifier
                     .fillMaxWidth(0.35f)
-                    .height(10.dp)
+                    .height(UiSizes.skeletonLineCompact)
                     .clip(MaterialTheme.shapes.extraSmall)
                     .background(brush),
             )
@@ -269,7 +275,7 @@ fun InfoRow(label: String, value: String, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 10.dp),
+            .padding(vertical = Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {

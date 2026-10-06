@@ -65,6 +65,7 @@ import com.ldp.adskip.ui.components.StatusOrb
 import com.ldp.adskip.ui.components.rememberAppLabel
 import com.ldp.adskip.ui.theme.Spacing
 import com.ldp.adskip.ui.theme.StatusColors
+import com.ldp.adskip.ui.theme.UiSizes
 
 /**
  * 主页：服务状态、跳过统计、关键词管理、模拟测试。
@@ -179,14 +180,14 @@ fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factor
  */
 @Composable
 private fun StatusHero(running: Boolean, onPrimaryAction: () -> Unit, onTest: () -> Unit) {
-    SectionCard(contentPadding = PaddingValues(20.dp)) {
+    SectionCard(contentPadding = PaddingValues(Spacing.lg)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             StatusOrb(
                 running = running,
                 contentDescription = stringResource(
                     if (running) R.string.status_on else R.string.status_off,
                 ),
-                diameter = 56.dp,
+                diameter = UiSizes.statusOrb,
             )
             Spacer(Modifier.width(Spacing.lg))
             Column(modifier = Modifier.weight(1f)) {
@@ -206,7 +207,7 @@ private fun StatusHero(running: Boolean, onPrimaryAction: () -> Unit, onTest: ()
             }
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(Spacing.lg))
 
         // 动作分级：只有服务没开时，「去开启」才是用户必须做的事，用 filled 表达；
         // 已运行时降级为 tonal，避免让用户误以为还有必须点的操作。
@@ -400,7 +401,7 @@ private fun FakeAdOverlay(countdown: Int, onSkipClicked: () -> Unit) {
             Button(onClick = onSkipClicked) {
                 Text(stringResource(R.string.fake_ad_skip))
             }
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(Spacing.lg))
             Text(
                 text = stringResource(R.string.fake_ad_countdown, countdown),
                 style = MaterialTheme.typography.bodySmall,

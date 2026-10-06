@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.ldp.adskip.ui.theme.StatusColors
+import com.ldp.adskip.ui.theme.UiSizes
 
 /**
  * 服务运行状态的自绘指示环。
@@ -47,7 +48,12 @@ import com.ldp.adskip.ui.theme.StatusColors
  * 无障碍：整颗环带 contentDescription，读屏可读出开 / 关状态。
  */
 @Composable
-fun StatusOrb(running: Boolean, contentDescription: String, modifier: Modifier = Modifier, diameter: Dp = 108.dp) {
+fun StatusOrb(
+    running: Boolean,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+    diameter: Dp = UiSizes.orbHalo,
+) {
     val accent by animateColorAsState(
         targetValue = if (running) StatusColors.on else StatusColors.off,
         animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),

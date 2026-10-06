@@ -199,7 +199,7 @@ fun SettingsContent(
                     ),
                 )
             }
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(Spacing.lg))
             HorizontalDivider(Modifier.padding(bottom = Spacing.lg))
             SectionHint(
                 stringResource(

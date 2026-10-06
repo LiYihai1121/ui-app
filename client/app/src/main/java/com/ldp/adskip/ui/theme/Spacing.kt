@@ -47,11 +47,29 @@ object UiSizes {
     /** 列表行图标边长 */
     val listIcon = 40.dp
 
+    /** 空态占位图标边长 */
+    val emptyStateIcon = 48.dp
+
     /** 可点击元素的最小触控目标边长（Material 无障碍基线） */
     val touchTarget = 48.dp
 
+    /** 行内次要图标边长（日志行状态点等） */
+    val inlineIcon = 18.dp
+
     /** 首页状态环直径 */
     val statusOrb = 56.dp
+
+    /** 状态环外层光晕直径 */
+    val orbHalo = 108.dp
+
+    /** 骨架屏列表行的默认高度 */
+    val skeletonRow = 60.dp
+
+    /** 文本占位条的默认高度 */
+    val skeletonLine = 14.dp
+
+    /** 文本占位条的紧凑高度 */
+    val skeletonLineCompact = 10.dp
 
     /** 页面内容最大宽度（宽屏下封顶居中，见 MainActivity） */
     val contentMaxWidth = 640.dp

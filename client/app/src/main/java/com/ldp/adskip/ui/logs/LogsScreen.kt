@@ -41,6 +41,7 @@ import com.ldp.adskip.ui.components.EmptyState
 import com.ldp.adskip.ui.components.PageHeader
 import com.ldp.adskip.ui.components.TwoLineRow
 import com.ldp.adskip.ui.theme.Spacing
+import com.ldp.adskip.ui.theme.UiSizes
 
 /**
  * 跳过日志：最近 200 条自动跳过记录，支持清空与分享。
@@ -101,7 +102,7 @@ fun LogsScreen(messenger: Messenger, viewModel: LogsViewModel = viewModel(factor
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(UiSizes.inlineIcon),
                 )
                 Spacer(Modifier.width(Spacing.sm))
                 Text(stringResource(R.string.logs_clear))
@@ -132,7 +133,7 @@ fun LogsScreen(messenger: Messenger, viewModel: LogsViewModel = viewModel(factor
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Send,
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(UiSizes.inlineIcon),
                 )
                 Spacer(Modifier.width(Spacing.sm))
                 Text(stringResource(R.string.logs_share))

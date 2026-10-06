@@ -33,7 +33,7 @@ import com.ldp.adskip.ui.theme.Spacing
 @Composable
 fun SectionCard(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(20.dp),
+    contentPadding: PaddingValues = PaddingValues(Spacing.lg),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
@@ -73,7 +73,7 @@ fun PageHeader(title: String, modifier: Modifier = Modifier, subtitle: String? =
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = Spacing.md),
+            .padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.lg, bottom = Spacing.md),
     ) {
         Text(text = title, style = MaterialTheme.typography.headlineSmall)
         if (subtitle != null) {

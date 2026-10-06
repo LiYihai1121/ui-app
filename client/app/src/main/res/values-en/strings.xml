@@ -87,7 +87,6 @@
     <string name="settings_dnd">Do Not Disturb</string>
     <string name="settings_dnd_start">Start Time</string>
     <string name="settings_dnd_end">End Time</string>
-    <string name="settings_battery">Battery Optimization</string>
     <string name="settings_battery_allow">Allow Background</string>
     <string name="settings_battery_done">Background allowed</string>
     <string name="settings_url_invalid">URL must start with http:// or https://</string>
