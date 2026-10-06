@@ -23,6 +23,21 @@
     <string name="error_generic_title">Couldn\'t load</string>
     <string name="error_generic_hint">The data didn\'t come through. Try again; if it keeps failing, share the logs.</string>
     <string name="state_loading_announcement">Loading</string>
+
+    <!-- Default rules. English builds must not fall back to the Chinese defaults:
+         「跳过」 is meaningless matching text for an English user. -->
+    <string-array name="default_keywords">
+        <item>skip</item>
+        <item>skip ad</item>
+        <item>skip ads</item>
+        <item>close ad</item>
+        <item>close ads</item>
+        <item>no ads</item>
+    </string-array>
+    <string-array name="default_view_ids">
+        <item>skip</item>
+        <item>jump</item>
+    </string-array>
     <string name="action_undo">Undo</string>
 
     <!-- Keywords -->

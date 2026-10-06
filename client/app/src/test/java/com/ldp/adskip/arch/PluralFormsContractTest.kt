@@ -101,6 +101,48 @@ class PluralFormsContractTest {
         )
     }
 
+    @Test
+    fun `string arrays are localized in every locale`() {
+        val locales = localeDirs()
+        val arrayNames = listOf("default_keywords", "default_view_ids")
+
+        val problems = mutableListOf<String>()
+        locales.forEach { locale ->
+            val text = File(locale, "strings.xml").readText()
+            arrayNames.forEach { name ->
+                if (!Regex("""<string-array\s+name="$name"\s*>""").containsMatchIn(text)) {
+                    problems += "${locale.name}/$name 未声明"
+                }
+            }
+        }
+
+        assertTrue(
+            "以下 string-array 未在每个 locale 声明。缺失时资源系统回落到默认 locale，" +
+                "英文用户会拿到中文关键词（如「跳过」），那是无效的匹配文本：\n" +
+                problems.joinToString("\n") { "  $it" },
+            problems.isEmpty(),
+        )
+
+        // 英文数组不得含 CJK：那是「数组内容没本地化」的直接证据。
+        val en = File(repoRoot(), "client/app/src/main/res/values-en/strings.xml")
+        if (en.isFile) {
+            val enText = en.readText()
+            val cjkInArray = arrayNames.filter { name ->
+                val block = Regex("""<string-array\s+name="$name"\s*>([\s\S]*?)</string-array>""")
+                    .find(enText)
+                    ?.groupValues
+                    ?.get(1)
+                    .orEmpty()
+                Regex("""[\u4e00-\u9fff]""").containsMatchIn(block)
+            }
+            assertTrue(
+                "英文 string-array 里出现了中文字符，说明数组只是把默认值复制过去而没有本地化：\n" +
+                    cjkInArray.joinToString("\n") { "  values-en/$it" },
+                cjkInArray.isEmpty(),
+            )
+        }
+    }
+
     // ---------- 工具 ----------
 
     private fun localeDirs(): List<File> {
