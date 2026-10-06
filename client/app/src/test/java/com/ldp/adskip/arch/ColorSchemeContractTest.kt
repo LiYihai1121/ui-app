@@ -81,6 +81,33 @@ class ColorSchemeContractTest {
         )
     }
 
+    @Test
+    fun `the window theme follows the system dark mode`() {
+        val base = File(repoRoot(), "client/app/src/main/res/values/themes.xml")
+        val night = File(repoRoot(), "client/app/src/main/res/values-night/themes.xml")
+        assertTrue("values/themes.xml 不存在：${base.path}", base.isFile)
+
+        // framework 的 android:Theme.Material 没有 DayNight 变体（那套只在 AppCompat 里），
+        // 所以「跟随系统深色」只能靠资源限定符，不能靠换父主题。契约据此检查两类事实。
+        assertTrue(
+            "缺少 values-night/themes.xml：深色系统下的窗口背景与启动闪屏会沿用浅色主题，" +
+                "而 Compose 只在首帧绘制后才接管——中间那一段就是刺眼的白屏。\n" +
+                "注意 framework 的 android:Theme.Material 没有 DayNight 变体，" +
+                "必须用资源限定符覆盖同名 style。",
+            night.isFile,
+        )
+        assertTrue(
+            "values-night/themes.xml 必须真的覆盖窗口背景（android:windowBackground），" +
+                "否则深色系统下的闪屏仍是浅色：\n  ${night.path}",
+            "android:windowBackground" in night.readText(),
+        )
+        assertTrue(
+            "状态栏颜色不得写死品牌蓝字面量，否则深色系统下仍是那块亮蓝；应走透明，" +
+                "让已 enableEdgeToEdge 的内容自己延伸：\n  ${base.path}",
+            "#1565C0" !in base.readText(),
+        )
+    }
+
     // ---------- 工具 ----------
 
     private fun mainSources(): List<File> = File(

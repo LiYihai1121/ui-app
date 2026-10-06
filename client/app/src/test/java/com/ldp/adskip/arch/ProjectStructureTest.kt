@@ -1,4 +1,4 @@
-﻿package com.ldp.adskip.arch
+package com.ldp.adskip.arch
 
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -397,14 +397,26 @@ class ProjectStructureTest {
     fun `profile strings are declared in every locale`() {
         val required = listOf("nav_profile", "profile_title", "profile_version_label")
         val resRoot = File(repoRoot(), "client/app/src/main/res")
+        // 只检查**声明了 strings.xml 的资源目录**（真正的 locale），并在断言里写明数量下限，
+        // 避免「过滤太狠导致一个都没查」时静默通过。
+        //
+        // 为什么不能要求每个 values*/ 都有 strings.xml：`values-night/` 这类是**资源限定符**
+        // 目录（只覆盖窗口主题的窗口级颜色），它不声明字符串，靠资源系统从 values/ 回退。
+        // 早期的写法把限定符目录当成 locale，于是新增 values-night/ 会让这条测试变红——
+        // 那不是「文案缺失」，是把两种目录的语义混为一谈。
         val locales = resRoot.listFiles()
             ?.filter { it.isDirectory && it.name.startsWith("values") }
+            ?.filter { File(it, "strings.xml").isFile }
             ?.map { it.name }
             .orEmpty()
 
+        assertTrue(
+            "未找到任何声明了 strings.xml 的 values*/ 目录，本用例会退化为恒真：${resRoot.path}",
+            locales.isNotEmpty(),
+        )
+
         locales.forEach { locale ->
             val xml = File(File(resRoot, locale), "strings.xml")
-            assertTrue("缺少 ${xml.path}", xml.isFile)
             val text = xml.readText()
             val missing = required.filter { !text.contains("name=\"$it\"") }
             assertTrue(
@@ -419,11 +431,15 @@ class ProjectStructureTest {
     @Test
     fun `product brand is declared consistently across every locale`() {
         val resRoot = File(repoRoot(), "client/app/src/main/res")
+        // 与上一条同理：只查声明了 strings.xml 的资源目录。
+        // `values-night/` 这类**资源限定符**目录不声明字符串，靠资源系统从 values/ 回退，
+        // 把它当 locale 会误报「缺少品牌文案」。
         val locales = resRoot.listFiles()
             ?.filter { it.isDirectory && it.name.startsWith("values") }
+            ?.filter { File(it, "strings.xml").isFile }
             ?.map { it.name }
             .orEmpty()
-        assertTrue("未找到任何 values*/ 资源目录，无法校验产品品牌", locales.isNotEmpty())
+        assertTrue("未找到任何声明了 strings.xml 的 values*/ 资源目录，无法校验产品品牌", locales.isNotEmpty())
 
         // 用户可见的品牌位：桌面名、无障碍服务名、快捷磁贴名。
         // 三者都会出现在系统设置界面里，漏改任意一项就会出现「同一个应用两个名字」。
@@ -434,7 +450,6 @@ class ProjectStructureTest {
         val problems = mutableListOf<String>()
         locales.forEach { locale ->
             val xml = File(File(resRoot, locale), "strings.xml")
-            assertTrue("缺少 ${xml.path}", xml.isFile)
             val text = xml.readText()
 
             brandKeys.forEach { key ->
