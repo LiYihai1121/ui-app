@@ -10,6 +10,7 @@ import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.AppContainer
 import com.ldp.adskip.R
 import com.ldp.adskip.core.AppEvents
+import com.ldp.adskip.device.AccessibilityStatus
 import com.ldp.adskip.ui.UiEffect
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -29,7 +30,7 @@ import kotlinx.coroutines.launch
 class HomeViewModel(private val container: AppContainer) : ViewModel() {
 
     data class UiState(
-        val serviceRunning: Boolean = false,
+        val accessibilityStatus: AccessibilityStatus = AccessibilityStatus.UNKNOWN,
         val totalSkips: Int = 0,
         val lastApp: String = "",
         val keywords: List<String> = emptyList(),
@@ -37,6 +38,9 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         val countdown: Int = FAKE_AD_SECONDS,
     ) {
         val testActive: Boolean get() = fakeAdVisible
+
+        /** 服务已确认开启。UNKNOWN 不算开启，避免拿不确定的状态去承诺功能可用。 */
+        val serviceRunning: Boolean get() = accessibilityStatus == AccessibilityStatus.ON
     }
 
     private val _uiState = MutableStateFlow(UiState())
@@ -54,8 +58,15 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         refreshAll()
 
         viewModelScope.launch {
+            // 进程信号只作实时提示：用户在系统设置里关掉服务时，回调可能迟迟不到，
+            // 因此回屏时会用系统真值覆盖（见 refreshAccessibilityStatus）。
             AppEvents.serviceRunning.collect { running ->
-                _uiState.value = _uiState.value.copy(serviceRunning = running)
+                _uiState.value = _uiState.value.copy(
+                    accessibilityStatus = AccessibilityStatus.decide(
+                        systemEnabled = null,
+                        processSignal = running,
+                    ),
+                )
             }
         }
         viewModelScope.launch {
@@ -114,7 +125,10 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
 
     /** 模拟一个带「跳过」按钮的开屏广告，验证无障碍链路。 */
     fun startFakeAdTest() {
-        if (!AppEvents.serviceRunningSnapshot) {
+        // 用有效状态而不是进程信号：服务已被用户在系统里关掉、但回调未到时，
+        // 进程信号仍为 true，会让用户以为链路可用，实际点了没反应。
+        refreshAccessibilityStatus()
+        if (!_uiState.value.serviceRunning) {
             send(R.string.test_need_service)
             return
         }
@@ -146,9 +160,32 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         _uiState.value = _uiState.value.copy(fakeAdVisible = false)
     }
 
+    /**
+     * 回屏时重查无障碍状态。
+     *
+     * 必须走系统真值：用户去系统设置里改开关后返回，Service 的 `onDestroy` 可能还没回调，
+     * 只订阅进程信号会把过期的「运行中」一直显示下去——而快捷磁贴读的是系统真值，
+     * 于是同一台设备出现两个说法。由 Screen 在进入本页时调用。
+     */
+    fun onScreenResumed() {
+        refreshAccessibilityStatus()
+        refreshStats()
+    }
+
     private fun refreshAll() {
+        refreshAccessibilityStatus()
         refreshStats()
         refreshKeywords()
+    }
+
+    private fun refreshAccessibilityStatus() {
+        _uiState.value = _uiState.value.copy(
+            accessibilityStatus = AccessibilityStatus.detect(
+                context = container.app,
+                serviceClassName = AccessibilityStatus.SKIP_AD_SERVICE_CLASS_NAME,
+                processSignal = AppEvents.serviceRunningSnapshot,
+            ),
+        )
     }
 
     private fun refreshStats() {

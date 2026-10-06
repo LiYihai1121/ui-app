@@ -16,7 +16,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +23,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
@@ -58,9 +59,13 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    // 从其他页切回时统计可能已变化（用户在别的页不会产生跳过，但服务状态会），
-    // 进屏重读一次以保证与首页口径一致。
-    LaunchedEffect(Unit) { viewModel.refreshStats() }
+    // 每次回到前台都重读：统计可能已变化，且用户可能刚跳去系统无障碍设置改了开关。
+    // 用 ON_RESUME 而非 LaunchedEffect(Unit)——后者只在首次进入组合时跑一次，
+    // 从系统设置返回时 Activity 并未重建，过期状态会被一直显示下去。
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshAccessibilityStatus()
+        viewModel.refreshStats()
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         PageHeader(

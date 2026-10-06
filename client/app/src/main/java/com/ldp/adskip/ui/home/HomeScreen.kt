@@ -56,6 +56,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
@@ -100,6 +102,14 @@ fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factor
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lastAppLabel = rememberAppLabel(state.lastApp)
+
+    // 每次回到前台都重查无障碍状态：用户从本页跳去系统设置改完开关再返回时，
+    // Activity 并未重建（LaunchedEffect(Unit) 不会重跑），而 Service 的 onDestroy
+    // 回调可能还没到——只靠进程信号会把过期的「运行中」一直显示下去，
+    // 与读系统真值的快捷磁贴说法不一致。
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.onScreenResumed()
+    }
 
     LaunchedEffect(messenger) {
         viewModel.effects.collect { effect ->

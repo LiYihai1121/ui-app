@@ -1,10 +1,8 @@
 package com.ldp.adskip.service
 
 import android.accessibilityservice.AccessibilityService
-import android.accessibilityservice.AccessibilityServiceInfo
 import android.accessibilityservice.GestureDescription
 import android.content.BroadcastReceiver
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -12,7 +10,6 @@ import android.graphics.Path
 import android.graphics.Rect
 import android.os.Build
 import android.view.accessibility.AccessibilityEvent
-import android.view.accessibility.AccessibilityManager
 import android.widget.Toast
 import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.R
@@ -22,6 +19,7 @@ import com.ldp.adskip.core.LogRing
 import com.ldp.adskip.data.Prefs
 import com.ldp.adskip.data.RulesRepository
 import com.ldp.adskip.data.StatsRepository
+import com.ldp.adskip.device.AccessibilityStatus
 import com.ldp.adskip.engine.SafetyGuard
 import com.ldp.adskip.engine.SkipRuleEngine
 import com.ldp.adskip.net.SyncClient
@@ -62,25 +60,15 @@ class SkipAdService : AccessibilityService() {
         /**
          * 无障碍服务在系统设置中是否已启用。
          *
-         * 供 `device/` 层的快捷磁贴读取**真实状态**：磁贴可能在应用进程刚被拉起、
-         * Service 尚未连接时就被点击，此时 [running] 仍是 `false`，
-         * 只有系统「已启用的无障碍服务」列表才权威。查询异常时回退到进程内运行态。
+         * 委托给 [AccessibilityStatus]：那里是全仓**唯一**查询系统已启用列表的地方
+         * （依赖边界使然——`ui/` 不能 import `service/`，而 `device/` 可被双方使用）。
+         * 本方法保留为 `service/` 层对内的便捷入口。
          */
-        fun isEnabled(context: Context): Boolean {
-            val manager = context.getSystemService(AccessibilityManager::class.java)
-                ?: return running
-            val self = ComponentName(context.packageName, SkipAdService::class.java.name)
-            return try {
-                manager.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-                    .any { info ->
-                        val serviceInfo = info.resolveInfo?.serviceInfo ?: return@any false
-                        ComponentName(serviceInfo.packageName, serviceInfo.name) == self
-                    }
-            } catch (e: Exception) {
-                LogRing.w("Service", "isEnabled query failed: ${e.message}")
-                running
-            }
-        }
+        fun isEnabled(context: Context): Boolean = AccessibilityStatus.detect(
+            context = context,
+            serviceClassName = SkipAdService::class.java.name,
+            processSignal = running,
+        ) == AccessibilityStatus.ON
 
         /**
          * 请求关闭当前运行中的服务（由快捷磁贴下发），内部走 `disableSelf()`——
