@@ -119,11 +119,18 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
             contentPadding = PaddingValues(start = Spacing.lg, end = Spacing.lg, bottom = Spacing.xl),
             verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         ) {
-            item { UsageCard(state = state) }
-            // 设置（云端规则 / 免打扰 / 保活 / 磁贴）排在「关于」之前：
-            // 它是用户会反复回来调整的高频项，而版本号、设备型号这类「关于」信息
-            // 基本只会在遇到问题时才看。原来的顺序把高频项压在最长的滚动条末尾。
-            item { SettingsContent(messenger) }
+            /*
+             * 「我的」页承载四类互不相干的内容，顺序按**用户来访目的**排：
+             *
+             * 1. 权限与系统开关 —— 最高优先。它回答「这个应用到底工作了吗」，
+             *    是唯一会阻塞全部功能的内容；权限没配好，下面三项都没有意义。
+             * 2. 使用概览 —— 「它替我跳过了多少」，功能生效的正反馈。
+             * 3. 设置 —— 用户会反复回来调整的高频项（云端规则 / 免打扰）。
+             * 4. 关于 —— 版本号、设备型号，基本只在遇到问题时才看，放最后。
+             *
+             * 此前的顺序把权限卡排在设置之后：一个「还没配好」的权限清单被压在两屏
+             * 之外，而设置项在功能未生效时几乎都是无效配置。
+             */
             item {
                 PermissionCard(
                     items = state.permissionItems,
@@ -131,6 +138,8 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
                     onOpen = { key -> onOpenPermission(key) },
                 )
             }
+            item { UsageCard(state = state) }
+            item { SettingsContent(messenger) }
             item {
                 AccessibilityCard(
                     running = state.serviceRunning,
