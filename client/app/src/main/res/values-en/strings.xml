@@ -187,4 +187,11 @@
         <item quantity="other">Skipped %1$d times</item>
     </plurals>
     <string name="stats_recent_short">Last: %1$s</string>
+
+    <!-- Node snapshot tool (debug) -->
+    <string name="settings_snapshot_section">Debug tools</string>
+    <string name="settings_snapshot_export">Export screen snapshot (debug)</string>
+    <string name="settings_snapshot_hint">Exports the current screen\'s accessibility node tree as JSON, for writing and validating selector rules. Current screen only; never uploaded.</string>
+    <string name="settings_snapshot_empty">Accessibility service is not running; cannot capture the current screen</string>
+    <string name="settings_snapshot_exported">Snapshot exported; save it from the share sheet</string>
 </resources>

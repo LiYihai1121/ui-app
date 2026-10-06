@@ -43,6 +43,7 @@ class SkipAdService : AccessibilityService() {
         const val ACTION_SERVICE_STATE = "com.ldp.adskip.SERVICE_STATE"
         const val ACTION_SKIPPED = "com.ldp.adskip.SKIPPED"
         const val ACTION_REQUEST_SHUTDOWN = "com.ldp.adskip.REQUEST_SHUTDOWN"
+        const val ACTION_EXPORT_SNAPSHOT = "com.ldp.adskip.EXPORT_SNAPSHOT"
         const val EXTRA_RUNNING = "running"
         const val EXTRA_PKG = "pkg"
 
@@ -110,7 +111,17 @@ class SkipAdService : AccessibilityService() {
         }
     }
 
+    private val snapshotReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != ACTION_EXPORT_SNAPSHOT) return
+            if (context == null) return
+            LogRing.d("Service", "snapshot export requested")
+            exportSnapshot(context)
+        }
+    }
+
     private var shutdownReceiverRegistered = false
+    private var snapshotReceiverRegistered = false
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -122,6 +133,7 @@ class SkipAdService : AccessibilityService() {
         running = true
         AppEvents.setServiceRunning(true)
         registerShutdownReceiver()
+        registerSnapshotReceiver()
         sendBroadcast(Intent(ACTION_SERVICE_STATE).setPackage(packageName).putExtra(EXTRA_RUNNING, true))
         LogRing.d("Service", "onServiceConnected")
     }
@@ -130,6 +142,7 @@ class SkipAdService : AccessibilityService() {
         running = false
         AppEvents.setServiceRunning(false)
         unregisterShutdownReceiver()
+        unregisterSnapshotReceiver()
         sendBroadcast(Intent(ACTION_SERVICE_STATE).setPackage(packageName).putExtra(EXTRA_RUNNING, false))
         // 强制落盘待写统计
         if (::statsRepo.isInitialized) statsRepo.flush()
@@ -160,6 +173,56 @@ class SkipAdService : AccessibilityService() {
         } catch (e: IllegalArgumentException) {
             // 已注销，忽略
         }
+    }
+
+    private fun registerSnapshotReceiver() {
+        if (snapshotReceiverRegistered) return
+        val filter = IntentFilter(ACTION_EXPORT_SNAPSHOT)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(snapshotReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                @Suppress("DEPRECATION")
+                registerReceiver(snapshotReceiver, filter)
+            }
+            snapshotReceiverRegistered = true
+        } catch (e: Exception) {
+            LogRing.w("Service", "register snapshot receiver failed: ${e.message}")
+        }
+    }
+
+    private fun unregisterSnapshotReceiver() {
+        if (!snapshotReceiverRegistered) return
+        snapshotReceiverRegistered = false
+        try {
+            unregisterReceiver(snapshotReceiver)
+        } catch (e: IllegalArgumentException) {
+            // 已注销，忽略
+        }
+    }
+
+    private fun exportSnapshot(context: Context) {
+        val root = rootInActiveWindow ?: run {
+            LogRing.w("Service", "snapshot export: no active window")
+            Toast.makeText(context, R.string.settings_snapshot_empty, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val pkg = root.packageName?.toString() ?: context.packageName
+        val activity = root.className?.toString() ?: "Unknown"
+        val snapshot = NodeSnapshot.capture(root, pkg, activity)
+        val text = snapshot.toShareText()
+
+        context.startActivity(
+            Intent.createChooser(
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "application/json"
+                    putExtra(Intent.EXTRA_SUBJECT, "AdSkip NodeSnapshot $pkg")
+                    putExtra(Intent.EXTRA_TEXT, text)
+                },
+                context.getString(R.string.logs_share),
+            ),
+        )
+        Toast.makeText(context, R.string.settings_snapshot_exported, Toast.LENGTH_SHORT).show()
     }
 
     override fun onInterrupt() {

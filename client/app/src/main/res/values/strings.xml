@@ -179,4 +179,11 @@
         <item quantity="other">累计跳过 %1$d 次</item>
     </plurals>
     <string name="stats_recent_short">最近：%1$s</string>
+
+    <!-- 节点快照工具（调试用） -->
+    <string name="settings_snapshot_section">调试工具</string>
+    <string name="settings_snapshot_export">导出界面快照（调试）</string>
+    <string name="settings_snapshot_hint">将当前屏幕的无障碍节点树导出为 JSON，用于编写和验证选择器规则。仅当前屏幕，不上传。</string>
+    <string name="settings_snapshot_empty">无障碍服务未运行，无法获取当前界面</string>
+    <string name="settings_snapshot_exported">快照已导出，请通过分享菜单保存</string>
 </resources>

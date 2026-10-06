@@ -1,5 +1,6 @@
 package com.ldp.adskip.ui.settings
 
+import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -10,6 +11,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.AppContainer
 import com.ldp.adskip.R
+import com.ldp.adskip.core.AppEvents
 import com.ldp.adskip.device.BatteryExemption
 import com.ldp.adskip.device.KeepAliveNavigator
 import com.ldp.adskip.device.LanguageMode
@@ -205,6 +207,18 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
     /** 查询电池优化豁免；失败时交由 [BatteryExemption] 落成 UNKNOWN，不冒充「未豁免」。 */
     private fun queryBatteryExemption(): BatteryExemption = BatteryExemption.detect(container.app)
+
+    fun exportNodeSnapshot() {
+        if (!AppEvents.serviceRunningSnapshot) {
+            send(container.app.getString(R.string.settings_snapshot_empty))
+            return
+        }
+        val context = container.app
+        // ui/ 层禁止 import service/（ArchitectureBoundaryTest）：action 用字面量，
+        // 与 SkipAdService.ACTION_EXPORT_SNAPSHOT 的一致性由 ServiceIntentContractTest 守护。
+        val intent = Intent("com.ldp.adskip.EXPORT_SNAPSHOT").setPackage(context.packageName)
+        context.sendBroadcast(intent)
+    }
 
     private fun send(message: String) {
         viewModelScope.launch { _effects.emit(UiEffect.ShowMessage(message)) }

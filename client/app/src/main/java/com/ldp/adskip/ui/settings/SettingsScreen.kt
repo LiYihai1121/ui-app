@@ -256,6 +256,23 @@ fun SettingsContent(
                 Text(stringResource(R.string.settings_tile_add))
             }
         }
+
+        SectionCard {
+            SectionTitle(stringResource(R.string.settings_snapshot_section))
+            Spacer(Modifier.height(Spacing.sm))
+            Text(
+                text = stringResource(R.string.settings_snapshot_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(Spacing.md))
+            FilledTonalButton(
+                onClick = viewModel::exportNodeSnapshot,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.settings_snapshot_export))
+            }
+        }
     }
 
     if (pickingStart) {
