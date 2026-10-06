@@ -21,7 +21,8 @@ import androidx.compose.ui.unit.dp
 /**
  * 应用主题。
  *
- * - [dynamicColor] 默认开启：Android 12+（API 31）跟随系统取色，低于该版本回退到品牌色板；
+ * - [dynamicColor] 默认关闭（见下方 [AdskipTheme] 的取值与理由）：品牌敏感产品优先保配色一致，
+ *   低于 Android 12 时本就没有动态取色能力，两种情况下都回退到品牌色板；
  * - 状态语义色（服务开 / 关）不参与动态取色——它们承载的是「是否生效」这一安全语义，
  *   必须保持稳定可辨，故通过 [LocalStatusPalette] 单独注入。
  */
@@ -49,6 +50,11 @@ private val LightColors = lightColorScheme(
     onSurface = LightOnSurface,
     surfaceVariant = LightSurfaceVariant,
     onSurfaceVariant = LightOnSurfaceVariant,
+    surfaceContainerLowest = LightSurfaceContainerLowest,
+    surfaceContainerLow = LightSurfaceContainerLow,
+    surfaceContainer = LightSurfaceContainer,
+    surfaceContainerHigh = LightSurfaceContainerHigh,
+    surfaceContainerHighest = LightSurfaceContainerHighest,
     outline = LightOutline,
     outlineVariant = LightOutlineVariant,
 )
@@ -76,6 +82,11 @@ private val DarkColors = darkColorScheme(
     onSurface = DarkOnSurface,
     surfaceVariant = DarkSurfaceVariant,
     onSurfaceVariant = DarkOnSurfaceVariant,
+    surfaceContainerLowest = DarkSurfaceContainerLowest,
+    surfaceContainerLow = DarkSurfaceContainerLow,
+    surfaceContainer = DarkSurfaceContainer,
+    surfaceContainerHigh = DarkSurfaceContainerHigh,
+    surfaceContainerHighest = DarkSurfaceContainerHighest,
     outline = DarkOutline,
     outlineVariant = DarkOutlineVariant,
 )
