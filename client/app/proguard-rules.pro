@@ -10,3 +10,7 @@
 
 # 数据模型
 -keep class com.ldp.adskip.data.** { *; }
+
+# security-crypto (Tink) 仅编译期引用的注解不在运行时 classpath，R8 压缩时显式忽略缺失类
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn javax.annotation.**
