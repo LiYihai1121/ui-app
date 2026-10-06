@@ -22,7 +22,7 @@
 
 本轮是「UI 重新设计与权限体系重构」，贯穿三条原则：**权限与系统开关一律三态**（无法确认 ≠ 未开启）、**同一事实只有一份真值源**、**能机器检查的约定都写成门禁**。
 
-### Added
+### Added (3.2.0)
 
 - **节点快照工具（设置 → 调试工具）**：一键把当前屏幕的无障碍节点树导出为 JSON 并通过系统分享面板保存，选择器规则的编写与验证不再靠猜。要点：
   - **体积上限**：`NodeSnapshot.toShareText()` 用二分查找定位可写入的安全前缀，保证分享文本总字节数 ≤ 96 KB（`Intent.EXTRA_TEXT` 的实际安全上限，避免分享面板卡死或系统截断），超出部分丢弃并以 `truncated=true` 标记——超大节点树仍可导出完整结构概要。
@@ -39,7 +39,7 @@
 - **可复用组件**：`StatusDot`（状态点，颜色 + 形状双重编码，色盲用户可辨）、`Modifier.screenContentWidth()`（大屏内容封顶，此前硬编码在 MainActivity）。
 - **`device/AccessibilityStatus` / `device/BatteryExemption`**：把「系统真值 / 进程信号 / 查询失败」收敛为 `ON`/`OFF`/`UNKNOWN` 三态，判定逻辑是纯函数，可 JVM 单测穷举。
 
-### Changed
+### Changed (3.2.0)
 
 - **「我的」页按来访目的重排**：权限清单提到首位（唯一会阻塞全部功能的内容），其后依次为使用概览、设置、无障碍入口与关于。此前权限清单被压在设置之后，而权限没配好时设置项几乎都是无效配置。
 - **首页补页面标题**：此前是四个一级页面里唯一没有标题的，用户切过去后没有任何位置锚点。
@@ -48,7 +48,7 @@
 - **配色补全**：`Theme.kt` 补上一直走 M3 默认值的 `surfaceContainer` / `surfaceContainerLow` / `surfaceContainerHighest`（默认值是紫调中性色，与品牌蓝不同色相，卡片底色一直与应用配色脱节）。
 - **深色窗口主题**：新增 `values-night/themes.xml`，深色系统下窗口背景与启动闪屏不再沿用浅色主题（Compose 只在首帧绘制后接管，此前中间那段是刺眼白屏）；状态栏由写死品牌蓝改为透明。
 
-### Fixed
+### Fixed (3.2.0)
 
 - **权限清单行按钮文案过长导致标题不可读**：行内按钮复用了「打开自启动 / 后台管理」（英文 `Open Auto-start / Background Manager`），在 1080px 屏上约占 850px；而该行给标题列 `weight(1f)`，剩余空间被压到约 210px，三字标题只能显示一个字符加省略号（实测 `B...` / `A...` / `Q...`）。现改用专用短文案（`permission_open` = 去设置 / Open）。**此缺陷由模拟器目视验证发现，编译与全部契约测试均未能拦住。**
 - **英文单复数错误**：四条计数文案（`apps_count` / `logs_subtitle` / `stats_total_short` / `fake_ad_countdown`）此前是普通 `<string>`，英文下会产出 `Skipped 1 times`、`1 records`、`Auto-close in 1 seconds` 这类语法错误。现改为 `<plurals>`（中文只需 `other`，英文补 `one`/`other`），四个读取点同步改用 `pluralStringResource`。
@@ -61,7 +61,7 @@
 - **无障碍播报缺陷**：底部导航图标与同行文字重复播报 tab 名；状态环与相邻文字重复播报服务状态；骨架屏对读屏是空白；全屏测试浮层未做语义隔离（被遮住的控件仍可被 TalkBack 聚焦激活）；关键词 chip 点本体即删除但删除语义只挂在尾部图标上。
 - **`UiContractTest` 两条守护自上线起从未生效**：间距检查的正则匹配的是 Kotlin 里不存在的 `20dp` 写法，对真实写法 `20.dp` 永不命中（22 处标度外取值长期潜伏）；文案检查用裸子串匹配，死文案 `settings_battery` 被 `settings_battery_allow` 命中而逃检。修复后暴露的违规已全部落到设计令牌。
 
-### Tests
+### Tests (3.2.0)
 
 - 新增契约测试：`PermissionCenterTest`、`AccessibilityStatusTest` / `AccessibilityStatusContractTest`、`BatteryExemptionTest` / `BatteryExemptionContractTest`、`ColorSchemeContractTest`、`ScreenHeaderContractTest`、`VendorDetectionContractTest`、`UiStateContractTest`、`PluralFormsContractTest`、`LanguageSelectionContractTest` / `LanguageModeTest`。
 - 契约文件由 4 个增至 11 个；`testDebugUnitTest` 由 189 个用例增至 231 个。
@@ -77,7 +77,7 @@
 > **发布验收覆盖声明（重要）**：按 CONTRIBUTING.md「发布验收」，触及无障碍服务、快捷磁贴、厂商跳转、后台调度、系统权限的变更**必须完成真机验收后才能发正式版**。本次发布的真机矩阵（Android 8/13/14/15 × MIUI/HarmonyOS/ColorOS/OriginOS）**尚未完成**，已知验证仅覆盖模拟器（Android 15 / API 35）。本次由维护者显式决定覆盖该规则先行发布正式版。
 > 已知风险：磁贴与厂商保活路径在真实 ROM 上的行为可能与模拟器不同；如出现问题，按 CONTRIBUTING「紧急变更与回滚」走 hotfix/*（制品回滚或 git revert）。
 
-### Added
+### Added (3.1.0)
 
 - **更名：净启动 AdSkip → 轻启**（仅用户可见名称；`applicationId` 仍为 `com.ldp.adskip`，可覆盖升级，无需卸载）：
   - 桌面名称 `app_name`、无障碍服务名 `service_name`、快捷磁贴名 `tile_label` 三方同步改为「轻启」——这三处分别显示在桌面、系统无障碍列表和快捷设置里，只改其中一处就会出现「同一个应用两个名字」；
@@ -86,8 +86,10 @@
   - 包名、`Theme.AdSkip`、`rootProject.name`、服务端英文标识与文档中的历史命名**刻意保持不变**：它们不面向用户，改动会破坏升级链与发布脚本追溯。
 
 - **静态检查门禁 ktlint**：新增仓库根 `.editorconfig` 作为「代码长什么样」的机器可读事实源（charset/行尾/缩进/行宽 + ktlint 规则集），并接入 `ktlintCheck` 任务——CI 的 `Android Build & Test` job 与发布流水线均已纳入，AGENTS.md、PR 模板、ARCHITECTURE、ROADMAP-ADS、DEV-ENVIRONMENT 的门禁清单同步更新。此前客户端**没有任何格式或静态检查工具**，`ArchitectureBoundaryTest` 只管 import 边界，不管单文件内的写法一致性。启用即修掉存量违规：6 处 `import org.junit.Assert.*` 通配导入改为显式导入，`Color.kt` 与 `Feedback.kt` 的文件级说明由悬空 KDoc 改为块注释。
+- **「我的」用户页**：底部导航新增一级入口（本页），展示本机使用概览（累计跳过 / 已跳过应用数 / 服务状态）与应用、设备信息（应用版本、系统版本、设备型号、ROM 厂商），并明示「跳过记录与统计均只保存在本机」。实现遵循既有单向下行数据流：`ui/profile/ProfileScreen` + `ProfileViewModel`（StateFlow 驱动），统计经 `StatsRepository`、版本经 `SettingsRepository` 读取，UI 不自行查 `PackageManager`（遵守 ARCHITECTURE.md 2.1 边界）。
+- **导航契约守护测试**：`ProjectStructureTest` 新增断言，把「一级路由恰为 4 项且不再声明 `SETTINGS`」「「我的」页必须内嵌 `SettingsContent()` 与无障碍入口、且跳转须经 `device/` 层」「新增页面必须在每个 locale 声明文案」升级为 CI 可执行规则。此规则源于本仓库的真实缺陷——`Routes.SETTINGS` 与 `SettingsScreen` 曾早已存在却无任何入口，用户进不去保活与磁贴设置；本次重构反过来又可能把「设置删了却忘了接回」写成新缺陷，故一并守护。
 
-### Changed
+### Changed (3.1.0)
 
 - **启动器图标与快捷磁贴图标重设计**：原图标是通用的「快进」符号（两个三角加一根竖条），与任意播放器/音乐类应用撞脸，在 48dp 下细节已糊成一条白杠。现改为**实心圆盘 + 负空间「跳过」箭头**——箭头从圆盘中穿出的形态直指「开屏广告被跳过」，负空间在小尺寸下对比度最高，磁贴 24dp 与主题图标下同样可辨。
   - 背景层由纯色改为品牌蓝对角渐变（#1E88E5 → #0D47A1，夹住 M3 主色 #1565C0），删除不再被引用的 `ic_launcher_background` 颜色资源；
@@ -105,15 +107,13 @@
   - 统计由两张 `headlineMedium` 大数字卡降为**一行摘要**（`累计跳过 N 次 · 最近 X`）——统计的作用是佐证服务在干活，不是用户的主要目标；「最近应用」为空时整段不显示，空占位会让用户误以为数据丢了。
 - **设置并入「我的」页，底部导航收敛为四项**：原独立的「设置」一级页签已移除，云端规则、免打扰时段、系统保活与快捷磁贴等内容整体内嵌进「我的」页。理由是设置与「关于本机」属同一心智模型，分成两页会让用户为改一个免打扰时段而去第三个页签。底部导航现为 首页 / 应用管理 / 跳过日志 / 我的 四项。实现上 `SettingsScreen` 改造为 `SettingsContent`——**去掉自带标题与滚动容器**，避免在「我的」页里嵌一个自带标题的滚动列（标题重复 + 滚动冲突）；全部既有 ViewModel 与逻辑原样复用，不做复制。
 - **「打开无障碍」入口移入「我的」页**：新增「无障碍服务」卡片与「打开无障碍设置」按钮。首页状态环的主按钮保留（服务未开启时的首屏行动不变），「我的」页作为第二入口，覆盖服务被系统强杀后用户直接翻到末页找设置的路径。跳转仍统一经 `KeepAliveNavigator`，UI 不自行拼 `Intent`。
+- **完整视觉重设计**：新增 `ui/theme`（Material You 动态取色、完整深色色板、自定义字阶与圆角）与 `ui/components`（`SectionCard` / `PageHeader` / `StatTile` / `StatusOrb`）两层。
+- 首页改为「自绘状态环 + 结论式文案 + 主行动按钮」主视觉；关键词由整行 `Text` 改为 `InputChip` 平铺，删除命中区域从数个字符扩大到 48dp。
+- 四个页面统一由底部 `NavigationBar` 承载一级导航，不再各自重复 `Scaffold` + `TopAppBar`。
+- 关闭 Android 10+ 三键导航栏的对比度强制，消除边到边下底部突兀白带。
+- 底部导航栏**刻意不使用** `material-icons-extended`：实测令 `assembleDebug` 的 dex 合并多耗数分钟、debug APK 增大约 7 MB，对以 `assembleDebug` 为 CI 门禁的轻量工程不划算，改用 core 图标集。
 
-
-### Added
-
-- **「我的」用户页**：底部导航新增一级入口（本页），展示本机使用概览（累计跳过 / 已跳过应用数 / 服务状态）与应用、设备信息（应用版本、系统版本、设备型号、ROM 厂商），并明示「跳过记录与统计均只保存在本机」。实现遵循既有单向下行数据流：`ui/profile/ProfileScreen` + `ProfileViewModel`（StateFlow 驱动），统计经 `StatsRepository`、版本经 `SettingsRepository` 读取，UI 不自行查 `PackageManager`（遵守 ARCHITECTURE.md 2.1 边界）。
-- **导航契约守护测试**：`ProjectStructureTest` 新增断言，把「一级路由恰为 4 项且不再声明 `SETTINGS`」「「我的」页必须内嵌 `SettingsContent()` 与无障碍入口、且跳转须经 `device/` 层」「新增页面必须在每个 locale 声明文案」升级为 CI 可执行规则。此规则源于本仓库的真实缺陷——`Routes.SETTINGS` 与 `SettingsScreen` 曾早已存在却无任何入口，用户进不去保活与磁贴设置；本次重构反过来又可能把「设置删了却忘了接回」写成新缺陷，故一并守护。
-
-
-### Fixed
+### Fixed (3.1.0)
 
 - **首页边到边缺陷**：`targetSdk = 35` 在 Android 15 起强制边到边，而四个页面中只有 `HomeScreen` 没有 `Scaffold`，标题会压在状态栏时钟上（已在 Android 15 / API 35 模拟器复现）。inset 改由外壳统一分发，页面只消费 `innerPadding`。
 - **软键盘遮挡**：首页关键词输入框、设置页服务器地址输入框在键盘弹出后被完全遮住（实测）。两页补 `imePadding()`。
@@ -121,14 +121,6 @@
 - **统计区直显包名**：改为经 PackageManager 解析应用显示名，查不到时回退包名；同时修复长文本被硬截断（无省略号）的问题。
 - **时间选择器硬编码 `OK` / `Cancel`**，未走 `strings.xml`。
 - 清除 `ui/` 下 10 个源文件的 UTF-8 BOM（仓库规则要求外部工具文件 UTF-8 无 BOM）。
-
-### Changed
-
-- **完整视觉重设计**：新增 `ui/theme`（Material You 动态取色、完整深色色板、自定义字阶与圆角）与 `ui/components`（`SectionCard` / `PageHeader` / `StatTile` / `StatusOrb`）两层。
-- 首页改为「自绘状态环 + 结论式文案 + 主行动按钮」主视觉；关键词由整行 `Text` 改为 `InputChip` 平铺，删除命中区域从数个字符扩大到 48dp。
-- 四个页面统一由底部 `NavigationBar` 承载一级导航，不再各自重复 `Scaffold` + `TopAppBar`。
-- 关闭 Android 10+ 三键导航栏的对比度强制，消除边到边下底部突兀白带。
-- 底部导航栏**刻意不使用** `material-icons-extended`：实测令 `assembleDebug` 的 dex 合并多耗数分钟、debug APK 增大约 7 MB，对以 `assembleDebug` 为 CI 门禁的轻量工程不划算，改用 core 图标集。
 
 ## [3.1.0-rc.1] - 2026-09-28
 
