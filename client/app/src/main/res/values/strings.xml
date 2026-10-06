@@ -21,6 +21,7 @@
     <string name="btn_retry">重试</string>
     <string name="error_generic_title">加载失败</string>
     <string name="error_generic_hint">数据没能读出来，可重试一次；若反复失败请反馈日志。</string>
+    <string name="state_loading_announcement">正在加载</string>
     <string name="action_undo">撤销</string>
 
     <!-- 关键词 -->

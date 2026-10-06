@@ -130,6 +130,31 @@ class UiStateContractTest {
         )
     }
 
+    @Test
+    fun `accessible names are not announced twice`() {
+        val main = File(appRoot(), "src/main/java/com/ldp/adskip/ui/MainActivity.kt")
+        assertTrue("MainActivity 不存在：${main.path}", main.isFile)
+        val mainText = main.readText()
+        val navStart = mainText.indexOf("NavigationBarItem(")
+        assertTrue("未找到 NavigationBarItem(，契约失效：${main.path}", navStart >= 0)
+        val navBody = mainText.substring(navStart)
+
+        assertTrue(
+            "底部导航的图标不得再挂与 label 相同的 contentDescription：下方 label 已渲染同一文案，" +
+                "两边都挂会让读屏把每个 tab 名念两遍。图标应为 contentDescription = null：\n" +
+                "  ${main.path} 的 NavigationBarItem 内出现了 contentDescription = stringResource",
+            "contentDescription = stringResource" !in navBody,
+        )
+
+        val orb = File(appRoot(), "src/main/java/com/ldp/adskip/ui/components/StatusOrb.kt")
+        assertTrue("StatusOrb 不存在：${orb.path}", orb.isFile)
+        assertTrue(
+            "状态环是纯装饰，语义必须由相邻的状态文字承担。若在这里重新挂 contentDescription，" +
+                "同一句「服务未开启 / 服务运行中」会在语义树里出现两次：\n  ${orb.path}",
+            "clearAndSetSemantics" in orb.readText(),
+        )
+    }
+
     // ---------- 工具 ----------
 
     /** 四个页面级 Composable 的源码路径（相对仓库根）。 */

@@ -49,6 +49,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -184,9 +188,6 @@ private fun StatusHero(running: Boolean, onPrimaryAction: () -> Unit, onTest: ()
         Row(verticalAlignment = Alignment.CenterVertically) {
             StatusOrb(
                 running = running,
-                contentDescription = stringResource(
-                    if (running) R.string.status_on else R.string.status_off,
-                ),
                 diameter = UiSizes.statusOrb,
             )
             Spacer(Modifier.width(Spacing.lg))
@@ -347,17 +348,26 @@ private fun KeywordsCard(keywords: List<String>, onAdd: (String) -> Unit, onRemo
                 verticalArrangement = Arrangement.spacedBy(Spacing.xs),
             ) {
                 keywords.forEachIndexed { index, keyword ->
+                    val removeLabel = stringResource(R.string.keyword_remove_cd, keyword)
                     InputChip(
                         selected = false,
                         onClick = { onRemoveAt(index) },
                         label = { Text(keyword) },
+                        // 点 chip 本体即删除，因此把「删除」声明成一个自定义语义动作，
+                        // 读屏会念「删除关键词 跳过，按钮」而不是只报 chip 文本。
+                        modifier = Modifier.semantics {
+                            customActions = listOf(
+                                CustomAccessibilityAction(removeLabel) {
+                                    onRemoveAt(index)
+                                    true
+                                },
+                            )
+                        },
                         trailingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = stringResource(
-                                    R.string.keyword_remove_cd,
-                                    keyword,
-                                ),
+                                // 动作语义已挂在 chip 上，图标本身不再重复声明。
+                                contentDescription = null,
                                 modifier = Modifier.size(InputChipDefaults.AvatarSize),
                             )
                         },
@@ -376,7 +386,11 @@ private fun KeywordsCard(keywords: List<String>, onAdd: (String) -> Unit, onRemo
 @Composable
 private fun FakeAdOverlay(countdown: Int, onSkipClicked: () -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            // 浮层盖住首页时必须同时**从语义树上移除底层内容**：它只吃掉了触摸事件，
+            // 被遮住的按钮仍可被 TalkBack 聚焦并激活，视障用户会点到一个看不见的东西。
+            .clearAndSetSemantics {},
         color = MaterialTheme.colorScheme.background,
     ) {
         Column(

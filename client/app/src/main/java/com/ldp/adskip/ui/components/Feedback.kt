@@ -34,7 +34,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -264,7 +267,11 @@ fun SkeletonList(
     rows: Int = 8,
     rowHeight: Dp = UiSizes.skeletonRow,
     avatarSize: Dp = UiSizes.listIcon,
+    loadingLabel: String = stringResource(R.string.state_loading_announcement),
 ) {
+    // 骨架块本身是无数值的空节点，读屏会把整片骨架读成空白。
+    // `progressBarRangeInfo` 让读屏播报「忙碌中」而不是逐个空块；范围取不确定态
+    // （0..1 且当前值等于起点），契合「长度未知的加载」这一真实语义。
     val transition = rememberInfiniteTransition(label = "skeleton")
     val shift by transition.animateFloat(
         initialValue = 0f,
@@ -284,7 +291,12 @@ fun SkeletonList(
     )
 
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = loadingLabel
+                progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate
+            },
         verticalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
         repeat(rows) {

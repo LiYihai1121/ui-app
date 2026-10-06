@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -20,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -122,7 +124,12 @@ fun SectionHint(text: String, modifier: Modifier = Modifier) {
  */
 @Composable
 fun StatTile(value: String, label: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier
+            // 数值与标签是一个语义单元：「累计跳过 42 次」。
+            // 不合并时读屏会把它拆成两个孤立节点，用户听到「42」与「次」分离。
+            .semantics(mergeDescendants = true) {},
+    ) {
         Text(
             text = value,
             style = MaterialTheme.typography.headlineMedium,
@@ -141,7 +148,14 @@ fun StatTile(value: String, label: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** 设置项：标题 + 可选副标题 + 开关。整行可点，命中区域远大于开关本身。 */
+/**
+ * 设置项：标题 + 可选副标题 + 开关。整行可点，命中区域远大于开关本身。
+ *
+ * 无障碍：整行是**一个** `Role.Switch` 节点（`toggleable` + `mergeDescendants`），
+ * 标题与状态一次读完。此前标题与开关是两个独立节点，读屏需要先停在标题、
+ * 再移到开关才能操作，副标题还会被跳过。`Switch` 自身因此置为不可交互
+ * （`onCheckedChange = null`），避免出现第二个可点区域。
+ */
 @Composable
 fun LabeledSwitch(
     title: String,
@@ -152,7 +166,14 @@ fun LabeledSwitch(
     enabled: Boolean = true,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -174,7 +195,7 @@ fun LabeledSwitch(
                 )
             }
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+        Switch(checked = checked, onCheckedChange = null, enabled = enabled)
     }
 }
 

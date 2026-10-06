@@ -19,8 +19,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.ldp.adskip.ui.theme.StatusColors
@@ -28,6 +27,11 @@ import com.ldp.adskip.ui.theme.UiSizes
 
 /**
  * 服务运行状态的自绘指示环。
+ *
+ * **纯装饰，不参与语义树**（`clearAndSetSemantics {}`）：状态结论由紧邻的
+ * `Text` 承担。早期这里另挂了一份 `contentDescription`，于是同一句
+ * 「服务未开启 / 服务运行中」在语义树里出现两次，读屏会连念两遍。
+ * 图形与文字讲同一件事时，语义只该由其中一方提供。
  *
  * 为什么自绘而不是用现成组件：
  * `CircularProgressIndicator` 的语义是「未知的、进行中的加载」，用它表示
@@ -44,16 +48,9 @@ import com.ldp.adskip.ui.theme.UiSizes
  * `am start` 复用任务时会恢复到上次的滚动位，此时截图与 uiautomator 边界
  * 看起来像「卡片顶部凭空少了一截」。判断 Compose 布局问题前，
  * 请先确认滚动位在顶部，否则量出来的 bounds 会把人带偏。
- *
- * 无障碍：整颗环带 contentDescription，读屏可读出开 / 关状态。
  */
 @Composable
-fun StatusOrb(
-    running: Boolean,
-    contentDescription: String,
-    modifier: Modifier = Modifier,
-    diameter: Dp = UiSizes.orbHalo,
-) {
+fun StatusOrb(running: Boolean, modifier: Modifier = Modifier, diameter: Dp = UiSizes.orbHalo) {
     val accent by animateColorAsState(
         targetValue = if (running) StatusColors.on else StatusColors.off,
         animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
@@ -87,7 +84,8 @@ fun StatusOrb(
     Canvas(
         modifier = modifier
             .size(diameter)
-            .semantics { this.contentDescription = contentDescription },
+            // 图形不提供语义：状态结论由相邻 Text 给出，两边都挂会让读屏重复播报。
+            .clearAndSetSemantics {},
     ) {
         val strokeWidth = size.minDimension * 0.085f
         val half = strokeWidth / 2f

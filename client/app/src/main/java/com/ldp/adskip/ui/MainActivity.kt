@@ -152,7 +152,9 @@ private fun AdskipShell() {
                         icon = {
                             Icon(
                                 imageVector = destination.icon,
-                                contentDescription = stringResource(destination.labelRes),
+                                // null 而非 labelRes：下方 label 已渲染同一文案，
+                                // 给图标再挂一次会让读屏把每个 tab 名念两遍。
+                                contentDescription = null,
                             )
                         },
                         label = {

@@ -21,6 +21,7 @@
     <string name="btn_retry">Retry</string>
     <string name="error_generic_title">Couldn\'t load</string>
     <string name="error_generic_hint">The data didn\'t come through. Try again; if it keeps failing, share the logs.</string>
+    <string name="state_loading_announcement">Loading</string>
     <string name="action_undo">Undo</string>
 
     <!-- Keywords -->
