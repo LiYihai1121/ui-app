@@ -12,10 +12,10 @@ import com.ldp.adskip.AppContainer
 import com.ldp.adskip.core.AppEvents
 import com.ldp.adskip.device.AccessibilityStatus
 import com.ldp.adskip.device.BatteryExemption
+import com.ldp.adskip.device.KeepAliveNavigator
 import com.ldp.adskip.device.PermissionCenter
 import com.ldp.adskip.device.PermissionItem
 import com.ldp.adskip.device.Vendor
-import com.ldp.adskip.device.VendorKeepAlive
 import com.ldp.adskip.ui.vendorLabelRes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,7 +52,7 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
         val androidVersion: String = "",
         /** 设备型号，如 `Pixel 7`。 */
         val deviceModel: String = "",
-        /** 当前 ROM 厂商（复用 device/VendorKeepAlive 的识别结果，与设置页一致）。 */
+        /** 当前 ROM 厂商（经 KeepAliveNavigator 的统一入口，带异常保护与日志，与设置页同源）。 */
         val vendor: Vendor = Vendor.GENERIC,
     ) {
         /** 服务已确认开启；UNKNOWN 不算开启，避免拿不确定的状态去承诺功能可用。 */
@@ -67,7 +67,7 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
             versionDisplay = container.settingsRepo.appVersionDisplay(),
             androidVersion = "Android ${Build.VERSION.RELEASE}",
             deviceModel = Build.MODEL,
-            vendor = VendorKeepAlive.detect(),
+            vendor = KeepAliveNavigator.detectVendor(),
         )
         refreshStats()
         refreshAccessibilityStatus()
