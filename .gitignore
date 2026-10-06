@@ -55,6 +55,10 @@ client/build-logic/**/bin/
 # Kotlin 构建会话目录
 .kotlin/
 
-# 服务端运行时产物（测试/部署生成，非源码；种子规则固化在 server/seed/）
-server/data/
-server/node_modules/
+# Pre-commit hooks
+!.pre-commit-config.yaml
+.secrets.baseline
+
+# Pre-commit hooks
+.pre-commit-config.yaml
+.secrets.baseline

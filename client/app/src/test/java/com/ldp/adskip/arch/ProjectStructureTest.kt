@@ -671,7 +671,9 @@ class ProjectStructureTest {
         val ALLOWED_ROOT_FILES = setOf(
             ".editorconfig", ".gitattributes", ".gitignore",
             "AGENTS.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "README.md",
+            "SECURITY.md", "CODEOWNERS", "DCO",
             "kilo.json", // Agent 工具的项目级配置（技能挂载 + 权限）；原 opencode.json 已是 legacy 路径
+            ".pre-commit-config.yaml", // 预提交钩子配置（代码质量门禁）
         )
 
         // client/ 白名单：末尾几项为本机生成/被忽略的目录，允许存在但不强制
