@@ -15,6 +15,9 @@ signing/
 # APK 产物（构建输出已忽略；根目录发布副本同样不入库）
 *.apk
 
+# 依赖安装产物（server/ 零运行时依赖，本地 bun install 时生成；绝不含锁文件语义）
+node_modules/
+
 # 本地工具状态目录（安全扫描 / AI 助手会话产物，不入库）
 .mimosa/
 .workbuddy/
