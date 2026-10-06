@@ -1,7 +1,7 @@
 package com.ldp.adskip.ui.settings
 
+import android.content.Intent
 import android.net.Uri
-import android.os.PowerManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -11,7 +11,11 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.AppContainer
 import com.ldp.adskip.R
+import com.ldp.adskip.core.AppEvents
+import com.ldp.adskip.device.BatteryExemption
 import com.ldp.adskip.device.KeepAliveNavigator
+import com.ldp.adskip.device.LanguageMode
+import com.ldp.adskip.device.LocaleApplier
 import com.ldp.adskip.device.TileAddResult
 import com.ldp.adskip.device.Vendor
 import com.ldp.adskip.ui.UiEffect
@@ -43,10 +47,19 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         val dndEnabled: Boolean = false,
         val dndStartMinute: Int = 23 * 60,
         val dndEndMinute: Int = 7 * 60,
-        val batteryExempt: Boolean = false,
+        val batteryExemption: BatteryExemption = BatteryExemption.UNKNOWN,
+        /** 界面语言选择。 */
+        val language: LanguageMode = LanguageMode.DEFAULT,
         /** 当前设备所属 ROM，用于保活引导文案与手动路径提示（device/VendorKeepAlive） */
         val keepAliveVendor: Vendor = Vendor.GENERIC,
-    )
+    ) {
+        /**
+         * 已确认豁免电池优化。
+         *
+         * [BatteryExemption.UNKNOWN] 不算已豁免：不确定时不该对用户承诺后台不会被杀。
+         */
+        val isBatteryExempt: Boolean get() = batteryExemption == BatteryExemption.EXEMPT
+    }
 
     private val _uiState = MutableStateFlow(
         UiState(
@@ -56,7 +69,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             dndEnabled = container.settingsRepo.isDoNotDisturbEnabled(),
             dndStartMinute = container.settingsRepo.getDoNotDisturbStart(),
             dndEndMinute = container.settingsRepo.getDoNotDisturbEnd(),
-            batteryExempt = queryBatteryExempt(),
+            batteryExemption = queryBatteryExemption(),
+            language = LanguageMode.fromTag(container.settingsRepo.languageTag()),
             keepAliveVendor = KeepAliveNavigator.detectVendor(),
         ),
     )
@@ -111,8 +125,28 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         _uiState.value = _uiState.value.copy(dndStartMinute = startMinute, dndEndMinute = endMinute)
     }
 
+    /**
+     * 切换界面语言。
+     *
+     * 先落偏好再应用：API 26–32 没有平台 API，`LocaleApplier.apply` 只是把
+     * 生效时机推迟到 Activity 重建，偏好必须先写，重建时才能读到。
+     *
+     * 平台路径（API 33+）会立即改所有 Activity 的资源，故返回 `true` 时
+     * **不需要**重建，避免多余的闪烁。
+     */
+    fun setLanguage(mode: LanguageMode) {
+        container.settingsRepo.setLanguageTag(mode.tag)
+        val appliedImmediately = LocaleApplier.apply(container.app, mode)
+        _uiState.value = _uiState.value.copy(language = mode)
+        if (!appliedImmediately) {
+            // 低版本需要重建 Activity 才能让新语言作用于资源解析。
+            _effects.tryEmit(UiEffect.ShowMessage(container.app.getString(R.string.settings_saved)))
+            _effects.tryEmit(UiEffect.RecreateActivity)
+        }
+    }
+
     fun refreshBatteryStatus() {
-        _uiState.value = _uiState.value.copy(batteryExempt = queryBatteryExempt())
+        _uiState.value = _uiState.value.copy(batteryExemption = queryBatteryExemption())
     }
 
     // ---------- 厂商保活引导与快捷磁贴 ----------
@@ -171,9 +205,19 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         _uiState.value = _uiState.value.copy(lastSyncAt = container.settingsRepo.lastSyncAt())
     }
 
-    private fun queryBatteryExempt(): Boolean {
-        val pm = container.app.getSystemService(PowerManager::class.java)
-        return pm?.isIgnoringBatteryOptimizations(container.app.packageName) ?: false
+    /** 查询电池优化豁免；失败时交由 [BatteryExemption] 落成 UNKNOWN，不冒充「未豁免」。 */
+    private fun queryBatteryExemption(): BatteryExemption = BatteryExemption.detect(container.app)
+
+    fun exportNodeSnapshot() {
+        if (!AppEvents.serviceRunningSnapshot) {
+            send(container.app.getString(R.string.settings_snapshot_empty))
+            return
+        }
+        val context = container.app
+        // ui/ 层禁止 import service/（ArchitectureBoundaryTest）：action 用字面量，
+        // 与 SkipAdService.ACTION_EXPORT_SNAPSHOT 的一致性由 ServiceIntentContractTest 守护。
+        val intent = Intent("com.ldp.adskip.EXPORT_SNAPSHOT").setPackage(context.packageName)
+        context.sendBroadcast(intent)
     }
 
     private fun send(message: String) {

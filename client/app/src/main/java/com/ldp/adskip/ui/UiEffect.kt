@@ -20,4 +20,16 @@ sealed interface UiEffect {
      * 文案由界面侧生成（需要拼接与本地化资源），ViewModel 只报告事实。
      */
     data class KeywordRemoved(val keyword: String) : UiEffect
+
+    /**
+     * 需要重建当前 Activity 才能让改动生效。
+     *
+     * 目前唯一来源是**低版本（API < 33）切换界面语言**：那里没有平台级的
+     * `LocaleManager`，新语言只能靠 Activity 重建时在 `attachBaseContext`
+     * 里包一层 Context 才作用于资源解析。
+     *
+     * 单独成类型而不是让 ViewModel 持有 Activity：UI 层之外无法安全地操作
+     * Activity 生命周期，这类「请宿主做一件事」的请求必须经 Effect 上报。
+     */
+    data object RecreateActivity : UiEffect
 }

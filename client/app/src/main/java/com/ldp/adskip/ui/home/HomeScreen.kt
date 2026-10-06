@@ -48,16 +48,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
 import com.ldp.adskip.device.KeepAliveNavigator
 import com.ldp.adskip.ui.Messenger
 import com.ldp.adskip.ui.UiEffect
+import com.ldp.adskip.ui.components.PageHeader
 import com.ldp.adskip.ui.components.SectionCard
 import com.ldp.adskip.ui.components.SectionHint
 import com.ldp.adskip.ui.components.SectionTitle
@@ -65,6 +73,7 @@ import com.ldp.adskip.ui.components.StatusOrb
 import com.ldp.adskip.ui.components.rememberAppLabel
 import com.ldp.adskip.ui.theme.Spacing
 import com.ldp.adskip.ui.theme.StatusColors
+import com.ldp.adskip.ui.theme.UiSizes
 
 /**
  * 主页：服务状态、跳过统计、关键词管理、模拟测试。
@@ -96,6 +105,14 @@ fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factor
     val context = LocalContext.current
     val lastAppLabel = rememberAppLabel(state.lastApp)
 
+    // 每次回到前台都重查无障碍状态：用户从本页跳去系统设置改完开关再返回时，
+    // Activity 并未重建（LaunchedEffect(Unit) 不会重跑），而 Service 的 onDestroy
+    // 回调可能还没到——只靠进程信号会把过期的「运行中」一直显示下去，
+    // 与读系统真值的快捷磁贴说法不一致。
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.onScreenResumed()
+    }
+
     LaunchedEffect(messenger) {
         viewModel.effects.collect { effect ->
             when (effect) {
@@ -106,6 +123,11 @@ fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factor
                     undoLabel = context.getString(R.string.action_undo),
                     onUndo = viewModel::undoRemoveKeyword,
                 )
+
+                // 本页不提供语言切换（在设置里），该 Effect 不会从这里发出。
+                // 显式列出而不加 `else`：将来新增 Effect 时编译器会提醒这里也要处理，
+                // 而不是被 else 静默吞掉。
+                is UiEffect.RecreateActivity -> Unit
             }
         }
     }
@@ -118,11 +140,18 @@ fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factor
             contentPadding = PaddingValues(
                 start = Spacing.lg,
                 end = Spacing.lg,
-                top = Spacing.lg,
+                // 顶部留白由 PageHeader 自带：这里再留一次会比其他一级页多出一倍间距。
+                top = 0.dp,
                 bottom = Spacing.xl,
             ),
             verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         ) {
+            item {
+                // 一级页面都要有位置锚点（见 ScreenHeaderContractTest）。
+                // 首页此前是四屏里唯一没有标题的：用户切过来后整屏像浮在空中的仪表盘。
+                PageHeader(title = stringResource(R.string.home_title))
+            }
+
             item {
                 StatusHero(
                     running = state.serviceRunning,
@@ -179,14 +208,11 @@ fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factor
  */
 @Composable
 private fun StatusHero(running: Boolean, onPrimaryAction: () -> Unit, onTest: () -> Unit) {
-    SectionCard(contentPadding = PaddingValues(20.dp)) {
+    SectionCard(contentPadding = PaddingValues(Spacing.lg)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             StatusOrb(
                 running = running,
-                contentDescription = stringResource(
-                    if (running) R.string.status_on else R.string.status_off,
-                ),
-                diameter = 56.dp,
+                diameter = UiSizes.statusOrb,
             )
             Spacer(Modifier.width(Spacing.lg))
             Column(modifier = Modifier.weight(1f)) {
@@ -206,7 +232,7 @@ private fun StatusHero(running: Boolean, onPrimaryAction: () -> Unit, onTest: ()
             }
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(Spacing.lg))
 
         // 动作分级：只有服务没开时，「去开启」才是用户必须做的事，用 filled 表达；
         // 已运行时降级为 tonal，避免让用户误以为还有必须点的操作。
@@ -271,7 +297,7 @@ private fun StatsRow(state: HomeViewModel.UiState, lastAppLabel: String) {
     SectionCard(contentPadding = PaddingValues(horizontal = Spacing.xl, vertical = Spacing.lg)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = stringResource(R.string.stats_total_short, state.totalSkips),
+                text = pluralStringResource(R.plurals.stats_total_short, state.totalSkips, state.totalSkips),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -346,17 +372,26 @@ private fun KeywordsCard(keywords: List<String>, onAdd: (String) -> Unit, onRemo
                 verticalArrangement = Arrangement.spacedBy(Spacing.xs),
             ) {
                 keywords.forEachIndexed { index, keyword ->
+                    val removeLabel = stringResource(R.string.keyword_remove_cd, keyword)
                     InputChip(
                         selected = false,
                         onClick = { onRemoveAt(index) },
                         label = { Text(keyword) },
+                        // 点 chip 本体即删除，因此把「删除」声明成一个自定义语义动作，
+                        // 读屏会念「删除关键词 跳过，按钮」而不是只报 chip 文本。
+                        modifier = Modifier.semantics {
+                            customActions = listOf(
+                                CustomAccessibilityAction(removeLabel) {
+                                    onRemoveAt(index)
+                                    true
+                                },
+                            )
+                        },
                         trailingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = stringResource(
-                                    R.string.keyword_remove_cd,
-                                    keyword,
-                                ),
+                                // 动作语义已挂在 chip 上，图标本身不再重复声明。
+                                contentDescription = null,
                                 modifier = Modifier.size(InputChipDefaults.AvatarSize),
                             )
                         },
@@ -375,7 +410,11 @@ private fun KeywordsCard(keywords: List<String>, onAdd: (String) -> Unit, onRemo
 @Composable
 private fun FakeAdOverlay(countdown: Int, onSkipClicked: () -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            // 浮层盖住首页时必须同时**从语义树上移除底层内容**：它只吃掉了触摸事件，
+            // 被遮住的按钮仍可被 TalkBack 聚焦并激活，视障用户会点到一个看不见的东西。
+            .clearAndSetSemantics {},
         color = MaterialTheme.colorScheme.background,
     ) {
         Column(
@@ -400,9 +439,9 @@ private fun FakeAdOverlay(countdown: Int, onSkipClicked: () -> Unit) {
             Button(onClick = onSkipClicked) {
                 Text(stringResource(R.string.fake_ad_skip))
             }
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(Spacing.lg))
             Text(
-                text = stringResource(R.string.fake_ad_countdown, countdown),
+                text = pluralStringResource(R.plurals.fake_ad_countdown, countdown, countdown),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

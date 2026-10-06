@@ -34,11 +34,16 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.ldp.adskip.R
 import com.ldp.adskip.ui.theme.Spacing
+import com.ldp.adskip.ui.theme.UiSizes
 
 /*
  * 通用 UI 组件第二批（v3.1 重设计后续）。
@@ -73,14 +78,14 @@ fun EmptyState(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.xxl, vertical = 48.dp),
+            .padding(horizontal = Spacing.xxl, vertical = Spacing.xxxl),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (icon != null) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(UiSizes.emptyStateIcon),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(Spacing.lg))
@@ -101,7 +106,65 @@ fun EmptyState(
             )
         }
         if (action != null) {
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(Spacing.lg))
+            action()
+        }
+    }
+}
+
+/**
+ * 错误状态占位：图标 + 结论 + 原因/下一步 + 重试动作。
+ *
+ * 为什么必须与 [EmptyState] 分开：两者对用户意味着完全不同的下一步。
+ * 「暂无内容」是终态，用户该去做别的事；「读取失败」是可恢复态，用户该重试。
+ * 此前全 app 只有空态，于是加载失败会显示成「暂无内容」——用户既不知道出了错，
+ * 也不知道重试有用。
+ *
+ * 无障碍：`error()` 语义把这一块整体标为错误区域，读屏会先报「错误」再读内容，
+ * 不必依赖图形与红色。图标是纯装饰（`contentDescription = null`），
+ * 语义由标题承担，避免图标与标题重复播报。
+ */
+@Composable
+fun ErrorState(
+    title: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    subtitle: String? = null,
+    action: @Composable (() -> Unit)? = null,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics { error(title) }
+            .padding(horizontal = Spacing.xxl, vertical = Spacing.xxxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(UiSizes.emptyStateIcon),
+                tint = MaterialTheme.colorScheme.error,
+            )
+            Spacer(Modifier.height(Spacing.lg))
+        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.error,
+        )
+        if (subtitle != null) {
+            Spacer(Modifier.height(Spacing.sm))
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (action != null) {
+            Spacer(Modifier.height(Spacing.lg))
             action()
         }
     }
@@ -152,7 +215,7 @@ fun TwoLineRow(
     modifier: Modifier = Modifier,
     leading: @Composable (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
-    contentPadding: PaddingValues = PaddingValues(vertical = 10.dp),
+    contentPadding: PaddingValues = PaddingValues(vertical = Spacing.sm),
 ) {
     Row(
         modifier = modifier
@@ -199,7 +262,16 @@ fun TwoLineRow(
  * 纯 DrawScope 渐变，不引入 shimmer 三方库（依赖清单保持零外部依赖）。
  */
 @Composable
-fun SkeletonList(modifier: Modifier = Modifier, rows: Int = 8, rowHeight: Dp = 60.dp, avatarSize: Dp = Spacing.xxxl) {
+fun SkeletonList(
+    modifier: Modifier = Modifier,
+    rows: Int = 8,
+    rowHeight: Dp = UiSizes.skeletonRow,
+    avatarSize: Dp = UiSizes.listIcon,
+    loadingLabel: String = stringResource(R.string.state_loading_announcement),
+) {
+    // 骨架块本身是无数值的空节点，读屏会把整片骨架读成空白。
+    // `progressBarRangeInfo` 让读屏播报「忙碌中」而不是逐个空块；范围取不确定态
+    // （0..1 且当前值等于起点），契合「长度未知的加载」这一真实语义。
     val transition = rememberInfiniteTransition(label = "skeleton")
     val shift by transition.animateFloat(
         initialValue = 0f,
@@ -219,7 +291,12 @@ fun SkeletonList(modifier: Modifier = Modifier, rows: Int = 8, rowHeight: Dp = 6
     )
 
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = loadingLabel
+                progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate
+            },
         verticalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
         repeat(rows) {
@@ -247,7 +324,7 @@ private fun SkeletonRow(brush: Brush, height: Dp, avatarSize: Dp) {
             Box(
                 Modifier
                     .fillMaxWidth(0.55f)
-                    .height(14.dp)
+                    .height(UiSizes.skeletonLine)
                     .clip(MaterialTheme.shapes.extraSmall)
                     .background(brush),
             )
@@ -255,7 +332,7 @@ private fun SkeletonRow(brush: Brush, height: Dp, avatarSize: Dp) {
             Box(
                 Modifier
                     .fillMaxWidth(0.35f)
-                    .height(10.dp)
+                    .height(UiSizes.skeletonLineCompact)
                     .clip(MaterialTheme.shapes.extraSmall)
                     .background(brush),
             )
@@ -269,7 +346,7 @@ fun InfoRow(label: String, value: String, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 10.dp),
+            .padding(vertical = Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {

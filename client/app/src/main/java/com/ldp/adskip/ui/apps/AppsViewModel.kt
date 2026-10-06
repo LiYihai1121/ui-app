@@ -10,6 +10,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.AppContainer
+import com.ldp.adskip.core.LogRing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +30,7 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
     data class UiState(
         val items: List<AppRow> = emptyList(),
         val loading: Boolean = true,
+        val failed: Boolean = false,
         val query: String = "",
         val onlyEnabled: Boolean = false,
     ) {
@@ -80,31 +82,40 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
 
     /** 在 IO 线程枚举启动器应用并读取规则/统计，回主线程提交。 */
     fun load() {
-        _uiState.value = _uiState.value.copy(loading = true)
+        _uiState.value = _uiState.value.copy(loading = true, failed = false)
         viewModelScope.launch {
-            val rows = withContext(Dispatchers.IO) {
-                val pm = container.app.packageManager
-                val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-                pm.queryIntentActivities(intent, 0)
-                    .distinctBy { it.activityInfo.packageName }
-                    .filter { it.activityInfo.packageName != container.app.packageName }
-                    .map {
-                        val pkg = it.activityInfo.packageName
-                        AppRow(
-                            pkg = pkg,
-                            label = it.loadLabel(pm).toString(),
-                            icon = try {
-                                it.loadIcon(pm)
-                            } catch (_: Exception) {
-                                null
-                            },
-                            disabled = container.rulesRepo.isDisabled(pkg),
-                            count = container.statsRepo.countFor(pkg),
-                        )
-                    }
-                    .sortedBy { it.label.lowercase() }
+            val rows = try {
+                withContext(Dispatchers.IO) {
+                    val pm = container.app.packageManager
+                    val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+                    pm.queryIntentActivities(intent, 0)
+                        .distinctBy { it.activityInfo.packageName }
+                        .filter { it.activityInfo.packageName != container.app.packageName }
+                        .map {
+                            val pkg = it.activityInfo.packageName
+                            AppRow(
+                                pkg = pkg,
+                                label = it.loadLabel(pm).toString(),
+                                icon = try {
+                                    it.loadIcon(pm)
+                                } catch (_: Exception) {
+                                    null
+                                },
+                                disabled = container.rulesRepo.isDisabled(pkg),
+                                count = container.statsRepo.countFor(pkg),
+                            )
+                        }
+                        .sortedBy { it.label.lowercase() }
+                }
+            } catch (e: Exception) {
+                // 查询失败必须落地成一个**可呈现的错误态**，而不是让协程静默中断：
+                // 否则 loading 永远停在 true，用户只看到不会消失的骨架屏，
+                // 既不知道出了错，也没有重试入口。
+                LogRing.e("AppsViewModel", "枚举启动器应用失败: ${e.message}")
+                _uiState.value = _uiState.value.copy(loading = false, failed = true)
+                return@launch
             }
-            _uiState.value = _uiState.value.copy(items = rows, loading = false)
+            _uiState.value = _uiState.value.copy(items = rows, loading = false, failed = false)
         }
     }
 

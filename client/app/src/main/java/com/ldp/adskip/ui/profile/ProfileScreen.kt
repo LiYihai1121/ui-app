@@ -16,7 +16,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,10 +23,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
 import com.ldp.adskip.device.KeepAliveNavigator
+import com.ldp.adskip.device.PermissionKeys
 import com.ldp.adskip.device.Vendor
 import com.ldp.adskip.ui.Messenger
 import com.ldp.adskip.ui.components.InfoDivider
@@ -57,11 +59,53 @@ import com.ldp.adskip.ui.theme.Spacing
 fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val tileLabel = stringResource(R.string.tile_label)
 
-    // 从其他页切回时统计可能已变化（用户在别的页不会产生跳过，但服务状态会），
-    // 进屏重读一次以保证与首页口径一致。
-    LaunchedEffect(Unit) { viewModel.refreshStats() }
+    // 每次回到前台都重读：统计可能已变化，且用户可能刚跳去系统无障碍设置改了开关。
+    // 用 ON_RESUME 而非 LaunchedEffect(Unit)——后者只在首次进入组合时跑一次，
+    // 从系统设置返回时 Activity 并未重建，过期状态会被一直显示下去。
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshAccessibilityStatus()
+        viewModel.refreshStats()
+    }
 
+    /*
+     * 权限清单各行的跳转出口。
+     *
+     * 统一经 device/KeepAliveNavigator（系统入口的唯一出口，含可解析性探测与降级），
+     * UI 不自行拼 Intent。失败时给出「手动路径」提示，而不是静默无事发生。
+     */
+    val onOpenPermission: (String) -> Unit = { key ->
+        val vendorName = viewModel.vendorName(state.vendor)
+        when (key) {
+            PermissionKeys.ACCESSIBILITY -> {
+                if (!KeepAliveNavigator.openAccessibilitySettings(context)) {
+                    messenger.show(context.getString(R.string.settings_open_failed))
+                }
+            }
+
+            PermissionKeys.BATTERY -> {
+                if (!KeepAliveNavigator.openBatteryOptimizationSettings(context)) {
+                    messenger.show(context.getString(R.string.settings_open_failed))
+                }
+            }
+
+            PermissionKeys.VENDOR_KEEPALIVE -> {
+                val opened = KeepAliveNavigator.openKeepAliveSettings(context) != null
+                val res = if (opened) {
+                    R.string.settings_keepalive_opened
+                } else {
+                    R.string.settings_keepalive_failed
+                }
+                messenger.show(context.getString(res, vendorName))
+            }
+
+            PermissionKeys.QUICK_TILE -> {
+                // 低版本无法主动请求添加，退化为文案引导（文案已含手动路径）。
+                messenger.show(context.getString(R.string.settings_tile_manual, tileLabel))
+            }
+        }
+    }
     Column(modifier = Modifier.fillMaxSize()) {
         PageHeader(
             title = stringResource(R.string.profile_title),
@@ -75,10 +119,26 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
             contentPadding = PaddingValues(start = Spacing.lg, end = Spacing.lg, bottom = Spacing.xl),
             verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         ) {
+            /*
+             * 「我的」页承载四类互不相干的内容，顺序按**用户来访目的**排：
+             *
+             * 1. 权限与系统开关 —— 最高优先。它回答「这个应用到底工作了吗」，
+             *    是唯一会阻塞全部功能的内容；权限没配好，下面三项都没有意义。
+             * 2. 使用概览 —— 「它替我跳过了多少」，功能生效的正反馈。
+             * 3. 设置 —— 用户会反复回来调整的高频项（云端规则 / 免打扰）。
+             * 4. 关于 —— 版本号、设备型号，基本只在遇到问题时才看，放最后。
+             *
+             * 此前的顺序把权限卡排在设置之后：一个「还没配好」的权限清单被压在两屏
+             * 之外，而设置项在功能未生效时几乎都是无效配置。
+             */
+            item {
+                PermissionCard(
+                    items = state.permissionItems,
+                    readyCount = state.permissionReadyCount,
+                    onOpen = { key -> onOpenPermission(key) },
+                )
+            }
             item { UsageCard(state = state) }
-            // 设置（云端规则 / 免打扰 / 保活 / 磁贴）排在「关于」之前：
-            // 它是用户会反复回来调整的高频项，而版本号、设备型号这类「关于」信息
-            // 基本只会在遇到问题时才看。原来的顺序把高频项压在最长的滚动条末尾。
             item { SettingsContent(messenger) }
             item {
                 AccessibilityCard(
@@ -99,8 +159,12 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
 /**
  * 无障碍服务入口卡片。
  *
- * 首页的状态环已提供主行动按钮，这里是第二入口：服务被系统强杀后用户往往先落到
- * 「我的」页找设置，单独给出「打开无障碍设置」可少一次返回。
+ * 与权限清单的分工：清单里的「无障碍服务」行只报**状态**（并且刻意不带行内按钮），
+ * 本卡片是它唯一的**行动入口**，服务被系统强杀后用户落到「我的」页可少一次返回。
+ *
+ * 这里只显示状态结论（「服务未开启 / 服务运行中」）。早期它还重复渲染整句
+ * `status_off_hint`，与清单行的状态描述叠在同一屏讲同一件事；去掉重复后，
+ * 清单行 → 本卡片的视觉动线变成「是什么状态 → 怎么改变它」。
  *
  * 按钮用 tonal 而非 filled：首页已经把「去开启服务」做成全应用唯一的主行动，
  * 本页作为第二入口再用 filled 会在同一屏里出现两个同权重的 filled 按钮，
@@ -109,12 +173,8 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
 @Composable
 private fun AccessibilityCard(running: Boolean, onOpen: () -> Unit) {
     SectionCard {
-        SectionTitle(stringResource(R.string.profile_accessibility_section))
-        Spacer(Modifier.height(Spacing.sm))
-        SectionHint(
-            stringResource(
-                if (running) R.string.status_on_hint else R.string.status_off_hint,
-            ),
+        SectionTitle(
+            stringResource(if (running) R.string.status_on else R.string.status_off),
         )
         Spacer(Modifier.height(Spacing.lg))
         FilledTonalButton(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {

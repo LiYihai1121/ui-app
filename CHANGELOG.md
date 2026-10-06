@@ -6,7 +6,7 @@
 
 ## 目录
 
-- [Unreleased](#unreleased)
+- [3.2.0](#320---2026-10-06)
 - [3.1.0](#310---2026-09-28)
 - [3.1.0-rc.1](#310-rc1---2026-09-28)
 - [3.0.4](#304---2026-09-27)
@@ -18,9 +18,57 @@
 - [2.1.0](#210---2026-08-24)
 - [2.0.0](#200---2026-08-24)
 
-## [Unreleased]
+## [3.2.0] - 2026-10-06
 
-（本节为空：待发布的变更已归入下方各版本）
+本轮是「UI 重新设计与权限体系重构」，贯穿三条原则：**权限与系统开关一律三态**（无法确认 ≠ 未开启）、**同一事实只有一份真值源**、**能机器检查的约定都写成门禁**。
+
+### Added
+
+- **节点快照工具（设置 → 调试工具）**：一键把当前屏幕的无障碍节点树导出为 JSON 并通过系统分享面板保存，选择器规则的编写与验证不再靠猜。要点：
+  - **体积上限**：`NodeSnapshot.toShareText()` 用二分查找定位可写入的安全前缀，保证分享文本总字节数 ≤ 96 KB（`Intent.EXTRA_TEXT` 的实际安全上限，避免分享面板卡死或系统截断），超出部分丢弃并以 `truncated=true` 标记——超大节点树仍可导出完整结构概要。
+  - **守边界不靠运气**：`ui/` 层禁止 import `service/`（`ArchitectureBoundaryTest`），设置页用 `"com.ldp.adskip.EXPORT_SNAPSHOT"` 字面量触发、`SkipAdService` 注册 `RECEIVER_NOT_EXPORTED` 接收器执行导出；字面量与常量的一致性由新增 `ServiceIntentContractTest` 固化——两边一旦漂移，按钮失效会在门禁立即可见，而不是用户点完毫无反应。
+  - **仅当前屏幕、绝不上传**：导出对象是活动窗口根节点（`rootInActiveWindow`），数据只经系统分享面板流出。
+  - **空状态提示**：服务未运行时按钮给出「无障碍服务未运行，无法获取当前界面」，不再无声失败。
+- **应用内界面语言选择**：「我的 → 设置」新增语言项，可选**跟随系统 / 简体中文 / English**，默认跟随系统。此前应用语言完全由系统决定，没有开关。
+  - 双路径实现：**API 33+** 走平台 `LocaleManager.setApplicationLocales`（系统级生效，会同步到系统「应用语言」设置，无需重建）；**API 26–32** 无平台 API，靠 `MainActivity.attachBaseContext` 包一层带 locale 的 Context，并在切换后重建 Activity。只做一条路径是本功能最常见的半成品——要么低版本失效，要么高版本与系统设置不同步。
+  - 「跟随系统」映射为**空** LocaleList（平台用它表示清除应用级覆盖）。写错的话用户切回「跟随系统」不会复原，且症状要等用户主动切回才发现，故由契约与单测双重守护。
+  - 语言名**不随当前界面语言翻译**（英文界面下仍显示「简体中文」）：用户看不懂当前语言时正是靠母语名认路。
+  - 新增 `core/LanguagePreferences` 存放语言偏好。放 `core` 而非 `data/Prefs` 是被架构边界逼出来的正解：`ui/` 与 `device/` 都被禁止 import `data/`，而两侧都要读它；`core` 是双方都允许依赖的横切层（`ArchitectureBoundaryTest` 在开发过程中两次拦下我的越界尝试）。
+- **权限与系统开关清单**：「我的」页新增一张可核对清单（`device/PermissionCenter` + `ui/profile/PermissionCard`），把此前分散在首页状态环、「我的」页无障碍卡片与设置页三处的四类开关——无障碍服务、电池优化豁免、厂商自启动、快捷磁贴——收敛到一处，每项给出真实状态与直达入口。清单顶部显示「已就绪 N / 4 项」。
+- **错误态组件 `ErrorState`**：此前全 app 只有空态，加载失败会显示成「暂无内容」——用户既不知道出了错，也不知道重试有用。错误态与空态分开，并带 `error()` 语义供读屏播报。
+- **可复用组件**：`StatusDot`（状态点，颜色 + 形状双重编码，色盲用户可辨）、`Modifier.screenContentWidth()`（大屏内容封顶，此前硬编码在 MainActivity）。
+- **`device/AccessibilityStatus` / `device/BatteryExemption`**：把「系统真值 / 进程信号 / 查询失败」收敛为 `ON`/`OFF`/`UNKNOWN` 三态，判定逻辑是纯函数，可 JVM 单测穷举。
+
+### Changed
+
+- **「我的」页按来访目的重排**：权限清单提到首位（唯一会阻塞全部功能的内容），其后依次为使用概览、设置、无障碍入口与关于。此前权限清单被压在设置之后，而权限没配好时设置项几乎都是无效配置。
+- **首页补页面标题**：此前是四个一级页面里唯一没有标题的，用户切过去后没有任何位置锚点。
+- **无障碍状态改读系统真值**：UI 此前只订阅进程信号，用户在系统设置里关掉无障碍而 Service 的 `onDestroy` 回调未到时，首页与「我的」页仍显示「运行中」，而快捷磁贴（读系统真值）已显示「已停止」——同一台设备两个说法。两屏现在都在 `ON_RESUME` 时重查真值。
+- **厂商识别统一入口**：`ProfileViewModel` 改为经 `KeepAliveNavigator.detectVendor()`（含异常保护与日志），与设置页同源；此前直调裸函数，失败时无迹可查。
+- **配色补全**：`Theme.kt` 补上一直走 M3 默认值的 `surfaceContainer` / `surfaceContainerLow` / `surfaceContainerHighest`（默认值是紫调中性色，与品牌蓝不同色相，卡片底色一直与应用配色脱节）。
+- **深色窗口主题**：新增 `values-night/themes.xml`，深色系统下窗口背景与启动闪屏不再沿用浅色主题（Compose 只在首帧绘制后接管，此前中间那段是刺眼白屏）；状态栏由写死品牌蓝改为透明。
+
+### Fixed
+
+- **权限清单行按钮文案过长导致标题不可读**：行内按钮复用了「打开自启动 / 后台管理」（英文 `Open Auto-start / Background Manager`），在 1080px 屏上约占 850px；而该行给标题列 `weight(1f)`，剩余空间被压到约 210px，三字标题只能显示一个字符加省略号（实测 `B...` / `A...` / `Q...`）。现改用专用短文案（`permission_open` = 去设置 / Open）。**此缺陷由模拟器目视验证发现，编译与全部契约测试均未能拦住。**
+- **英文单复数错误**：四条计数文案（`apps_count` / `logs_subtitle` / `stats_total_short` / `fake_ad_countdown`）此前是普通 `<string>`，英文下会产出 `Skipped 1 times`、`1 records`、`Auto-close in 1 seconds` 这类语法错误。现改为 `<plurals>`（中文只需 `other`，英文补 `one`/`other`），四个读取点同步改用 `pluralStringResource`。
+- **英文默认关键词回落中文**：`default_keywords` / `default_view_ids` 只在默认 locale 声明，英文环境会回落到「跳过 / 跳過 / 跳过广告 / 关闭广告」——对英文广告一个都命不中。现补齐英文数组（`skip` / `skip ad` / `skip ads` / `close ad` / `close ads` / `no ads`）。
+- **「我的」页同一事实说两遍**：权限清单的无障碍行报状态，紧随其后的卡片又渲染整句提示。现清单行负责状态、卡片作为唯一行动入口，并删除失去引用方的 `profile_accessibility_section`。
+- **应用管理页加载失败卡死**：`queryIntentActivities` 无异常保护，抛异常时协程中断、`loading` 永远停在 `true`，用户看到永不消失的骨架屏且无重试入口。现捕获异常并落到可重试的错误态。
+- **应用管理页空态文案错配**：「已加载完且无应用」的空态显示的是「正在加载应用列表…」。
+- **电池豁免跳转后不刷新**：状态只在进屏时读一次，用户点按钮跳去系统设置允许后返回，按钮仍停在「允许后台运行」。
+- **权限清单里重复的无障碍入口**：清单行与紧随其后的无障碍卡片提供同一个跳转按钮，改为状态留在清单、入口归卡片。
+- **无障碍播报缺陷**：底部导航图标与同行文字重复播报 tab 名；状态环与相邻文字重复播报服务状态；骨架屏对读屏是空白；全屏测试浮层未做语义隔离（被遮住的控件仍可被 TalkBack 聚焦激活）；关键词 chip 点本体即删除但删除语义只挂在尾部图标上。
+- **`UiContractTest` 两条守护自上线起从未生效**：间距检查的正则匹配的是 Kotlin 里不存在的 `20dp` 写法，对真实写法 `20.dp` 永不命中（22 处标度外取值长期潜伏）；文案检查用裸子串匹配，死文案 `settings_battery` 被 `settings_battery_allow` 命中而逃检。修复后暴露的违规已全部落到设计令牌。
+
+### Tests
+
+- 新增契约测试：`PermissionCenterTest`、`AccessibilityStatusTest` / `AccessibilityStatusContractTest`、`BatteryExemptionTest` / `BatteryExemptionContractTest`、`ColorSchemeContractTest`、`ScreenHeaderContractTest`、`VendorDetectionContractTest`、`UiStateContractTest`、`PluralFormsContractTest`、`LanguageSelectionContractTest` / `LanguageModeTest`。
+- 契约文件由 4 个增至 11 个；`testDebugUnitTest` 由 189 个用例增至 231 个。
+
+> **验证范围**：已在模拟器（Android 14 / API 34，`AdSkipTest` AVD）上实装并逐屏目视确认首页、应用管理、跳过日志、「我的」四个一级页面；并在同一模拟器上实测语言功能：切到「简体中文」后平台侧 `cmd locale get-app-locales` 返回 `[zh-CN]` 且全部界面（含底部导航）转中文；切回「跟随系统」后返回 `[]`（覆盖已清除）且界面回归英文。上述「权限清单行按钮」缺陷亦由此发现。**厂商 ROM 相关行为（自启动入口、后台管理跳转、磁贴）与 API 26–32 的低版本语言路径仍未经真机验证**——前者需真机，后者模拟器仅有 API 34 镜像，与 `ROADMAP` 中「模拟器不能替代厂商 ROM 验收」的既有保留一致。
+>
+> 字阶 15 个 M3 角色中 7 个、形状 5 个槽位中 2 个当前无调用方——这是 M3 要求完整体系所致，已用契约固化「体系完整」，非遗漏。
 
 ## [3.1.0] - 2026-09-28
 

@@ -246,7 +246,6 @@ object Prefs {
     }
 
     fun getDoNotDisturbStart(context: Context): Int = sp(context).getInt(KEY_DND_START, 23 * 60)
-
     fun getDoNotDisturbEnd(context: Context): Int = sp(context).getInt(KEY_DND_END, 7 * 60)
 
     fun setDoNotDisturbTimes(context: Context, startMinute: Int, endMinute: Int) {

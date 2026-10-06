@@ -1,7 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  窗口主题（Compose 绘制**之前**的那一段：窗口背景与启动闪屏）。
+
+  深色系统由 values-night/themes.xml 覆盖同名 style —— framework 的
+  `android:Theme.Material` 没有 DayNight 变体（那套只在 AppCompat 里），
+  所以「跟随系统深色」只能靠资源限定符实现，不能靠换父主题。
+
+  状态栏走透明而非写死品牌蓝：写死的话深色系统下仍是那块亮蓝；透明让应用内容
+  （已 enableEdgeToEdge）自己延伸到状态栏。导航栏保留品牌色——两侧都是深色，
+  浅色图标在明暗主题下都清晰。
+  注意此处是**窗口级**颜色，与 ui/theme/Color.kt 的运行时可组合配色是两套东西
+  （后者管 Compose 绘制之后的界面），不构成第二份真相。
+-->
 <resources>
     <style name="Theme.AdSkip" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">#1565C0</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:navigationBarColor">@color/brand</item>
     </style>

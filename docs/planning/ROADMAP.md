@@ -68,7 +68,7 @@
 - [x] **v3.0.3（M1a，已发布）**：L1 引擎内核——选择器第三通道（`engine/selector/` AST / 解析器 / 匹配器 + `AdNode.parent` / `previousSibling()`）。纯内核增量、无用户可见行为变化；技术方案见 [DESIGN-PHASE1-SELECTOR.md](DESIGN-PHASE1-SELECTOR.md) 步骤 A/B
 - [x] **v3.0.4（M1a 补丁，已发布）**：安装可用性修复——`assembleRelease` 缺签名配置时回退 debug 签名、发布流水线强制 `apksigner verify` 并支持 Secrets 注入正式密钥，修复发布制品未签名导致手机报「解析软件包时出现问题」（[Issue #23](https://github.com/LiYihai1121/ui-app/issues/23)）；无功能行为变化
 - [x] **v3.1.0（M1b，已发布）**：协议 v2——服务端 `selectors` 字段与校验 + `SyncClient` 解析 + 点击结果校验与本地规则黑名单（步骤 C/D）；并随本版本一并交付品牌更名「轻启」、启动器/磁贴图标重设计、首页与「我的」页 UI 重设计、ktlint 静态门禁与 Compose BOM/compileSdk 升级（用户可见变更详见 [CHANGELOG.md](../../CHANGELOG.md) 3.1.0）。**真机矩阵（Android 8/13/14/15 × MIUI/HarmonyOS/ColorOS/OriginOS）尚未完成**，维护者显式决定先行发布正式版（见 CHANGELOG 3.1.0 发布验收覆盖声明）；Git tag `v3.1.0` 已创建于 `main` 提交 `ad188b0`（PR #42 经 Squash 合入），制品由正式密钥签名并经 `apksigner verify` 复核（见 [RELEASE-HISTORY.md](RELEASE-HISTORY.md)）。
-- [ ] **v3.2.0（M1c）**：节点快照工具——App 内导出当前界面节点树 JSON，规则编写不再靠猜（步骤 E）
+- [x] **v3.2.0（M1c，待发布）**：节点快照工具——App 内导出当前界面节点树 JSON，规则编写不再靠猜（步骤 E）。交付：`service/NodeSnapshot` 捕获与序列化 + 二分查找 96 KB 截断（`truncated=true` 标记）+ 设置页调试入口（服务未运行时显式提示）+ `ServiceIntentContractTest` 守护广播字面量与 `service/` 常量的单一真值源。**随本版本一并落版「UI 重新设计与权限体系重构」全部未发版内容**（语言选择、权限清单三态化等，详见 [CHANGELOG.md](../../CHANGELOG.md) 3.2.0）。开发完成于分支 `refactor/ui-permission-redesign`，待 PR 合入 `main` 后打 `v3.2.0` 发布。
 - [ ] **v3.3.0（M1d）**：Top 30 App 首批选择器规则入库 + 真机回归与性能采样 + 规则审核通道（步骤 F、L5 基础）
 - [ ] **v3.4.0（M2）**：L2 网络过滤层——DNS 过滤 + `filter-rules` 路由
 - [ ] **v3.5.0（M3）**：L3 防摇一摇模块（独立可选 APK）
@@ -107,6 +107,36 @@
   > M4 保留通知过滤与通知类 ROM 指引。详见 [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) 第 2/2.1/3 节。
 
 > **为什么剥离原 `3.1.0`**：原计划把「选择器引擎 + 快照工具 + Top 30 规则 + 真机验收 ≥95%」压在单个 `3.1.0` 里，而引擎内核（步骤 A/B）已按 PR 增量并入 `main` 却无版本承载——继续维持大礼包会让未发布内容堆积，且真机指标反过来阻塞协议与工具。现按「是否产生用户可见能力」切分小版本：每个版本可独立验收、独立回滚（选择器是纯增量字段，服务端停发即回退 v1 行为，无数据迁移）。
+
+### 🧩 已落地（待发布，分支 `refactor/ui-permission-redesign`）
+
+> 本轮是「UI 重新设计与权限体系重构」，尚未发版，具体用户可见变更见 [CHANGELOG.md](../../CHANGELOG.md) 的 `[Unreleased]`。贯穿三条原则：
+> **① 权限与系统开关一律三态**——无法确认 ≠ 未开启；**② 同一事实只有一份真值源**；
+> **③ 能机器检查的约定都写成门禁**（契约由 4 条增至 40 余条）。
+
+- [x] **权限与系统开关清单**：四类开关（无障碍 / 电池豁免 / 厂商自启动 / 快捷磁贴）由三处收敛为一张可核对清单，
+  置于「我的」页首位。厂商自启动与快捷磁贴**刻意停在「无法自动确认」**——系统无公开查询 API，
+  谎报「未开启」会让已经配好的用户在系统页反复来回而状态永不变。
+- [x] **无障碍与电池豁免改读系统真值**：此前 UI 只订阅进程信号，用户在系统设置里改完开关而 Service 回调未到时，
+  首页会显示过期的「运行中」，与读真值的快捷磁贴说法不一致。现两屏都在 `ON_RESUME` 重查。
+- [x] **三态化重构**：`device/AccessibilityStatus` 与 `device/BatteryExemption` 把「真值 / 进程信号 / 查询失败」
+  收敛为 `ON`/`OFF`/`UNKNOWN`，判定为纯函数、可 JVM 单测穷举。
+- [x] **UI 层交互细节**：补齐错误态（此前只有空态，失败会显示成「暂无内容」）、修复骨架屏永久卡死、
+  首页补页面标题、大屏内容封顶抽为 `Modifier.screenContentWidth()`、组件库新增 `ErrorState` / `StatusDot`。
+- [x] **无障碍修复**：标题补 `heading()` 语义、消除四处重复播报、全屏浮层做语义隔离（此前被遮住的控件
+  仍可被 TalkBack 聚焦激活）、关键词 chip 的删除语义修正。
+- [x] **配色补全**：补上一直走 M3 默认值的 `surfaceContainer*` 三个角色（默认值是紫调中性色，
+  与品牌蓝不同色相）；新增 `values-night/themes.xml` 消除深色系统下的启动白屏。
+- [x] **应用内界面语言选择**：可选跟随系统 / 简体中文 / English（默认跟随系统）。
+  **双路径**：API 33+ 用平台 `LocaleManager`（系统级生效，会同步到系统「应用语言」设置），
+  API 26–32 无平台 API，靠 `attachBaseContext` 包 Context + 重建 Activity。
+  已在模拟器实测可逆（切中文 → 平台返回 `[zh-CN]`；切回跟随系统 → 返回 `[]` 且界面复原）。
+
+> **未完成项（本分支遗留）**：字阶 15 个 M3 角色中 7 个零引用、形状槽位 `medium`/`extraLarge` 零引用——
+> 这是 M3 要求完整体系所致，已用契约固化「体系完整」，非遗漏；快捷磁贴的「是否已添加」若要可确认，
+> 需在磁贴服务里持久化标志。**该存储问题的解法已在语言功能中出现**：把跨层共享的偏好放进
+> `core/`（`ui/` 与 `device/` 都允许依赖它），即可绕开「`device/` 不能依赖 `data/`」的限制
+> （见 `core/LanguagePreferences`）。API 26–32 的低版本语言路径亦待真机覆盖。
 
 ### 候选池（未排期，不承诺版本）
 

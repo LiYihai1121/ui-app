@@ -25,7 +25,9 @@ class UiContractTest {
 
     @Test
     fun `spacing literals stay on the declared scale`() {
-        val allowed = setOf("4", "8", "12", "16", "24", "32", "40")
+        // 0dp 是**语义性零值**（elevation = 0、inset = 0），不是「间距取值」：
+        // 它表达「无阴影 / 无内缩」，换成任何正数都是错的，故显式放行而非塞进标度。
+        val allowed = setOf("0", "4", "8", "12", "16", "24", "32", "40")
         // 圆角半径属于 shape 体系（6/12/16/20/28），不是间距标度，单独豁免该文件
         val offenders = mutableListOf<String>()
 
@@ -33,7 +35,12 @@ class UiContractTest {
             .filterNot { it.endsWith("theme/Spacing.kt") || it.endsWith("theme/Theme.kt") }
             .forEach { relative ->
                 codeOf(relative).forEachIndexed { index, line ->
-                    Regex("""(\d+(?:\.\d+)?)dp""").findAll(line).forEach { m ->
+                    // 只匹配**整数字面量**的 `N.dp` 写法（如 `20.dp`）。
+                    // 早先写作 `(\d+(?:\.\d+)?)dp`，它匹配的是 `20dp` 这种 Kotlin 里并不存在的
+                    // 形式，而对真实写法 `20.dp` 完全无法命中——于是本测试自上线起从未真正
+                    // 检查过任何一行代码，22 处标度外取值长期潜伏（见修复提交说明）。
+                    // 限定整数同时排除 `0.5.dp` 这类浮点误报：那属于比例而非间距标度。
+                    Regex("""(\d+)\.dp""").findAll(line).forEach { m ->
                         if (!allowed.contains(m.groupValues[1])) {
                             offenders += "$relative:${index + 1}  ${m.groupValues[1]}dp  ${line.trim()}"
                         }
@@ -102,7 +109,12 @@ class UiContractTest {
                 .map { it.groupValues[1] }
                 // string-array 不参与本检查（default_keywords / default_view_ids 由代码按名读取）
                 .forEach { name ->
-                    val referenced = references.contains("R.string.$name") ||
+                    // 必须按**词边界**匹配，不能裸子串匹配。早先写作
+                    // `references.contains("R.string.$name")`，于是 `settings_battery`
+                    // 被 `R.string.settings_battery_allow` 命中去重，真正的死文案
+                    // `settings_battery` 长期逃过本检查。`[\w]` 保证右侧不再接标识符字符。
+                    val exact = Regex("""R\.string\.${Regex.escape(name)}(?![\w])""")
+                    val referenced = exact.containsMatchIn(references) ||
                         references.contains("R.string.array.$name") ||
                         references.contains("@string/$name")
                     if (!referenced) orphans += "$locale/$name"
@@ -158,7 +170,7 @@ class UiContractTest {
             .filter { it.isNotBlank() }
     }
     private fun repoRoot(): File {
-        var dir: File? = File(System.getProperty("user.dir"))
+        var dir: File? = System.getProperty("user.dir")?.let { File(it) }
         while (dir != null) {
             if (File(dir, ".gitignore").isFile && File(dir, "docs/README.md").isFile) return dir
             dir = dir.parentFile

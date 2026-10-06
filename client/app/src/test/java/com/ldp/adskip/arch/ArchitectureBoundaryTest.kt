@@ -114,7 +114,7 @@ class ArchitectureBoundaryTest {
     }
 
     private fun sourceRoot(): File {
-        var dir: File? = File(System.getProperty("user.dir"))
+        var dir: File? = System.getProperty("user.dir")?.let { File(it) }
         while (dir != null) {
             val candidate = File(dir, "src/main/java/com/ldp/adskip")
             if (candidate.isDirectory) return candidate

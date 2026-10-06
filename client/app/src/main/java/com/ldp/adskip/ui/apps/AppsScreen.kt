@@ -16,6 +16,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -32,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
@@ -40,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R
 import com.ldp.adskip.ui.components.EmptyState
+import com.ldp.adskip.ui.components.ErrorState
 import com.ldp.adskip.ui.components.PageHeader
 import com.ldp.adskip.ui.components.SkeletonList
 import com.ldp.adskip.ui.components.TwoLineRow
@@ -92,6 +96,21 @@ fun AppsScreen(viewModel: AppsViewModel = viewModel(factory = AppsViewModel.Fact
         )
 
         when {
+            // 错误优先于 loading 与空态：失败是可恢复态，必须给出重试入口；
+            // 排在 loading 之前是因为失败时 loading 已由 ViewModel 置回 false，
+            // 若顺序颠倒，将来任何忘记复位 loading 的改动都会把错误态挡住。
+            state.failed -> ErrorState(
+                icon = Icons.Default.Warning,
+                title = stringResource(R.string.error_generic_title),
+                subtitle = stringResource(R.string.error_generic_hint),
+                action = {
+                    Button(onClick = viewModel::load) {
+                        Text(stringResource(R.string.btn_retry))
+                    }
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+
             state.loading && state.items.isEmpty() -> SkeletonList(
                 modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm),
             )
@@ -101,8 +120,11 @@ fun AppsScreen(viewModel: AppsViewModel = viewModel(factory = AppsViewModel.Fact
                 title = stringResource(
                     if (state.items.isEmpty()) R.string.apps_empty else R.string.apps_no_match,
                 ),
+                // 走到这里必然「已加载完成」：loading 分支在上面，失败分支已在最前。
+                // 旧代码用 `items.isEmpty()` 区分两种副标题，导致加载完成的空列表显示
+                // 「正在加载应用列表…」——把加载文案放进了空态。
                 subtitle = stringResource(
-                    if (state.items.isEmpty()) R.string.apps_loading else R.string.apps_no_match_hint,
+                    if (state.items.isEmpty()) R.string.apps_empty_hint else R.string.apps_no_match_hint,
                 ),
                 // 空态不能只说「没有」还得给出路：搜索无结果时提供一个一键清除的入口，
                 // 否则用户要手动清空输入框并关掉筛选才能看到全部应用。
@@ -214,7 +236,7 @@ private fun AppRowItem(row: AppsViewModel.AppRow, onToggle: (String, Boolean) ->
 @Composable
 private fun subtitle(row: AppsViewModel.AppRow): String = when {
     row.disabled -> stringResource(R.string.apps_disabled)
-    row.count > 0 -> stringResource(R.string.apps_count, row.count)
+    row.count > 0 -> pluralStringResource(R.plurals.apps_count, row.count, row.count)
     else -> stringResource(R.string.apps_never)
 }
 

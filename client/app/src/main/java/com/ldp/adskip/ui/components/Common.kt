@@ -1,7 +1,11 @@
 package com.ldp.adskip.ui.components
 
 import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,6 +14,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -19,10 +26,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ldp.adskip.ui.theme.Spacing
+import com.ldp.adskip.ui.theme.UiSizes
 
 /**
  * 统一卡片容器。
@@ -33,7 +46,7 @@ import com.ldp.adskip.ui.theme.Spacing
 @Composable
 fun SectionCard(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(20.dp),
+    contentPadding: PaddingValues = PaddingValues(Spacing.lg),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
@@ -51,14 +64,20 @@ fun SectionCard(
     }
 }
 
-/** 卡片内的小节标题。 */
+/**
+ * 卡片内的小节标题。
+ *
+ * 带 `heading()` 语义：读屏可把标题当作导航锚点逐段跳读。此前全项目 0 处
+ * heading，视障用户只能从头线性听完一整屏 —— 而本应用的关键操作（开关关键词、
+ * 打开无障碍）都在长列表之后。
+ */
 @Composable
 fun SectionTitle(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurface,
-        modifier = modifier,
+        modifier = modifier.semantics { heading() },
     )
 }
 
@@ -67,15 +86,22 @@ fun SectionTitle(text: String, modifier: Modifier = Modifier) {
  *
  * 外壳只提供底部导航栏，页面标题由各页自己渲染——四个页面都自带 `Scaffold` + `TopAppBar`
  * 会在底部栏之上再叠一层顶栏，既重复又挤占首屏空间。
+ *
+ * 标题带 `heading()`，副标题不带：副标题是补充说明，列为标题会让读屏的
+ * 标题导航被噪声填满。
  */
 @Composable
 fun PageHeader(title: String, modifier: Modifier = Modifier, subtitle: String? = null) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = Spacing.md),
+            .padding(start = Spacing.lg, end = Spacing.lg, top = Spacing.lg, bottom = Spacing.md),
     ) {
-        Text(text = title, style = MaterialTheme.typography.headlineSmall)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.semantics { heading() },
+        )
         if (subtitle != null) {
             Text(
                 text = subtitle,
@@ -83,6 +109,80 @@ fun PageHeader(title: String, modifier: Modifier = Modifier, subtitle: String? =
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+/**
+ * 状态圆点：实心 = 就绪，空心环 = 未就绪。
+ *
+ * 用**颜色 + 形状双重编码**：只靠颜色区分对色觉障碍用户不可读，而这是判断
+ * 「功能是否生效」的唯一视觉线索，误判成本很高。
+ *
+ * 圆点自身对无障碍服务隐藏（`clearAndSetSemantics`）：状态结论由相邻文字承担，
+ * 否则读屏会念出一个没有信息的「圆点」。
+ */
+@Composable
+fun StatusDot(ready: Boolean, modifier: Modifier = Modifier) {
+    val color = if (ready) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.outline
+    }
+    Box(
+        modifier = modifier
+            .size(UiSizes.skeletonLineCompact)
+            .clip(CircleShape)
+            .then(if (ready) Modifier.background(color) else Modifier.border(Spacing.xs / 3, color, CircleShape))
+            .clearAndSetSemantics {},
+    )
+}
+
+/**
+ * 设置项：标题 + 可选副标题 + 当前取值 + 点击进入选择。
+ *
+ * 与 [LabeledSwitch] 的区别：那是布尔开/关，这是**从若干取值中选一个**。
+ * 单独成组件而不是复用开关：语言这类多选一用开关表达会丢信息
+ * （用户看不到当前选的是哪个），且「点整行」的语义是「打开选择」，不是「切换」。
+ *
+ * 整行是一个 `Role.Button` 语义节点，读屏会念「标题，当前取值，按钮」。
+ */
+@Composable
+fun LabeledChoiceRow(
+    title: String,
+    value: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(vertical = Spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(Modifier.weight(1f).padding(end = Spacing.lg)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -107,7 +207,12 @@ fun SectionHint(text: String, modifier: Modifier = Modifier) {
  */
 @Composable
 fun StatTile(value: String, label: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier
+            // 数值与标签是一个语义单元：「累计跳过 42 次」。
+            // 不合并时读屏会把它拆成两个孤立节点，用户听到「42」与「次」分离。
+            .semantics(mergeDescendants = true) {},
+    ) {
         Text(
             text = value,
             style = MaterialTheme.typography.headlineMedium,
@@ -126,7 +231,14 @@ fun StatTile(value: String, label: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** 设置项：标题 + 可选副标题 + 开关。整行可点，命中区域远大于开关本身。 */
+/**
+ * 设置项：标题 + 可选副标题 + 开关。整行可点，命中区域远大于开关本身。
+ *
+ * 无障碍：整行是**一个** `Role.Switch` 节点（`toggleable` + `mergeDescendants`），
+ * 标题与状态一次读完。此前标题与开关是两个独立节点，读屏需要先停在标题、
+ * 再移到开关才能操作，副标题还会被跳过。`Switch` 自身因此置为不可交互
+ * （`onCheckedChange = null`），避免出现第二个可点区域。
+ */
 @Composable
 fun LabeledSwitch(
     title: String,
@@ -137,7 +249,14 @@ fun LabeledSwitch(
     enabled: Boolean = true,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -159,7 +278,7 @@ fun LabeledSwitch(
                 )
             }
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+        Switch(checked = checked, onCheckedChange = null, enabled = enabled)
     }
 }
 
