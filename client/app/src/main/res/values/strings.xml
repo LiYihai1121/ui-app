@@ -53,7 +53,9 @@
     <!-- 测试 -->
     <string name="fake_ad_title">示例开屏广告</string>
     <string name="fake_ad_subtitle">如果无障碍服务已开启，此广告将被自动跳过</string>
-    <string name="fake_ad_countdown">%1$d 秒后自动关闭</string>
+    <plurals name="fake_ad_countdown">
+        <item quantity="other">%1$d 秒后自动关闭</item>
+    </plurals>
     <string name="fake_ad_skip">跳过 5</string>
     <string name="test_need_service">服务未开启，请先开启无障碍服务再测试</string>
     <string name="test_success">✅ 测试通过！广告已被自动跳过（%1$s）</string>
@@ -66,7 +68,9 @@
     <!-- 应用管理 -->
     <string name="apps_title">应用管理</string>
     <string name="apps_hint">关闭开关后，将不在该应用内自动跳过广告</string>
-    <string name="apps_count">已跳过 %1$d 次</string>
+    <plurals name="apps_count">
+        <item quantity="other">已跳过 %1$d 次</item>
+    </plurals>
     <string name="apps_never">从未跳过</string>
     <string name="apps_disabled">已禁用</string>
     <string name="apps_search_placeholder">搜索应用名或包名</string>
@@ -80,7 +84,9 @@
 
     <!-- 跳过日志 -->
     <string name="logs_title">跳过日志</string>
-    <string name="logs_subtitle">共 %1$d 条记录，仅保留最近 200 条</string>
+    <plurals name="logs_subtitle">
+        <item quantity="other">共 %1$d 条记录，仅保留最近 200 条</item>
+    </plurals>
     <string name="logs_empty">暂无记录</string>
     <string name="logs_empty_hint">服务开启后，每次自动跳过都会记录在这里</string>
     <string name="logs_clear">清空日志</string>
@@ -161,6 +167,8 @@
     <string name="permission_state_ready">已就绪</string>
     <string name="permission_state_needs_action">需要处理</string>
     <string name="permission_state_unknown">无法自动确认，请手动核对</string>
-    <string name="stats_total_short">累计跳过 %1$d 次</string>
+    <plurals name="stats_total_short">
+        <item quantity="other">累计跳过 %1$d 次</item>
+    </plurals>
     <string name="stats_recent_short">最近：%1$s</string>
 </resources>

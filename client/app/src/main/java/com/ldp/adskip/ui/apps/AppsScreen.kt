@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
@@ -235,7 +236,7 @@ private fun AppRowItem(row: AppsViewModel.AppRow, onToggle: (String, Boolean) ->
 @Composable
 private fun subtitle(row: AppsViewModel.AppRow): String = when {
     row.disabled -> stringResource(R.string.apps_disabled)
-    row.count > 0 -> stringResource(R.string.apps_count, row.count)
+    row.count > 0 -> pluralStringResource(R.plurals.apps_count, row.count, row.count)
     else -> stringResource(R.string.apps_never)
 }
 

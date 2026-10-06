@@ -40,7 +40,10 @@
     <!-- Test -->
     <string name="fake_ad_title">Sample Splash Ad</string>
     <string name="fake_ad_subtitle">If the accessibility service is enabled, this ad will be auto-skipped</string>
-    <string name="fake_ad_countdown">Auto-close in %1$d seconds</string>
+    <plurals name="fake_ad_countdown">
+        <item quantity="one">Auto-close in %1$d second</item>
+        <item quantity="other">Auto-close in %1$d seconds</item>
+    </plurals>
     <string name="fake_ad_skip">Skip 5</string>
     <string name="test_need_service">Service is off. Please enable accessibility service first</string>
     <string name="test_success">✅ Test passed! Ad was auto-skipped (%1$s)</string>
@@ -53,7 +56,10 @@
     <!-- App Manager -->
     <string name="apps_title">App Manager</string>
     <string name="apps_hint">Toggle off to stop auto-skipping in that app</string>
-    <string name="apps_count">Skipped %1$d times</string>
+    <plurals name="apps_count">
+        <item quantity="one">Skipped %1$d time</item>
+        <item quantity="other">Skipped %1$d times</item>
+    </plurals>
     <string name="apps_never">Never skipped</string>
     <string name="apps_disabled">Disabled</string>
     <string name="apps_search_placeholder">Search app name or package</string>
@@ -67,7 +73,10 @@
 
     <!-- Skip Logs -->
     <string name="logs_title">Skip Logs</string>
-    <string name="logs_subtitle">%1$d records, only the latest 200 are kept</string>
+    <plurals name="logs_subtitle">
+        <item quantity="one">%1$d record, only the latest 200 are kept</item>
+        <item quantity="other">%1$d records, only the latest 200 are kept</item>
+    </plurals>
     <string name="logs_empty">No records yet</string>
     <string name="logs_empty_hint">Once the service is on, every auto-skip will show up here</string>
     <string name="logs_clear">Clear Logs</string>
@@ -148,6 +157,9 @@
     <string name="permission_state_ready">Ready</string>
     <string name="permission_state_needs_action">Needs action</string>
     <string name="permission_state_unknown">Can\'t verify automatically — check manually</string>
-    <string name="stats_total_short">Skipped %1$d times</string>
+    <plurals name="stats_total_short">
+        <item quantity="one">Skipped %1$d time</item>
+        <item quantity="other">Skipped %1$d times</item>
+    </plurals>
     <string name="stats_recent_short">Last: %1$s</string>
 </resources>

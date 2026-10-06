@@ -30,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -86,7 +87,7 @@ fun LogsScreen(messenger: Messenger, viewModel: LogsViewModel = viewModel(factor
     Column(modifier = Modifier.fillMaxSize()) {
         PageHeader(
             title = stringResource(R.string.logs_title),
-            subtitle = stringResource(R.string.logs_subtitle, state.logs.size),
+            subtitle = pluralStringResource(R.plurals.logs_subtitle, state.logs.size, state.logs.size),
         )
 
         Row(

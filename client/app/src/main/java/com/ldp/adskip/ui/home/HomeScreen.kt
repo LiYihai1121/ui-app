@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -291,7 +292,7 @@ private fun StatsRow(state: HomeViewModel.UiState, lastAppLabel: String) {
     SectionCard(contentPadding = PaddingValues(horizontal = Spacing.xl, vertical = Spacing.lg)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = stringResource(R.string.stats_total_short, state.totalSkips),
+                text = pluralStringResource(R.plurals.stats_total_short, state.totalSkips, state.totalSkips),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -435,7 +436,7 @@ private fun FakeAdOverlay(countdown: Int, onSkipClicked: () -> Unit) {
             }
             Spacer(Modifier.height(Spacing.lg))
             Text(
-                text = stringResource(R.string.fake_ad_countdown, countdown),
+                text = pluralStringResource(R.plurals.fake_ad_countdown, countdown, countdown),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
