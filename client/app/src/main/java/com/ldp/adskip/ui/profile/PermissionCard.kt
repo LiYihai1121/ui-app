@@ -77,7 +77,10 @@ private fun PermissionRow(item: PermissionItem, onOpen: (key: String) -> Unit) {
         trailing = {
             if (showAction) {
                 TextButton(onClick = { onOpen(item.key) }) {
-                    Text(stringResource(R.string.settings_keepalive_open))
+                    // 刻意用短文案（permission_open）：本行给标题列 weight(1f)，
+                    // 按钮过长会把标题挤成单字符——实测 "Open Auto-start / Background
+                    // Manager" 让标题只剩约 210px（1080px 屏），读起来是 "B..."。
+                    Text(stringResource(R.string.permission_open))
                 }
             }
         },

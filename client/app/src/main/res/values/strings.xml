@@ -166,6 +166,9 @@
     <string name="permission_state_ready">已就绪</string>
     <string name="permission_state_needs_action">需要处理</string>
     <string name="permission_state_unknown">无法自动确认，请手动核对</string>
+    <!-- 权限清单行的按钮。必须短：该行用 weight(1f) 给标题列，长按钮会把标题挤成单字符
+         （实测过 "Open Auto-start / Background Manager" 让标题只剩约 1/5 宽度）。 -->
+    <string name="permission_open">去设置</string>
     <plurals name="stats_total_short">
         <item quantity="other">累计跳过 %1$d 次</item>
     </plurals>

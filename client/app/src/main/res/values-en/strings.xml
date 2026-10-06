@@ -171,6 +171,9 @@
     <string name="permission_state_ready">Ready</string>
     <string name="permission_state_needs_action">Needs action</string>
     <string name="permission_state_unknown">Can\'t verify automatically — check manually</string>
+    <!-- Keep this short: the row gives the title column weight(1f), so a long action label
+         squeezes the title down to a single character (measured). -->
+    <string name="permission_open">Open</string>
     <plurals name="stats_total_short">
         <item quantity="one">Skipped %1$d time</item>
         <item quantity="other">Skipped %1$d times</item>
