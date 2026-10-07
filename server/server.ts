@@ -6,6 +6,7 @@ import { handleApi } from "./src/api";
 import { withCors, errorJson } from "./src/utils/httpUtil";
 import { cleanupOldStats, flush } from "./src/storage/store";
 import { recordAccess } from "./src/middleware/accessLog";
+import { logger } from "./src/utils/logger";
 
 export interface StartOptions {
   port?: number;
@@ -50,9 +51,14 @@ export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
   const port = options.port ?? config.PORT;
   const host = options.host ?? config.HOST;
 
+  const tlsConfig = config.TLS_CERT && config.TLS_KEY
+    ? { tls: { cert: Bun.file(config.TLS_CERT), key: Bun.file(config.TLS_KEY) } }
+    : {};
+
   const server: Bun.Server<undefined> = Bun.serve({
     port,
     hostname: host,
+    ...tlsConfig,
     // 协议层拒绝超大请求体（chunked 无 content-length 时由 Bun 直接拦截，堵内存放大）
     maxRequestBodySize: config.MAX_BODY,
     async fetch(req) {
@@ -151,7 +157,7 @@ export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
 }
 
 function shutdown(signal: string): void {
-  console.log(`\n[AdSkip Server] 收到 ${signal}，正在优雅停机…`);
+  logger.info("shutdown", { signal });
   flush();
   server?.stop(true);
   process.exit(0);
@@ -159,16 +165,20 @@ function shutdown(signal: string): void {
 
 if (import.meta.main) {
   server = startServer();
-  console.log(`[AdSkip Server] 运行于 http://${server.hostname}:${server.port}`);
-  console.log(`[AdSkip Server] 落地页: http://${server.hostname}:${server.port}/`);
-  console.log(`[AdSkip Server] 管理后台: http://${server.hostname}:${server.port}/admin`);
+  const protocol = config.TLS_CERT && config.TLS_KEY ? "https" : "http";
+  logger.info("server_started", {
+    protocol,
+    hostname: server.hostname,
+    port: server.port,
+    adminToken: config.ADMIN_TOKEN ? "configured" : "MISSING",
+  });
   if (!config.ADMIN_TOKEN) {
-    console.warn("[AdSkip Server] 警告：未配置 ADMIN_TOKEN，写接口将返回 503");
+    logger.warn("admin_token_missing", { impact: "write_endpoints_503" });
   }
   for (const info of Object.values(os.networkInterfaces())) {
     for (const ni of info ?? []) {
       if (ni.family === "IPv4" && !ni.internal) {
-        console.log(`  LAN: http://${ni.address}:${server.port}`);
+        logger.info("lan_endpoint", { address: ni.address, port: server.port, protocol });
       }
     }
   }

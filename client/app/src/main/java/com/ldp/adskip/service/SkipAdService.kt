@@ -120,8 +120,42 @@ class SkipAdService : AccessibilityService() {
         }
     }
 
-    private var shutdownReceiverRegistered = false
-    private var snapshotReceiverRegistered = false
+    private class ReceiverHandle(
+        private val service: Context,
+        private val receiver: BroadcastReceiver,
+        private val action: String,
+    ) {
+        private var registered = false
+
+        fun register() {
+            if (registered) return
+            val filter = IntentFilter(action)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    service.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+                } else {
+                    @Suppress("DEPRECATION")
+                    service.registerReceiver(receiver, filter)
+                }
+                registered = true
+            } catch (e: Exception) {
+                LogRing.w("Service", "register $action receiver failed: ${e.message}")
+            }
+        }
+
+        fun unregister() {
+            if (!registered) return
+            registered = false
+            try {
+                service.unregisterReceiver(receiver)
+            } catch (e: IllegalArgumentException) {
+                // already unregistered
+            }
+        }
+    }
+
+    private val shutdownHandle = ReceiverHandle(this, shutdownReceiver, ACTION_REQUEST_SHUTDOWN)
+    private val snapshotHandle = ReceiverHandle(this, snapshotReceiver, ACTION_EXPORT_SNAPSHOT)
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -132,8 +166,8 @@ class SkipAdService : AccessibilityService() {
         syncClient = container.syncClient
         running = true
         AppEvents.setServiceRunning(true)
-        registerShutdownReceiver()
-        registerSnapshotReceiver()
+        shutdownHandle.register()
+        snapshotHandle.register()
         sendBroadcast(Intent(ACTION_SERVICE_STATE).setPackage(packageName).putExtra(EXTRA_RUNNING, true))
         LogRing.d("Service", "onServiceConnected")
     }
@@ -141,64 +175,12 @@ class SkipAdService : AccessibilityService() {
     override fun onDestroy() {
         running = false
         AppEvents.setServiceRunning(false)
-        unregisterShutdownReceiver()
-        unregisterSnapshotReceiver()
+        shutdownHandle.unregister()
+        snapshotHandle.unregister()
         sendBroadcast(Intent(ACTION_SERVICE_STATE).setPackage(packageName).putExtra(EXTRA_RUNNING, false))
         // 强制落盘待写统计
         if (::statsRepo.isInitialized) statsRepo.flush()
         super.onDestroy()
-    }
-
-    private fun registerShutdownReceiver() {
-        if (shutdownReceiverRegistered) return
-        val filter = IntentFilter(ACTION_REQUEST_SHUTDOWN)
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(shutdownReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-            } else {
-                @Suppress("DEPRECATION")
-                registerReceiver(shutdownReceiver, filter)
-            }
-            shutdownReceiverRegistered = true
-        } catch (e: Exception) {
-            LogRing.w("Service", "register shutdown receiver failed: ${e.message}")
-        }
-    }
-
-    private fun unregisterShutdownReceiver() {
-        if (!shutdownReceiverRegistered) return
-        shutdownReceiverRegistered = false
-        try {
-            unregisterReceiver(shutdownReceiver)
-        } catch (e: IllegalArgumentException) {
-            // 已注销，忽略
-        }
-    }
-
-    private fun registerSnapshotReceiver() {
-        if (snapshotReceiverRegistered) return
-        val filter = IntentFilter(ACTION_EXPORT_SNAPSHOT)
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(snapshotReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-            } else {
-                @Suppress("DEPRECATION")
-                registerReceiver(snapshotReceiver, filter)
-            }
-            snapshotReceiverRegistered = true
-        } catch (e: Exception) {
-            LogRing.w("Service", "register snapshot receiver failed: ${e.message}")
-        }
-    }
-
-    private fun unregisterSnapshotReceiver() {
-        if (!snapshotReceiverRegistered) return
-        snapshotReceiverRegistered = false
-        try {
-            unregisterReceiver(snapshotReceiver)
-        } catch (e: IllegalArgumentException) {
-            // 已注销，忽略
-        }
     }
 
     private fun exportSnapshot(context: Context) {

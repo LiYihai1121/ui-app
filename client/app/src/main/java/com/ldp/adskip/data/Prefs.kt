@@ -64,10 +64,7 @@ object Prefs {
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
             )
             spInstance = encrypted
-            if (!migrated) {
-                migrated = true
-                migrateLegacy(context, encrypted)
-            }
+            migrateLegacy(context, encrypted)
             return encrypted
         }
     }
@@ -79,16 +76,21 @@ object Prefs {
         for ((key, value) in legacy.all) {
             when (value) {
                 is String -> editor.putString(key, value)
+
                 is Int -> editor.putInt(key, value)
+
                 is Long -> editor.putLong(key, value)
+
                 is Boolean -> editor.putBoolean(key, value)
-                is Set<*> -> editor.putStringSet(key, value as Set<String>)
+
+                else -> {
+                    @Suppress("UNCHECKED_CAST")
+                    editor.putStringSet(key, value as Set<String>)
+                }
             }
         }
-        // commit() 同步落盘：先确保加密副本持久化，再清空明文源，避免中途失败丢数据
-        if (editor.commit()) {
-            legacy.edit().clear().commit()
-        }
+        editor.apply()
+        runCatching { context.deleteSharedPreferences(LEGACY_SP_NAME) }
     }
 
     // ---------- 全局规则 ----------
