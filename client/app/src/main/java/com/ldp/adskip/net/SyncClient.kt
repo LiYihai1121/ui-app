@@ -7,12 +7,14 @@ import com.ldp.adskip.core.AppExecutors
 import com.ldp.adskip.core.LogRing
 import com.ldp.adskip.data.Prefs
 import com.ldp.adskip.data.RulesRepository
+import okhttp3.CertificatePinner
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.BufferedWriter
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
+import java.util.concurrent.TimeUnit
 
 /**
  * 网络层：云端规则同步与跳过上报。
@@ -21,8 +23,7 @@ import java.net.URL
  * - v1 协议：If-None-Match / 304、deviceId 限频维度、批量补报
  * - 经 AppExecutors.io 线程执行（调用方传入 executor）
  * - 上报静默失败：服务端不在线是正常场景，不影响本地功能
- *
- * 仍为零第三方依赖（HttpURLConnection + org.json）。
+ * - OkHttp 客户端（连接池、Gzip、证书锁定、连接复用）
  */
 object SyncClient {
 
@@ -35,6 +36,28 @@ object SyncClient {
     fun serverUrl(context: Context): String = Prefs.getServerUrl(context)
     fun saveServerUrl(context: Context, url: String) = Prefs.saveServerUrl(context, url)
     fun lastSyncAt(context: Context): Long = Prefs.getLastSyncAt(context)
+
+    // OkHttp 单例（线程安全）
+    private val httpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
+            .readTimeout(TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
+            .writeTimeout(TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
+            .certificatePinner(
+                CertificatePinner.Builder()
+                    // 锁定服务器证书公钥（SHA-256）；部署时替换为实际证书指纹
+                    // 格式：CertificatePinner.pin("sha256/AAAAAAAA...")
+                    .build(),
+            )
+            .build()
+    }
+
+    // 测试用客户端（禁用证书锁定，允许 MockWebServer 自签名证书）
+    internal var testClient: OkHttpClient? = null
+
+    private fun client(): OkHttpClient = testClient ?: httpClient
+
+    // ---------- 规则解析 ----------
 
     private data class RulesParseResult(
         val keywords: List<String>?,
@@ -99,6 +122,8 @@ object SyncClient {
 
         return RulesParseResult(keywords, viewIds, selectors, pkgRules, schemaVersion, hash, version)
     }
+
+    // ---------- 同步/上报 ----------
 
     /**
      * 拉取云端规则并落地（v1 协议：带 If-None-Match）。
@@ -216,7 +241,7 @@ object SyncClient {
             }
             ok
         } catch (e: Exception) {
-            com.ldp.adskip.core.LogRing.w("Sync", "syncRulesSilently failed: ${e.message}")
+            LogRing.w("Sync", "syncRulesSilently failed: ${e.message}")
             false
         }
     }
@@ -225,34 +250,24 @@ object SyncClient {
 
     /** GET 带 If-None-Match，返回 (body, notModified) —— 同步阻塞版 */
     private fun httpGetWithETagBlocking(url: String, etag: String): Pair<String, Boolean> {
-        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
-            connectTimeout = TIMEOUT_MS
-            readTimeout = TIMEOUT_MS
-            requestMethod = "GET"
-            if (etag.isNotEmpty()) setRequestProperty("If-None-Match", etag)
-        }
-        try {
-            if (conn.responseCode == 304) return Pair("", true)
-            if (conn.responseCode !in 200..299) throw Exception("HTTP " + conn.responseCode)
-            return Pair(conn.inputStream.bufferedReader().use { it.readText() }, false)
-        } finally {
-            conn.disconnect()
+        val request = Request.Builder()
+            .url(url)
+            .header("If-None-Match", etag)
+            .build()
+        client().newCall(request).execute().use { response ->
+            if (response.code == 304) return Pair("", true)
+            if (response.code !in 200..299) throw Exception("HTTP " + response.code)
+            return Pair(response.body!!.string(), false)
         }
     }
 
     private fun httpPost(url: String, body: String) {
-        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
-            connectTimeout = 3000
-            readTimeout = 3000
-            requestMethod = "POST"
-            setRequestProperty("Content-Type", "application/json; charset=utf-8")
-            doOutput = true
-        }
-        try {
-            BufferedWriter(OutputStreamWriter(conn.outputStream, "UTF-8")).use { it.write(body) }
-            conn.responseCode // 触发发送
-        } finally {
-            conn.disconnect()
+        val request = Request.Builder()
+            .url(url)
+            .post(body.toRequestBody("application/json; charset=utf-8".toMediaType()))
+            .build()
+        client().newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw Exception("HTTP " + response.code)
         }
     }
 
