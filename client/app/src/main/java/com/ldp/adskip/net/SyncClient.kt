@@ -3,6 +3,8 @@ package com.ldp.adskip.net
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import com.ldp.adskip.core.AppExecutors
+import com.ldp.adskip.core.LogRing
 import com.ldp.adskip.data.Prefs
 import com.ldp.adskip.data.RulesRepository
 import org.json.JSONArray
@@ -26,12 +28,77 @@ object SyncClient {
 
     private const val TIMEOUT_MS = 6000
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val executors by lazy { AppExecutors() }
 
     // ---------- 配置 ----------
 
     fun serverUrl(context: Context): String = Prefs.getServerUrl(context)
     fun saveServerUrl(context: Context, url: String) = Prefs.saveServerUrl(context, url)
     fun lastSyncAt(context: Context): Long = Prefs.getLastSyncAt(context)
+
+    private data class RulesParseResult(
+        val keywords: List<String>?,
+        val viewIds: List<String>?,
+        val selectors: List<String>?,
+        val pkgRules: Map<String, RulesRepository.PkgRule>,
+        val schemaVersion: Int,
+        val hash: String,
+        val version: Int,
+    )
+
+    /** v1/v0 规则响应统一解析；两端形状的差异在此收敛。 */
+    private fun parseRulesResponse(body: String): RulesParseResult {
+        val json = JSONObject(body)
+        val schemaVersion = json.optInt("schemaVersion", 1)
+        val hash = json.optString("hash", "")
+        val version = json.optInt("version", 0)
+
+        val rulesObj = json.optJSONObject("rules")
+        val keywords: List<String>?
+        val viewIds: List<String>?
+        val selectors: List<String>?
+        val pkgRules = mutableMapOf<String, RulesRepository.PkgRule>()
+
+        if (rulesObj != null) {
+            keywords = rulesObj.optJSONArray("globalKeywords")?.toStringList()
+            viewIds = rulesObj.optJSONArray("globalViewIds")?.toStringList()
+            selectors = rulesObj.optJSONArray("globalSelectors")?.toStringList()
+            val apps = rulesObj.optJSONObject("apps")
+            if (apps != null) {
+                val keys = apps.keys()
+                while (keys.hasNext()) {
+                    val pkg = keys.next()
+                    val rule = apps.optJSONObject(pkg) ?: continue
+                    pkgRules[pkg] = RulesRepository.PkgRule(
+                        keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
+                        viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
+                        selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
+                        disabled = rule.optBoolean("disabled", false),
+                    )
+                }
+            }
+        } else {
+            keywords = json.optJSONArray("keywords")?.toStringList()
+            viewIds = json.optJSONArray("viewIds")?.toStringList()
+            selectors = json.optJSONArray("selectors")?.toStringList()
+            val packages = json.optJSONObject("packages")
+            if (packages != null) {
+                val keys = packages.keys()
+                while (keys.hasNext()) {
+                    val pkg = keys.next()
+                    val rule = packages.optJSONObject(pkg) ?: continue
+                    pkgRules[pkg] = RulesRepository.PkgRule(
+                        keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
+                        viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
+                        selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
+                        disabled = rule.optBoolean("disabled", false),
+                    )
+                }
+            }
+        }
+
+        return RulesParseResult(keywords, viewIds, selectors, pkgRules, schemaVersion, hash, version)
+    }
 
     /**
      * 拉取云端规则并落地（v1 协议：带 If-None-Match）。
@@ -43,7 +110,7 @@ object SyncClient {
         rulesRepo: RulesRepository,
         onResult: (Boolean, String) -> Unit,
     ) {
-        Thread {
+        executors.io.execute {
             val result = try {
                 val base = serverUrl.trimEnd('/')
                 val knownHash = Prefs.getRulesHash(context)
@@ -54,106 +121,50 @@ object SyncClient {
                     Prefs.setLastSyncAt(context, System.currentTimeMillis())
                     Pair(true, "规则已是最新（304 Not Modified）")
                 } else {
-                    val json = JSONObject(body)
-                    val schemaVersion = json.optInt("schemaVersion", 1)
-                    val hash = json.optString("hash", "")
-
-                    // v1 格式
-                    val rulesObj = json.optJSONObject("rules")
-                    val keywords: List<String>?
-                    val viewIds: List<String>?
-                    val selectors: List<String>?
-                    val pkgRules = mutableMapOf<String, RulesRepository.PkgRule>()
-
-                    if (rulesObj != null) {
-                        keywords = rulesObj.optJSONArray("globalKeywords")?.toStringList()
-                        viewIds = rulesObj.optJSONArray("globalViewIds")?.toStringList()
-                        selectors = rulesObj.optJSONArray("globalSelectors")?.toStringList()
-                        val apps = rulesObj.optJSONObject("apps")
-                        if (apps != null) {
-                            val keys = apps.keys()
-                            while (keys.hasNext()) {
-                                val pkg = keys.next()
-                                val rule = apps.optJSONObject(pkg) ?: continue
-                                pkgRules[pkg] = RulesRepository.PkgRule(
-                                    keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
-                                    viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
-                                    selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
-                                    disabled = rule.optBoolean("disabled", false),
-                                )
-                            }
-                        }
-                    } else {
-                        // v0 回退：读兼容字段
-                        keywords = json.optJSONArray("keywords")?.toStringList()
-                        viewIds = json.optJSONArray("viewIds")?.toStringList()
-                        selectors = json.optJSONArray("selectors")?.toStringList()
-                        val packages = json.optJSONObject("packages")
-                        if (packages != null) {
-                            val keys = packages.keys()
-                            while (keys.hasNext()) {
-                                val pkg = keys.next()
-                                val rule = packages.optJSONObject(pkg) ?: continue
-                                pkgRules[pkg] = RulesRepository.PkgRule(
-                                    keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
-                                    viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
-                                    selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
-                                    disabled = rule.optBoolean("disabled", false),
-                                )
-                            }
-                        }
-                    }
-
-                    val ok = rulesRepo.applyCloudRules(keywords, viewIds, pkgRules, schemaVersion, selectors)
+                    val parsed = parseRulesResponse(body)
+                    val ok = rulesRepo.applyCloudRules(
+                        parsed.keywords,
+                        parsed.viewIds,
+                        parsed.pkgRules,
+                        parsed.schemaVersion,
+                        parsed.selectors,
+                    )
                     if (!ok) {
                         Pair(false, "规则协议版本过低，请升级客户端")
                     } else {
-                        Prefs.setRulesHash(context, hash)
+                        Prefs.setRulesHash(context, parsed.hash)
                         Prefs.setLastSyncAt(context, System.currentTimeMillis())
-                        val version = json.optInt("version", 0)
-                        Pair(true, "同步成功：规则 v$version，含 ${pkgRules.size} 个应用专属规则")
+                        Pair(true, "同步成功：规则 v${parsed.version}，含 ${parsed.pkgRules.size} 个应用专属规则")
                     }
                 }
             } catch (e: Exception) {
                 Pair(false, "同步失败：" + (e.message ?: "网络错误"))
             }
             mainHandler.post { onResult(result.first, result.second) }
-        }.start()
+        }
     }
 
-    /** 静默上报一次跳过（v1 批量格式）。 */
+    /** 静默上报一次跳过（无 deviceId，仅保留以兼容旧调用方；优先使用带 deviceId 的重载）。 */
+    @Deprecated("Use reportSkip(serverUrl, pkg, label, deviceId)")
     fun reportSkip(serverUrl: String, pkg: String, label: String) {
         if (serverUrl.isBlank()) return
-        Thread {
+        executors.io.execute {
             try {
                 val base = serverUrl.trimEnd('/')
-                // v1 批量上报，回退 v0 单条
-                val payload = JSONObject()
-                val event = JSONObject()
-                event.put("pkg", pkg)
-                event.put("channel", "text")
-                event.put("ts", System.currentTimeMillis())
-                payload.put("deviceId", "pending") // deviceId 在有 context 时设置
-                payload.put("events", JSONArray().put(event))
-                try {
-                    httpPost("$base/api/v1/reports/batch", payload.toString())
-                } catch (e: Exception) {
-                    // 回退 v0
-                    val v0Payload = JSONObject()
-                    v0Payload.put("pkg", pkg)
-                    v0Payload.put("label", label)
-                    httpPost("$base/api/skip", v0Payload.toString())
-                }
+                val v0Payload = JSONObject()
+                v0Payload.put("pkg", pkg)
+                v0Payload.put("label", label)
+                httpPost("$base/api/skip", v0Payload.toString())
             } catch (e: Exception) {
                 // 静默失败
             }
-        }.start()
+        }
     }
 
     /** 静默上报一次跳过（带 deviceId，v1 批量格式）。 */
     fun reportSkip(serverUrl: String, pkg: String, label: String, deviceId: String) {
         if (serverUrl.isBlank()) return
-        Thread {
+        executors.io.execute {
             try {
                 val base = serverUrl.trimEnd('/')
                 val payload = JSONObject()
@@ -175,7 +186,7 @@ object SyncClient {
             } catch (e: Exception) {
                 // 静默失败
             }
-        }.start()
+        }
     }
 
     /**
@@ -191,57 +202,16 @@ object SyncClient {
                 Prefs.setLastSyncAt(context, System.currentTimeMillis())
                 return true
             }
-            val json = JSONObject(body)
-            val schemaVersion = json.optInt("schemaVersion", 1)
-            val hash = json.optString("hash", "")
-
-            val rulesObj = json.optJSONObject("rules")
-            val keywords: List<String>?
-            val viewIds: List<String>?
-            val selectors: List<String>?
-            val pkgRules = mutableMapOf<String, RulesRepository.PkgRule>()
-
-            if (rulesObj != null) {
-                keywords = rulesObj.optJSONArray("globalKeywords")?.toStringList()
-                viewIds = rulesObj.optJSONArray("globalViewIds")?.toStringList()
-                selectors = rulesObj.optJSONArray("globalSelectors")?.toStringList()
-                val apps = rulesObj.optJSONObject("apps")
-                if (apps != null) {
-                    val keys = apps.keys()
-                    while (keys.hasNext()) {
-                        val pkg = keys.next()
-                        val rule = apps.optJSONObject(pkg) ?: continue
-                        pkgRules[pkg] = RulesRepository.PkgRule(
-                            keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
-                            viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
-                            selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
-                            disabled = rule.optBoolean("disabled", false),
-                        )
-                    }
-                }
-            } else {
-                keywords = json.optJSONArray("keywords")?.toStringList()
-                viewIds = json.optJSONArray("viewIds")?.toStringList()
-                selectors = json.optJSONArray("selectors")?.toStringList()
-                val packages = json.optJSONObject("packages")
-                if (packages != null) {
-                    val keys = packages.keys()
-                    while (keys.hasNext()) {
-                        val pkg = keys.next()
-                        val rule = packages.optJSONObject(pkg) ?: continue
-                        pkgRules[pkg] = RulesRepository.PkgRule(
-                            keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
-                            viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
-                            selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
-                            disabled = rule.optBoolean("disabled", false),
-                        )
-                    }
-                }
-            }
-
-            val ok = rulesRepo.applyCloudRules(keywords, viewIds, pkgRules, schemaVersion, selectors)
+            val parsed = parseRulesResponse(body)
+            val ok = rulesRepo.applyCloudRules(
+                parsed.keywords,
+                parsed.viewIds,
+                parsed.pkgRules,
+                parsed.schemaVersion,
+                parsed.selectors,
+            )
             if (ok) {
-                Prefs.setRulesHash(context, hash)
+                Prefs.setRulesHash(context, parsed.hash)
                 Prefs.setLastSyncAt(context, System.currentTimeMillis())
             }
             ok

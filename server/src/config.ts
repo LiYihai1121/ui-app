@@ -20,6 +20,8 @@ export interface Config {
   STATS_DIR_CLEANUP_ON_START: boolean;
   BACKUP_DIR: string;
   BACKUP_COUNT: number;
+  /** 统计分片保留的备份份数（rotateStatsBackup 轮转） */
+  STATS_BACKUP_COUNT: number;
   ADMIN_TOKEN: string;
   STATS_READ_AUTH: boolean;
   CORS_ORIGINS: string[] | null;
@@ -56,6 +58,7 @@ export const config: Config = {
   STATS_DIR_CLEANUP_ON_START: true,
   BACKUP_DIR: path.join(ROOT, "data", "backups"),
   BACKUP_COUNT: 5,
+  STATS_BACKUP_COUNT: 5,
   ADMIN_TOKEN: process.env.ADMIN_TOKEN ?? "",
   STATS_READ_AUTH: false,
   CORS_ORIGINS: process.env.CORS_ORIGINS

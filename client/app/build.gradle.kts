@@ -96,5 +96,8 @@ dependencies {
     // 单 Activity 导航
     implementation(libs.androidx.navigation.compose)
 
+    // 安全存储（EncryptedSharedPreferences）
+    implementation(libs.androidx.security.crypto)
+
     testImplementation(libs.junit)
 }
