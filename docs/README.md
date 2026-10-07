@@ -19,6 +19,7 @@ docs/
 │   ├── ROADMAP-ADS.md             里程碑 / 周次 / 出口条件
 │   ├── DESIGN-PHASE1-SELECTOR.md  L1 技术设计与步骤 A–F
 │   ├── DESIGN-BUILD-FRAMEWORK.md  构建框架工程化（version catalog / build-logic / 模块拆分）
+│   ├── FOLLOW-UP.md               安全加固与技术补充计划（已修复清单 / 待修复 / 里程碑）
 │   └── RELEASE-HISTORY.md         发布链路（tag / 提交 / Release / 制品）
 └── diagrams/          架构图（adskip-architecture.json 源 + .html 渲染）
 ```
@@ -37,6 +38,7 @@ docs/
 | 了解构建框架演进方案（version catalog / 约定插件 / 模块拆分） | [planning/DESIGN-BUILD-FRAMEWORK.md](planning/DESIGN-BUILD-FRAMEWORK.md) |
 | 配置本机开发环境 | [development/DEV-ENVIRONMENT.md](development/DEV-ENVIRONMENT.md) |
 | 查某版本发布到哪个提交、哪个 tag | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
+| 查安全加固/技术短板跟进计划（已修复清单 / 待修复 / 里程碑） | [planning/FOLLOW-UP.md](planning/FOLLOW-UP.md) |
 | 了解提交/分支/发布/回滚规范 | [CONTRIBUTING.md](../CONTRIBUTING.md)（执行摘要见 [AGENTS.md](../AGENTS.md)） |
 | 多个 Agent / 多分支并行开发时的隔离与协作 | [development/AGENT-WORKFLOW.md](development/AGENT-WORKFLOW.md) |
 | 开发或维护 Agent 技能（SKILL.md 格式 / 校验 / 登记） | [../skills/README.md](../skills/README.md) |
