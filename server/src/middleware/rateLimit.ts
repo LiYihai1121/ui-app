@@ -68,14 +68,28 @@ export function probeReportIp(req: Request, remoteIp: string): boolean {
   );
 }
 
-// 空闲桶 5 分钟后回收（与 Node 版一致）
-const gcTimer = setInterval(() => {
-  const now = Date.now();
-  for (const [k, b] of buckets) {
-    if (now - b.last > 5 * 60 * 1000) buckets.delete(k);
-  }
-}, 60000);
-gcTimer.unref?.();
+// 空闲桶 5 分钟后回收（与 Node 版一致）。
+// 不用 setInterval：每轮结束才排下一轮（Bun 优雅停机时清理钩子可以立即停止），
+// 避免进程退出瞬间被定时器拖住或误触发。
+let gcTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleGc(): void {
+  gcTimer = setTimeout(() => {
+    const now = Date.now();
+    for (const [k, b] of buckets) {
+      if (now - b.last > 5 * 60 * 1000) buckets.delete(k);
+    }
+    scheduleGc();
+  }, 60000);
+  gcTimer.unref?.();
+}
+scheduleGc();
+
+/** 停止后台 GC 定时器（优雅停机 / 测试收尾调用） */
+export function stopBackgroundTimers(): void {
+  if (gcTimer) clearTimeout(gcTimer);
+  gcTimer = null;
+}
 
 /** 仅供测试：清空限流状态 */
 export function _resetRateLimitForTests(): void {

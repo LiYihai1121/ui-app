@@ -4,7 +4,9 @@ import * as os from "node:os";
 import { config } from "./src/config";
 import { handleApi } from "./src/api";
 import { withCors, errorJson, applySecurityHeaders, applyAdminContentSecurityPolicy } from "./src/utils/httpUtil";
-import { cleanupOldStats, flush } from "./src/storage/store";
+import { logger } from "./src/utils/logger";
+import { cleanupOldStats, flush, stopBackgroundTimers as stopStoreTimers } from "./src/storage/store";
+import { stopBackgroundTimers as stopRateLimitTimers } from "./src/middleware/rateLimit";
 import { recordAccess } from "./src/middleware/accessLog";
 
 export interface StartOptions {
@@ -13,6 +15,8 @@ export interface StartOptions {
   adminToken?: string;
   apkFile?: string;
   dataDir?: string;
+  /** TLS 证书/私钥 PEM 文件路径；两者同时给定时启用 HTTPS，否则回退 HTTP */
+  tls?: { certFile?: string; keyFile?: string };
 }
 
 /**
@@ -50,11 +54,26 @@ export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
   const port = options.port ?? config.PORT;
   const host = options.host ?? config.HOST;
 
+  // TLS：证书与私钥同时给定时启用 HTTPS；否则退化为 HTTP。
+  // 部署指引见 docs/development/DEV-ENVIRONMENT.md 与 server 根 README 注释。
+  const certFile = options.tls?.certFile ?? config.TLS_CERT_FILE;
+  const keyFile = options.tls?.keyFile ?? config.TLS_KEY_FILE;
+  const tlsEnabled = certFile !== "" && keyFile !== "";
+  if (tlsEnabled) {
+    const missing = [certFile, keyFile].filter((f) => !fs.existsSync(f));
+    if (missing.length > 0) {
+      throw new Error(`TLS 文件缺失：${missing.join(", ")}（同时配置 TLS_CERT_FILE 与 TLS_KEY_FILE 才启用 HTTPS）`);
+    }
+  }
+
   const server: Bun.Server<undefined> = Bun.serve({
     port,
     hostname: host,
     // 协议层拒绝超大请求体（chunked 无 content-length 时由 Bun 直接拦截，堵内存放大）
     maxRequestBodySize: config.MAX_BODY,
+    tls: tlsEnabled
+      ? { cert: Bun.file(certFile), key: Bun.file(keyFile) }
+      : undefined,
     async fetch(req) {
       const started = performance.now();
       const url = new URL(req.url);
@@ -158,28 +177,44 @@ export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
 }
 
 function shutdown(signal: string): void {
-  console.log(`\n[AdSkip Server] 收到 ${signal}，正在优雅停机…`);
+  logger.info(`收到 ${signal}，正在优雅停机…`, { signal });
   flush();
   server?.stop(true);
+  // 退出前显式停止后台定时器，避免进程被 GC/清理任务拖住（FOLLOW-UP #7 setInterval 修复）
+  stopStoreTimers();
+  stopRateLimitTimers();
   process.exit(0);
 }
 
 if (import.meta.main) {
   server = startServer();
-  console.log(`[AdSkip Server] 运行于 http://${server.hostname}:${server.port}`);
-  console.log(`[AdSkip Server] 落地页: http://${server.hostname}:${server.port}/`);
-  console.log(`[AdSkip Server] 管理后台: http://${server.hostname}:${server.port}/admin`);
+  const scheme = tlsConfigured() ? "https" : "http";
+  if (server) {
+    logger.info(`运行于 ${scheme}://${server.hostname}:${server.port}`, {
+      scheme,
+      host: server.hostname,
+      port: server.port,
+    });
+  }
+  const displayBase = `${scheme}://${server?.hostname ?? config.HOST}:${server?.port ?? config.PORT}`;
+  logger.info(`落地页: ${displayBase}/`);
+  logger.info(`管理后台: ${displayBase}/admin`);
   if (!config.ADMIN_TOKEN) {
-    console.warn("[AdSkip Server] 警告：未配置 ADMIN_TOKEN，写接口将返回 503");
+    logger.warn("未配置 ADMIN_TOKEN，写接口将返回 503", { hint: "设置环境变量 ADMIN_TOKEN 后重启" });
   }
   for (const info of Object.values(os.networkInterfaces())) {
     for (const ni of info ?? []) {
       if (ni.family === "IPv4" && !ni.internal) {
-        console.log(`  LAN: http://${ni.address}:${server.port}`);
+        logger.info(`LAN: ${scheme}://${ni.address}:${server?.port}`);
       }
     }
   }
 
   process.on("SIGTERM", () => shutdown("SIGTERM"));
   process.on("SIGINT", () => shutdown("SIGINT"));
+}
+
+/** 基于配置判断当前是否启用 TLS（两个文件都设置才启用，与 startServer 一致） */
+function tlsConfigured(): boolean {
+  return config.TLS_CERT_FILE !== "" && config.TLS_KEY_FILE !== "";
 }

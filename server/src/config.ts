@@ -28,6 +28,9 @@ export interface Config {
   RATE_LIMIT_READ_PER_MIN: number;
   RATE_LIMIT_REPORT_PER_MIN: number;
   RATE_LIMIT_WRITE_PER_MIN: number;
+  /** HTTPS 证书/私钥文件路径（TLS 证书链 PEM）；两者同时配置才启用 TLS，否则退化为 HTTP */
+  TLS_CERT_FILE: string;
+  TLS_KEY_FILE: string;
   SCHEMA_VERSION: number;
   SCHEMA_VERSION_MIN: number;
   MAX_KEYWORD_LEN: number;
@@ -67,6 +70,8 @@ export const config: Config = {
   RATE_LIMIT_READ_PER_MIN: 120,
   RATE_LIMIT_REPORT_PER_MIN: 30,
   RATE_LIMIT_WRITE_PER_MIN: 10,
+  TLS_CERT_FILE: process.env.TLS_CERT_FILE ?? "",
+  TLS_KEY_FILE: process.env.TLS_KEY_FILE ?? "",
   // 2 = 载荷含选择器通道（rules.globalSelectors / apps.*.selectors）；
   // MIN 保持 1，旧客户端（不识 selectors）对 schema 2 载荷行为不变。
   SCHEMA_VERSION: 2,

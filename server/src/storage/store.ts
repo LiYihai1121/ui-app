@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as crypto from "node:crypto";
 import { config } from "../config";
+import { logger } from "../utils/logger";
 import type {
   AppStat,
   CleanedRules,
@@ -354,9 +355,24 @@ export function cleanupOldStats(): void {
   }
 }
 
-// 过期分片定期清理：启动清理只跑一次，长驻进程需要周期执行
-const statsCleanupTimer = setInterval(cleanupOldStats, 6 * 60 * 60 * 1000);
-statsCleanupTimer.unref?.();
+// 过期分片定期清理：启动清理只跑一次，长驻进程需要周期执行。
+// 不用 setInterval：递归 setTimeout 便于优雅停机时显式停止（见 stopBackgroundTimers）。
+let statsCleanupTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleStatsCleanup(): void {
+  statsCleanupTimer = setTimeout(() => {
+    cleanupOldStats();
+    scheduleStatsCleanup();
+  }, 6 * 60 * 60 * 1000);
+  statsCleanupTimer.unref?.();
+}
+scheduleStatsCleanup();
+
+/** 停止后台清理定时器（server 优雅停机调用；测试收尾可用以免悬挂） */
+export function stopBackgroundTimers(): void {
+  if (statsCleanupTimer) clearTimeout(statsCleanupTimer);
+  statsCleanupTimer = null;
+}
 
 /** 仅供测试：清空汇总缓存 */
 export function _resetSummaryCacheForTests(): void {
@@ -389,7 +405,7 @@ function flushDay(day: string): void {
 
 export function flush(): void {
   for (const day of statsCache.keys()) flushDay(day);
-  console.log("[store] all stats flushed");
+  logger.info("all stats flushed");
 }
 
 export const _internal = { computeHash, listStatsDays };

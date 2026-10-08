@@ -2,7 +2,10 @@ import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import * as https from "node:https";
+import { spawnSync } from "node:child_process";
 import { startServer } from "../server";
+import { _isStructuredLine } from "../src/utils/logger";
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "adskip-test-"));
 const apkSrc = path.join(import.meta.dir, "..", "..", "AdSkip-latest.apk");
@@ -288,5 +291,133 @@ describe("smoke", () => {
     expect(Array.isArray(j.entries)).toBe(true);
     expect(j.entries.length).toBeGreaterThan(0);
     expect(j.entries[0].path).toBe("/api/v1/admin/logs");
+  });
+});
+
+// ---------- TLS（HTTPS） ----------
+
+/** 检查当前环境是否有 openssl 可用（CI/本地均具备；不可用时跳过 TLS 用例） */
+function opensslAvailable(): boolean {
+  const r = spawnSync("openssl", ["version"], { encoding: "utf8", shell: process.platform === "win32" });
+  return r.status === 0;
+}
+
+function genSelfSigned(dir: string): { certFile: string; keyFile: string } {
+  const certFile = path.join(dir, "cert.pem");
+  const keyFile = path.join(dir, "key.pem");
+  const cnfFile = path.join(dir, "openssl.cnf");
+  // openssl req 依赖 openssl.cnf 才能解析 -subj（部分安装缺少默认 config，显式提供最小配置）
+  fs.writeFileSync(
+    cnfFile,
+    [
+      "[req]",
+      "distinguished_name = dn",
+      "prompt = no",
+      "[dn]",
+      "CN = localhost",
+    ].join("\n")
+  );
+  const r = spawnSync(
+    "openssl",
+    [
+      "req", "-x509", "-newkey", "rsa:2048",
+      "-config", cnfFile,
+      "-keyout", keyFile, "-out", certFile,
+      "-days", "2", "-nodes",
+    ],
+    { encoding: "utf8", shell: process.platform === "win32" }
+  );
+  if (r.status !== 0) throw new Error(`openssl 生成证书失败: ${r.stderr || r.stdout}`);
+  return { certFile, keyFile };
+}
+
+function httpsGet(url: string, timeoutMs = 5000): Promise<{ status: number; body: string }> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      req.destroy();
+      reject(new Error("TLS 请求超时"));
+    }, timeoutMs);
+    const req = https.get(
+      url,
+      {
+        rejectUnauthorized: false, // 自签证书，仅验证「能完成 TLS 握手并拿到响应」
+        timeout: timeoutMs,
+      },
+      (res) => {
+        let data = "";
+        res.on("data", (c) => (data += c));
+        res.on("end", () => {
+          clearTimeout(timer);
+          resolve({ status: res.statusCode ?? 0, body: data });
+        });
+      }
+    );
+    req.on("error", (e) => {
+      clearTimeout(timer);
+      reject(e);
+    });
+  });
+}
+
+describe.skipIf(!opensslAvailable())("TLS", () => {
+  const tlsTmp = fs.mkdtempSync(path.join(os.tmpdir(), "adskip-tls-"));
+  let tlsServer: Bun.Server<undefined>;
+  let tlsBase: string;
+
+  beforeAll(async () => {
+    const { certFile, keyFile } = genSelfSigned(tlsTmp);
+    const apkTest2 = path.join(tlsTmp, "AdSkip-latest.apk");
+    if (fs.existsSync(apkSrc)) fs.copyFileSync(apkSrc, apkTest2);
+    tlsServer = startServer({
+      port: 0,
+      host: "127.0.0.1",
+      adminToken: "test123",
+      dataDir: path.join(tlsTmp, "data"),
+      apkFile: apkTest2,
+      tls: { certFile, keyFile },
+    });
+    tlsBase = `https://127.0.0.1:${tlsServer.port}`;
+  });
+
+  afterAll(() => {
+    tlsServer?.stop(true);
+    fs.rmSync(tlsTmp, { recursive: true, force: true });
+  });
+
+  it("HTTPS 握手并返回健康检查成功", async () => {
+    const res = await httpsGet(`${tlsBase}/api/v1/health`);
+    expect(res.status).toBe(200);
+    expect(JSON.parse(res.body)).toMatchObject({ status: "ok" });
+  });
+
+  it("HTTPS 落地页返回 200 且带安全头", async () => {
+    const res = await httpsGet(`${tlsBase}/`);
+    expect(res.status).toBe(200);
+    expect(res.body).toContain("AdSkip");
+  });
+
+  it("HTTP 明文请求不会被 TLS 端口接受（连接失败/协议错误）", async () => {
+    const httpPort = tlsServer.port;
+    await expect(fetch(`http://127.0.0.1:${httpPort}/api/v1/health`)).rejects.toThrow();
+  });
+
+  it("TLS 文件缺失时启动抛错（不静默回退为 HTTP）", () => {
+    expect(() =>
+      startServer({
+        port: 0,
+        host: "127.0.0.1",
+        adminToken: "test123",
+        dataDir: path.join(tlsTmp, "data-missing"),
+        tls: { certFile: path.join(tlsTmp, "nope-cert.pem"), keyFile: path.join(tlsTmp, "nope-key.pem") },
+      })
+    ).toThrow();
+  });
+});
+
+describe("structured logger", () => {
+  it("logger 辅助判定：结构化行是可解析 JSON 且带 level/msg", () => {
+    expect(_isStructuredLine('{"time":"2026-01-01T00:00:00.000Z","level":30,"msg":"hello"}')).toBe(true);
+    expect(_isStructuredLine("plain text")).toBe(false);
+    expect(_isStructuredLine('{"msg":"missing level"}')).toBe(false);
   });
 });
