@@ -34,8 +34,7 @@
 | 25 | 规则链路无签名：明文 HTTP 下 MITM 可篡改规则、驱动无障碍恶意点击（P0） | 规则响应 ECDSA P-256 签名（`X-Rules-Signature`，覆盖原始 body 字节）+ 客户端内置公钥 fail-closed 验签；`bun run keys:gen` 生成密钥对，换钥即吊销旧钥 | `rulesSigner.ts`, `RulesSignature.kt`, `gen-rules-keys.ts` |
 | 26 | `rateLimit.ts`/`store.ts` 周期定时器无清理钩子（Bun 优雅停机可能截断收尾） | 新增 `stopRateLimitTimers()`/`stopStoreTimers()`（可重复调用），`shutdown()` 先停周期定时器再落盘退出 | `rateLimit.ts`, `store.ts`, `server.ts` |
 | 27 | 服务端无运行指标出口（健康检查仅 status+timestamp） | 新增 `GET /api/v1/metrics`（uptime/按状态类请求计数/规则版本/统计总量/RSS/安全开关态，不含用户级明细），health 附 uptimeSec 且仍不读盘 | `healthApi.ts`, `accessLog.ts` |
-| 28 | 无一键部署物（候选池挂账） | `server/Dockerfile`（oven/bun:1-alpine）+ `docker-compose.yml`（ADMIN_TOKEN 必填防误暴露、密钥经 env/.env 注入、数据卷持久化）+ `.dockerignore` | `Dockerfile`, `docker-compose.yml` |
-| 29 | 勘误：「快照 UI 集成未完成」台账行文过时 | 实际链路早已完整（设置页按钮 → `exportNodeSnapshot` 广播 → `SkipAdService.snapshotReceiver`），仅台账未同步 | — |
+| 28 | 勘误：「快照 UI 集成未完成」台账行文过时 | 实际链路早已完整（设置页按钮 → `exportNodeSnapshot` 广播 → `SkipAdService.snapshotReceiver`），仅台账未同步 | — |
 
 ---
 
@@ -70,7 +69,7 @@
 | P1 | `store.ts` 无存储层单测 | ✅ 已修复：新增 `rotateStatsBackup` 测试用例，验证备份创建与轮转上限 | — |
 | P2 | 无端到端集成测试 | 补 `androidx.test` instrumentation 或 `AppTest`，覆盖 Service → Engine → 点击 → 上报全链路 | 2-3 天 |
 | P2 | 无结构化日志/指标导出 | ✅ 已修复：新增 `src/utils/logger.ts`（JSONL 格式，零运行时依赖），替换 `server.ts` 中的 `console.*` | — |
-| P3 | `SettingsScreen.kt` 快照 UI 集成未完成 | ✅ 勘误（#29）：实际链路早已完整（设置页按钮 → `exportNodeSnapshot` 广播 → `SkipAdService.snapshotReceiver`），系台账行文过时 | — |
+| P3 | `SettingsScreen.kt` 快照 UI 集成未完成 | ✅ 勘误（#28）：实际链路早已完整（设置页按钮 → `exportNodeSnapshot` 广播 → `SkipAdService.snapshotReceiver`），系台账行文过时 | — |
 | P3 | 未提交构建产物残留 | 清理 `client/build-logic/convention/bin/` 或确认已 `.gitignore` | 0.5 天 |
 
 ---

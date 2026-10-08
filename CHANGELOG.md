@@ -40,7 +40,6 @@
 
 - **`/api/v1/metrics`**：粗粒度运行指标（uptime、按状态类请求计数、规则版本、统计总量、RSS、安全开关态），不含用户级明细；`/health` 附带 uptimeSec
 - **优雅停机加固**：周期定时器（限流 GC / 统计清理）提供清理钩子，停机时先停定时器再落盘退出
-- **Docker 一键部署**：`server/Dockerfile` + `docker-compose.yml`（ADMIN_TOKEN 必填防误暴露，密钥经环境变量/.env 注入，数据卷持久化）
 
 ## [3.2.0] - 2026-10-06
 
