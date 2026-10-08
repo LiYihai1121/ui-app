@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -220,6 +221,9 @@ fun TwoLineRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            // 触控目标下限（联合厂商无障碍/适老化基线 48dp）：行组件被整行可点时
+            // （应用管理行等），行高由内容决定，兜底保证命中区 ≥ 48dp
+            .heightIn(min = UiSizes.touchTarget)
             .padding(contentPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {

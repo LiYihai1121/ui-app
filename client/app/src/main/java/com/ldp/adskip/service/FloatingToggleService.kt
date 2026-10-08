@@ -141,6 +141,8 @@ class FloatingToggleService : Service() {
         setTextColor(Color.WHITE)
         setBackgroundColor(Color.parseColor("#33FFFFFF"))
         minWidth = dp(120)
+        // 触控目标下限（联合厂商无障碍/适老化基线 48dp）；大字体下文字换行不裁剪
+        minHeight = dp(48)
     }
 
     private fun togglePause() {
