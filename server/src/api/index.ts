@@ -34,6 +34,11 @@ export async function handleApi(
   if (method === "GET" && p === "/api/v1/health") {
     return healthApi.health(req, url, ctx);
   }
+  if (method === "GET" && p === "/api/v1/metrics") {
+    // 运维指标走读限频；响应仅含聚合计数，不含用户级明细
+    if (!limitRead(req, ctx.ip)) return errorJson(429, "rate limited");
+    return healthApi.metrics(req, url, ctx);
+  }
   if (method === "GET" && p === "/api/v1/admin/logs") {
     // 限流先于鉴权：失败的鉴权尝试也消耗令牌桶，阻断 admin token 暴力猜测
     if (!limitRead(req, ctx.ip)) return errorJson(429, "rate limited");

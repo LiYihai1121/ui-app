@@ -23,17 +23,20 @@ import {
   limitReport,
   probeReportIp,
   clientIp,
+  stopRateLimitTimers,
   _resetRateLimitForTests,
 } from "../src/middleware/rateLimit";
 import {
   getRules,
   recordSkip,
   statsSummary,
+  stopStoreTimers,
   _resetSummaryCacheForTests,
   _resetStatsCacheForTests,
   _resetRulesCacheForTests,
   _rotateStatsBackupForTests,
 } from "../src/storage/store";
+import { accessMetrics, recordAccess } from "../src/middleware/accessLog";
 import { v1_publish } from "../src/api/rulesApi";
 
 function req(headers: Record<string, string> = {}): Request {
@@ -670,5 +673,28 @@ describe("admin 2FA（TOTP 第二因子）", () => {
         requireAdmin(req({ authorization: "Bearer secret", "x-2fa-code": totpAt(SECRET, Date.now(), 6) }), ip).ok
       ).toBe(true);
     });
+  });
+});
+
+describe("运维收尾（计数器与定时器清理）", () => {
+  it("accessMetrics 按状态类聚合计数（/metrics 数据源）", () => {
+    recordAccess({ method: "GET", path: "/x", status: 200, ip: "1.1.1.1", ms: 1 });
+    recordAccess({ method: "GET", path: "/x", status: 404, ip: "1.1.1.1", ms: 1 });
+    recordAccess({ method: "GET", path: "/x", status: 500, ip: "1.1.1.1", ms: 1 });
+    const m = accessMetrics();
+    expect(m.byStatusClass["2xx"]).toBeGreaterThanOrEqual(1);
+    expect(m.byStatusClass["4xx"]).toBeGreaterThanOrEqual(1);
+    expect(m.byStatusClass["5xx"]).toBeGreaterThanOrEqual(1);
+    expect(m.total).toBeGreaterThanOrEqual(3);
+    expect(m.uptimeSec).toBeGreaterThanOrEqual(0);
+  });
+
+  it("定时器清理钩子可重复调用，且不影响限流工作", () => {
+    stopRateLimitTimers();
+    stopStoreTimers();
+    stopRateLimitTimers();
+    stopStoreTimers();
+    _resetRateLimitForTests();
+    expect(limitRead(req(), "10.9.9.20")).toBe(true);
   });
 });

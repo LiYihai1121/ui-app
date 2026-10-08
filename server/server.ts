@@ -6,7 +6,8 @@ import { handleApi } from "./src/api";
 import { withCors, errorJson, errorResponseFrom, HttpError } from "./src/utils/httpUtil";
 import { base32Decode } from "./src/utils/totp";
 import { isRulesSigningConfigured } from "./src/utils/rulesSigner";
-import { cleanupOldStats, flush } from "./src/storage/store";
+import { cleanupOldStats, flush, stopStoreTimers } from "./src/storage/store";
+import { stopRateLimitTimers } from "./src/middleware/rateLimit";
 import { recordAccess } from "./src/middleware/accessLog";
 import { logger } from "./src/utils/logger";
 
@@ -171,6 +172,9 @@ export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
 
 function shutdown(signal: string): void {
   logger.info("shutdown", { signal });
+  // 先停周期定时器再落盘退出：Bun 优雅停机时 setInterval 回调可能截断收尾
+  stopRateLimitTimers();
+  stopStoreTimers();
   flush();
   server?.stop(true);
   process.exit(0);

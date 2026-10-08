@@ -373,6 +373,11 @@ export function cleanupOldStats(): void {
 const statsCleanupTimer = setInterval(cleanupOldStats, 6 * 60 * 60 * 1000);
 statsCleanupTimer.unref?.();
 
+/** 优雅停机：停止周期清理定时器（可重复调用）；落盘由调用方 `flush()` 先行 */
+export function stopStoreTimers(): void {
+  clearInterval(statsCleanupTimer);
+}
+
 /** 仅供测试：清空汇总缓存 */
 export function _resetSummaryCacheForTests(): void {
   summaryCache = null;

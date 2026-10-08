@@ -113,6 +113,11 @@ const gcTimer = setInterval(() => {
 }, 60000);
 gcTimer.unref?.();
 
+/** 优雅停机：停止 GC 定时器（可重复调用）。避免退出前被周期任务截断 */
+export function stopRateLimitTimers(): void {
+  clearInterval(gcTimer);
+}
+
 /** 仅供测试：清空限流状态 */
 export function _resetRateLimitForTests(): void {
   buckets.clear();

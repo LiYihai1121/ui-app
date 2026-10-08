@@ -56,6 +56,22 @@ describe("smoke", () => {
     expect(json.status).toBe("ok");
   });
 
+  it("metrics 提供粗粒度运行指标（不含用户级明细）", async () => {
+    const res = await fetch(`${base}/api/v1/metrics`);
+    expect(res.status).toBe(200);
+    const j = (await res.json()) as any;
+    expect(typeof j.uptimeSec).toBe("number");
+    expect(typeof j.requests.total).toBe("number");
+    expect(typeof j.requests.byStatusClass["2xx"]).toBe("number");
+    expect(typeof j.rules.version).toBe("number");
+    expect(typeof j.stats.total).toBe("number");
+    expect(typeof j.memory.rssBytes).toBe("number");
+    expect(j.security).toBeDefined();
+    // 不得泄露用户级明细字段
+    expect(j.stats.byApp).toBeUndefined();
+    expect(j.recent).toBeUndefined();
+  });
+
   it("v0 规则形状", async () => {
     const res = await fetch(`${base}/api/rules/latest`);
     const j = (await res.json()) as any;

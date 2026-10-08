@@ -1,0 +1,31 @@
+# AdSkip 服务端一键部署。
+#
+#   cd server && docker compose up -d
+#
+# ADMIN_TOKEN 必填（未配置时管理端点 503 fail-closed，此处直接拒绝启动以免误暴露）；
+# 其余密钥按需配置：ADMIN_TOTP_SECRET（2FA）、RULES_SIGNING_KEY（规则签名）、
+# TLS_CERT/TLS_KEY（HTTPS）。密钥放同目录 .env（gitignored）或宿主环境，
+# 勿写进本文件。
+services:
+  adskip-server:
+    build: .
+    image: adskip-server:latest
+    container_name: adskip-server
+    ports:
+      - "${PORT:-3210}:3210"
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3210"
+      ADMIN_TOKEN: "${ADMIN_TOKEN:?请设置 ADMIN_TOKEN（管理端点鉴权令牌）}"
+      ADMIN_TOTP_SECRET: "${ADMIN_TOTP_SECRET:-}"
+      RULES_SIGNING_KEY: "${RULES_SIGNING_KEY:-}"
+      TLS_CERT: "${TLS_CERT:-}"
+      TLS_KEY: "${TLS_KEY:-}"
+      CORS_ORIGINS: "${CORS_ORIGINS:-}"
+      TRUST_PROXY: "${TRUST_PROXY:-}"
+    volumes:
+      - adskip-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  adskip-data:
