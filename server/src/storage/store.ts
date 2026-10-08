@@ -398,9 +398,18 @@ function flushDay(day: string): void {
     c.timer = null;
   }
   if (!c.dirty) return;
-  rotateStatsBackup(day);
-  writeJson(path.join(config.STATS_DIR, `${day}.json`), c.data);
-  c.dirty = false;
+  try {
+    rotateStatsBackup(day);
+  } catch (e) {
+    logger.warn(`[store] stats backup failed for ${day}`, { day, error: String(e) });
+  }
+  try {
+    writeJson(path.join(config.STATS_DIR, `${day}.json`), c.data);
+    c.dirty = false;
+  } catch (e) {
+    // 写入失败（磁盘满 / 权限 / 路径异常）不向上抛：保持服务可用，下次 flush 重试
+    logger.error(`[store] flushDay failed for ${day}: ${String(e)}`);
+  }
 }
 
 export function flush(): void {
