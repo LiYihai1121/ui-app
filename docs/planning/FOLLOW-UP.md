@@ -56,13 +56,13 @@
 | P1 | `store.ts` 规则备份仅全量拷贝，无增量/压缩 | 长期运行可改用 WAL 或按天快照；当前 JSON 全量备份对小项目可接受 | 待评估 |
 | P2 | `Prefs.DEFAULT_SERVER` 硬编码本地 IP | 增加 URL 合法性校验（禁止私有地址回环）；或在 UI 隐藏默认值，强制用户输入 | 0.5 天 |
 | P2 | `rateLimit.ts` / `store.ts` 使用 `setInterval` 做 GC/清理 | Bun 优雅停机可能截断；改用 `setTimeout` 递归或显式清理钩子 | 0.5 天 |
-| P3 | `SyncClient` 无连接池/Keep-Alive/重试 | 引入 `OkHttp`（若允许）或手写连接池 + 指数退避；受「零第三方依赖」约束，待项目决策后实施 | 待评估 |
+| P3 | `SyncClient` 无连接池/Keep-Alive/重试 | ✅ 连接池/Keep-Alive 已随 OkHttp 引入交付（`6ff5b73`）；指数退避重试仍待排期 | 0.5 天（重试） |
 
 ### 🟢 低危（测试/可观测/文档）
 
 | 优先级 | 问题 | 建议修复方案 | 预计工作量 |
 |--------|------|--------------|------------|
-| P1 | `SyncClient` 无网络层单测 | 引入 `MockWebServer` 或 OkHttp Mock；受「零第三方依赖」约束，待项目决策后实施 | 待评估 |
+| P1 | `SyncClient` 无网络层单测 | ✅ 已交付：`SyncClientTest`（MockWebServer，覆盖 304/上报/连接复用等 7 用例，随 OkHttp 引入 `6ff5b73`） | — |
 | P1 | `store.ts` 无存储层单测 | ✅ 已修复：新增 `rotateStatsBackup` 测试用例，验证备份创建与轮转上限 | — |
 | P2 | 无端到端集成测试 | 补 `androidx.test` instrumentation 或 `AppTest`，覆盖 Service → Engine → 点击 → 上报全链路 | 2-3 天 |
 | P2 | 无结构化日志/指标导出 | ✅ 已修复：新增 `src/utils/logger.ts`（JSONL 格式，零运行时依赖），替换 `server.ts` 中的 `console.*` | — |
@@ -78,39 +78,25 @@
 | `androidx.security:security-crypto` | EncryptedSharedPreferences | ✅ 已引入 | 版本 1.1.0-alpha07 |
 | 服务端结构化日志 | JSONL 输出 | ✅ 已实现 | `src/utils/logger.ts`，零运行时依赖 |
 | 服务端 TLS | HTTPS 支持 | ✅ 配置就绪 | 通过 `TLS_CERT`/`TLS_KEY` 环境变量启用 |
-| `OkHttp` | HTTP 客户端（连接池/证书锁定/重试） | 待评估 | 替代 `HttpURLConnection`；打破「零第三方依赖」承诺，待项目决策 |
-| `MockWebServer` | 网络层测试 | 待评估 | 与 OkHttp 配套；受 OkHttp 引入决策制约 |
+| `OkHttp` | HTTP 客户端（连接池/证书锁定/重试） | ✅ 已引入 | `6ff5b73` 替代 `HttpURLConnection`；「零第三方依赖」约束据此调整（保留服务端零依赖不变） |
+| `MockWebServer` | 网络层测试 | ✅ 已引入 | 与 OkHttp 配套，`SyncClientTest` 已覆盖 |
 | `pino` / `bun:logger` | 服务端结构化日志 | ✅ 已实现 | 自研轻量实现，无需额外依赖 |
 | `Prometheus` / OpenTelemetry | 指标导出 | P3 | 长期可观测需求 |
 | `TLS 1.3` + `HSTS` | 传输层安全 | ✅ 基础设施就绪 | 部署时配置证书即可启用 |
 
 ---
 
-## 里程碑建议
+## 版本归属（2026-10-08 校准，替代原「里程碑建议」）
 
-### v3.3.0（安全加固版）
-- [x] 明文流量策略显式收口（NSC base-config 放行，行为等价；HTTPS 迁移后收紧）
-- [x] EncryptedSharedPreferences 全量迁移
-- [x] `reportSkip` deviceId bug 修复
-- [x] `Prefs` 迁移幂等性修复
-- [x] `LanguagePreferences` 加密迁移
-- [x] `StatsRepository` 写错误处理
-- [x] TLS 配置基础设施（`TLS_CERT`/`TLS_KEY` 环境变量）
-- [x] 服务端结构化日志
-- [x] `SkipAdService` 接收器抽象
-- [x] `store.ts` 统计备份轮转
-- [ ] `SyncClient` 引入 OkHttp + 证书锁定（待项目决策）
-- [ ] `MockWebServer` 网络层单测（待 OkHttp 引入）
+> 版本号以 [ROADMAP-ADS.md](ROADMAP-ADS.md) 里程碑表为**唯一真值源**。本节此前以「里程碑建议」自行承诺 v3.3.0（安全加固版）/ v3.4.0（工程化版）/ v4.0.0（可观测版）的内容，与 ROADMAP-ADS 的里程碑表**同一版本号两套内容**（双真值源）——已废除改写。本表只回答「本页待办项归哪个版本」。
 
-### v3.4.0（工程化版）
-- [ ] 端到端集成测试
-- [ ] `SyncClient` 连接池/Keep-Alive/重试（待 OkHttp 引入）
-- [ ] `store.ts` 备份压缩/增量
-
-### v4.0.0（可观测版）
-- [ ] 指标导出（Prometheus/OTel）
-- [ ] 客户端崩溃上报（非强制，可选）
-- [ ] 服务端健康检查增强（/metrics）
+| 版本 | 主题 | 本页项去向 |
+|------|------|------------|
+| `3.3.0`（待发布） | 安全加固 | 已修复 #1–#25 随 PR #55–#57 交付；HTTPS 证书 / 证书 pin / 规则签名密钥三项为**部署激活**，随发布说明交付 |
+| `3.4.0`（待发布） | 交互增强 | 悬浮窗快捷开关、自定义取点规则、布局适配（PR #58–#60，已勾选于 ROADMAP 候选池） |
+| `3.5.0`（M1d） | 选择器生态 | 真机回归欠账（与历史真机矩阵一并补做） |
+| `4.0.0`（M4） | 通知过滤 | 服务端健康检查增强（/metrics）随可观测项并入 |
+| 候选池（不占版本号） | 工程化 / 可观测 | 端到端集成测试、`store.ts` 备份压缩/增量、指标导出（Prometheus/OTel）、客户端崩溃上报、`SyncClient` 指数退避重试 |
 
 ---
 

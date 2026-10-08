@@ -70,8 +70,10 @@ docs/
 | `3.0.4` | 已发布（tag 已建，制品已签名可直接安装） | 安装可用性修复：release 签名回退 + 发布强制签名校验 + Secrets 注入正式密钥（Issue #23） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
 | `3.1.0` | 已发布（tag `v3.1.0` @ `main` `ad188b0`；制品 `CN=AdSkip Release` 签名，`apksigner verify` 通过） | 协议 v2（`selectors` 字段）+ 点击结果校验 + 品牌更名「轻启」+ 图标/UI 重设计 + 快捷磁贴 + 厂商保活 + ktlint 门禁（用户可见变更见 [CHANGELOG.md](../CHANGELOG.md) 3.1.0） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
 | `3.2.0` | 已发布（tag `v3.2.0` @ `main` `f5127dd`；Release 资产 `AdSkip-v3.2.0.apk` 1,923,024 bytes + `SHA256SUMS`） | 节点快照工具 + 设置页入口（步骤 E）+ UI 重设计与权限体系重构落版 | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
-| `3.3.0` | **进行中**（步骤 F） | Top 30 规则入库 + 真机回归 + 规则审核通道 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 6 节 |
-| `3.4.0` / `3.5.0` / `4.0.0` | 规划 | L2 DNS 过滤 / L3 防摇一摇 / L4 通知与系统层 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 5~6 节 |
+| `3.3.0` | **待发布**（PR 链 #55–#57） | 安全加固：23 项安全漏洞修复 + TOTP 双因素认证 + 规则链路签名验证（用户可见变更见 [CHANGELOG.md](../CHANGELOG.md) Unreleased） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
+| `3.4.0` | **待发布**（PR 链 #58–#60） | 交互增强：悬浮窗快捷开关 + 自定义取点规则 + 联合厂商标准布局适配 | [planning/ROADMAP.md](planning/ROADMAP.md) 版本序列 |
+| `3.5.0` | **进行中**（步骤 F） | Top 30 规则入库 + 真机回归 + 规则审核通道 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 6 节 |
+| `3.6.0` / `3.7.0` / `4.0.0` | 规划 | L2 DNS 过滤 / L3 防摇一摇 / L4 通知与系统层 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 5~6 节 |
 
 未排期能力见 [planning/ROADMAP.md](planning/ROADMAP.md) 的「候选池」；L2/L3 启动前必须先完成 Phase 0 合规评审（见 [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 3 节）。
 
@@ -81,8 +83,8 @@ docs/
 
 | 文档 | 归属版本 | 说明 |
 | --- | --- | --- |
-| `docs/guide/RULE-AUTHORING.md` | `3.3.0` | 规则编写指南：选择器语法、快照 → 规则流程、审核提交流程（届时新建 `guide/` 目录） |
-| 覆盖度矩阵公示页 | `3.3.0` | 对用户公示各广告类型的覆盖口径（当前为 [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 4/9 节的内部口径） |
+| `docs/guide/RULE-AUTHORING.md` | `3.5.0` | 规则编写指南：选择器语法、快照 → 规则流程、审核提交流程（届时新建 `guide/` 目录） |
+| 覆盖度矩阵公示页 | `3.5.0` | 对用户公示各广告类型的覆盖口径（当前为 [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 4/9 节的内部口径） |
 
 ## 文档命名规范
 

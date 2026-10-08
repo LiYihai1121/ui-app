@@ -71,10 +71,14 @@
 - [x] **v3.0.4（M1a 补丁，已发布）**：安装可用性修复——`assembleRelease` 缺签名配置时回退 debug 签名、发布流水线强制 `apksigner verify` 并支持 Secrets 注入正式密钥，修复发布制品未签名导致手机报「解析软件包时出现问题」（[Issue #23](https://github.com/LiYihai1121/ui-app/issues/23)）；无功能行为变化
 - [x] **v3.1.0（M1b，已发布）**：协议 v2——服务端 `selectors` 字段与校验 + `SyncClient` 解析 + 点击结果校验与本地规则黑名单（步骤 C/D）；并随本版本一并交付品牌更名「轻启」、启动器/磁贴图标重设计、首页与「我的」页 UI 重设计、ktlint 静态门禁与 Compose BOM/compileSdk 升级（用户可见变更详见 [CHANGELOG.md](../../CHANGELOG.md) 3.1.0）。**真机矩阵（Android 8/13/14/15 × MIUI/HarmonyOS/ColorOS/OriginOS）尚未完成**，维护者显式决定先行发布正式版（见 CHANGELOG 3.1.0 发布验收覆盖声明）；Git tag `v3.1.0` 已创建于 `main` 提交 `ad188b0`（PR #42 经 Squash 合入），制品由正式密钥签名并经 `apksigner verify` 复核（见 [RELEASE-HISTORY.md](RELEASE-HISTORY.md)）。
 - [x] **v3.2.0（M1c，已发布）**：节点快照工具——App 内导出当前界面节点树 JSON，规则编写不再靠猜（步骤 E）。交付：`service/NodeSnapshot` 捕获与序列化 + 二分查找 96 KB 截断（`truncated=true` 标记）+ 设置页调试入口（服务未运行时显式提示）+ `ServiceIntentContractTest` 守护广播字面量与 `service/` 常量的单一真值源。**随本版本一并落版「UI 重新设计与权限体系重构」全部未发版内容**（语言选择、权限清单三态化等，详见 [CHANGELOG.md](../../CHANGELOG.md) 3.2.0）。已随 PR #46 Squash 合入 `main`（提交 `f5127dd`）并打 annotated tag `v3.2.0`（2026-10-06）发布，Release 资产 `AdSkip-v3.2.0.apk` 1,923,024 bytes + `SHA256SUMS`（见 [RELEASE-HISTORY.md](RELEASE-HISTORY.md)）。
-- [ ] **v3.3.0（M1d）**：Top 30 App 首批选择器规则入库 + 真机回归与性能采样 + 规则审核通道（步骤 F、L5 基础）
-- [ ] **v3.4.0（M2）**：L2 网络过滤层——DNS 过滤 + `filter-rules` 路由
-- [ ] **v3.5.0（M3）**：L3 防摇一摇模块（独立可选 APK）
+- [ ] **v3.3.0（安全加固版，待发布）**：PR #55–#57——23 项安全漏洞修复（限流失效链 / 接收器导出 / 护栏绕过等）+ 管理端 TOTP 双因素认证 + 规则链路签名验证（防 MITM 注入规则）。出口条件：CI 全绿 + 密钥部署说明（`totp:gen` / `keys:gen`）+ 真机冒烟
+- [ ] **v3.4.0（交互增强版，待发布）**：PR #58–#60——悬浮窗快捷开关、自定义取点规则（手动标注广告跳过位置）、按联合厂商标准的布局适配（触控下限 / 异形屏 insets）。出口条件：真机矩阵验收（悬浮层 / 前台服务的厂商差异）+ 商店 specialUse 用途说明
+- [ ] **v3.5.0（M1d）**：Top 30 App 首批选择器规则入库 + 真机回归与性能采样 + 规则审核通道（步骤 F、L5 基础）
+- [ ] **v3.6.0（M2）**：L2 网络过滤层——DNS 过滤 + `filter-rules` 路由
+- [ ] **v3.7.0（M3）**：L3 防摇一摇模块（独立可选 APK）
 - [ ] **v4.0.0（M4）**：L4 通知过滤 + ROM 指引 + 规则生态完善
+
+> **2026-10-08 版本序列校准**：安全加固（#55–#57）与交互增强（#58–#60）是已交付待发布的两批能力，此前无版本承载；插入为 v3.3.0/v3.4.0 后，M1d/M2/M3 顺延为 v3.5.0/v3.6.0/v3.7.0，M4（major）不变。里程碑表与出口条件以 [ROADMAP-ADS.md](ROADMAP-ADS.md) 为准；发布链路预排期见 [RELEASE-HISTORY.md](RELEASE-HISTORY.md)。
 
 ### 🧪 预发布（RC，验收未完成）
 

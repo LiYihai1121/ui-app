@@ -18,6 +18,8 @@
 
 | 版本 | Git tag | 对应提交 | GitHub Release | 状态 |
 | --- | --- | --- | --- | --- |
+| `3.4.0` | 待创建 | 待合并 | 未创建 | **待发布**（交互增强：悬浮窗快捷开关 / 自定义取点规则 / 布局适配；PR #58–#60） |
+| `3.3.0` | 待创建 | 待合并 | 未创建 | **待发布**（安全加固：23 项安全漏洞修复 / TOTP 双因素认证 / 规则链路签名验证；PR #55–#57） |
 | `3.2.0` | [`v3.2.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.2.0) | `f5127dd` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.2.0) | 已发布（`AdSkip-v3.2.0.apk` 1,923,024 bytes，`SHA256=6f958ed5…fcb4`，Release 资产 `SHA256SUMS`；由 release.yml 构建并创建，经 PR #46 Squash 合入 `main`） |
 | `3.1.0` | [`v3.1.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0) | `ad188b0` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0) | 已发布（`AdSkip-v3.1.0.apk` 1,895,460 bytes，`SHA256=30657f9c…fb6`，`CN=AdSkip Release` 正式签名，`apksigner verify` 通过；厂商保活与磁贴未真机验收，见下「发布基线说明」） |
 | `3.1.0-rc.1` | [`v3.1.0-rc.1`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0-rc.1) | `696ef1e` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0-rc.1) | **预发布**（已签名 APK + `SHA256SUMS`；厂商跳转与磁贴未真机验收，**不可作为正式版分发**） |
