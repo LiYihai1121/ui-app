@@ -165,30 +165,38 @@ class HttpTransportTest {
 
     /**
      * 构建一个 TLS 模式的服务端与一个「信任该服务端证书」的客户端，并渲染指定 pin。
-     * 在同一端口上换 pin 需要重建 server（MockWebServer 单次即为固定 TLS 上下文），
-     * 故这里返回可复用的 [ForTestingTls]（含 client 构造器），避免重复样板。
+     *
+     * 注意 host 必须动态取 [MockWebServer.url] 的 host：不同平台的 loopback 解析不同
+     * （Windows 可能返回 `127.0.0.1`，Linux CI 返回 `localhost`），证书 SAN 须同时覆盖
+     * DNS `localhost` 与 IPv4/IPv6 loopback，否则 hostname 校验会因平台不同而偶发失败。
+     * pin 同样绑定动态 host，确保证书锁定真正生效。
      */
-    private fun buildTls(renderPin: (String) -> String, onClient: (OkHttpClient) -> HttpTransport): ForTestingTls {
+    private fun buildTls(makePin: (pinnedCert: HeldCertificate) -> String): ForTestingTls {
         val heldCert = HeldCertificate.Builder()
             .commonName("localhost")
+            .addSubjectAlternativeName("localhost") // DNS SAN：URL host 为 localhost 的平台
             .addSubjectAlternativeName("127.0.0.1") // IP SAN：OkHttp 对 IP 主机会校验 IP SAN
+            .addSubjectAlternativeName("::1") // IPv6 loopback：部分平台 localhost 解析为 ::1
             .build()
         val serverTls = HandshakeCertificates.Builder().heldCertificate(heldCert).build()
         val tlsServer = MockWebServer()
         tlsServer.useHttps(serverTls.sslSocketFactory(), false)
         tlsServer.start()
+        val tlsUrl = tlsServer.url("/api/v1/health")
+        val pinHost = tlsUrl.host
         val clientTls = HandshakeCertificates.Builder()
             .addTrustedCertificate(heldCert.certificate)
             .build()
+        val correctPin = makePin(heldCert)
         return ForTestingTls(
             server = tlsServer,
-            url = tlsServer.url("/api/v1/health").toString(),
-            makeClient = { pin ->
+            url = tlsUrl.toString(),
+            makeClient = {
                 OkHttpClient.Builder()
                     .sslSocketFactory(clientTls.sslSocketFactory(), clientTls.trustManager)
                     .certificatePinner(
                         CertificatePinner.Builder()
-                            .add("127.0.0.1", renderPin(pin))
+                            .add(pinHost, correctPin)
                             .build(),
                     )
                     .build()
@@ -200,19 +208,18 @@ class HttpTransportTest {
     data class ForTestingTls(
         val server: MockWebServer,
         val url: String,
-        val makeClient: (String) -> OkHttpClient,
+        val makeClient: () -> OkHttpClient,
         val onClient: (OkHttpClient) -> HttpTransport,
     )
 
     @Test
     fun `证书锁定：错误 pin 拒绝 TLS 请求`() {
         val fixture = buildTls(
-            renderPin = { _ -> "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" },
-            onClient = { c -> HttpTransport.forTesting(c, maxRetries = 0) },
+            makePin = { _ -> "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" },
         )
         fixture.server.enqueue(MockResponse().setBody("""{"status":"ok"}"""))
         try {
-            val transport = fixture.onClient(fixture.makeClient("ignored"))
+            val transport = fixture.onClient(fixture.makeClient())
             assertThrows(SSLException::class.java) {
                 transport.getWithEtag(fixture.url, "")
             }
@@ -223,34 +230,16 @@ class HttpTransportTest {
 
     @Test
     fun `证书锁定：正确 pin 通过 TLS 请求`() {
-        val heldCert = HeldCertificate.Builder()
-            .commonName("localhost")
-            .addSubjectAlternativeName("127.0.0.1")
-            .build()
-        val serverTls = HandshakeCertificates.Builder().heldCertificate(heldCert).build()
-        val tlsServer = MockWebServer()
-        tlsServer.useHttps(serverTls.sslSocketFactory(), false)
-        tlsServer.start()
-        val clientTls = HandshakeCertificates.Builder()
-            .addTrustedCertificate(heldCert.certificate)
-            .build()
-        val correctPin = CertificatePinner.pin(heldCert.certificate)
-        val client = OkHttpClient.Builder()
-            .sslSocketFactory(clientTls.sslSocketFactory(), clientTls.trustManager)
-            .certificatePinner(
-                CertificatePinner.Builder()
-                    .add("127.0.0.1", correctPin)
-                    .build(),
-            )
-            .build()
-        val transport = HttpTransport.forTesting(client, maxRetries = 0)
-        tlsServer.enqueue(MockResponse().setBody("""{"status":"ok"}"""))
+        val fixture = buildTls(
+            makePin = { heldCert -> CertificatePinner.pin(heldCert.certificate) },
+        )
+        fixture.server.enqueue(MockResponse().setBody("""{"status":"ok"}"""))
         try {
-            val result = transport.getWithEtag(tlsServer.url("/api/v1/health").toString(), "")
+            val result = fixture.onClient(fixture.makeClient()).getWithEtag(fixture.url, "")
             assertFalse(result.notModified)
             assertEquals("""{"status":"ok"}""", result.body)
         } finally {
-            tlsServer.shutdown()
+            fixture.server.shutdown()
         }
     }
 }
