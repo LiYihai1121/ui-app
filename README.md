@@ -117,41 +117,12 @@ client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，
 │       ├── SelectorParser.kt       #   解析器（非法输入返回 null，fail-safe）
 │       └── SelectorMatcher.kt      #   右到左求值（祖先/子/前兄弟关系匹配）
 ├── data/
-│   ├── Prefs.kt                    # 存储原语（SharedPreferences + deviceId + rulesHash）
-│   ├── RulesRepository.kt          # 规则仓库（LruCache 缓存/版本失效/schemaVersion 校验）
+│   ├── Prefs.kt                    # 存储原语（EncryptedSharedPreferences 加密）
+│   ├── RulesRepository.kt          # 规则仓库（LruCache 缓存/版本失效）
+│   ├── SettingsRepository.kt       # 设置门面（免打扰/语言/版本展示）
 │   └── StatsRepository.kt          # 统计仓库（合批落盘）
-├── net/
-│   └── SyncClient.kt               # 网络层（v1: ETag/304/deviceId/批量补报）
-└── sync/
-    └── SyncJobService.kt           # JobScheduler 定时同步（三合一，跨重启持久化）
 
 client/app/src/test/java/com/ldp/adskip/   # JVM 单测（引擎/护栏/边界与清单契约守护/选择器），随门禁运行
-
-server/                             # 后端（Bun + TypeScript，零运行时依赖）
-├── server.ts                       # Bun.serve 入口、路由分发、优雅停机
-├── src/
-│   ├── api/                        # 路由拆分（v0+v1）
-│   │   ├── index.ts                #   路由分发
-│   │   ├── rulesApi.ts             #   规则下发/发布/模拟器
-│   │   ├── statsApi.ts             #   统计汇总
-│   │   └── healthApi.ts            #   健康检查
-│   ├── middleware/
-│   │   ├── auth.ts                 #   Bearer token 鉴权
-│   │   └── rateLimit.ts            #   内存令牌桶限流
-│   ├── storage/
-│   │   └── store.ts                #   规则（缓存+备份轮转）/ 统计（分日分片+延迟刷盘）
-│   ├── utils/
-│   │   ├── httpUtil.ts             #   CORS 白名单 / 安全 JSON 解析 / Handler 类型
-│   │   └── validate.ts             #   载荷校验（与客户端同源约束）
-│   └── config.ts                   # 集中配置（env 覆盖）
-├── public/
-│   ├── index.html                  # 产品落地页
-│   └── admin.html                  # 管理后台（登录 + diff 预览 + 规则模拟器）
-├── test/
-│   ├── unit.test.ts                # 单元测试（validate/auth/rateLimit/种子兜底）
-│   └── smoke.test.ts               # 冒烟测试（in-process，全部路由 v0+v1）
-├── seed/rules.json                 # 初始规则种子（入库；运行时文件缺失时兜底）
-└── data/                           # 运行时数据（不入库）：rules.json / stats/ / backups/
 ```
 
 详细设计见 [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)。
@@ -209,7 +180,7 @@ bun run typecheck     # tsc --noEmit
 ## 分支与版本
 
 - 工作流：企业级 GitHub Flow——`main` 和 `release/*` 受保护，所有改动经 PR、CI 和审查后 Squash Merge；功能、修复和紧急变更使用短生命周期分支。
-- 版本规则：遵循 SemVer；Android `versionCode` 全局单调递增，`versionName` 与服务端 `server/package.json` 版本保持一致；正式版本使用不可移动的 `vX.Y.Z` 标签。
+- 版本规则：遵循 SemVer；Android `versionCode` 全局单调递增，`versionName` 遵循 SemVer；正式版本使用不可移动的 `vX.Y.Z` 标签。
 - 发布流程：`release/vX.Y.Z` 冻结验收，CI 根据 tag 生成可追溯制品并记录校验和；事故优先回滚已验证制品，修复通过 `hotfix/*` 发布。
 - 团队协作：提交格式、Pull Request 门禁、分支保护、发布和回滚规则见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 - 功能路线以 [ROADMAP.md](docs/planning/ROADMAP.md) 为准，架构与模块职责以 [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) 为准，版本链路以 [RELEASE-HISTORY.md](docs/planning/RELEASE-HISTORY.md) 为准；**文档入口与规划事实源见 [docs/README.md](docs/README.md)**。
@@ -219,10 +190,10 @@ bun run typecheck     # tsc --noEmit
 本工具仅通过系统无障碍能力，**点击广告界面本身已展示的「跳过」按钮**，不拦截、修改或破解任何网络请求与广告内容。请仅用于个人设备，勿用于商业用途。
 
 > 1. 此类工具不符合 Google Play 对 AccessibilityService 的审核口径，分发以 APK 自建渠道为准，不上架应用商店。
-> 2. **隐私声明**：数据默认不出本机。上报为可选且仅含包名、时间戳和匹配通道（text/viewId），不含任何用户隐私数据。服务端无账号体系，统计仅存自建服务端。
+> 2. **隐私声明**：数据仅存本机，不上报、不联网。
 
 ## 许可证
 
 本项目以 [GNU 通用公共许可证第三版（GPL-3.0）](LICENSE) 发布。在保留版权声明的前提下，你可以自由使用、修改与分发本项目；衍生作品须以 GPL-3.0 继续开源。
 
-选择 GPL-3.0 的理由：本项目定位为「自建服务端 + 个人设备使用」的非商业工具，强传染性许可证可防止闭源商用套壳，并与主流自建服务生态（AdGuard Home、AdAway 等同为 GPL-3.0）保持一致。如需其他授权安排，请联系作者。
+选择 GPL-3.0 的理由：本项目定位为「个人设备本地使用」的非商业工具，强传染性许可证可防止闭源商用套壳，并与主流自建服务生态（AdGuard Home、AdAway 等同为 GPL-3.0）保持一致。如需其他授权安排，请联系作者。

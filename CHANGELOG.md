@@ -18,6 +18,20 @@
 - [2.1.0](#210---2026-08-24)
 - [2.0.0](#200---2026-08-24)
 
+## [Unreleased]
+
+### Changed
+
+- **移除云端同步与上报，转为纯本地应用**（remove-server 重构，阶段一 + 阶段二）：
+  - 阶段一（`d3092ca`）：删除整个 `server/` 目录（Bun + TypeScript 后端），`selectors.contract.json` 迁移至 `client/app/src/test/resources/`；CI/release 流程与 `ProjectStructureTest`/`SelectorContractTest` 同步收口。
+  - 阶段二（`4ad542c`）：删除 `net/SyncClient`（云端规则同步 + 跳过上报）、`sync/SyncJobService`（后台同步调度）、`res/xml/network_security_config`；`AndroidManifest` 移除 `INTERNET`/`RECEIVE_BOOT_COMPLETED` 权限与 `SyncJobService` 声明；`SettingsRepository`/`RulesRepository`/`Prefs` 移除云同步/服务器地址/设备标识/规则哈希 API；`SkipAdService` 不再上报跳过事件；设置页移除云端规则同步 UI（服务器地址 / 立即同步 / 自动同步开关）。
+  - 边界守护同步更新：`ArchitectureBoundaryTest` 删除 `net`/`sync` 目录用例；`ManifestContractTest` 删除 `setPersisted`/`RECEIVE_BOOT_COMPLETED` 用例；`UiContractTest` 触发的 11 个云同步孤儿字符串已在 `values/` 与 `values-en/` 清理。
+  - 三大门禁全绿：`ktlintCheck` / `testDebugUnitTest` / `assembleDebug`。
+
+### Removed
+
+- `server/` 目录、`net/SyncClient`、`sync/SyncJobService`、`res/xml/network_security_config.xml`、云同步相关字符串与设置入口。
+
 ## [3.2.0] - 2026-10-06
 
 本轮是「UI 重新设计与权限体系重构」，贯穿三条原则：**权限与系统开关一律三态**（无法确认 ≠ 未开启）、**同一事实只有一份真值源**、**能机器检查的约定都写成门禁**。
