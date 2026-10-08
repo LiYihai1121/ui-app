@@ -193,13 +193,18 @@ function rotateBackup(): void {
   }
 }
 
+/** 备份文件名的进程内单调序号：同毫秒连续备份若只靠时间戳会撞名互相覆盖 */
+let backupSeq = 0;
+
 function rotateStatsBackup(day: string): void {
   try {
     const src = path.join(config.STATS_DIR, `${day}.json`);
     if (!dirOrFileExists(src)) return;
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
     const ms = Date.now();
-    const dest = path.join(config.STATS_DIR, "backups", `stats-${day}-${stamp}-${ms}.json`);
+    // 时间戳 + 单调序号保证唯一：同一毫秒内的多次备份不再互相覆盖（快机器上会静默丢备份）
+    const seq = (backupSeq++ % 1_000_000).toString().padStart(6, "0");
+    const dest = path.join(config.STATS_DIR, "backups", `stats-${day}-${stamp}-${ms}-${seq}.json`);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(src, dest);
 
