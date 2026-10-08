@@ -4,6 +4,7 @@ import { requireAdmin } from "../middleware/auth";
 import { limitRead, limitWrite, limitReport, probeReportIp } from "../middleware/rateLimit";
 import {
   jsonResponse,
+  rawJsonResponse,
   errorJson,
   statusResponse,
   readBody,
@@ -11,35 +12,50 @@ import {
   errorResponseFrom,
   type Handler,
 } from "../utils/httpUtil";
+import { signRulesBody } from "../utils/rulesSigner";
 import { cleanRules, cleanBatchReport, cleanReportEvent, cleanLabel, isValidPackage } from "../utils/validate";
+
+/**
+ * 规则响应统一出口：对**原始 body 字节**做 ECDSA 签名（X-Rules-Signature），
+ * 客户端验签通过才落地规则——防明文链路被 MITM 注入恶意规则驱动自动点击。
+ * 未配置 RULES_SIGNING_KEY 时不带签名头（与旧部署/旧客户端共存）。
+ */
+function signedRulesResponse(raw: string, extra: Record<string, string> = {}): Response {
+  const sig = signRulesBody(raw);
+  const headers = sig
+    ? { ...extra, "X-Rules-Signature": sig, "X-Rules-Signature-Alg": "ecdsa-p256-sha256" }
+    : extra;
+  return rawJsonResponse(raw, 200, headers);
+}
 
 export const v0_latest: Handler = () => {
   const r = getRules();
-  return jsonResponse({
-    version: r.version,
-    updatedAt: r.updatedAt,
-    keywords: r.keywords,
-    viewIds: r.viewIds,
-    // v0 平铺形状的选择器字段：管理后台按 legacy 形状编辑，缺失会导致已配的
-    // 选择器在编辑页「看不见」——保存一次就被清空。
-    selectors: r.selectors,
-    packages: r.packages,
-  });
+  return signedRulesResponse(
+    JSON.stringify({
+      version: r.version,
+      updatedAt: r.updatedAt,
+      keywords: r.keywords,
+      viewIds: r.viewIds,
+      // v0 平铺形状的选择器字段：管理后台按 legacy 形状编辑，缺失会导致已配的
+      // 选择器在编辑页「看不见」——保存一次就被清空。
+      selectors: r.selectors,
+      packages: r.packages,
+    })
+  );
 };
 
 export const v1_latest: Handler = (req) => {
   const rules = getRules();
   const ifNoneMatch = req.headers.get("if-none-match");
   if (ifNoneMatch && ifNoneMatch === rules.hash) return statusResponse(304);
-  return jsonResponse(
-    {
+  return signedRulesResponse(
+    JSON.stringify({
       schemaVersion: rules.schemaVersion,
       version: rules.version,
       hash: rules.hash,
       updatedAt: rules.updatedAt,
       rules: rules.rules,
-    },
-    200,
+    }),
     { ETag: rules.hash }
   );
 };

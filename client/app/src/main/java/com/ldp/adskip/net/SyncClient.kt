@@ -3,6 +3,7 @@ package com.ldp.adskip.net
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import com.ldp.adskip.BuildConfig
 import com.ldp.adskip.core.AppExecutors
 import com.ldp.adskip.core.LogRing
 import com.ldp.adskip.data.Prefs
@@ -38,6 +39,9 @@ object SyncClient {
      * 规则载荷合法规模远小于该值（服务端请求体上限 1MB），超限即拒绝。
      */
     private const val MAX_RESPONSE_BYTES = 2L * 1024 * 1024
+
+    /** 规则响应签名头（base64 DER，覆盖响应原始字节；见 RulesSignature） */
+    private const val RULES_SIGNATURE_HEADER = "X-Rules-Signature"
 
     /**
      * 云端规则载荷条目上限（与服务端 config 对齐：MAX_APPS=2000、
@@ -287,7 +291,22 @@ object SyncClient {
         client().newCall(request).execute().use { response ->
             if (response.code == 304) return Pair("", true)
             if (response.code !in 200..299) throw Exception("HTTP " + response.code)
-            return Pair(readBodyCapped(response), false)
+            val body = readBodyCapped(response)
+            requireSignedRules(body, response.header(RULES_SIGNATURE_HEADER))
+            return Pair(body, false)
+        }
+    }
+
+    /**
+     * 规则响应验签（fail-closed）：内置公钥后（BuildConfig.RULES_SIGNING_PUBKEY，
+     * 构建期注入），缺签名/验签失败一律拒绝落地——防明文链路被 MITM 注入恶意
+     * 规则驱动无障碍点击；未内置公钥则跳过（与未启用签名的服务端共存）。
+     */
+    private fun requireSignedRules(body: String, signature: String?) {
+        val publicKey = BuildConfig.RULES_SIGNING_PUBKEY
+        if (publicKey.isBlank()) return
+        if (!RulesSignature.verify(body, signature, publicKey)) {
+            throw Exception("rules signature verification failed")
         }
     }
 

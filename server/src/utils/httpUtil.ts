@@ -79,6 +79,24 @@ export function jsonResponse(
   return new Response(JSON.stringify(body), { status, headers });
 }
 
+/**
+ * 以**原始字节**返回 JSON。
+ *
+ * 签名必须覆盖实际发送的 body（`JSON.stringify` 的键序等细节决定字节），
+ * 不能再走 `jsonResponse` 的对象二次序列化——否则客户端验签的字节与
+ * 服务端签名的字节可能不一致。
+ */
+export function rawJsonResponse(
+  raw: string,
+  status = 200,
+  extra: Record<string, string> = {}
+): Response {
+  const headers = new Headers();
+  headers.set("Content-Type", "application/json; charset=utf-8");
+  for (const [k, v] of Object.entries(extra)) headers.set(k, v);
+  return new Response(raw, { status, headers });
+}
+
 export function errorJson(status: number, error: string): Response {
   return jsonResponse({ error }, status);
 }

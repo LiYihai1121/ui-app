@@ -10,7 +10,8 @@
     "dev": "bun --watch server.ts",
     "test": "bun test",
     "typecheck": "bunx tsc --noEmit",
-    "totp:gen": "bun run scripts/gen-totp.ts"
+    "totp:gen": "bun run scripts/gen-totp.ts",
+    "keys:gen": "bun run scripts/gen-rules-keys.ts"
   },
   "engines": {
     "bun": ">=1.1"

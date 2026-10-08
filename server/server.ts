@@ -5,6 +5,7 @@ import { config } from "./src/config";
 import { handleApi } from "./src/api";
 import { withCors, errorJson, errorResponseFrom, HttpError } from "./src/utils/httpUtil";
 import { base32Decode } from "./src/utils/totp";
+import { isRulesSigningConfigured } from "./src/utils/rulesSigner";
 import { cleanupOldStats, flush } from "./src/storage/store";
 import { recordAccess } from "./src/middleware/accessLog";
 import { logger } from "./src/utils/logger";
@@ -202,6 +203,20 @@ if (import.meta.main) {
     logger.warn("admin_2fa_disabled", {
       impact: "admin_token_compromise_grants_full_access",
       hint: "运行 bun run totp:gen 生成密钥并配 ADMIN_TOTP_SECRET 启用双因素",
+    });
+  }
+  if (config.RULES_SIGNING_KEY) {
+    if (isRulesSigningConfigured()) {
+      logger.info("rules_signing_enabled", { alg: "ecdsa-p256-sha256" });
+    } else {
+      logger.error("rules_signing_key_invalid", {
+        hint: "RULES_SIGNING_KEY 不是合法 PKCS8 密钥，规则响应将不带签名；运行 bun run keys:gen 重新生成",
+      });
+    }
+  } else {
+    logger.warn("rules_signing_disabled", {
+      impact: "mitm_can_inject_rules_over_cleartext",
+      hint: "运行 bun run keys:gen 生成密钥对，配 RULES_SIGNING_KEY 启用规则签名",
     });
   }
   for (const info of Object.values(os.networkInterfaces())) {

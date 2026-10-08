@@ -31,6 +31,7 @@
 | 22 | release 未配签名时静默回退 debug 签名（公开密钥可伪造升级） | 默认产出未签名包；回退 debug 签名需显式 `adskip.allowDebugSigning=true` | `app/build.gradle.kts` |
 | 23 | `LanguagePreferences` 实际仍在明文 SP（#9 未落地），且与 Prefs 旧存储同名，迁移删源文件会丢语言设置 | 偏好统一走 `core/SecureStore` 加密存储（含明文历史全量迁移） | `LanguagePreferences.kt`, `SecureStore.kt`, `Prefs.kt` |
 | 24 | 管理端单因子认证：ADMIN_TOKEN 泄露即全失守（可下发任意规则驱动客户端点击） | 启用 TOTP 双因素（RFC 6238，零依赖实现）：`ADMIN_TOTP_SECRET` 配置后管理端点须带 `X-2FA-Code`；单 IP 连错 5 次锁 15 分钟；`bun run totp:gen` 生成密钥，管理后台带动态码输入框 | `totp.ts`, `auth.ts`, `admin.html` |
+| 25 | 规则链路无签名：明文 HTTP 下 MITM 可篡改规则、驱动无障碍恶意点击（P0） | 规则响应 ECDSA P-256 签名（`X-Rules-Signature`，覆盖原始 body 字节）+ 客户端内置公钥 fail-closed 验签；`bun run keys:gen` 生成密钥对，换钥即吊销旧钥 | `rulesSigner.ts`, `RulesSignature.kt`, `gen-rules-keys.ts` |
 
 ---
 
@@ -41,8 +42,8 @@
 | 优先级 | 问题 | 建议修复方案 | 预计工作量 |
 |--------|------|--------------|------------|
 | P0 | 服务端 HTTPS 支持（TLS 配置已就绪，待部署证书） | 设置 `TLS_CERT`/`TLS_KEY` 环境变量即可启用 HTTPS；客户端 release 强制 HTTPS | 部署时配置 |
-| P0 | 规则链路无签名：明文 HTTP 下 MITM 可注入规则驱动无障碍自动点击（泄露面：deviceId/使用画像） | 规则响应加签名（客户端内置公钥验签后才落地，跨端协议变更需同步 API.md + 契约测试）；或部署 HTTPS + 真实证书锁定后收紧 NSC | 待评估 |
-| P0 | `SyncClient` 证书锁定是空壳（`CertificatePinner` 无 pin 值，等于未启用） | OkHttp 已就位；部署证书后配置 `CertificatePinner.add(host, "sha256/…")` 并补 pin 覆盖测试 | 部署时配置 |
+| P0 | 规则链路无签名：明文 HTTP 下 MITM 可注入规则驱动无障碍自动点击（泄露面：deviceId/使用画像） | ✅ 机制已落地（#25）：`bun run keys:gen` 生成密钥对，服务端配 `RULES_SIGNING_KEY`、客户端构建配 `adskip.rulesSigningPubkey` 即强制验签；未配置密钥的部署仍暴露此风险 | 部署时配置 |
+| P0 | `SyncClient` 证书锁定是空壳（`CertificatePinner` 无 pin 值，等于未启用） | OkHttp 已就位；部署证书后配置 `CertificatePinner.add(host, "sha256/…")` 并补 pin 覆盖测试（注意：客户端 release 强制 HTTPS 尚未做，依赖部署形态决策） | 部署时配置 |
 | P1 | `Prefs` 迁移逻辑幂等性不足 | ✅ 已修复：改用 `deleteSharedPreferences` 删除明文源文件 | — |
 | P1 | `LanguagePreferences` 未使用加密存储 | ✅ 已修复：同步迁移至 `EncryptedSharedPreferences` | — |
 | P2 | `StatsRepository` 合批写 SP 无错误处理 | ✅ 已修复：`flush()` 添加 `try-catch` + `LogRing.w` | — |

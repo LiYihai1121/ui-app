@@ -9,6 +9,7 @@
 - **JSON 限制**：键数 ≤ 100、嵌套深度 ≤ 5，越界返回 `400`
 - **鉴权**：管理端点需要 `Authorization: Bearer <ADMIN_TOKEN>`；未配置 `ADMIN_TOKEN` 时管理端点返回 `503`；令牌比较为常数时间实现
 - **双因素认证（2FA，可选启用）**：配置 `ADMIN_TOTP_SECRET`（base32 密钥，`bun run totp:gen` 生成）后，管理端点还必须携带 `X-2FA-Code: <6 位动态码>`（TOTP / RFC 6238，SHA-1、6 位、30 秒周期，容忍 ±1 周期漂移）。缺码返回 `401 "2fa code required"`、错码返回 `401 "invalid 2fa code"`；单 IP 连续 5 次失败锁定 15 分钟（`429 "too many 2fa attempts"`）。未配置密钥时 2FA 关闭，行为与旧版一致。密钥仅经环境变量提供，不入库
+- **规则签名（可选启用）**：配置 `RULES_SIGNING_KEY`（`bun run keys:gen` 生成 ECDSA P-256 密钥对）后，规则拉取响应带 `X-Rules-Signature`（base64 DER 签名，覆盖**响应原始字节**）与 `X-Rules-Signature-Alg: ecdsa-p256-sha256`。客户端构建期内置公钥（`client/local.properties` 的 `adskip.rulesSigningPubkey`）后只落地验签通过的规则，缺签名/验签失败即拒绝（fail-closed）——防明文链路被 MITM 注入规则。未配置时无签名头，与旧部署/旧客户端共存；换钥即吊销旧钥（两端同步替换）
 - **限流**（内存令牌桶，空闲桶 5 分钟回收）：读 120 次/分/IP、写 10 次/分/IP、上报 30 次/分/deviceId（deviceId 缺失时按 IP）；超限 `429`；批量上报在读体之前先做 IP 级预检；限流先于鉴权（失败的鉴权尝试同样消耗令牌桶）
 - **CORS**：配置 `CORS_ORIGINS` 白名单时，命中回显 Origin、不命中不发送该头；未配置白名单时**不**发送 `Allow-Origin`（跨域默认拒绝，同源管理页不受影响），显式配置 `CORS_ORIGINS=*` 才对任意来源开放
 - **错误格式**：`{"error": "<信息>"}`

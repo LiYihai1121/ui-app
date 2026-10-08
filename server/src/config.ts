@@ -31,6 +31,12 @@ export interface Config {
   ADMIN_TOTP_SECRET: string;
   /** otpauth:// 链接中的签发方标识（展示在验证器 App 条目上） */
   ADMIN_TOTP_ISSUER: string;
+  /**
+   * 规则响应签名私钥（PKCS8 PEM 或 base64 DER；`bun run keys:gen` 生成）。
+   * 配置后规则响应带 X-Rules-Signature（ECDSA P-256/SHA-256，覆盖原始 body 字节），
+   * 客户端验签通过才落地规则；为空则不签名（向后兼容）。密钥不入库，仅经环境变量提供。
+   */
+  RULES_SIGNING_KEY: string;
   /** 统计汇总是否要求 admin 鉴权（STATS_READ_AUTH=1 开启；默认匿名可读，行为与旧版一致） */
   STATS_READ_AUTH: boolean;
   /**
@@ -83,6 +89,7 @@ export const config: Config = {
   ADMIN_TOKEN: process.env.ADMIN_TOKEN ?? "",
   ADMIN_TOTP_SECRET: (process.env.ADMIN_TOTP_SECRET ?? "").replace(/[\s-]/g, "").toUpperCase(),
   ADMIN_TOTP_ISSUER: process.env.ADMIN_TOTP_ISSUER ?? "AdSkip Server",
+  RULES_SIGNING_KEY: process.env.RULES_SIGNING_KEY ?? "",
   STATS_READ_AUTH: ["1", "true", "yes"].includes(
     (process.env.STATS_READ_AUTH ?? "").toLowerCase()
   ),

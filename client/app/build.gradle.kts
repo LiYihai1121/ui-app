@@ -54,6 +54,19 @@ android {
         versionCode = 12
         // 展示值用 X.Y（与 CONTRIBUTING「版本策略」一致；server 侧用完整 X.Y.Z）
         versionName = "3.2"
+
+        // 规则链路验签公钥（base64 X.509 SPKI，`cd server && bun run keys:gen` 生成）：
+        // 配 local.properties 的 adskip.rulesSigningPubkey 即启用强制验签（缺签名/验签失败拒绝规则）；
+        // 留空 = 不验签，与未启用签名的服务端共存。
+        buildConfigField(
+            "String",
+            "RULES_SIGNING_PUBKEY",
+            "\"" + (signingProps.getProperty("adskip.rulesSigningPubkey") ?: "") + "\"",
+        )
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     signingConfigs {
