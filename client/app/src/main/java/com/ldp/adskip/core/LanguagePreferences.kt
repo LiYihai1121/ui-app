@@ -19,7 +19,6 @@ import android.content.Context
  */
 object LanguagePreferences {
 
-    private const val SP_NAME = "adskip_prefs"
     private const val KEY_LANGUAGE = "language"
 
     /** 已保存的语言 tag；`null` 表示跟随系统。 */
@@ -32,5 +31,12 @@ object LanguagePreferences {
             .apply()
     }
 
-    private fun prefs(context: Context) = context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE)
+    /**
+     * 走 [SecureStore] 加密存储。
+     *
+     * 历史原因本键曾与 `data/Prefs` 共用明文文件 `adskip_prefs`；现在两者统一
+     * 落在加密存储，且旧键已由 SecureStore 的全量迁移带入——不会再出现
+     * 「Prefs 迁移后删源文件，语言选择跟着丢」的数据丢失。
+     */
+    private fun prefs(context: Context) = SecureStore.prefs(context)
 }

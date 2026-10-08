@@ -7,6 +7,17 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
+    <!--
+      内部广播权限（signature 级）：SkipAdService 的动态接收器接收「关停服务 / 导出前台节点快照」
+      指令。不加权限时（Android 8–12 动态注册默认可被任意应用投递），第三方应用可远程关停无障碍服务
+      或诱导导出前台界面文本。signature 级 + 自申请，只有同签名的本应用能投递。
+      契约由 ManifestContractTest 强制校验。
+    -->
+    <permission
+        android:name="com.ldp.adskip.permission.INTERNAL"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.ldp.adskip.permission.INTERNAL" />
+
     <!-- 应用管理页需要列出其他可启动应用（Android 11+ 可见性声明） -->
     <queries>
         <intent>

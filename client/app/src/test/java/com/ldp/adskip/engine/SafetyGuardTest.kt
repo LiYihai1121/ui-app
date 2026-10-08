@@ -92,4 +92,40 @@ class SafetyGuardTest {
         val node = FakeAdNode.node(text = "Skip")
         assertTrue(SafetyGuard.canClick(node, "com.example.app"))
     }
+
+    @Test
+    fun `english deny word blocked`() {
+        val node = FakeAdNode.node(text = "Install Now")
+        assertFalse(SafetyGuard.canClick(node, "com.example.app"))
+    }
+
+    @Test
+    fun `english deny word case insensitive blocked`() {
+        val node = FakeAdNode.node(text = "ALLOW")
+        assertFalse(SafetyGuard.canClick(node, "com.example.app"))
+    }
+
+    @Test
+    fun `sensitive system packages blocked`() {
+        val node = FakeAdNode.node(text = "跳过")
+        assertFalse(SafetyGuard.canClick(node, "com.android.permissioncontroller"))
+        assertFalse(SafetyGuard.canClick(node, "com.android.packageinstaller"))
+        assertFalse(SafetyGuard.canClick(node, "com.android.settings"))
+    }
+
+    @Test
+    fun `deny word in parent chain blocked`() {
+        // 无标签图标按钮 + 敏感文案在父容器：只看目标自身会被绕过
+        val button = FakeAdNode.node()
+        val dialog = FakeAdNode.node(text = "要允许安装此应用吗？", children = listOf(button))
+        val target = dialog.children().first()
+        assertFalse(SafetyGuard.canClick(target, "com.example.app"))
+    }
+
+    @Test
+    fun `unlabeled button without sensitive ancestors allowed`() {
+        val button = FakeAdNode.node()
+        val card = FakeAdNode.node(text = "限时秒杀", children = listOf(button))
+        assertTrue(SafetyGuard.canClick(card.children().first(), "com.example.app"))
+    }
 }

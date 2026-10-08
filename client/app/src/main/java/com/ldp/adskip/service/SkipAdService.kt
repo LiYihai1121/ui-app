@@ -44,6 +44,13 @@ class SkipAdService : AccessibilityService() {
         const val ACTION_SKIPPED = "com.ldp.adskip.SKIPPED"
         const val ACTION_REQUEST_SHUTDOWN = "com.ldp.adskip.REQUEST_SHUTDOWN"
         const val ACTION_EXPORT_SNAPSHOT = "com.ldp.adskip.EXPORT_SNAPSHOT"
+
+        /**
+         * 内部广播权限（signature 级，manifest 声明）：
+         * 动态接收器只接受本应用投递的关停/快照导出指令，
+         * 补齐 Android 8–12 动态注册默认可被任意应用投递的口子。
+         */
+        const val INTERNAL_PERMISSION = "com.ldp.adskip.permission.INTERNAL"
         const val EXTRA_RUNNING = "running"
         const val EXTRA_PKG = "pkg"
 
@@ -131,11 +138,19 @@ class SkipAdService : AccessibilityService() {
             if (registered) return
             val filter = IntentFilter(action)
             try {
+                // broadcastPermission=INTERNAL_PERMISSION：所有 API 级别都只接受
+                // 同签名应用投递；API 33+ 再叠加 RECEIVER_NOT_EXPORTED。
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    service.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+                    service.registerReceiver(
+                        receiver,
+                        filter,
+                        INTERNAL_PERMISSION,
+                        null,
+                        Context.RECEIVER_NOT_EXPORTED,
+                    )
                 } else {
                     @Suppress("DEPRECATION")
-                    service.registerReceiver(receiver, filter)
+                    service.registerReceiver(receiver, filter, INTERNAL_PERMISSION, null)
                 }
                 registered = true
             } catch (e: Exception) {
@@ -194,6 +209,8 @@ class SkipAdService : AccessibilityService() {
         val snapshot = NodeSnapshot.capture(root, pkg, activity)
         val text = snapshot.toShareText()
 
+        // Service context 启动 Activity 必须带 FLAG_ACTIVITY_NEW_TASK，
+        // 否则抛 AndroidRuntimeException 直接崩掉进程（顺带杀死无障碍服务）。
         context.startActivity(
             Intent.createChooser(
                 Intent(Intent.ACTION_SEND).apply {
@@ -202,7 +219,7 @@ class SkipAdService : AccessibilityService() {
                     putExtra(Intent.EXTRA_TEXT, text)
                 },
                 context.getString(R.string.logs_share),
-            ),
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
         Toast.makeText(context, R.string.settings_snapshot_exported, Toast.LENGTH_SHORT).show()
     }
@@ -242,7 +259,11 @@ class SkipAdService : AccessibilityService() {
 
         // 安全护栏：点击前复核
         if (!SafetyGuard.canClick(target, pkg)) {
-            LogRing.w("Safety", "blocked click on pkg=$pkg label=${target.text}/${target.desc}")
+            // 只记录标签长度，不落其他应用的界面文本：LogRing 可被用户导出分享
+            LogRing.w(
+                "Safety",
+                "blocked click on pkg=$pkg textLen=${target.text?.length ?: 0} descLen=${target.desc?.length ?: 0}",
+            )
             return
         }
 

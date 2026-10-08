@@ -12,6 +12,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
@@ -28,6 +29,29 @@ import java.util.concurrent.TimeUnit
 object SyncClient {
 
     private const val TIMEOUT_MS = 6000
+
+    /**
+     * 响应体读取上限。
+     *
+     * 安全契约：响应来自网络对端（可能是被劫持的 AP / 恶意服务器），
+     * 无上限的 `body.string()` 会让一个超大响应直接把应用内存打爆（DoS）。
+     * 规则载荷合法规模远小于该值（服务端请求体上限 1MB），超限即拒绝。
+     */
+    private const val MAX_RESPONSE_BYTES = 2L * 1024 * 1024
+
+    /**
+     * 云端规则载荷条目上限（与服务端 config 对齐：MAX_APPS=2000、
+     * MAX_RULES_PER_APP=512、MAX_SELECTORS_PER_LIST=128、条目 256 字符）。
+     * 服务端已清洗，但客户端不能假设对端可信（MITM/被劫持服务器）：
+     * 超限条目直接丢弃、非法包名键直接跳过，防内存/偏好存储被打爆。
+     */
+    private const val MAX_CLOUD_APPS = 2000
+    private const val MAX_LIST_ITEMS = 512
+    private const val MAX_SELECTORS = 128
+    private const val MAX_ITEM_LEN = 256
+
+    /** 与服务端 PKG_RE 同源：包名键必须是合法安卓包名，否则不得进入偏好存储键空间 */
+    private val PKG_KEY_RE = Regex("^[a-zA-Z][A-Za-z0-9_]*(\\.[a-zA-Z][A-Za-z0-9_]*)+$")
     private val mainHandler = Handler(Looper.getMainLooper())
     private val executors by lazy { AppExecutors() }
 
@@ -59,7 +83,8 @@ object SyncClient {
 
     // ---------- 规则解析 ----------
 
-    private data class RulesParseResult(
+    /** 解析结果（internal：单测直接覆盖解析边界） */
+    internal data class RulesParseResult(
         val keywords: List<String>?,
         val viewIds: List<String>?,
         val selectors: List<String>?,
@@ -69,8 +94,8 @@ object SyncClient {
         val version: Int,
     )
 
-    /** v1/v0 规则响应统一解析；两端形状的差异在此收敛。 */
-    private fun parseRulesResponse(body: String): RulesParseResult {
+    /** v1/v0 规则响应统一解析；两端形状的差异在此收敛。internal 供单测覆盖。 */
+    internal fun parseRulesResponse(body: String): RulesParseResult {
         val json = JSONObject(body)
         val schemaVersion = json.optInt("schemaVersion", 1)
         val hash = json.optString("hash", "")
@@ -85,17 +110,20 @@ object SyncClient {
         if (rulesObj != null) {
             keywords = rulesObj.optJSONArray("globalKeywords")?.toStringList()
             viewIds = rulesObj.optJSONArray("globalViewIds")?.toStringList()
-            selectors = rulesObj.optJSONArray("globalSelectors")?.toStringList()
+            selectors = rulesObj.optJSONArray("globalSelectors")?.toStringList(MAX_SELECTORS)
             val apps = rulesObj.optJSONObject("apps")
             if (apps != null) {
                 val keys = apps.keys()
                 while (keys.hasNext()) {
                     val pkg = keys.next()
+                    if (pkgRules.size >= MAX_CLOUD_APPS) break
+                    // 非法包名键不得进入偏好存储键空间（服务端 PKG_RE 同源校验）
+                    if (!PKG_KEY_RE.matches(pkg)) continue
                     val rule = apps.optJSONObject(pkg) ?: continue
                     pkgRules[pkg] = RulesRepository.PkgRule(
                         keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
                         viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
-                        selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
+                        selectors = rule.optJSONArray("selectors")?.toStringList(MAX_SELECTORS) ?: emptyList(),
                         disabled = rule.optBoolean("disabled", false),
                     )
                 }
@@ -103,17 +131,19 @@ object SyncClient {
         } else {
             keywords = json.optJSONArray("keywords")?.toStringList()
             viewIds = json.optJSONArray("viewIds")?.toStringList()
-            selectors = json.optJSONArray("selectors")?.toStringList()
+            selectors = json.optJSONArray("selectors")?.toStringList(MAX_SELECTORS)
             val packages = json.optJSONObject("packages")
             if (packages != null) {
                 val keys = packages.keys()
                 while (keys.hasNext()) {
                     val pkg = keys.next()
+                    if (pkgRules.size >= MAX_CLOUD_APPS) break
+                    if (!PKG_KEY_RE.matches(pkg)) continue
                     val rule = packages.optJSONObject(pkg) ?: continue
                     pkgRules[pkg] = RulesRepository.PkgRule(
                         keywords = rule.optJSONArray("keywords")?.toStringList() ?: emptyList(),
                         viewIds = rule.optJSONArray("viewIds")?.toStringList() ?: emptyList(),
-                        selectors = rule.optJSONArray("selectors")?.toStringList() ?: emptyList(),
+                        selectors = rule.optJSONArray("selectors")?.toStringList(MAX_SELECTORS) ?: emptyList(),
                         disabled = rule.optBoolean("disabled", false),
                     )
                 }
@@ -257,8 +287,18 @@ object SyncClient {
         client().newCall(request).execute().use { response ->
             if (response.code == 304) return Pair("", true)
             if (response.code !in 200..299) throw Exception("HTTP " + response.code)
-            return Pair(response.body!!.string(), false)
+            return Pair(readBodyCapped(response), false)
         }
+    }
+
+    /** 读取响应体，超过 [MAX_RESPONSE_BYTES] 直接失败，避免超大响应耗尽内存（internal 供单测覆盖） */
+    internal fun readBodyCapped(response: Response): String {
+        val body = response.body ?: return ""
+        if (body.contentLength() > MAX_RESPONSE_BYTES) throw Exception("response too large")
+        val source = body.source()
+        source.request(MAX_RESPONSE_BYTES + 1)
+        if (source.buffer.size > MAX_RESPONSE_BYTES) throw Exception("response too large")
+        return source.buffer.clone().readString(Charsets.UTF_8)
     }
 
     private fun httpPost(url: String, body: String) {
@@ -271,10 +311,11 @@ object SyncClient {
         }
     }
 
-    private fun JSONArray.toStringList(): List<String> {
+    private fun JSONArray.toStringList(maxItems: Int = MAX_LIST_ITEMS): List<String> {
         val out = mutableListOf<String>()
         for (i in 0 until length()) {
-            val s = optString(i).trim()
+            if (out.size >= maxItems) break
+            val s = optString(i).trim().take(MAX_ITEM_LEN)
             if (s.isNotEmpty()) out.add(s)
         }
         return out

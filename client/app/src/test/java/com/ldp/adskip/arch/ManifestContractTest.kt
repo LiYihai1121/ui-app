@@ -110,6 +110,41 @@ class ManifestContractTest {
         )
     }
 
+    // ---------- 内部广播接收器不得对第三方开放 ----------
+
+    @Test
+    fun `internal broadcast permission is declared as signature level`() {
+        // 安全契约：服务的动态接收器（关停/快照导出）只接受同签名应用投递。
+        // 声明与自申请缺一即为导出面暴露（Android 8–12 动态注册默认可被任意应用投递）。
+        assertTrue(
+            "清单缺少 signature 级 <permission android:name=\"com.ldp.adskip.permission.INTERNAL\">",
+            Regex(
+                """<permission[^>]*android:name="com\.ldp\.adskip\.permission\.INTERNAL"[^>]*protectionLevel="signature"[^>]*/>""",
+            ).containsMatchIn(manifest),
+        )
+        assertTrue(
+            "清单缺少 <uses-permission android:name=\"com.ldp.adskip.permission.INTERNAL\"/>（本应用发指令也需要该权限）",
+            manifest.contains("""<uses-permission android:name="com.ldp.adskip.permission.INTERNAL" />"""),
+        )
+    }
+
+    @Test
+    fun `every dynamic receiver registration requires internal permission`() {
+        val service = readMainSource("service/SkipAdService.kt")
+        val all = Regex("""(?<!\w)registerReceiver\(""").findAll(service).count()
+        assertTrue("未在 SkipAdService 中找到 registerReceiver 调用", all > 0)
+        val guarded = Regex(
+            """(?<!\w)registerReceiver\([^)]*INTERNAL_PERMISSION""",
+            RegexOption.DOT_MATCHES_ALL,
+        ).findAll(service).count()
+        assertTrue(
+            "动态注册接收器缺少 INTERNAL_PERMISSION（$guarded/$all 处已加）。\n" +
+                "无权限保护时任意应用可投递 REQUEST_SHUTDOWN 关停无障碍服务，" +
+                "或 EXPORT_SNAPSHOT 诱导导出前台界面文本（含聊天/验证码等隐私）。",
+            guarded == all,
+        )
+    }
+
     // ---------- 工具 ----------
 
     /**
