@@ -1,4 +1,4 @@
-package com.ldp.adskip.ui.settings
+﻿package com.ldp.adskip.ui.settings
 
 import android.app.Activity
 import androidx.annotation.StringRes
@@ -35,7 +35,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle

@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  启动器图标背景层：对角线性渐变（#1E88E5 → #0D47A1），两端都取品牌蓝家族色，
-  视觉上夹住 M3 主色 #1565C0，保证图标与应用内主题是同一个「蓝」而不是两套配色。
+  启动器图标背景层（Tech V4）：深空暗色 + 电路纹理 + 中心光晕。
 
-  为什么用矢量渐变而不是 @color：改成矢量后即可在不改前景层的前提下做夜间版或品牌换色；
-  代价是背景层的 color 资源不再被引用（见 colors.xml 的说明）。
+  设计语言（科技感）：
+  - 深空基底：#060A1A → #0D1228，营造「暗色科技」氛围；
+  - 电路网格：极细线条（12dp 间距，3% 不透明度），暗示数据流动与精密工程；
+  - 中心光晕：#1A3A8A 径向发光，为前景的霓虹符号提供「光源」暗示；
+  - 四角压暗：光线自然衰减，增加纵深感。
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
@@ -13,17 +15,44 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
+    <!-- 基底：深空径向渐变 -->
     <path android:pathData="M0,0 h108 v108 h-108 z">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:type="linear"
-                android:startX="0"
-                android:startY="0"
-                android:endX="108"
-                android:endY="108">
-                <item android:offset="0" android:color="#1E88E5" />
-                <item android:offset="1" android:color="#0D47A1" />
+                android:type="radial"
+                android:centerX="54" android:centerY="48"
+                android:gradientRadius="80">
+                <item android:offset="0" android:color="#0D1228" />
+                <item android:offset="0.5" android:color="#080C1E" />
+                <item android:offset="1" android:color="#04060F" />
             </gradient>
         </aapt:attr>
     </path>
+
+    <!-- 电路网格：水平线 -->
+    <path android:pathData="M0,12 h108 M0,24 h108 M0,36 h108 M0,48 h108 M0,60 h108 M0,72 h108 M0,84 h108 M0,96 h108"
+        android:strokeColor="#1A3A8A" android:strokeWidth="0.3" android:fillColor="#00000000" />
+
+    <!-- 电路网格：垂直线 -->
+    <path android:pathData="M12,0 v108 M24,0 v108 M36,0 v108 M48,0 v108 M60,0 v108 M72,0 v108 M84,0 v108 M96,0 v108"
+        android:strokeColor="#1A3A8A" android:strokeWidth="0.3" android:fillColor="#00000000" />
+
+    <!-- 电路节点：十字交叉点高亮 -->
+    <path android:pathData="M24,24 l2,0 M24,24 l0,2 M60,36 l2,0 M60,36 l0,2 M36,60 l2,0 M36,60 l0,2 M72,72 l2,0 M72,72 l0,2 M48,48 l2,0 M48,48 l0,2 M84,24 l2,0 M84,24 l0,2"
+        android:strokeColor="#2955B0" android:strokeWidth="0.5" android:fillColor="#00000000" />
+
+    <!-- 中心光晕：为前景霓虹符号提供光源 -->
+    <path android:pathData="M54,48 m-28,0 a28,28 0 1,0 56,0 a28,28 0 1,0 -56,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="54" android:centerY="48"
+                android:gradientRadius="28">
+                <item android:offset="0" android:color="#1A3A8A" />
+                <item android:offset="0.6" android:color="#0D1A40" />
+                <item android:offset="1" android:color="#00000000" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
 </vector>

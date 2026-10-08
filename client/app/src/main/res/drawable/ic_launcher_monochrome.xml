@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  启动器图标单色层（Android 13+ 主题图标 / Material You 桌面取形）。
-
-  主题化桌面会把本层用系统色重新着色，因此这里必须是**单色、无渐变、无透明叠加**的纯形状，
-  否则会出现「彩色图标 / 单色图标」两套观感。形状与 ic_launcher_foreground.xml 完全一致，
-  只换颜色：前景层用白（压在品牌蓝背景上），本层用黑（由系统着色）。
+  启动器图标单色层（Tech V4 / Android 13+ 主题图标）。
+  形状与 ic_launcher_foreground.xml（Tech V4）完全一致：
+  六边形芯片框 + 电路装饰线 + 快进双三角 + 速度线，
+  只换颜色：前景层用电光蓝渐变（压在深空背景上），本层用纯黑（由系统按主题着色）。
+  本层必须是单色纯形状，不得出现渐变或透明叠加。
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -12,9 +12,28 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <path
-        android:fillColor="#000000"
-        android:fillType="evenOdd"
-        android:pathData="M23.0,54.0 a31.0,31.0 0 1,0 62.0,0 a31.0,31.0 0 1,0 -62.0,0 Z
-                          M26,47.5 L61,47.5 L61,35.5 L85,54 L61,72.5 L61,60.5 L26,60.5 Z" />
+    <!-- 六边形框 -->
+    <path android:pathData="M54,18 L86,37 L86,71 L54,90 L22,71 L22,37 Z"
+        android:fillColor="#00000000"
+        android:strokeColor="#000000"
+        android:strokeWidth="2" />
+
+    <!-- 电路装饰线 -->
+    <path android:pathData="M32,44 L54,44 M32,54 L42,54 M32,64 L54,64 M62,44 L76,44 M62,64 L76,64"
+        android:strokeColor="#000000" android:strokeWidth="0.6" android:fillColor="#00000000" />
+
+    <!-- 电路节点 -->
+    <path android:pathData="M32,44 l1.5,0 M32,54 l1.5,0 M32,64 l1.5,0 M74,44 l-1.5,0 M74,64 l-1.5,0"
+        android:strokeColor="#000000" android:strokeWidth="1.2" android:fillColor="#00000000" />
+
+    <!-- 左三角 -->
+    <path android:pathData="M38,38 L52,54 L38,70 Z" android:fillColor="#000000" />
+
+    <!-- 右三角 -->
+    <path android:pathData="M52,38 L66,54 L52,70 Z" android:fillColor="#000000" />
+
+    <!-- 速度线 -->
+    <path android:pathData="M36,74 L62,74 M40,78 L58,78 M44,82 L54,82"
+        android:strokeColor="#000000" android:strokeWidth="1" android:fillColor="#00000000" />
+
 </vector>

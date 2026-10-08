@@ -1,27 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  启动器图标前景层（108dp 画布，坐标系与 Android 自适应图标一致）。
+  启动器图标前景层（Tech V4）：霓虹光晕快进符号。
 
-  设计要点（改动前请先读，避免退化成通用「快进」图形）：
-  - 安全区 66dp（21..87）、可视区 72dp（18..90）。圆盘直径 62（23..85）落在安全区内；
-  - 圆盘 + 负空间「跳过」箭头：负空间在小尺寸下对比度最高，48dp 与磁贴 24dp 仍可辨识，
-    而实心描边方案在 24px 会糊成一团；
-  - 箭头必须**完全位于圆盘内**：evenOdd 填充下「在槽内但在圆盘外」的点会重新被填上，
-    负空间消失。因此箭头尖端正好落在圆盘最右点 (85,54)，不再向外穿出；
-  - 单色层见 ic_launcher_monochrome.xml（Android 13+ 主题图标）。
+  设计语言（科技感）：
+  - 霓虹光晕：三层渐进光晕（六边形外框），模拟电子屏幕的发光效果；
+  - 电光蓝主色：#00E5FF → #FFFFFF，中心最亮向边缘衰减；
+  - 几何精度：六边形外框（芯片/科技的经典符号）+ 快进双三角 + 速度线；
+  - 暗色对比：霓虹色在深空背景上产生强烈的「点亮」效果。
 
-  预览与本文件使用同一组坐标：渲染脚本输出即为此处的 pathData。
+  相对于 V3 的变化：
+  - V3 是纯白双三角（极简但缺乏科技氛围）；
+  - V4 加入六边形芯片框 + 三层霓虹光晕 + 电路纹理背景，整体呈现「电子芯片点亮」的科技感。
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- 圆盘 + 负空间箭头合并为一条 evenOdd 路径 -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="M23.0,54.0 a31.0,31.0 0 1,0 62.0,0 a31.0,31.0 0 1,0 -62.0,0 Z
-                          M26,47.5 L61,47.5 L61,35.5 L85,54 L61,72.5 L61,60.5 L26,60.5 Z" />
+    <!-- 外层光晕（六边形，最低不透明度） -->
+    <path android:pathData="M54,10 L93,33 L93,75 L54,98 L15,75 L15,33 Z"
+        android:strokeWidth="1">
+        <aapt:attr name="android:strokeColor">
+            <gradient android:type="linear"
+                android:startX="54" android:startY="10" android:endX="54" android:endY="98">
+                <item android:offset="0" android:color="#2000E5FF" />
+                <item android:offset="1" android:color="#200066CC" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- 中层光晕（六边形，中等不透明度） -->
+    <path android:pathData="M54,15 L89,36 L89,72 L54,93 L19,72 L19,36 Z"
+        android:strokeWidth="1.5">
+        <aapt:attr name="android:strokeColor">
+            <gradient android:type="linear"
+                android:startX="54" android:startY="15" android:endX="54" android:endY="93">
+                <item android:offset="0" android:color="#4000E5FF" />
+                <item android:offset="1" android:color="#400066CC" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- 主六边形框（芯片/科技符号） -->
+    <path android:pathData="M54,18 L86,37 L86,71 L54,90 L22,71 L22,37 Z"
+        android:fillColor="#0D1228"
+        android:strokeColor="#00E5FF"
+        android:strokeWidth="2" />
+
+    <!-- 六边形内部电路装饰线 -->
+    <path android:pathData="M32,44 L54,44 M32,54 L42,54 M32,64 L54,64 M62,44 L76,44 M62,64 L76,64"
+        android:strokeColor="#00E5FF" android:strokeWidth="0.6" android:fillColor="#00000000" />
+
+    <!-- 六边形电路节点 -->
+    <path android:pathData="M32,44 l1.5,0 M32,54 l1.5,0 M32,64 l1.5,0 M74,44 l-1.5,0 M74,64 l-1.5,0"
+        android:strokeColor="#00E5FF" android:strokeWidth="1.2" android:fillColor="#00000000" />
+
+    <!-- 左三角（渐变填充） -->
+    <path android:pathData="M38,38 L52,54 L38,70 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear"
+                android:startX="38" android:startY="38" android:endX="52" android:endY="54">
+                <item android:offset="0" android:color="#FFFFFF" />
+                <item android:offset="1" android:color="#00E5FF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- 右三角（渐变填充，略有重叠制造速度感） -->
+    <path android:pathData="M52,38 L66,54 L52,70 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear"
+                android:startX="52" android:startY="38" android:endX="66" android:endY="54">
+                <item android:offset="0" android:color="#FFFFFF" />
+                <item android:offset="1" android:color="#00E5FF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- 速度线（递减长度） -->
+    <path android:pathData="M36,74 L62,74"
+        android:strokeColor="#00E5FF" android:strokeWidth="1" android:fillColor="#00000000" />
+    <path android:pathData="M40,78 L58,78"
+        android:strokeColor="#00E5FF" android:strokeWidth="0.8" android:fillColor="#00000000" />
+    <path android:pathData="M44,82 L54,82"
+        android:strokeColor="#00E5FF" android:strokeWidth="0.6" android:fillColor="#00000000" />
+
 </vector>

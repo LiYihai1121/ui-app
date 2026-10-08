@@ -22,6 +22,7 @@ navigationCompose = "2.8.5"
 
 # 测试
 junit = "4.13.2"
+orgJson = "20240303"
 
 # 安全存储（EncryptedSharedPreferences）
 securityCrypto = "1.1.0-alpha07"
@@ -55,6 +56,7 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 
 # 测试
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
 
 # 安全存储
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
