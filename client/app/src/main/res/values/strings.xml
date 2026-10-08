@@ -193,6 +193,7 @@
     <string name="settings_overlay_enable">显示悬浮开关</string>
     <string name="settings_overlay_disable">关闭悬浮开关</string>
     <string name="settings_overlay_permission_needed">需要「显示在其他应用上层」权限，请在系统设置中允许后返回</string>
+    <string name="settings_overlay_permission_unavailable">无法打开悬浮权限设置页，请手动前往 设置 → 应用管理 → 轻启 → 悬浮窗</string>
     <string name="overlay_channel_name">快捷开关</string>
     <string name="overlay_notif_title">轻启快捷开关运行中</string>
     <string name="overlay_notif_text">点按面板即可暂停/恢复，点此返回应用</string>

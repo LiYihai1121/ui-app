@@ -12,6 +12,7 @@ import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.AppContainer
 import com.ldp.adskip.R
 import com.ldp.adskip.core.AppEvents
+import com.ldp.adskip.core.LogRing
 import com.ldp.adskip.device.BatteryExemption
 import com.ldp.adskip.device.KeepAliveNavigator
 import com.ldp.adskip.device.LanguageMode
@@ -197,13 +198,17 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     private fun requestOverlayPermission() {
-        runCatching {
+        try {
             container.app.startActivity(
                 Intent(
                     android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + container.app.packageName),
                 ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
+        } catch (e: Exception) {
+            // 系统无悬浮权限管理页面（部分精简 ROM）：引导用户手动进入
+            LogRing.w("Settings", "悬浮权限设置页打开失败: ${e.javaClass.simpleName}: ${e.message}")
+            send(container.app.getString(R.string.settings_overlay_permission_unavailable))
         }
     }
 
