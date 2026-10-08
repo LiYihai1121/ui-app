@@ -159,8 +159,14 @@ PACKAGE_OR_CLASSIFIER_REDECLARATION: Redeclaration: SelectorContractTest
 `client/build-logic/convention/build.gradle.kts`），语言服务器无法从 Gradle 模型取到 Kotlin 工具链版本，
 于是回落到自带编译器，再撞上 Gradle 9.7.0 自带的 stdlib 2.4.0。
 
-**处理**：升级 `fwcd.kotlin` 到内置 Kotlin ≥ 2.4.0 的版本，然后重载窗口。注意
-`.vscode/extensions.json` 只登记扩展 ID、**无法锁定版本**，需在各机手动升级。
+**处理（本仓库的既定取舍）**：`fwcd.kotlin` 在 Marketplace 上 **0.2.36 即为最新版**，
+不存在可升级的目标，「升级扩展」这条路走不通。因此本仓库在 `.vscode/settings.json` 把
+`kotlin.diagnostics.enabled` 置为 `false`：关掉后失去的只是这一列全是误报的红波浪线，
+补全 / 跳转定义 / 查找引用 / hover / 签名提示照常工作（`kotlin.diagnostics.*` 与
+`kotlin.completion.*` 相互独立）。真实错误信号由命令行门禁负责
+（`cd client; ./gradlew ktlintCheck testDebugUnitTest`），门禁全绿即代表源码正确。
+撤销条件：fwcd 发布内置编译器 ≥ 2.4.0 的版本后，把该键改回 `true` 即可恢复 IDE 内诊断。
+
 **不要为迁就语言服务器而改写已通过构建的代码**——那会污染正确的源码。
 
 **关于 `Redeclaration`**：`SelectorContractTest.kt` 在根与 `.worktrees/<agent>-<slug>/` 下各有副本
@@ -168,8 +174,9 @@ PACKAGE_OR_CLASSIFIER_REDECLARATION: Redeclaration: SelectorContractTest
 已用 `java.import.exclusions` 把这些目录排除出 Java 语言服务；但 `fwcd.kotlin` 0.2.36 的配置项里
 **没有目录排除开关**（只有 `kotlin.languageServer.*` / `kotlin.diagnostics.*` / `kotlin.scripts.*` 等），
 故它会把所有 worktree 的 gradle 工程一并导入，并对同包同类名报 `Redeclaration`。
-清理已完成协作的 worktree（`git worktree remove .worktrees/<name>`）即可消除；
-在此之前该报错同样可安全忽略。
+这类副本是**多 Agent 协作的正常中间态，不是故障**：协作收尾后按
+[AGENT-WORKFLOW.md](AGENT-WORKFLOW.md) 删掉 worktree（`git worktree remove .worktrees/<name>`，
+分支与提交不受影响）即可消除；在其存在期间该报错同样可安全忽略。
 
 
 ## CI 构建失败排障
