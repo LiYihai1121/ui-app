@@ -82,6 +82,33 @@ class UiContractTest {
     }
 
     @Test
+    fun `interactive row primitives keep a minimum touch target`() {
+        // 联合厂商无障碍/适老化基线：可点区域最小边长 48dp（UiSizes.touchTarget）。
+        // 整行可点的行组件（LabeledSwitch / TwoLineRow）行高由内容决定，
+        // 单行内容或紧凑字号下会低于 48dp，必须给根 Row 显式兜底。
+        val required = "heightIn(min = UiSizes.touchTarget)"
+        val primitives = listOf("fun LabeledSwitch(", "fun TwoLineRow(")
+        val offenders = mutableListOf<String>()
+        uiSources().forEach { file ->
+            val code = codeOf(file).joinToString("\n")
+            primitives.forEach { signature ->
+                val start = code.indexOf(signature)
+                if (start < 0) return@forEach
+                val end = code.indexOf("\nfun ", start + signature.length)
+                val block = code.substring(start, if (end < 0) code.length else end)
+                if (!block.contains(required)) {
+                    offenders += "${file.substringAfterLast('/')} → $signature"
+                }
+            }
+        }
+        assertTrue(
+            "整行可点的行组件必须声明最小触控高度 $required（无障碍/适老化基线 48dp）。" +
+                "缺失：\n" + offenders.joinToString("\n") { "  $it" },
+            offenders.isEmpty(),
+        )
+    }
+
+    @Test
     fun `every declared string is referenced by code`() {
         val resRoot = File(repoRoot(), "client/app/src/main/res")
         val locales = resRoot.listFiles()

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
@@ -251,6 +252,9 @@ fun LabeledSwitch(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            // 触控目标下限（联合厂商无障碍/适老化基线 48dp）：整行可点但行高由
+            // 内容决定，单行/紧凑字号下会低于 48dp，兜底保证命中区不缩水
+            .heightIn(min = UiSizes.touchTarget)
             .toggleable(
                 value = checked,
                 enabled = enabled,

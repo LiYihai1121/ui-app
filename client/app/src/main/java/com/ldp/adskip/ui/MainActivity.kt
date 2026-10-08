@@ -11,8 +11,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
@@ -145,6 +149,9 @@ private fun AdskipShell() {
     // 不用 CompositionLocal——依赖写在签名上，比隐式查找更容易发现遗漏。
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        // 联合厂商标准（异形屏适配）：刘海/挖孔（displayCutout）不得遮挡内容。
+        // 横屏下只吃系统栏 insets 会让卡片顶到摄像头开孔下面，显式并入 cutout。
+        contentWindowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout),
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = {
             NavigationBar(

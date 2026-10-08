@@ -112,6 +112,8 @@ class PointPickService : Service() {
         }
         val cancel = Button(this).apply {
             setText(R.string.point_pick_cancel)
+            // 触控目标下限（联合厂商无障碍/适老化基线 48dp）
+            minHeight = dp(48)
             setOnClickListener { stopSelf() }
         }
         val cancelBar = LinearLayout(this@PointPickService).apply {
