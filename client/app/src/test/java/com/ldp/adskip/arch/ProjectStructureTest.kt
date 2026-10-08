@@ -44,7 +44,7 @@ class ProjectStructureTest {
                 (unexpectedDirs + unexpectedFiles).joinToString("\n") { "  $it" } +
                 "\n新增根级目录/文件会让仓库结构失去边界（历史上根目录就长出过 *.apk 与工具残留目录）。\n" +
                 "若确有必要：\n" +
-                "  1. 优先放进既有目录（docs/ 子模块、client/ 模块、server/ 内部）；\n" +
+                "  1. 优先放进既有目录（docs/ 子模块、client/ 模块）；\n" +
                 "  2. 确属根级治理文件时，把名字加入本测试的 ALLOWED_ROOT_DIRS / ALLOWED_ROOT_FILES；\n" +
                 "  3. 若属于本机生成物或工具产物，应写入根 .gitignore 而不是加白名单。",
             unexpectedDirs.isEmpty() && unexpectedFiles.isEmpty(),
@@ -639,6 +639,7 @@ class ProjectStructureTest {
             ".workbuddy", // 同族工具目录
             ".cursor", // Cursor 本机工程状态（不入库；缺席白名单会在装了 Cursor 的机器上误红）
             ".vscode", // 编辑器共享配置（选择性入库，规则见 VSCODE_SHARED_FILES）
+            ".preview", // 本机预览产物目录（深链截图等，gitignore 不入库；缺席白名单会在生成预览的机器上误红）
         )
 
         // 仓库根白名单：目录
@@ -651,7 +652,6 @@ class ProjectStructureTest {
             "skills", // 随仓库版本控制的 Agent 技能（kilo.json 的 skills.paths 挂载点）
             "client", // Android 工程根
             "docs", // 文档
-            "server", // Bun + TypeScript 服务端
         ) + AGENT_TOOL_DIRS
 
         /**

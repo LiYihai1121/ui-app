@@ -16,7 +16,6 @@
     "**/.gradle": true,
     "**/.kotlin": true,
     "**/node_modules": true,
-    "**/server/data": true,
     // 多 Agent 协作产物与工作区：与根 .gitignore 同步，避免文件树里出现
     // 一堆 worktree 副本——它们也会被 Java 语言服务当作重复 gradle 项目导入。
     "**/.kilo": true,
@@ -32,7 +31,6 @@
     "**/.gradle": true,
     "**/.kotlin": true,
     "**/node_modules": true,
-    "**/server/data": true,
     "**/.kilo": true,
     "**/.kilocode": true,
     "**/.worktrees": true,
@@ -64,7 +62,8 @@
     "**/.agents/**",
     "**/.mimosa/**",
     "**/.workbuddy/**",
-    "**/.cursor/**"
+    "**/.cursor/**",
+    "**/.preview/**"
   ],
 
   // 120 与 .editorconfig 的 max_line_length 对齐。**这是一处必须手工同步的耦合**：

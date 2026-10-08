@@ -23,8 +23,6 @@
   - `cd client && ./gradlew ktlintCheck`
   - `cd client && ./gradlew assembleDebug`
   - `cd client && ./gradlew testDebugUnitTest`
-  - `cd server && bun test`
-  - `cd server && bun run typecheck`
 - 提交 PR 前完成自审，说明变更范围、兼容性、风险、验证结果和回滚方案。
 - `main` 与 `release/*` 必须通过 CI 和必要审查后合并；默认使用 Squash Merge。
 - 安全、协议、数据或发布配置变更需要领域负责人审查；紧急修复也必须保留事故记录和回滚点。
@@ -32,7 +30,7 @@
 ## 版本发布
 
 - 使用 Semantic Versioning：`MAJOR.MINOR.PATCH`；预发布版本使用 `X.Y.Z-rc.N`。
-- 发布从 `main` 创建 `release/vX.Y.Z`，冻结功能并同步更新 Android `versionName`、全局单调递增的 `versionCode` 和 `server/package.json` 版本。
+- 发布从 `main` 创建 `release/vX.Y.Z`，冻结功能并同步更新 Android `versionName` 与全局单调递增的 `versionCode`。
 - 通过完整 CI 和发布验收后，创建不可移动的带注释标签 `vX.Y.Z`，制品必须可追溯到 commit/tag 并记录校验和。
 - 禁止删除或移动已推送的版本标签；故障优先回滚已验证制品或使用 `git revert`，不得对受保护分支执行 reset 或 force-push。
 

@@ -8,11 +8,10 @@ import java.io.File
 /**
  * 选择器双端契约的客户端一侧（DESIGN-PHASE1 §6.2）。
  *
- * 与 `server/test/selectors.contract.test.ts` 消费同一份
- * `server/test/fixtures/selectors.contract.json`：同一批向量两端必须给出一致的
- * 「接受 / 拒绝」判定。两套校验实现相隔一个仓库、发布节奏不同，若各改各的，
- * 就会出现「服务端放行、客户端静默丢弃」或反之的漂移——第三通道会看起来
- * 「配了没生效」，而没有任何报错。
+ * 消费 `client/app/src/test/resources/selectors.contract.json`：同一批向量
+ * 必须给出一致的「接受 / 拒绝」判定。夹具原随 `server/` 一同维护，服务端移除后
+ * 迁入客户端侧由本测试单独守护；解析器收紧或文法变更时未同步夹具，第三通道
+ * 会看起来「配了没生效」，而没有任何报错。
  *
  * 判定口径：客户端的「接受」= [SelectorParser.parse] 编译成功。
  * 夹具的 `divergences` 段刻意记录两端判定不同的向量（服务端只做快检，
@@ -120,7 +119,7 @@ class SelectorContractTest {
 
     private fun fixture(): Fixture {
         val text = File(repoRoot(), FIXTURE_REL_PATH).let {
-            assertTrue("未找到选择器契约夹具 ${it.path}（应由 server/test/selectors.contract.test.ts 共同消费）", it.isFile)
+            assertTrue("未找到选择器契约夹具 ${it.path}（应位于 client/app/src/test/resources/）", it.isFile)
             it.readText()
         }
         val accepted = mutableListOf<Vector>()
@@ -198,7 +197,7 @@ class SelectorContractTest {
     }
 
     private companion object {
-        const val FIXTURE_REL_PATH = "server/test/fixtures/selectors.contract.json"
+        const val FIXTURE_REL_PATH = "client/app/src/test/resources/selectors.contract.json"
 
         val SECTION_ACCEPTED = Regex("\"accepted\"\\s*:")
         val SECTION_REJECTED = Regex("\"rejected\"\\s*:")

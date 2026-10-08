@@ -141,24 +141,3 @@ jobs:
             /tmp/android-release-build.log
             app/build/reports/ktlint/
           if-no-files-found: ignore
-
-  server:
-    name: Server Tests
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: server
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Run tests
-        run: bun test
-
-      - name: Run typecheck
-        run: bun run typecheck

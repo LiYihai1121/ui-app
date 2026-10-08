@@ -49,9 +49,7 @@ jobs:
             exit 1
           fi
 
-          server_version="$(node -p "require('./server/package.json').version")"
           android_version_name="$(sed -n 's/^[[:space:]]*versionName = "\([^"]*\)"/\1/p' client/app/build.gradle.kts)"
-          test "$server_version" = "$base_version"
           test "$android_version_name" = "$android_version"
 
       - name: Verify known workflow chain
@@ -89,9 +87,6 @@ jobs:
         with:
           packages: 'platforms;android-35 build-tools;35.0.0'
 
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-
       - name: Configure release signing (optional secrets)
         if: env.ADSKIP_KEYSTORE_BASE64 != ''
         shell: bash
@@ -111,13 +106,6 @@ jobs:
           chmod +x gradlew
           # ktlintCheck 与 CI 保持同一门禁：发布制品不应绕过格式与静态检查
           ./gradlew ktlintCheck assembleRelease testDebugUnitTest --no-daemon
-
-      - name: Test server
-        working-directory: server
-        run: |
-          bun install
-          bun test
-          bun run typecheck
 
       - name: Prepare release artifacts
         shell: bash

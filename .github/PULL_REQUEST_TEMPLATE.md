@@ -26,8 +26,6 @@
 - [ ] `cd client && ./gradlew ktlintCheck`
 - [ ] `cd client && ./gradlew assembleDebug`
 - [ ] `cd client && ./gradlew testDebugUnitTest`
-- [ ] `cd server && bun test`
-- [ ] `cd server && bun run typecheck`
 
 ## 风险与回滚
 
@@ -40,7 +38,7 @@
 ## 发布检查
 
 - [ ] 未修改已发布版本标签，未复用 Android `versionCode`
-- [ ] 需要发布时已创建 `release/vX.Y.Z`，并同步 Android 与服务端版本
+- [ ] 需要发布时已创建 `release/vX.Y.Z`，并同步 Android 版本
 - [ ] 涉及安全、协议或数据变更时已请求领域负责人审查
 
 <!-- 规则（分支模型、提交格式、审批与发布要求）见 CONTRIBUTING.md；此处不复制，避免两份真相。 -->

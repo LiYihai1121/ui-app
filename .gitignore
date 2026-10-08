@@ -65,3 +65,4 @@ client/build-logic/**/bin/
 # Pre-commit hooks
 .pre-commit-config.yaml
 .secrets.baseline
+.preview/
