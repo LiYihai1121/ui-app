@@ -52,8 +52,9 @@ node_modules/
 # 工程根打开时会另写 client/.vscode/，必须单独忽略，否则会作为未跟踪文件出现。
 client/.vscode/
 
-# JDT 语言服务编译 included build 时会把源镜像到 convention/bin/，不是 Gradle 产物。
-client/build-logic/**/bin/
+# JDT 语言服务编译 included build 时会把源镜像到各模块的 bin/ 目录（convention/bin/、
+# app/bin/ 等），不是 Gradle 产物，绝不提交。
+client/**/bin/
 
 # Kotlin 构建会话目录
 .kotlin/
