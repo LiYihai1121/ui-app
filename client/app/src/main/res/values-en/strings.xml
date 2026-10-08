@@ -209,4 +209,21 @@
     <string name="overlay_btn_dnd_on">Do Not Disturb: On</string>
     <string name="overlay_btn_dnd_off">Do Not Disturb: Off</string>
     <string name="overlay_btn_close">Close panel</string>
+
+    <!-- Custom point rules -->
+    <string name="settings_point_section">Custom tap-point rules</string>
+    <string name="settings_point_hint">For ads the engine cannot recognize: open the floating toggle on the ad screen, tap Pick point mode, then tap the skip button position once. The app will tap that spot afterwards. Stored as screen ratios on this device only.</string>
+    <string name="settings_point_pick">Enter pick point mode</string>
+    <string name="settings_point_entry">%1$s ｜ %2$d%%, %3$d%%</string>
+    <string name="settings_point_delete">Delete</string>
+    <string name="settings_point_clear">Clear all point rules</string>
+    <string name="settings_point_empty">No point rules yet</string>
+    <string name="point_pick_channel_name">Pick point mode</string>
+    <string name="point_pick_notif_title">轻启 pick point mode is running</string>
+    <string name="point_pick_hint">Tap the position of the ad skip button</string>
+    <string name="point_pick_current">Current app: %1$s</string>
+    <string name="point_pick_cancel">Cancel</string>
+    <string name="point_pick_saved">Point rule saved for %1$s</string>
+    <string name="point_pick_no_pkg">Cannot determine the current app (or it is not allowed); cancelled</string>
+    <string name="overlay_btn_pick">Pick point mode</string>
 </resources>

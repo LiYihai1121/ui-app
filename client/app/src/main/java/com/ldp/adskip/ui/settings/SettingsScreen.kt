@@ -95,6 +95,7 @@ fun SettingsContent(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refreshBatteryStatus()
         viewModel.refreshOverlayState()
+        viewModel.refreshPointRules()
     }
 
     var pickingStart by remember { mutableStateOf(false) }
@@ -221,6 +222,51 @@ fun SettingsContent(
                 checked = state.floatingOverlay,
                 onCheckedChange = viewModel::setFloatingOverlay,
             )
+        }
+
+        SectionCard {
+            SectionTitle(stringResource(R.string.settings_point_section))
+            Spacer(Modifier.height(Spacing.sm))
+            SectionHint(stringResource(R.string.settings_point_hint))
+            Button(
+                onClick = viewModel::startPointPick,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.settings_point_pick))
+            }
+            if (state.pointRules.isEmpty()) {
+                Spacer(Modifier.height(Spacing.sm))
+                Text(
+                    text = stringResource(R.string.settings_point_empty),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                state.pointRules.forEach { rule ->
+                    HorizontalDivider(Modifier.padding(vertical = Spacing.sm))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(rule.pkg, style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                text = stringResource(
+                                    R.string.settings_point_entry,
+                                    rule.xPercent,
+                                    rule.yPercent,
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        TextButton(onClick = { viewModel.deletePointRule(rule.pkg) }) {
+                            Text(stringResource(R.string.settings_point_delete))
+                        }
+                    }
+                }
+                Spacer(Modifier.height(Spacing.sm))
+                TextButton(onClick = viewModel::clearPointRules) {
+                    Text(stringResource(R.string.settings_point_clear))
+                }
+            }
         }
 
         SectionCard {

@@ -128,4 +128,14 @@ class SafetyGuardTest {
         val card = FakeAdNode.node(text = "限时秒杀", children = listOf(button))
         assertTrue(SafetyGuard.canClick(card.children().first(), "com.example.app"))
     }
+
+    @Test
+    fun `package guard blocks self and sensitive system packages`() {
+        // 坐标点击（自定义取点）也必须过这份包级护栏
+        assertFalse(SafetyGuard.canClickPackage("com.ldp.adskip"))
+        assertFalse(SafetyGuard.canClickPackage("com.android.settings"))
+        assertFalse(SafetyGuard.canClickPackage("com.android.permissioncontroller"))
+        assertFalse(SafetyGuard.canClickPackage("com.android.packageinstaller"))
+        assertTrue(SafetyGuard.canClickPackage("com.example.app"))
+    }
 }

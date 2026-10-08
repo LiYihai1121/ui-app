@@ -104,6 +104,11 @@ class FloatingToggleService : Service() {
         dndButton = buildButton().apply {
             setOnClickListener { toggleDnd() }
         }
+        val pickButton = buildButton().apply {
+            setText(R.string.overlay_btn_pick)
+            // 取点模式：盖一层透明层在广告界面上直接标注「跳过」位置
+            setOnClickListener { PointPickService.start(this@FloatingToggleService) }
+        }
         val closeButton = buildButton().apply {
             setText(R.string.overlay_btn_close)
             setOnClickListener { stopSelf() }
@@ -111,6 +116,7 @@ class FloatingToggleService : Service() {
 
         panel.addView(pauseButton)
         panel.addView(dndButton)
+        panel.addView(pickButton)
         panel.addView(closeButton)
         refreshLabels()
 

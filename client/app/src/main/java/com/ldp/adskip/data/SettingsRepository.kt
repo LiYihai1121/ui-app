@@ -48,6 +48,15 @@ class SettingsRepository(private val context: Context, private val rulesRepo: Ru
 
     fun setPaused(paused: Boolean) = Prefs.setPaused(context, paused)
 
+    // ---------- 自定义取点规则 ----------
+
+    /** 全部取点规则（按包名排序） */
+    fun pointRuleEntries(): List<PointRules.Entry> = PointRules.all(context)
+
+    fun removePointRule(pkg: String) = PointRules.remove(context, pkg)
+
+    fun clearPointRules() = PointRules.clear(context)
+
     fun getDoNotDisturbStart(): Int = Prefs.getDoNotDisturbStart(context)
 
     fun getDoNotDisturbEnd(): Int = Prefs.getDoNotDisturbEnd(context)
