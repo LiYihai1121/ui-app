@@ -28,6 +28,8 @@
   - 边界守护同步更新：`ArchitectureBoundaryTest` 删除 `net`/`sync` 目录用例；`ManifestContractTest` 删除 `setPersisted`/`RECEIVE_BOOT_COMPLETED` 用例；`UiContractTest` 触发的 11 个云同步孤儿字符串已在 `values/` 与 `values-en/` 清理。
   - 三大门禁全绿：`ktlintCheck` / `testDebugUnitTest` / `assembleDebug`。
 
+- **Agent 技能库扩容：新增 `software-development-full`（通用完整版软件开发协议）**：`skills/` 下新增第三个技能目录，并登记到 `skills/README.md` 的目录树。此前 `skills/` 只有两个「只保留指针」的轻量技能，通用工程判断（先侦察后修改、边界条件、测试策略、并发与安全强制检查项）没有可落地的载体；该技能把这套约束落成 SKILL.md，并按本仓库的 frontmatter 规范补上自动发现所需的 `description` 字段。文件开头显式声明优先级：分支 / 提交 / 门禁 / 发版一律让位于 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [AGENTS.md](AGENTS.md)，技能本身刻意不复制本仓库的分支命名表与门禁命令清单，避免形成第二份真相。仅面向开发者的 Agent 配置变更，不影响应用运行时行为。
+
 ### Removed
 
 - `server/` 目录、`net/SyncClient`、`sync/SyncJobService`、`res/xml/network_security_config.xml`、云同步相关字符串与设置入口。

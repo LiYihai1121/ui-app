@@ -24,7 +24,7 @@ docs/
 └── diagrams/          架构图（adskip-architecture.json 源 + .html 渲染）
 ```
 
-> 根级不在 `docs/` 下的文档：`skills/README.md` 是**随仓库版本控制的 Agent 技能**的开发规范（`skills/` 目录挂载于根 `kilo.json`），见 [../skills/README.md](../skills/README.md)。
+> 根级不在 `docs/` 下的文档：`skills/README.md` 是**随仓库版本控制的 Agent 技能**的开发规范，登记 `branch-guard`（分支治理）、`software-development-full`（通用完整版工程协议）、`code-simplifier`（代码简化）三个技能（`skills/` 目录挂载于根 `kilo.json`），见 [../skills/README.md](../skills/README.md)。
 
 ## 阅读顺序
 

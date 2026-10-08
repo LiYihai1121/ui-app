@@ -1,7 +1,7 @@
 # Agent 技能开发（skills/README.md）
 
-> 状态：已生效；最后更新：2026-10-07。
-> 适用范围：所有随仓库版本控制的 Agent 技能（`branch-guard`、`code-simplifier` 等）。
+> 状态：已生效；最后更新：2026-10-09。
+> 适用范围：所有随仓库版本控制的 Agent 技能（`branch-guard`、`software-development-full`、`code-simplifier` 等）。
 > 挂载方式：`kilo.json` 的 `skills.paths: ["./skills"]`；技能加载与权限见 [kilo.json](../kilo.json)。
 
 本目录是**随仓库版本控制的 Agent 技能**的唯一存放处。技能不是「个人配置」：放进 `.kilo/` 等被
@@ -12,9 +12,11 @@
 
 ```text
 skills/
-├── branch-guard/      自研技能：分支治理（规则指针 + 自检动作，不复述规则）
+├── branch-guard/              自研技能：分支治理（规则指针 + 自检动作，不复述规则）
 │   └── SKILL.md
-└── code-simplifier/   第三方上游技能：代码简化（Apache-2.0，随包携带 LICENSE / NOTICE）
+├── software-development-full/ 通用工程协议：侦察→设计→实现→验证→交付的完整约束
+│   └── SKILL.md
+└── code-simplifier/           第三方上游技能：代码简化（Apache-2.0，随包携带 LICENSE / NOTICE）
     ├── SKILL.md
     ├── README.md
     ├── LICENSE / NOTICE.md
@@ -44,6 +46,14 @@ metadata:            # 可选；按需补充
   [AGENTS.md](../AGENTS.md)、[AGENT-WORKFLOW.md](../docs/development/AGENT-WORKFLOW.md) 等），技能只跟随指针。
 - **描述要防误触发**：description 写明适用场景与边界（例如审查类技能：只报告有证据的发现、不在未授权时改代码），
   避免无关任务误加载。
+
+**「规则不复制」的唯一例外是 `software-development-full/`**：它是一份**通用软件工程协议**
+（侦察、设计、边界条件、测试、并发、安全、交付自检），内容是跨项目通用的工程判断，
+不是本仓库流程规范的副本，因此不适用上面的「只保留指针」限制。但它**仍然让位于仓库规则**——
+该技能的开头以醒目提示声明：分支 / 提交 / 门禁 / 发版一律以
+[CONTRIBUTING.md](../CONTRIBUTING.md) 与 [AGENTS.md](../AGENTS.md) 为准，
+它刻意不复制本仓库的分支命名表与门禁命令清单。判断标准是「这条规则描述的是哪个仓库」：
+描述通用工程实践的允许入库，描述本仓库流程的必须只留指针。
 
 ## 开发一个新技能
 
