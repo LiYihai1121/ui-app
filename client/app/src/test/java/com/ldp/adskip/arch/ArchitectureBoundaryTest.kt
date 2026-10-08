@@ -31,15 +31,13 @@ class ArchitectureBoundaryTest {
         allowed = listOf("com.ldp.adskip.core."),
     )
 
-    // ---------- ui：不直连 service / net / sync / 原始偏好 Prefs ----------
+    // ---------- ui：不直连 service / 原始偏好 Prefs ----------
 
     @Test
-    fun `ui never imports service net sync or raw prefs`() = assertNoBannedImports(
+    fun `ui never imports service or raw prefs`() = assertNoBannedImports(
         pkgDir = "ui",
         banned = listOf(
             "com.ldp.adskip.service.",
-            "com.ldp.adskip.net.",
-            "com.ldp.adskip.sync.",
             "com.ldp.adskip.data.Prefs",
         ),
     )
@@ -61,13 +59,11 @@ class ArchitectureBoundaryTest {
     // ---------- device：系统集成层可向下取系统状态，不可反向依赖 ui/业务层 ----------
 
     @Test
-    fun `device never imports ui data net or sync`() = assertNoBannedImports(
+    fun `device never imports ui or data`() = assertNoBannedImports(
         pkgDir = "device",
         banned = listOf(
             "com.ldp.adskip.ui.",
             "com.ldp.adskip.data.",
-            "com.ldp.adskip.net.",
-            "com.ldp.adskip.sync.",
         ),
     )
 

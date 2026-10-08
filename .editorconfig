@@ -1,8 +1,8 @@
 # 编辑器与静态检查的共同约定——本文件是「代码长什么样」的机器可读事实源。
 #
 # 为什么放仓库根：ktlint 会从被检查文件所在目录逐级向上寻找 .editorconfig，
-# 根级一份即可同时覆盖 client/（Kotlin/KTS）与 server/（TS/HTML），
-# 避免同一份规则在两个目录各存一份、形成第二份真相。
+# 根级一份即可同时覆盖 client/（Kotlin/KTS）与 CI 工作流等配置文件，
+# 避免同一份规则在多个目录各存一份、形成第二份真相。
 #
 # 变更方式：规则调整必须改本文件并同步 ktlint 约定插件（AdskipAndroidApplicationPlugin），
 # 不允许在单文件里用 // ktlint-disable 掩盖问题——那是把检查关掉，不是解决检查。
@@ -47,10 +47,10 @@ ij_kotlin_imports_layout = *,java.**,javax.**,kotlin.**,^
 ktlint_standard_no-wildcard-imports = disabled
 ij_kotlin_imports_layout = *,java.**,javax.**,kotlin.**,^
 
-[*.{ts,js,json,html,css,yml,yaml,toml}]
+[*.{json,yml,yaml,toml}]
 indent_size = 2
 
-[*.{kt,kts,ts,js,json,html,css,yml,yaml,toml}]
+[*.{kt,kts,json,yml,yaml,toml}]
 # 缩进用空格；Git 与本文件共同保证行尾统一为 LF（.gitattributes 亦声明 text=auto eol=lf）
 indent_style = space
 

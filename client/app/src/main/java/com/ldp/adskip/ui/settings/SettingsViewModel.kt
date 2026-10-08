@@ -26,10 +26,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 /**
- * 云端规则同步设置状态。
+ * 设置页状态（免打扰时段 / 电池优化豁免 / 界面语言 / 保活引导，纯本地，无云端同步）。
  *
- * 持久化 / 网络 / 后台调度一律经 [com.ldp.adskip.data.SettingsRepository] 访问
- * （边界契约：ui 层不直读 Prefs、不碰 SyncClient / SyncJobService）。
+ * 持久化一律经 [com.ldp.adskip.data.SettingsRepository] 访问
+ * （边界契约：ui 层不直读 Prefs）。
  * 单向数据流：状态入 [UiState]，一次性提示经 [effects] 下发。
  */
 class SettingsViewModel(private val container: AppContainer) : ViewModel() {

@@ -74,20 +74,8 @@
   "[kts]": {
     "editor.rulers": [120]
   },
-  "[ts]": {
-    "editor.rulers": [120]
-  },
-
-  // 缩进宽度交给 .editorconfig（Kotlin 4、服务端 2），此处不重复声明：
-  // 一旦在这里写死 "editor.tabSize": 4，服务端的 2 空格就会被覆盖成 4。
-
-  // 本仓库的服务端有类型检查门禁（bun run typecheck = tsc --noEmit），
-  // 但 tsc 自身的报错不经过 VS Code 的 Problems 面板；开启后由编辑器实时提示，
-  // 改错时不必等跑一次门禁才发现。
-  //
-  // 键名从已弃用的 `typescript.tsdk` 迁到新版 `js/ts.` 命名空间——这项迁移是
-  // VS Code 打开工作区时自动完成的，保留迁移后的写法，否则每次打开都会再被改一次。
-  "js/ts.tsserver.experimental.enableProjectDiagnostics": true,
+  // 缩进宽度交给 .editorconfig（Kotlin/KTS 4 空格），此处不重复声明：
+  // 一旦在这里写死 "editor.tabSize": 4，配置文件（JSON / YAML）的 2 空格就会被一并覆盖。
 
   // Java 空值分析交给语言服务自动判定。Kotlin 侧同样关心 NPE
   // （`System.getProperty` 可能返回 null），由编辑器实时提示比等门禁快。

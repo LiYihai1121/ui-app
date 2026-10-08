@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 /**
  * 「我的」页状态：本机使用概览 + 应用与设备信息。
  *
- * 边界遵守（ARCHITECTURE.md 2.1）：ui 层不 import `data.Prefs` / `net` / `sync` / `service`，
+ * 边界遵守（ARCHITECTURE.md 2.1）：ui 层不 import `data.Prefs` / `service`，
  * 统计经 [com.ldp.adskip.data.StatsRepository]、版本经
  * [com.ldp.adskip.data.SettingsRepository] 读取，UI 不自行查 `PackageManager`。
  *

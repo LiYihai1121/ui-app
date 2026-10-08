@@ -22,7 +22,7 @@ import java.util.concurrent.Executor
  * 候选入口表（[VendorKeepAlive]）与磁贴交互决策（[QuickTileLogic]）均为纯 Kotlin，便于 JVM 单测。
  *
  * 边界契约：本包属 `device/` 层，允许依赖 `core/`（日志）与 `service/`（无障碍真实状态与关闭请求），
- * 禁止依赖 `ui/`、`data/`、`net/`、`sync/`（见 ARCHITECTURE.md 2.1 与 ArchitectureBoundaryTest）。
+ * 禁止依赖 `ui/`、`data/`（见 ARCHITECTURE.md 2.1 与 ArchitectureBoundaryTest）。
  */
 object KeepAliveNavigator {
 
