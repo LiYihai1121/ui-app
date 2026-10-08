@@ -201,6 +201,7 @@
     <string name="settings_overlay_enable">Show floating toggle</string>
     <string name="settings_overlay_disable">Hide floating toggle</string>
     <string name="settings_overlay_permission_needed">The display-over-other-apps permission is required; allow it in system settings and return</string>
+    <string name="settings_overlay_permission_unavailable">Cannot open the overlay permission settings page. Please go to Settings → Apps → 轻启 → Overlay manually</string>
     <string name="overlay_channel_name">Quick toggle</string>
     <string name="overlay_notif_title">轻启 quick toggle is running</string>
     <string name="overlay_notif_text">Tap the panel to pause/resume; tap here to open the app</string>

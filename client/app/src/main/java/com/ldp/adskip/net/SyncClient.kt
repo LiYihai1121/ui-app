@@ -215,7 +215,8 @@ object SyncClient {
                 v0Payload.put("label", label)
                 httpPost("$base/api/skip", v0Payload.toString())
             } catch (e: Exception) {
-                // 静默失败
+                // 静默失败：服务端不在线是正常场景（不影响本地功能），但需记录便于排查
+                LogRing.d("Sync", "reportSkip(deprecated) 失败: ${e.message}")
             }
         }
     }
@@ -243,7 +244,8 @@ object SyncClient {
                     httpPost("$base/api/skip", v0Payload.toString())
                 }
             } catch (e: Exception) {
-                // 静默失败
+                // 静默失败：服务端不在线是正常场景（不影响本地功能），但需记录便于排查
+                LogRing.d("Sync", "reportSkip 失败: ${e.message}")
             }
         }
     }
