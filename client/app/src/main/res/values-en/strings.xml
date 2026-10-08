@@ -101,7 +101,6 @@
     <string name="logs_item_subtitle">%1$s | %2$s</string>
 
     <!-- Cloud Sync Settings -->
-    <string name="settings_cloud_section">Cloud Rules</string>
     <string name="settings_language_section">Language</string>
     <string name="settings_language_label">App language</string>
     <string name="settings_language_hint">Follow system uses the device language; you can also pin one.</string>
@@ -110,23 +109,13 @@
     <string name="language_system">Follow system</string>
     <string name="language_zh">简体中文</string>
     <string name="language_en">English</string>
-    <string name="settings_schedule_section">Sync &amp; Do Not Disturb</string>
-    <string name="settings_server_label">Server Address</string>
-    <string name="settings_server_hint">http://your-pc-ip:3210</string>
-    <string name="settings_save">Save Address</string>
+    <string name="settings_schedule_section">Do Not Disturb</string>
     <string name="settings_saved">Server address saved</string>
-    <string name="settings_sync">Sync Cloud Rules Now</string>
-    <string name="settings_syncing">Syncing…</string>
-    <string name="settings_last_sync">Last sync: %1$s</string>
-    <string name="settings_never_sync">Never synced</string>
-    <string name="settings_desc">After sync: cloud keywords / ViewIDs / app-specific rules will overwrite local rules. Apps disabled by cloud rules will stop skipping. The server can be started with the bundled server entry in the server directory.</string>
-    <string name="settings_auto_sync">Auto-sync every 12 hours</string>
     <string name="settings_dnd">Do Not Disturb</string>
     <string name="settings_dnd_start">Start Time</string>
     <string name="settings_dnd_end">End Time</string>
     <string name="settings_battery_allow">Allow Background</string>
     <string name="settings_battery_done">Background allowed</string>
-    <string name="settings_url_invalid">URL must start with http:// or https://</string>
 
     <!-- Vendor keep-alive guide & quick settings tile (device/ layer) -->
     <string name="settings_keepalive_title">System Keep-alive &amp; Shortcuts</string>

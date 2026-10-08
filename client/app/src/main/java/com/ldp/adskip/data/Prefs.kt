@@ -35,22 +35,15 @@ object Prefs {
     private const val KEY_TOTAL = "total_skips"
     private const val KEY_LAST_APP = "last_app"
     private const val KEY_LOGS = "logs"
-    private const val KEY_SERVER_URL = "server_url"
-    private const val KEY_LAST_SYNC = "last_sync_at"
-    private const val KEY_AUTO_SYNC = "auto_sync"
     private const val KEY_DND_ENABLED = "dnd_enabled"
     private const val KEY_DND_START = "dnd_start_minute"
     private const val KEY_DND_END = "dnd_end_minute"
-    private const val KEY_DEVICE_ID = "device_id"
-    private const val KEY_RULES_HASH = "rules_hash"
-
     private const val PREFIX_PKG_KEYWORDS = "pkg_kw:"
     private const val PREFIX_PKG_VIEW_IDS = "pkg_vid:"
     private const val PREFIX_PKG_SELECTORS = "pkg_sel:"
     private const val PREFIX_PKG_COUNT = "pkg_count:"
 
     private const val LOG_CAP = 200
-    const val DEFAULT_SERVER = "http://192.168.1.100:3210"
 
     fun sp(context: Context): SharedPreferences {
         spInstance?.let { return it }
@@ -269,26 +262,7 @@ object Prefs {
         sp(context).edit().putString(KEY_LOGS, next.toString()).apply()
     }
 
-    // ---------- 云同步 ----------
-    fun getServerUrl(context: Context): String = sp(context).getString(KEY_SERVER_URL, DEFAULT_SERVER) ?: DEFAULT_SERVER
-
-    fun saveServerUrl(context: Context, url: String) {
-        sp(context).edit().putString(KEY_SERVER_URL, url).apply()
-    }
-
-    fun getLastSyncAt(context: Context): Long = sp(context).getLong(KEY_LAST_SYNC, 0L)
-
-    fun setLastSyncAt(context: Context, ts: Long) {
-        sp(context).edit().putLong(KEY_LAST_SYNC, ts).apply()
-    }
-
-    // ---------- 体验设置 ----------
-    fun isAutoSyncEnabled(context: Context): Boolean = sp(context).getBoolean(KEY_AUTO_SYNC, false)
-
-    fun setAutoSyncEnabled(context: Context, enabled: Boolean) {
-        sp(context).edit().putBoolean(KEY_AUTO_SYNC, enabled).apply()
-    }
-
+    // ---------- 免打扰时段 ----------
     fun isDoNotDisturbEnabled(context: Context): Boolean = sp(context).getBoolean(KEY_DND_ENABLED, false)
 
     fun setDoNotDisturbEnabled(context: Context, enabled: Boolean) {
@@ -303,23 +277,6 @@ object Prefs {
             .putInt(KEY_DND_START, startMinute)
             .putInt(KEY_DND_END, endMinute)
             .apply()
-    }
-
-    // ---------- 设备标识（上报限频维度） ----------
-    fun getDeviceId(context: Context): String {
-        val prefs = sp(context)
-        var id = prefs.getString(KEY_DEVICE_ID, null)
-        if (id.isNullOrBlank()) {
-            id = java.util.UUID.randomUUID().toString()
-            prefs.edit().putString(KEY_DEVICE_ID, id).apply()
-        }
-        return id
-    }
-
-    // ---------- 规则哈希（If-None-Match 同步） ----------
-    fun getRulesHash(context: Context): String = sp(context).getString(KEY_RULES_HASH, "") ?: ""
-    fun setRulesHash(context: Context, hash: String) {
-        sp(context).edit().putString(KEY_RULES_HASH, hash).apply()
     }
 
     // ---------- 有序字符串列表序列化 ----------

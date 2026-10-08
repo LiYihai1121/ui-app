@@ -53,18 +53,6 @@ class ArchitectureBoundaryTest {
     )
 
     @Test
-    fun `net never imports ui or service`() = assertNoBannedImports(
-        pkgDir = "net",
-        banned = listOf("com.ldp.adskip.ui.", "com.ldp.adskip.service."),
-    )
-
-    @Test
-    fun `sync never imports ui or service`() = assertNoBannedImports(
-        pkgDir = "sync",
-        banned = listOf("com.ldp.adskip.ui.", "com.ldp.adskip.service."),
-    )
-
-    @Test
     fun `service never imports ui`() = assertNoBannedImports(
         pkgDir = "service",
         banned = listOf("com.ldp.adskip.ui."),

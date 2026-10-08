@@ -89,27 +89,6 @@ class ManifestContractTest {
         )
     }
 
-    // ---------- setPersisted 依赖 RECEIVE_BOOT_COMPLETED（易被误删） ----------
-
-    @Test
-    fun `boot permission is kept while a persisted job is used`() {
-        val syncSource = readMainSource("sync/SyncJobService.kt")
-        assertTrue(
-            "未找到 .setPersisted( 调用；若同步调度已改为其他机制，请同步更新本测试与" +
-                "ARCHITECTURE.md 的同步流程图",
-            syncSource.contains(".setPersisted("),
-        )
-        assertTrue(
-            "同步任务使用了 setPersisted(true)，但清单缺少 RECEIVE_BOOT_COMPLETED 权限。\n" +
-                "JobInfo.Builder.setPersisted 标注了 @RequiresPermission(RECEIVE_BOOT_COMPLETED)，" +
-                "缺少该权限时 JobScheduler.schedule() 会**静默失败**（返回 0），" +
-                "表现为「设备重启后规则不再自动同步」——没有任何崩溃或日志。\n" +
-                "注意：该权限由 JobScheduler 的持久化能力要求，与是否存在 BootReceiver 无关；" +
-                "架构文档中「已删除 BootReceiver」不等于可以删除此权限。",
-            manifest.contains("android.permission.RECEIVE_BOOT_COMPLETED"),
-        )
-    }
-
     // ---------- 工具 ----------
 
     /**

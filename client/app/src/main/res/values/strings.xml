@@ -96,25 +96,14 @@
     <string name="logs_item_subtitle">%1$s ｜ %2$s</string>
 
     <!-- 云同步设置 -->
-    <string name="settings_cloud_section">云端规则</string>
     <string name="settings_language_section">语言</string>
     <string name="settings_language_label">界面语言</string>
     <string name="settings_language_hint">选择「跟随系统」时使用系统语言；也可固定为某一种。</string>
     <string name="language_system">跟随系统</string>
     <string name="language_zh">简体中文</string>
     <string name="language_en">English</string>
-    <string name="settings_schedule_section">同步与免打扰</string>
-    <string name="settings_url_invalid">地址需为 http:// 或 https:// 开头的有效地址</string>
-    <string name="settings_server_label">服务器地址</string>
-    <string name="settings_server_hint">http://电脑IP:3210</string>
-    <string name="settings_save">保存地址</string>
+    <string name="settings_schedule_section">免打扰时段</string>
     <string name="settings_saved">服务器地址已保存</string>
-    <string name="settings_sync">立即同步云端规则</string>
-    <string name="settings_syncing">正在同步…</string>
-    <string name="settings_last_sync">上次同步：%1$s</string>
-    <string name="settings_never_sync">尚未同步过</string>
-    <string name="settings_desc">同步后：云端的关键词 / ViewID / 应用专属规则将覆盖本地，被云端标记禁用的应用将停止跳过。服务器可用 server 目录下的轻启服务端一键启动。</string>
-    <string name="settings_auto_sync">每 12 小时自动同步</string>
     <string name="settings_dnd">免打扰时段</string>
     <string name="settings_dnd_start">开始时间</string>
     <string name="settings_dnd_end">结束时间</string>

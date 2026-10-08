@@ -22,7 +22,6 @@ import com.ldp.adskip.data.StatsRepository
 import com.ldp.adskip.device.AccessibilityStatus
 import com.ldp.adskip.engine.SafetyGuard
 import com.ldp.adskip.engine.SkipRuleEngine
-import com.ldp.adskip.net.SyncClient
 
 /**
  * 无障碍服务（薄编排层）。
@@ -95,7 +94,6 @@ class SkipAdService : AccessibilityService() {
     private lateinit var clock: Clock
     private lateinit var rulesRepo: RulesRepository
     private lateinit var statsRepo: StatsRepository
-    private lateinit var syncClient: SyncClient
 
     /**
      * 快捷磁贴的关闭请求接收端（进程内、定向投递）。
@@ -129,7 +127,6 @@ class SkipAdService : AccessibilityService() {
         clock = container.clock
         rulesRepo = container.rulesRepo
         statsRepo = container.statsRepo
-        syncClient = container.syncClient
         running = true
         AppEvents.setServiceRunning(true)
         registerShutdownReceiver()
@@ -272,7 +269,6 @@ class SkipAdService : AccessibilityService() {
         if (!AppEvents.testActive) {
             Toast.makeText(this, getString(R.string.toast_skipped, label), Toast.LENGTH_SHORT).show()
         }
-        syncClient.reportSkip(Prefs.getServerUrl(this), pkg, label, Prefs.getDeviceId(this))
         AppEvents.emitSkipped(label)
         // 广播一律 setPackage 收窄到本应用：ACTION_SKIPPED 携带用户正在使用的应用名，
         // 不加限制会让任意第三方应用注册同名 action 即可监听（隐私泄露）。

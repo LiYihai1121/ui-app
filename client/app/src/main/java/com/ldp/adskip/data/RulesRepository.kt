@@ -8,20 +8,12 @@ import com.ldp.adskip.engine.selector.SelectorParser
 /**
  * 规则仓库：所有「规则」读写的唯一入口。
  *
- * v2.2 增强：
  * - [LruCache] 按 `(pkg → version)` 缓存合并结果，事件高频路径上只剩查表
  * - 仓库维护 `version` 计数，任何落地操作 `+1` 使缓存失效
- * - 云规则落地前校验 schemaVersion
+ *
+ * 纯本地架构：规则仅由本机编辑产生，不再有云端落地入口（旧 `applyCloudRules` 已随 C/S 改造移除）。
  */
 class RulesRepository(private val context: Context) {
-
-    /** 应用专属规则（云端下发）。 */
-    data class PkgRule(
-        val keywords: List<String>,
-        val viewIds: List<String>,
-        val disabled: Boolean = false,
-        val selectors: List<String> = emptyList(),
-    )
 
     private var version = 0
     private val cache = LruCache<String, RuleSet>(64)
@@ -58,34 +50,6 @@ class RulesRepository(private val context: Context) {
     fun setDisabled(pkg: String, disabled: Boolean) {
         Prefs.setPackageDisabled(context, pkg, disabled)
         invalidate()
-    }
-
-    // ---------- 云端规则落地（校验 schemaVersion） ----------
-    fun applyCloudRules(
-        keywords: List<String>?,
-        viewIds: List<String>?,
-        pkgRules: Map<String, PkgRule>,
-        schemaVersion: Int = RuleSet.SCHEMA_VERSION,
-        selectors: List<String>? = null,
-    ): Boolean {
-        // 校验 schemaVersion：低于客户端支持的版本拒载
-        if (schemaVersion < RuleSet.MIN_SCHEMA_VERSION) {
-            return false
-        }
-        keywords?.let { Prefs.saveKeywords(context, it) }
-        viewIds?.let { Prefs.saveViewIds(context, it) }
-        selectors?.let { Prefs.saveGlobalSelectors(context, it) }
-        Prefs.clearAllPkgRules(context)
-        val disabled = mutableListOf<String>()
-        for ((pkg, rule) in pkgRules) {
-            Prefs.savePkgKeywords(context, pkg, rule.keywords)
-            Prefs.savePkgViewIds(context, pkg, rule.viewIds)
-            Prefs.savePkgSelectors(context, pkg, rule.selectors)
-            if (rule.disabled) disabled.add(pkg)
-        }
-        Prefs.replaceDisabledPackages(context, disabled)
-        invalidate()
-        return true
     }
 
     /** 使缓存失效 */

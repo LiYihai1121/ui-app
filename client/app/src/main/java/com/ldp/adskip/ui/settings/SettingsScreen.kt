@@ -124,65 +124,10 @@ fun SettingsContent(
         }
 
         SectionCard {
-            SectionTitle(stringResource(R.string.settings_cloud_section))
-            Spacer(Modifier.height(Spacing.md))
-            OutlinedTextField(
-                value = state.serverUrlInput,
-                onValueChange = viewModel::onServerUrlChanged,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.settings_server_label)) },
-                placeholder = { Text(stringResource(R.string.settings_server_hint)) },
-                singleLine = true,
-            )
-            Spacer(Modifier.height(Spacing.md))
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                FilledTonalButton(onClick = { viewModel.saveServerUrl(state.serverUrlInput) }) {
-                    Text(stringResource(R.string.settings_save))
-                }
-                Button(onClick = viewModel::syncNow, enabled = !state.syncing) {
-                    Text(
-                        stringResource(
-                            if (state.syncing) {
-                                R.string.settings_syncing
-                            } else {
-                                R.string.settings_sync
-                            },
-                        ),
-                    )
-                }
-            }
-            state.syncResult?.let {
-                Spacer(Modifier.height(Spacing.md))
-                Text(text = it, style = MaterialTheme.typography.bodyMedium)
-            }
-            Spacer(Modifier.height(Spacing.sm))
-            Text(
-                text = if (state.lastSyncAt > 0L) {
-                    stringResource(
-                        R.string.settings_last_sync,
-                        viewModel.formatLastSync(state.lastSyncAt),
-                    )
-                } else {
-                    stringResource(R.string.settings_never_sync)
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(Spacing.sm))
-            SectionHint(stringResource(R.string.settings_desc))
-        }
-
-        SectionCard {
             SectionTitle(stringResource(R.string.settings_schedule_section))
             // 统一走 components/LabeledSwitch：此前本页自带的 SwitchRow 只让开关本身
             // 可点，而 LabeledSwitch 整行可点（命中区域远大于开关）。同一个「设置开关」
             // 在应用列表里整行可点、在设置页只能点小开关，用户会当成其中一个是 bug。
-            LabeledSwitch(
-                title = stringResource(R.string.settings_auto_sync),
-                checked = state.autoSync,
-                onCheckedChange = viewModel::setAutoSync,
-            )
-            HorizontalDivider(Modifier.padding(vertical = Spacing.sm))
             LabeledSwitch(
                 title = stringResource(R.string.settings_dnd),
                 checked = state.dndEnabled,
