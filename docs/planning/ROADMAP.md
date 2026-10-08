@@ -148,7 +148,7 @@
 
 - [x] 自定义取点规则（2026-10-08 交付，`feature/point-rules`）：对无法识别的广告手动标注跳过区域；实现为**透明悬浮层直接在真实界面上取点**（无需截屏/录屏权限，所见即所得），坐标按屏幕比例存本机，节点未命中时兜底点击
 - [x] 悬浮窗快捷开关（2026-10-08 交付，`feature/floating-toggle`）：悬浮面板一键暂停/恢复自动跳过、切换免打扰，区别于 ADS Phase 4 的「悬浮窗权限引导」
-- [ ] 服务端 Docker 镜像与一键部署脚本
+- [x] 服务端 Docker 镜像与一键部署脚本（2026-10-08 交付，`feature/ops-tooling`）：`server/Dockerfile`（oven/bun，零运行时依赖）+ `docker-compose.yml`（ADMIN_TOKEN 必填防误暴露、密钥经环境变量/.env 注入、数据卷持久化）
 - [ ] 多设备规则共享（局域网规则仓库）
 - [ ] 构建框架工程化（**工程基础设施，不产生用户可见能力**，故不占用版本号）：阶段 A（目录结构契约）与**阶段 B（version catalog + `build-logic` 约定插件 + Gradle 硬化）已实施**，阶段 C（`core:common` / `core:engine` 模块拆分）待排期；已知坑位与分步回滚策略见 [DESIGN-BUILD-FRAMEWORK.md](DESIGN-BUILD-FRAMEWORK.md)
 

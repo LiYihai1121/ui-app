@@ -86,7 +86,22 @@
 
 ### GET /api/v1/health
 
-`{"status":"ok","timestamp":"..."}`
+`{"status":"ok","timestamp":"...","uptimeSec":123}`（探活用，不读盘）
+
+### GET /api/v1/metrics
+
+粗粒度运行指标（走读限频 120/分/IP；**不含用户级明细**——无包名、事件、IP）：
+
+```json
+{
+  "uptimeSec": 123,
+  "requests": { "total": 42, "byStatusClass": { "2xx": 40, "3xx": 1, "4xx": 1, "5xx": 0, "other": 0 } },
+  "rules": { "version": 3, "schemaVersion": 2, "hash": "sha256:..." },
+  "stats": { "total": 108, "today": 12 },
+  "memory": { "rssBytes": 12345678 },
+  "security": { "tls": false, "twofa": true, "rulesSigning": true }
+}
+```
 
 ### GET /api/v1/admin/logs  `[admin]`
 

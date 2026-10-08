@@ -294,9 +294,11 @@ AdSkip/                            全栈 monorepo
 │       ├── net/                  SyncClient / RulesSignature（规则响应验签）
 │       └── sync/                 SyncJobService
 ├── server/                       Bun + TypeScript 后端
+│   ├── Dockerfile                一键部署镜像（oven/bun:1-alpine，零运行时依赖）
+│   ├── docker-compose.yml        一键部署编排（密钥经环境变量/.env 注入，数据经卷持久化）
 │   ├── scripts/                  密钥生成（gen-totp.ts / gen-rules-keys.ts，密钥不入库）
 │   ├── src/
-│   │   ├── api/                  路由拆分（rulesApi / statsApi / healthApi）
+│   │   ├── api/                  路由拆分（rulesApi / statsApi / healthApi·health+metrics）
 │   │   ├── middleware/           鉴权 + 限流 + 访问日志（auth / rateLimit / accessLog）
 │   │   ├── utils/                HTTP 工具 + 校验 + 日志 + TOTP + 规则签名（httpUtil.ts / validate.ts / logger.ts / totp.ts / rulesSigner.ts）
 │   │   ├── storage/              规则 + 统计存储（store.ts）

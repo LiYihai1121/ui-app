@@ -32,6 +32,10 @@
 | 23 | `LanguagePreferences` 实际仍在明文 SP（#9 未落地），且与 Prefs 旧存储同名，迁移删源文件会丢语言设置 | 偏好统一走 `core/SecureStore` 加密存储（含明文历史全量迁移） | `LanguagePreferences.kt`, `SecureStore.kt`, `Prefs.kt` |
 | 24 | 管理端单因子认证：ADMIN_TOKEN 泄露即全失守（可下发任意规则驱动客户端点击） | 启用 TOTP 双因素（RFC 6238，零依赖实现）：`ADMIN_TOTP_SECRET` 配置后管理端点须带 `X-2FA-Code`；单 IP 连错 5 次锁 15 分钟；`bun run totp:gen` 生成密钥，管理后台带动态码输入框 | `totp.ts`, `auth.ts`, `admin.html` |
 | 25 | 规则链路无签名：明文 HTTP 下 MITM 可篡改规则、驱动无障碍恶意点击（P0） | 规则响应 ECDSA P-256 签名（`X-Rules-Signature`，覆盖原始 body 字节）+ 客户端内置公钥 fail-closed 验签；`bun run keys:gen` 生成密钥对，换钥即吊销旧钥 | `rulesSigner.ts`, `RulesSignature.kt`, `gen-rules-keys.ts` |
+| 26 | `rateLimit.ts`/`store.ts` 周期定时器无清理钩子（Bun 优雅停机可能截断收尾） | 新增 `stopRateLimitTimers()`/`stopStoreTimers()`（可重复调用），`shutdown()` 先停周期定时器再落盘退出 | `rateLimit.ts`, `store.ts`, `server.ts` |
+| 27 | 服务端无运行指标出口（健康检查仅 status+timestamp） | 新增 `GET /api/v1/metrics`（uptime/按状态类请求计数/规则版本/统计总量/RSS/安全开关态，不含用户级明细），health 附 uptimeSec 且仍不读盘 | `healthApi.ts`, `accessLog.ts` |
+| 28 | 无一键部署物（候选池挂账） | `server/Dockerfile`（oven/bun:1-alpine）+ `docker-compose.yml`（ADMIN_TOKEN 必填防误暴露、密钥经 env/.env 注入、数据卷持久化）+ `.dockerignore` | `Dockerfile`, `docker-compose.yml` |
+| 29 | 勘误：「快照 UI 集成未完成」台账行文过时 | 实际链路早已完整（设置页按钮 → `exportNodeSnapshot` 广播 → `SkipAdService.snapshotReceiver`），仅台账未同步 | — |
 
 ---
 
@@ -55,7 +59,7 @@
 | P1 | `SkipAdService` 接收器注册/注销模板重复 | ✅ 已修复：提取 `ReceiverHandle` 抽象 | — |
 | P1 | `store.ts` 规则备份仅全量拷贝，无增量/压缩 | 长期运行可改用 WAL 或按天快照；当前 JSON 全量备份对小项目可接受 | 待评估 |
 | P2 | `Prefs.DEFAULT_SERVER` 硬编码本地 IP | 增加 URL 合法性校验（禁止私有地址回环）；或在 UI 隐藏默认值，强制用户输入 | 0.5 天 |
-| P2 | `rateLimit.ts` / `store.ts` 使用 `setInterval` 做 GC/清理 | Bun 优雅停机可能截断；改用 `setTimeout` 递归或显式清理钩子 | 0.5 天 |
+| P2 | `rateLimit.ts` / `store.ts` 使用 `setInterval` 做 GC/清理 | ✅ 已修复：新增 `stopRateLimitTimers()` / `stopStoreTimers()` 清理钩子，`shutdown()` 先停周期定时器再落盘退出 | — |
 | P3 | `SyncClient` 无连接池/Keep-Alive/重试 | ✅ 连接池/Keep-Alive 已随 OkHttp 引入交付（`6ff5b73`）；指数退避重试仍待排期 | 0.5 天（重试） |
 
 ### 🟢 低危（测试/可观测/文档）
@@ -66,7 +70,7 @@
 | P1 | `store.ts` 无存储层单测 | ✅ 已修复：新增 `rotateStatsBackup` 测试用例，验证备份创建与轮转上限 | — |
 | P2 | 无端到端集成测试 | 补 `androidx.test` instrumentation 或 `AppTest`，覆盖 Service → Engine → 点击 → 上报全链路 | 2-3 天 |
 | P2 | 无结构化日志/指标导出 | ✅ 已修复：新增 `src/utils/logger.ts`（JSONL 格式，零运行时依赖），替换 `server.ts` 中的 `console.*` | — |
-| P3 | `SettingsScreen.kt` 快照 UI 集成未完成 | 联调节点快照导出按钮与 `SkipAdService` 接收器 | 0.5 天 |
+| P3 | `SettingsScreen.kt` 快照 UI 集成未完成 | ✅ 勘误（#29）：实际链路早已完整（设置页按钮 → `exportNodeSnapshot` 广播 → `SkipAdService.snapshotReceiver`），系台账行文过时 | — |
 | P3 | 未提交构建产物残留 | 清理 `client/build-logic/convention/bin/` 或确认已 `.gitignore` | 0.5 天 |
 
 ---
@@ -95,7 +99,7 @@
 | `3.3.0`（待发布） | 安全加固 | 已修复 #1–#25 随 PR #55–#57 交付；HTTPS 证书 / 证书 pin / 规则签名密钥三项为**部署激活**，随发布说明交付 |
 | `3.4.0`（待发布） | 交互增强 | 悬浮窗快捷开关、自定义取点规则、布局适配（PR #58–#60，已勾选于 ROADMAP 候选池） |
 | `3.5.0`（M1d） | 选择器生态 | 真机回归欠账（与历史真机矩阵一并补做） |
-| `4.0.0`（M4） | 通知过滤 | 服务端健康检查增强（/metrics）随可观测项并入 |
+| `4.0.0`（M4） | 通知过滤 | —（`/metrics` 健康检查增强已提前交付，见 #27） |
 | 候选池（不占版本号） | 工程化 / 可观测 | 端到端集成测试、`store.ts` 备份压缩/增量、指标导出（Prometheus/OTel）、客户端崩溃上报、`SyncClient` 指数退避重试 |
 
 ---
