@@ -19,7 +19,6 @@ import android.content.Context
  */
 object LanguagePreferences {
 
-    private const val SP_NAME = "adskip_prefs"
     private const val KEY_LANGUAGE = "language"
 
     /** 已保存的语言 tag；`null` 表示跟随系统。 */
@@ -32,5 +31,12 @@ object LanguagePreferences {
             .apply()
     }
 
-    private fun prefs(context: Context) = context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE)
+    /**
+     * 走 [SecureStore] 单一加密存储。
+     *
+     * 历史教训（见 SecureStore 文档）：本类曾自开同名明文 SharedPreferences，
+     * 与 `data/Prefs` 的迁移源互踩——迁移清源时把语言设置连带销毁。现在所有
+     * 偏好收口到同一存储，不存在第二文件、同名与明文回潮。
+     */
+    private fun prefs(context: Context) = SecureStore.prefs(context)
 }

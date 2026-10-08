@@ -16,7 +16,7 @@
 │  │  └ AppEvents（进程内状态总线）      │                        │
 │  │                                    ▼                        │
 │  │                              data/                        │
-│  │                             ├ Prefs（EncryptedSharedPreferences）│
+│  │                             ├ Prefs（SecureStore 加密存储）│
 │  │                             ├ RulesRepository（合并/LruCache）│
 │  │                             ├ StatsRepository（合批落盘）   │
 │  │                             └ SettingsRepository（设置门面）│
@@ -36,7 +36,7 @@
 | **service/** | SkipAdService + FrameworkAdNode | 事件接收、节流去抖、点击执行、AccessibilityNodeInfo 节点适配 | 不含匹配规则逻辑、不做安全裁决、不依赖 `ui/` |
 | **engine/** | SkipRuleEngine + RuleSet + AdNode + SafetyGuard + selector/ | 纯匹配：文本/ViewID/选择器 三通道（选择器为类 CSS 子集，右到左求值，DESIGN-PHASE1） | 不执行点击、不读存储、不依赖任何 Android 类型 |
 | **data/** | Prefs / RulesRepository / StatsRepository / SettingsRepository | 存储原语 + 领域仓库（合并/LruCache/合批落盘）+ 设置门面（免打扰/语言/版本） | 不感知 UI |
-| **core/** | AppEvents / AppExecutors / Clock / LogRing | 进程内事件总线、线程域收口、时钟注入、环形日志 | 不含业务逻辑 |
+| **core/** | AppEvents / AppExecutors / Clock / LogRing / SecureStore（加密偏好唯一入口） | 进程内事件总线、线程域收口、时钟注入、环形日志、偏好加密存储 | 不含业务逻辑 |
 | **device/** | VendorKeepAlive（纯数据）/ QuickTileLogic（纯逻辑）/ KeepAliveNavigator（跳转出口）/ SkipTileService（快捷磁贴） | 系统级入口：厂商 ROM 识别与自启动/后台管理跳转、下拉磁贴、系统设置页跳转 | 不读业务数据、不依赖 `ui/`（允许依赖 `core/` 与 `service/` 的只读状态查询） |
 
 **关键设计**：
@@ -137,7 +137,7 @@
 
 | 层 | 机制 | 说明 |
 | --- | --- | --- |
-| **存储加密** | EncryptedSharedPreferences | `Prefs.kt` 使用 `MasterKey` + AES-256-GCM 加密；规则、统计、设置均经加密存储 |
+| **存储加密** | `core/SecureStore`（AndroidKeyStore AES-256-GCM） | 偏好逐值加密、密钥硬件保护不可导出；规则、统计、设置均经加密存储。旧 security-crypto（Tink 格式）存量数据由 `LegacyEncryptedPrefsMigration` 一次性迁移（迁移期依赖，下版本移除）；存储收口由 `SecureStorageContractTest` 强制 |
 | **安全护栏** | SafetyGuard | 硬编码黑名单（支付/付款/确认/同意/购买/下单/授权/登录/免密/开通/安装/下载），不可被规则覆盖 |
 | **广播收窄** | setPackage | 所有 `sendBroadcast` 都带 `setPackage(...)`，防止第三方注册同名 action 监听 |
 | **网络隔离** | 无网络权限 | `AndroidManifest` 移除 `INTERNET` 权限，客户端不发起任何网络请求 |
@@ -185,7 +185,7 @@ AdSkip/                            Android-only monorepo（纯本地）
 │   ├── settings.gradle.kts        仓库配置（国内镜像优先）
 │   └── app/src/main/java/com/ldp/adskip/
 │       ├── ui/                   Compose UI（单 Activity + 4 Screen + ViewModel + UiEffect）
-│       ├── core/                 AppEvents / Clock / AppExecutors / LogRing
+│       ├── core/                 AppEvents / Clock / AppExecutors / LogRing / SecureStore / LanguagePreferences
 │       ├── service/              SkipAdService + FrameworkAdNode（无障碍服务/节点适配）
 │       │   ├── device/               系统级入口：VendorKeepAlive（ROM 识别 + 入口表）
 │       │       │                     QuickTileLogic（磁贴决策）/ KeepAliveNavigator（跳转出口）

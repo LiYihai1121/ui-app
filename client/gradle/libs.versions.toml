@@ -23,7 +23,8 @@ navigationCompose = "2.8.5"
 # 测试
 junit = "4.13.2"
 
-# 安全存储（EncryptedSharedPreferences）
+# 安全存储（⚠️ 迁移期依赖，下版本移除）：该库已被上游废弃，现仅 core/LegacyEncryptedPrefsMigration
+# 用于一次性读取旧 Tink 格式存量数据；正式加密存储为 core/SecureStore（AndroidKeyStore，零依赖）
 securityCrypto = "1.1.0-alpha07"
 
 # 静态检查（构建期工具，不进运行时依赖，故不影响「客户端零第三方依赖」承诺）

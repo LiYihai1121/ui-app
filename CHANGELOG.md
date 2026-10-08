@@ -20,6 +20,11 @@
 
 ## [Unreleased]
 
+### Security
+
+- **存储加密后端替换（废弃依赖下线进行中）**：`androidx.security:security-crypto`（已废弃的 alpha 库）替换为自实现 `core/SecureStore`——AndroidKeyStore 硬件密钥（AES-256-GCM，不可导出）+ 逐值密文信封，对外保持 SharedPreferences 接口、全部读写点零改动。旧 Tink 格式存量数据经 `LegacyEncryptedPrefsMigration` 一次性迁移（迁移期依赖，下个版本连文件一起移除）；迁移先落盘后清源、幂等可重入。
+  - **顺带根治一处数据丢失**：`LanguagePreferences` 曾与 `data/Prefs` 共用同一明文存储文件名，Prefs 迁移清源时把语言设置连带销毁（且每次进程重启复发）；现所有偏好收口到 `SecureStore` 单一存储，同名互踩不再可能。存储收口与迁移期依赖隔离由新契约测试 `SecureStorageContractTest` 门禁强制。
+
 ### Changed
 
 - **移除云端同步与上报，转为纯本地应用**（remove-server 重构，阶段一 + 阶段二）：
