@@ -7,6 +7,27 @@ interface Bucket {
 
 const buckets = new Map<string, Bucket>();
 
+/**
+ * 令牌桶总量硬上限。
+ *
+ * 安全契约：桶键里含 deviceId 等请求方可控维度，没有上限时攻击者可用
+ * 唯一键无限制造桶条目（内存放大）。到顶后淘汰最久未用的桶，保证内存有界
+ * 且不把合法用户锁死。
+ */
+const MAX_BUCKETS = 10000;
+
+function evictOldest(): void {
+  let oldestKey: string | null = null;
+  let oldest = Infinity;
+  for (const [k, b] of buckets) {
+    if (b.last < oldest) {
+      oldest = b.last;
+      oldestKey = k;
+    }
+  }
+  if (oldestKey !== null) buckets.delete(oldestKey);
+}
+
 function refill(b: Bucket, capacity: number, now: number): void {
   const elapsed = now - b.last;
   b.tokens = Math.min(capacity, b.tokens + (elapsed / 60000) * capacity);
@@ -17,6 +38,7 @@ export function allow(key: string, capacity: number): boolean {
   const now = Date.now();
   let b = buckets.get(key);
   if (!b) {
+    if (buckets.size >= MAX_BUCKETS) evictOldest();
     buckets.set(key, { tokens: capacity, last: now });
     return true;
   }
@@ -35,10 +57,24 @@ export function probe(key: string, capacity: number): boolean {
   return b.tokens >= 1;
 }
 
+/**
+ * 判定限流维度用的客户端 IP。
+ *
+ * 安全契约：X-Forwarded-For 是请求方可以任意填写的头，若默认采信，
+ * 攻击者每换一个 XFF 值就能拿到一个全新的令牌桶，限流彻底失效。
+ * 因此只在显式开启 `config.TRUST_PROXY`（部署在可信反向代理之后）时才取 XFF
+ * 首个地址，否则一律使用 socket IP。返回值截断到 64 字符，避免超长头撑爆桶键。
+ */
 export function clientIp(req: Request, remoteIp: string): string {
-  const xff = req.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0].trim();
-  return remoteIp || "unknown";
+  const clamp = (s: string) => s.slice(0, 64);
+  if (config.TRUST_PROXY) {
+    const xff = req.headers.get("x-forwarded-for");
+    if (xff) {
+      const first = xff.split(",")[0].trim();
+      if (first) return clamp(first);
+    }
+  }
+  return clamp(remoteIp || "unknown");
 }
 
 export function limitRead(req: Request, remoteIp: string): boolean {

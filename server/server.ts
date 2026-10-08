@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import { config } from "./src/config";
 import { handleApi } from "./src/api";
-import { withCors, errorJson } from "./src/utils/httpUtil";
+import { withCors, errorJson, errorResponseFrom, HttpError } from "./src/utils/httpUtil";
 import { cleanupOldStats, flush } from "./src/storage/store";
 import { recordAccess } from "./src/middleware/accessLog";
 import { logger } from "./src/utils/logger";
@@ -51,9 +51,21 @@ export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
   const port = options.port ?? config.PORT;
   const host = options.host ?? config.HOST;
 
+  // TLS 必须整对配置：只给一半（挂了证书忘配私钥）静默回退明文是最危险的失败方式
+  if (Boolean(config.TLS_CERT) !== Boolean(config.TLS_KEY)) {
+    throw new Error("TLS_CERT and TLS_KEY must be configured together (half-configured TLS is refused)");
+  }
   const tlsConfig = config.TLS_CERT && config.TLS_KEY
     ? { tls: { cert: Bun.file(config.TLS_CERT), key: Bun.file(config.TLS_KEY) } }
     : {};
+
+  if (!tlsConfig.tls && host !== "127.0.0.1" && host !== "::1" && host !== "localhost") {
+    // 明文 + 非回环监听：admin bearer 令牌与规则流量可被同网段嗅探，必须显式知悉
+    logger.warn("plaintext_non_loopback", {
+      impact: "admin_token_and_traffic_cleartext",
+      hint: "配置 TLS_CERT/TLS_KEY 启用 HTTPS，或把 HOST 收到 127.0.0.1",
+    });
+  }
 
   const server: Bun.Server<undefined> = Bun.serve({
     port,
@@ -72,15 +84,14 @@ export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
       try {
         resp = await route(req, url, origin, ctx);
       } catch (e: any) {
-        const status =
-          typeof e?.statusCode === "number" ? e.statusCode : 500;
-        resp = withCors(
-          new Response(JSON.stringify({ error: String(e?.message ?? e) }), {
-            status,
-            headers: { "Content-Type": "application/json; charset=utf-8" },
-          }),
-          origin
-        );
+        // 5xx 不回显内部错误细节（fs 异常等可能带完整路径）；细节只进 JSONL 日志
+        if (!(e instanceof HttpError)) {
+          logger.error("request_failed", {
+            path: url.pathname,
+            error: String(e?.message ?? e),
+          });
+        }
+        resp = withCors(errorResponseFrom(e), origin);
       }
       recordAccess({
         method: req.method,

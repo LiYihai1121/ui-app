@@ -112,6 +112,17 @@ export function cleanRules(input: unknown): CleanedRules | null {
   };
 }
 
+/**
+ * 上报 label 清洗：去掉控制字符（防跨端 UI/日志 注入）并截断到 256。
+ * label 会持久化到统计分片并经 /stats/summary 下发到所有端，属跨端数据卫生边界。
+ */
+export function cleanLabel(raw: unknown): string {
+  return String(raw ?? "")
+    .replace(/[\u0000-\u001F\u007F]/g, " ")
+    .trim()
+    .slice(0, 256);
+}
+
 export function cleanReportEvent(input: unknown): {
   pkg: string;
   channel: string;
