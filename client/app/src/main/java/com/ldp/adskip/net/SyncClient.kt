@@ -9,10 +9,6 @@ import com.ldp.adskip.data.Prefs
 import com.ldp.adskip.data.RulesRepository
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.BufferedWriter
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
 
 /**
  * 网络层：云端规则同步与跳过上报。
@@ -22,13 +18,21 @@ import java.net.URL
  * - 经 AppExecutors.io 线程执行（调用方传入 executor）
  * - 上报静默失败：服务端不在线是正常场景，不影响本地功能
  *
- * 仍为零第三方依赖（HttpURLConnection + org.json）。
+ * v3.3 网络层收口：HTTP 原语全部经 [HttpTransport]（OkHttp：连接池/Keep-Alive/重试/证书锁定），
+ * 不再裸用 HttpURLConnection；JSON 解析仍用 org.json（Android 平台内建）。
  */
 object SyncClient {
 
     private const val TIMEOUT_MS = 6000
     private val mainHandler = Handler(Looper.getMainLooper())
     private val executors by lazy { AppExecutors() }
+
+    private val http by lazy {
+        HttpTransport.create(
+            connectTimeoutMs = TIMEOUT_MS.toLong(),
+            readTimeoutMs = TIMEOUT_MS.toLong(),
+        )
+    }
 
     // ---------- 配置 ----------
 
@@ -195,7 +199,12 @@ object SyncClient {
      */
     fun syncRulesSilently(context: Context, serverUrl: String, rulesRepo: RulesRepository): Boolean {
         return try {
-            val base = serverUrl.trimEnd('/')
+            val trimmed = serverUrl.trim()
+            if (trimmed.isEmpty()) {
+                LogRing.w("Sync", "syncRulesSilently skipped: server URL 未配置")
+                return false
+            }
+            val base = trimmed.trimEnd('/')
             val knownHash = Prefs.getRulesHash(context)
             val (body, notModified) = httpGetWithETagBlocking("$base/api/v1/rules/latest", knownHash)
             if (notModified) {
@@ -223,37 +232,14 @@ object SyncClient {
 
     // ---------- HTTP 原语 ----------
 
-    /** GET 带 If-None-Match，返回 (body, notModified) —— 同步阻塞版 */
+    /** GET 带 If-None-Match，返回 (body, notModified) —— 同步阻塞版（经 [HttpTransport] 连接池/重试） */
     private fun httpGetWithETagBlocking(url: String, etag: String): Pair<String, Boolean> {
-        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
-            connectTimeout = TIMEOUT_MS
-            readTimeout = TIMEOUT_MS
-            requestMethod = "GET"
-            if (etag.isNotEmpty()) setRequestProperty("If-None-Match", etag)
-        }
-        try {
-            if (conn.responseCode == 304) return Pair("", true)
-            if (conn.responseCode !in 200..299) throw Exception("HTTP " + conn.responseCode)
-            return Pair(conn.inputStream.bufferedReader().use { it.readText() }, false)
-        } finally {
-            conn.disconnect()
-        }
+        val result = http.getWithEtag(url, etag)
+        return Pair(result.body, result.notModified)
     }
 
     private fun httpPost(url: String, body: String) {
-        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
-            connectTimeout = 3000
-            readTimeout = 3000
-            requestMethod = "POST"
-            setRequestProperty("Content-Type", "application/json; charset=utf-8")
-            doOutput = true
-        }
-        try {
-            BufferedWriter(OutputStreamWriter(conn.outputStream, "UTF-8")).use { it.write(body) }
-            conn.responseCode // 触发发送
-        } finally {
-            conn.disconnect()
-        }
+        http.postJson(url, body)
     }
 
     private fun JSONArray.toStringList(): List<String> {

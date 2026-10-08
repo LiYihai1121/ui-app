@@ -99,5 +99,11 @@ dependencies {
     // 安全存储（EncryptedSharedPreferences）
     implementation(libs.androidx.security.crypto)
 
+    // 网络层（FOLLOW-UP：连接池/Keep-Alive/重试/证书锁定，替代 HttpURLConnection）
+    implementation(libs.okhttp)
+
     testImplementation(libs.junit)
+    // 网络层测试（MockWebServer 与 okhttp 同版本配套 + okhttp-tls 构造自签证书）
+    testImplementation(libs.mockwebserver)
+    testImplementation(libs.okhttp.tls)
 }

@@ -26,6 +26,11 @@ junit = "4.13.2"
 # 安全存储（EncryptedSharedPreferences）
 securityCrypto = "1.1.0-alpha07"
 
+# 网络层（FOLLOW-UP P0 证书锁定 / P3 连接池、Keep-Alive、重试）；
+# 经 OkHttp 统一收口，替代裸 HttpURLConnection；配套 MockWebServer 做网络层单测
+okhttp = "4.12.0"                       # okhttp 4.x 最新稳定版；5.x 仍处 alpha，暂不引入
+                                        # 客户端 zero-dep 承诺由此调整为「除 AndroidX / security-crypto 外仅引入 OkHttp」
+
 # 静态检查（构建期工具，不进运行时依赖，故不影响「客户端零第三方依赖」承诺）
 ktlint = "14.2.0"                   # ktlint-gradle 包装插件；其默认内含的 ktlint 版本会随补丁版变动，
                                     # 故下方显式锁定 ktlint 本体版本，避免「同一提交不同时间跑出不同结果」
@@ -58,6 +63,13 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 # 安全存储
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+
+# 网络层（连接池/Keep-Alive/重试/证书锁定）
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+# 证书锁定测试（HeldCertificate / HandshakeCertificates）
+okhttp-tls = { group = "com.squareup.okhttp3", name = "okhttp-tls", version.ref = "okhttp" }
+# 网络层测试（测试期依赖，不进 APK）
+mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
 
 # build-logic 约定插件运行时依赖（供 build-logic/convention 将 AGP/Compose 编译器/ktlint 插件应用到目标工程）
 # 注意：id 标注的插件应用走 pluginManagement 仓库解析，这里要求的是构成 classpath 的实际制品坐标
