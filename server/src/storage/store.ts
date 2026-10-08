@@ -199,7 +199,11 @@ function rotateStatsBackup(day: string): void {
     if (!dirOrFileExists(src)) return;
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
     const ms = Date.now();
-    const dest = path.join(config.STATS_DIR, "backups", `stats-${day}-${stamp}-${ms}.json`);
+    // 同一毫秒内的连续轮转会得到完全相同的 stamp+ms，文件名必须再带一个随机后缀
+    // 才能保证唯一——否则 copyFileSync 会静默覆盖上一份备份，轮转形同虚设
+    // （CI 上该测试曾以「期望 5、实际 2」失败：8 次调用恰好落在两个毫秒内）。
+    const uniq = crypto.randomBytes(4).toString("hex");
+    const dest = path.join(config.STATS_DIR, "backups", `stats-${day}-${stamp}-${ms}-${uniq}.json`);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(src, dest);
 
