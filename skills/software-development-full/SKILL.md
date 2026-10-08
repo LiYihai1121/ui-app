@@ -1,10 +1,9 @@
 ---
 name: software-development-full
 description: 通用完整版软件开发规则（开发/修改/Bug 修复/重构/代码审查/测试/API/数据库/前后端/脚本/嵌入式全场景）。开发类任务均适用；与项目自身规则（AGENTS.md/CONTRIBUTING.md 等）冲突时以项目规则为准（见正文 0.1 优先级），此时应在交付说明中指出影响。
-metadata:
-  version: 1.0.0
-  summary: 通用完整版软件开发规则，供 Codex、Claude Code、Cursor 等 AI 编程代理使用
-  language: zh-CN
+version: 1.0.0
+summary: 通用完整版软件开发规则，供 Codex、Claude Code、Cursor 等 AI 编程代理使用
+language: zh-CN
 ---
 
 # Software Development Full Skill
