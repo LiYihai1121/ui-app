@@ -30,6 +30,13 @@
 
 - **Agent 技能库扩容：新增 `software-development-full`（通用完整版软件开发协议）**：`skills/` 下新增第三个技能目录，并登记到 `skills/README.md` 的目录树。此前 `skills/` 只有两个「只保留指针」的轻量技能，通用工程判断（先侦察后修改、边界条件、测试策略、并发与安全强制检查项）没有可落地的载体；该技能把这套约束落成 SKILL.md，并按本仓库的 frontmatter 规范补上自动发现所需的 `description` 字段。文件开头显式声明优先级：分支 / 提交 / 门禁 / 发版一律让位于 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [AGENTS.md](AGENTS.md)，技能本身刻意不复制本仓库的分支命名表与门禁命令清单，避免形成第二份真相。仅面向开发者的 Agent 配置变更，不影响应用运行时行为。
 
+- **IDE Kotlin 语言服务器误报诊断的判定与处置（仅面向开发者，不影响运行时行为）**：`client/` 曾出现 86 条红色诊断（类型解析失败、符号未定义、重复声明），逐条核对后确认**全部为工具链版本错配导致的误报，源码与契约测试无需改动**。
+  - 根因：VS Code 扩展 `fwcd.kotlin` 0.2.36 自带 Kotlin 2.1.0 编译器（仅识别 ≤ 2.2.0 的元数据），而 Gradle 9.7.0 分发的是 `kotlin-stdlib-2.4.0.jar`；本仓库经 AGP 9.4.1 将 Kotlin 作为内置能力、未在 Gradle 侧声明 `kotlin-android`，语言服务器无法发现工具链版本，只能退回自带编译器。
+  - 死路确认：Marketplace 上 0.2.36 已是最新版，**「升级扩展」这条路不存在**，请勿再按此方向排查。
+  - 处置：`.vscode/settings.json` 关闭 `kotlin.diagnostics.enabled`。该键与 `kotlin.completion.*` 相互独立，只停误报诊断，补全 / 跳转定义 / 查找引用 / 悬停 / 签名帮助全部保留。设置变更需 Reload Window 后生效。
+  - 重复声明来源：`fwcd.kotlin` 的 33 个配置键中没有任何目录排除项，`.worktrees/` 下他人工作区的物理副本会被一并索引；已清理相关已完成的 worktree，对应分支仍保留在 `origin`，可用 `git worktree add` 恢复。
+  - 方法论固化：[DEV-ENVIRONMENT.md](docs/development/DEV-ENVIRONMENT.md) 新增「IDE 语言服务诊断排障」一节，记录「先证伪、再动手」的判定步骤，避免后来者重走死路。
+
 ### Removed
 
 - `server/` 目录、`net/SyncClient`、`sync/SyncJobService`、`res/xml/network_security_config.xml`、云同步相关字符串与设置入口。
