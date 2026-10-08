@@ -120,14 +120,28 @@ jobs:
           set -o pipefail
           ./gradlew testDebugUnitTest --no-daemon 2>&1 | tee /tmp/android-test.log
 
-      - name: Build release APK and verify it is signed
+      - name: Build release APK and verify signing state
         run: |
           set -o pipefail
           ./gradlew assembleRelease --no-daemon 2>&1 | tee /tmp/android-release-build.log
-          # 无签名配置时必须回退 debug 签名，产物必须可安装（未签名 APK 在手机上报「解析软件包时出现问题」，Issue #23）
           apksigner="$(find "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/build-tools" -maxdepth 2 -type f -name apksigner | sort | tail -n 1)"
           test -n "$apksigner"
-          "$apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
+          # 签名策略（Issue #23 的安全收紧版）：配置了 release 签名 → 产物必须可验签；
+          # 未配置 → 产出未签名包是预期行为，禁止再回退 debug 签名（debug keystore 公开，
+          # 用它签的 release 可被任何人伪造升级）。
+          if [ -f app/build/outputs/apk/release/app-release.apk ]; then
+            "$apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
+          elif [ -f app/build/outputs/apk/release/app-release-unsigned.apk ]; then
+            echo "release built unsigned (no signing config) — expected under current policy"
+            # 反向守卫：默认产物必须是未签名包，防止静默改回 debug 签名
+            if "$apksigner" verify app/build/outputs/apk/release/app-release-unsigned.apk >/dev/null 2>&1; then
+              echo "unsigned artifact unexpectedly carries a signature — check signingConfig fallback" >&2
+              exit 1
+            fi
+          else
+            echo "no release APK produced" >&2
+            exit 1
+          fi
 
       - name: Upload Android logs
         if: always()
