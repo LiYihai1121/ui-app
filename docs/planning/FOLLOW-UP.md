@@ -14,6 +14,9 @@
 | 5 | 全部 SharedPreferences 明文存储 | 迁移至 `EncryptedSharedPreferences`，首次启动自动迁移旧数据 | `Prefs.kt` |
 | 6 | 统计分片无备份机制 | 新增 `rotateStatsBackup()`，每次 `flushDay` 前自动备份，保留 5 份 | `store.ts` |
 | 7 | `SettingsViewModel` 缺少 SSRF 防护 | 保留 URL 合法性校验；私有 IP 段不阻断（避免破坏局域网服务定位） | `SettingsViewModel.kt` |
+| 8 | `LanguagePreferences` 明文存储，且与 `Prefs` 的迁移源 `adskip_prefs` 同名，语言设置会被首次业务访问整体清空 | 迁移至与 `Prefs` 共用的加密存储 `adskip_prefs_enc`（经 `core/SecurePreferences` 单例打开，单一写入口）；明文仅作一次性迁移源，只搬 `language` 键 | `LanguagePreferences.kt`、`SecurePreferences.kt`、`Prefs.kt` |
+| 9 | `Prefs` 明文迁移依赖进程内布尔，跨进程重启可能重复迁移覆盖已加密数据 | 迁移成功即删除明文文件，幂等判定改为「明文文件是否存在」，天然跨进程幂等 | `Prefs.kt` |
+| 10 | 落地页/管理后台静态页缺安全响应头 | `X-Content-Type-Options` / `Referrer-Policy` / `X-Frame-Options`；`/admin` 追加 CSP | `httpUtil.ts`、`server.ts`、`smoke.test.ts` |
 
 ---
 
@@ -25,8 +28,6 @@
 |--------|------|--------------|------------|
 | P0 | 服务端无 HTTPS 支持 | 启用 `Bun.serve({ tls: ... })` 或反向代理 Nginx/Caddy；客户端 release 强制 HTTPS | 1-2 天 |
 | P0 | `SyncClient` HTTP 无证书锁定 | 引入 `OkHttp` 或自写 `HostnameVerifier` + `CertificatePinner` | 2-3 天 |
-| P1 | `Prefs` 迁移逻辑幂等性不足 | `migrated` 标志在进程内仅一次，跨进程重启会重复迁移；改用 `SharedPreferences` 文件存在性判断 | 0.5 天 |
-| P1 | `LanguagePreferences` 未使用加密存储 | 与 `Prefs` 同步迁移至 `EncryptedSharedPreferences` | 0.5 天 |
 | P2 | `StatsRepository` 合批写 SP 无错误处理 | 捕获 `IOException` 并记录 `LogRing`，避免统计丢失静默失败 | 0.5 天 |
 
 ### 🟡 中危（架构/设计）

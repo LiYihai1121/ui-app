@@ -37,6 +37,30 @@ export function withCors(resp: Response, origin: string | null): Response {
   return resp;
 }
 
+/** 静态网站级安全头：抑制 MIME 嗅探、引用泄露与点击劫持；所有 HTML 响应都应附带 */
+export function applySecurityHeaders(headers: Headers): void {
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("Referrer-Policy", "no-referrer");
+  headers.set("X-Frame-Options", "DENY");
+}
+
+/** 管理后台 CSP：token 存于 sessionStorage，同源注入后由 CSP 兜底压缩被利用面（admin.html 全内联资源） */
+const ADMIN_CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "font-src 'self'",
+  "base-uri 'none'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join("; ");
+
+/** 给管理后台页面附加 CSP */
+export function applyAdminContentSecurityPolicy(headers: Headers): void {
+  headers.set("Content-Security-Policy", ADMIN_CONTENT_SECURITY_POLICY);
+}
+
 export function jsonResponse(
   body: unknown,
   status = 200,

@@ -2,11 +2,11 @@ package com.ldp.adskip.data
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
 import com.ldp.adskip.R
+import com.ldp.adskip.core.SecurePreferences
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 
 /**
  * 关键词/规则/日志/统计的本地存储。
@@ -18,13 +18,8 @@ object Prefs {
     /** 旧明文存储文件名（迁移源）。 */
     private const val LEGACY_SP_NAME = "adskip_prefs"
 
-    /** 新加密存储文件名。 */
-    private const val SP_NAME = "adskip_prefs_enc"
-
     private var spInstance: SharedPreferences? = null
 
-    /** 进程内迁移仅执行一次；迁移幂等（源为空即跳过）。 */
-    private var migrated = false
     private const val KEY_KEYWORDS = "keywords"
     private const val KEY_KEYWORDS_JSON = "keywords_json"
     private const val KEY_VIEW_IDS = "view_ids"
@@ -56,25 +51,28 @@ object Prefs {
         spInstance?.let { return it }
         synchronized(this) {
             spInstance?.let { return it }
-            val encrypted = EncryptedSharedPreferences.create(
-                context,
-                SP_NAME,
-                MasterKey.Builder(context).build(),
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-            )
+            val encrypted = SecurePreferences.open(context)
             spInstance = encrypted
-            if (!migrated) {
-                migrated = true
-                migrateLegacy(context, encrypted)
-            }
+            migrateLegacyIfPresent(context, encrypted)
             return encrypted
         }
     }
 
-    private fun migrateLegacy(context: Context, target: SharedPreferences) {
+    /**
+     * 把旧明文文件整体迁移进加密存储，完成后删除明文文件。
+     *
+     * 幂等判定依据是**明文文件是否存在于磁盘**（跨进程唯一事实），而非进程内布尔：
+     * 迁移成功后文件被删除，任何进程重启后都会直接跳过；
+     * 若中途失败（commit 未落盘），文件仍在，下次启动可再次尝试，不会丢数据。
+     */
+    private fun migrateLegacyIfPresent(context: Context, target: SharedPreferences) {
+        if (!legacyFile(context).exists()) return
         val legacy = context.getSharedPreferences(LEGACY_SP_NAME, Context.MODE_PRIVATE)
-        if (legacy.all.isEmpty()) return
+        if (legacy.all.isEmpty()) {
+            // 空文件同样删除：避免「文件在但全空」被反复当作迁移源
+            context.deleteSharedPreferences(LEGACY_SP_NAME)
+            return
+        }
         val editor = target.edit()
         for ((key, value) in legacy.all) {
             when (value) {
@@ -85,11 +83,14 @@ object Prefs {
                 is Set<*> -> editor.putStringSet(key, value as Set<String>)
             }
         }
-        // commit() 同步落盘：先确保加密副本持久化，再清空明文源，避免中途失败丢数据
+        // commit() 同步落盘：先确保加密副本持久化，再删除明文源，避免中途失败丢数据
         if (editor.commit()) {
-            legacy.edit().clear().commit()
+            context.deleteSharedPreferences(LEGACY_SP_NAME)
         }
     }
+
+    private fun legacyFile(context: Context): File =
+        File(context.applicationInfo.dataDir, "shared_prefs/$LEGACY_SP_NAME.xml")
 
     // ---------- 全局规则 ----------
     fun getKeywords(context: Context): MutableList<String> {

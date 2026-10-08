@@ -31,6 +31,23 @@ class ArchitectureBoundaryTest {
         allowed = listOf("com.ldp.adskip.core."),
     )
 
+    // ---------- core：加密存储依赖只经 SecurePreferences 收口（防误扩散） ----------
+
+    @Test
+    fun `core crypto dependency is confined to SecurePreferences`() {
+        val core = File(sourceRoot(), "core")
+        val cryptoUsers = core.walkTopDown()
+            .filter { it.isFile && it.extension == "kt" }
+            .filter { file -> file.readLines().any { it.startsWith("import androidx.security.crypto.") } }
+            .map { it.name }
+            .toList()
+        assertTrue(
+            "core 包中 androidx.security.crypto 依赖应只收口在 SecurePreferences.kt（其它组件经它取加密偏好），" +
+                "当前出现于：$cryptoUsers",
+            cryptoUsers == listOf("SecurePreferences.kt"),
+        )
+    }
+
     // ---------- ui：不直连 service / net / sync / 原始偏好 Prefs ----------
 
     @Test

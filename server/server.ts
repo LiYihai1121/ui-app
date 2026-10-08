@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import { config } from "./src/config";
 import { handleApi } from "./src/api";
-import { withCors, errorJson } from "./src/utils/httpUtil";
+import { withCors, errorJson, applySecurityHeaders, applyAdminContentSecurityPolicy } from "./src/utils/httpUtil";
 import { cleanupOldStats, flush } from "./src/storage/store";
 import { recordAccess } from "./src/middleware/accessLog";
 
@@ -111,16 +111,23 @@ export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
         const html = await Bun.file(
           path.join(config.PUBLIC_DIR, "index.html")
         ).text();
+        const headers = new Headers({ "Content-Type": "text/html; charset=utf-8" });
+        applySecurityHeaders(headers);
         return withCors(
           new Response(html.replaceAll("{{APP_VERSION}}", APP_VERSION), {
-            headers: { "Content-Type": "text/html; charset=utf-8" },
+            headers,
           }),
           origin
         );
       }
       if (url.pathname === "/admin") {
+        const headers = new Headers({ "Content-Type": "text/html; charset=utf-8" });
+        applySecurityHeaders(headers);
+        applyAdminContentSecurityPolicy(headers);
         return withCors(
-          new Response(Bun.file(path.join(config.PUBLIC_DIR, "admin.html"))),
+          new Response(Bun.file(path.join(config.PUBLIC_DIR, "admin.html")), {
+            headers,
+          }),
           origin
         );
       }

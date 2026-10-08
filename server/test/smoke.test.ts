@@ -50,6 +50,21 @@ describe("smoke", () => {
     expect(res.status).toBe(200);
   });
 
+  it("静态页带安全响应头", async () => {
+    const landing = await fetch(`${base}/`);
+    expect(landing.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(landing.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(landing.headers.get("x-frame-options")).toBe("DENY");
+
+    const admin = await fetch(`${base}/admin`);
+    expect(admin.status).toBe(200);
+    expect(admin.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(admin.headers.get("referrer-policy")).toBe("no-referrer");
+    const csp = admin.headers.get("content-security-policy") ?? "";
+    expect(csp).toContain("default-src 'self'");
+    expect(csp).toContain("frame-ancestors 'none'");
+  });
+
   it("health 正常", async () => {
     const res = await fetch(`${base}/api/v1/health`);
     const json = (await res.json()) as any;
