@@ -186,4 +186,19 @@
     <string name="settings_snapshot_hint">将当前屏幕的无障碍节点树导出为 JSON，用于编写和验证选择器规则。仅当前屏幕，不上传。</string>
     <string name="settings_snapshot_empty">无障碍服务未运行，无法获取当前界面</string>
     <string name="settings_snapshot_exported">快照已导出，请通过分享菜单保存</string>
+
+    <!-- 悬浮窗快捷开关 -->
+    <string name="settings_overlay_section">悬浮窗快捷开关</string>
+    <string name="settings_overlay_hint">在其他应用上层显示一个小面板，一键暂停/恢复自动跳过、切换免打扰，不用来回切应用。需要「显示在其他应用上层」权限。</string>
+    <string name="settings_overlay_enable">显示悬浮开关</string>
+    <string name="settings_overlay_disable">关闭悬浮开关</string>
+    <string name="settings_overlay_permission_needed">需要「显示在其他应用上层」权限，请在系统设置中允许后返回</string>
+    <string name="overlay_channel_name">快捷开关</string>
+    <string name="overlay_notif_title">轻启快捷开关运行中</string>
+    <string name="overlay_notif_text">点按面板即可暂停/恢复，点此返回应用</string>
+    <string name="overlay_btn_pause">暂停跳过</string>
+    <string name="overlay_btn_resume">恢复跳过</string>
+    <string name="overlay_btn_dnd_on">免打扰：开</string>
+    <string name="overlay_btn_dnd_off">免打扰：关</string>
+    <string name="overlay_btn_close">关闭面板</string>
 </resources>

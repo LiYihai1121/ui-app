@@ -41,6 +41,13 @@ class SettingsRepository(private val context: Context, private val rulesRepo: Ru
 
     fun setDoNotDisturbEnabled(enabled: Boolean) = Prefs.setDoNotDisturbEnabled(context, enabled)
 
+    // ---------- 暂停自动跳过（悬浮窗快捷开关） ----------
+
+    /** 暂停期间服务保持运行，只是不再触发点击（免去反复开停无障碍服务） */
+    fun isPaused(): Boolean = Prefs.isPaused(context)
+
+    fun setPaused(paused: Boolean) = Prefs.setPaused(context, paused)
+
     fun getDoNotDisturbStart(): Int = Prefs.getDoNotDisturbStart(context)
 
     fun getDoNotDisturbEnd(): Int = Prefs.getDoNotDisturbEnd(context)

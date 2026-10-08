@@ -194,4 +194,19 @@
     <string name="settings_snapshot_hint">Exports the current screen\'s accessibility node tree as JSON, for writing and validating selector rules. Current screen only; never uploaded.</string>
     <string name="settings_snapshot_empty">Accessibility service is not running; cannot capture the current screen</string>
     <string name="settings_snapshot_exported">Snapshot exported; save it from the share sheet</string>
+
+    <!-- Floating quick toggle -->
+    <string name="settings_overlay_section">Floating quick toggle</string>
+    <string name="settings_overlay_hint">Shows a small panel over other apps to pause/resume auto-skip or toggle Do Not Disturb without switching apps. Requires the display-over-other-apps permission.</string>
+    <string name="settings_overlay_enable">Show floating toggle</string>
+    <string name="settings_overlay_disable">Hide floating toggle</string>
+    <string name="settings_overlay_permission_needed">The display-over-other-apps permission is required; allow it in system settings and return</string>
+    <string name="overlay_channel_name">Quick toggle</string>
+    <string name="overlay_notif_title">轻启 quick toggle is running</string>
+    <string name="overlay_notif_text">Tap the panel to pause/resume; tap here to open the app</string>
+    <string name="overlay_btn_pause">Pause skipping</string>
+    <string name="overlay_btn_resume">Resume skipping</string>
+    <string name="overlay_btn_dnd_on">Do Not Disturb: On</string>
+    <string name="overlay_btn_dnd_off">Do Not Disturb: Off</string>
+    <string name="overlay_btn_close">Close panel</string>
 </resources>

@@ -145,6 +145,39 @@ class ManifestContractTest {
         )
     }
 
+    // ---------- 悬浮窗快捷开关（overlay 前台服务） ----------
+
+    @Test
+    fun `floating toggle service is not exported and uses special-use foreground type`() {
+        val start = manifest.indexOf(".service.FloatingToggleService")
+        assertTrue("清单缺少 FloatingToggleService 声明", start >= 0)
+        val end = manifest.indexOf("</service>", start)
+        val block = manifest.substring(start, end)
+        assertTrue(
+            "悬浮开关服务必须 exported=false（否则任意应用可启停悬浮层）",
+            Regex("""android:exported\s*=\s*"false"""").containsMatchIn(block),
+        )
+        assertTrue(
+            "悬浮开关服务必须声明 foregroundServiceType=specialUse 与用途说明（Android 14+ 前台服务要求）",
+            block.contains("""android:foregroundServiceType="specialUse"""") &&
+                block.contains("PROPERTY_SPECIAL_USE_FGS_SUBTYPE"),
+        )
+    }
+
+    @Test
+    fun `overlay and foreground-service permissions are declared`() {
+        val overlayPerm = """<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />"""
+        val fgsPerm = """<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />"""
+        val fgsSpecialPerm =
+            """<uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />"""
+        assertTrue("清单缺少 SYSTEM_ALERT_WINDOW（悬浮层能力声明）", manifest.contains(overlayPerm))
+        assertTrue("清单缺少 FOREGROUND_SERVICE（前台服务）", manifest.contains(fgsPerm))
+        assertTrue(
+            "清单缺少 FOREGROUND_SERVICE_SPECIAL_USE（Android 14+ 前台服务类型）",
+            manifest.contains(fgsSpecialPerm),
+        )
+    }
+
     // ---------- 工具 ----------
 
     /**

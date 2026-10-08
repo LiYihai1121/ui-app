@@ -27,6 +27,7 @@ object Prefs {
     private const val KEY_SERVER_URL = "server_url"
     private const val KEY_LAST_SYNC = "last_sync_at"
     private const val KEY_AUTO_SYNC = "auto_sync"
+    private const val KEY_PAUSED = "skip_paused"
     private const val KEY_DND_ENABLED = "dnd_enabled"
     private const val KEY_DND_START = "dnd_start_minute"
     private const val KEY_DND_END = "dnd_end_minute"
@@ -240,6 +241,16 @@ object Prefs {
 
     fun setAutoSyncEnabled(context: Context, enabled: Boolean) {
         sp(context).edit().putBoolean(KEY_AUTO_SYNC, enabled).apply()
+    }
+
+    /**
+     * 暂停自动跳过（悬浮窗快捷开关用）：暂停期间服务仍在运行，
+     * 只是不再触发点击——免去反复开停无障碍服务的系统弹窗。
+     */
+    fun isPaused(context: Context): Boolean = sp(context).getBoolean(KEY_PAUSED, false)
+
+    fun setPaused(context: Context, paused: Boolean) {
+        sp(context).edit().putBoolean(KEY_PAUSED, paused).apply()
     }
 
     fun isDoNotDisturbEnabled(context: Context): Boolean = sp(context).getBoolean(KEY_DND_ENABLED, false)

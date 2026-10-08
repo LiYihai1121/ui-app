@@ -16,6 +16,7 @@ import com.ldp.adskip.device.BatteryExemption
 import com.ldp.adskip.device.KeepAliveNavigator
 import com.ldp.adskip.device.LanguageMode
 import com.ldp.adskip.device.LocaleApplier
+import com.ldp.adskip.device.OverlayToggle
 import com.ldp.adskip.device.TileAddResult
 import com.ldp.adskip.device.Vendor
 import com.ldp.adskip.ui.UiEffect
@@ -52,6 +53,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         val language: LanguageMode = LanguageMode.DEFAULT,
         /** 当前设备所属 ROM，用于保活引导文案与手动路径提示（device/VendorKeepAlive） */
         val keepAliveVendor: Vendor = Vendor.GENERIC,
+        /** 悬浮窗快捷开关是否在显示 */
+        val floatingOverlay: Boolean = false,
     ) {
         /**
          * 已确认豁免电池优化。
@@ -72,6 +75,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             batteryExemption = queryBatteryExemption(),
             language = LanguageMode.fromTag(container.settingsRepo.languageTag()),
             keepAliveVendor = KeepAliveNavigator.detectVendor(),
+            floatingOverlay = OverlayToggle.isActive(),
         ),
     )
     val uiState: StateFlow<UiState> = _uiState
@@ -123,6 +127,38 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun setDndTimes(startMinute: Int, endMinute: Int) {
         container.settingsRepo.setDoNotDisturbTimes(startMinute, endMinute)
         _uiState.value = _uiState.value.copy(dndStartMinute = startMinute, dndEndMinute = endMinute)
+    }
+
+    // ---------- 悬浮窗快捷开关 ----------
+
+    /**
+     * 启停悬浮窗快捷开关。
+     *
+     * 未获「显示在其他应用上层」权限时不静默失败：提示后直接跳系统授权页，
+     * 返回时由 [refreshOverlayState] 对齐真实状态。
+     */
+    fun setFloatingOverlay(enabled: Boolean) {
+        val app = container.app
+        if (enabled && !OverlayToggle.hasPermission(app)) {
+            send(app.getString(R.string.settings_overlay_permission_needed))
+            runCatching {
+                app.startActivity(
+                    Intent(
+                        android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + app.packageName),
+                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+            }
+            _uiState.value = _uiState.value.copy(floatingOverlay = false)
+            return
+        }
+        if (enabled) OverlayToggle.start(app) else OverlayToggle.stop(app)
+        _uiState.value = _uiState.value.copy(floatingOverlay = enabled)
+    }
+
+    /** 回到前台时对齐悬浮开关真实状态（授权后返回 / 服务被系统回收） */
+    fun refreshOverlayState() {
+        _uiState.value = _uiState.value.copy(floatingOverlay = OverlayToggle.isActive())
     }
 
     /**

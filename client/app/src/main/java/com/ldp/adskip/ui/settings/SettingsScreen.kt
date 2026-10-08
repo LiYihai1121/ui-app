@@ -94,6 +94,7 @@ fun SettingsContent(
     // 因此每次都按 ON_RESUME 重查。
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refreshBatteryStatus()
+        viewModel.refreshOverlayState()
     }
 
     var pickingStart by remember { mutableStateOf(false) }
@@ -202,6 +203,23 @@ fun SettingsContent(
                 text = formatMinuteRange(state.dndStartMinute, state.dndEndMinute),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        SectionCard {
+            SectionTitle(stringResource(R.string.settings_overlay_section))
+            Spacer(Modifier.height(Spacing.sm))
+            SectionHint(stringResource(R.string.settings_overlay_hint))
+            LabeledSwitch(
+                title = stringResource(
+                    if (state.floatingOverlay) {
+                        R.string.settings_overlay_disable
+                    } else {
+                        R.string.settings_overlay_enable
+                    },
+                ),
+                checked = state.floatingOverlay,
+                onCheckedChange = viewModel::setFloatingOverlay,
             )
         }
 

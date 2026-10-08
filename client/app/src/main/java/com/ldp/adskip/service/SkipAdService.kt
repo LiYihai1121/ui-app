@@ -243,6 +243,8 @@ class SkipAdService : AccessibilityService() {
     }
 
     private fun trySkip(pkg: String) {
+        // 悬浮窗快捷开关的「暂停」：服务照常运行，只是不触发点击
+        if (Prefs.isPaused(this)) return
         if (Prefs.isDoNotDisturbEnabled(this) && isInDoNotDisturbPeriod()) return
         val now = clock.elapsedRealtime()
         if (now - lastScanAt < SCAN_INTERVAL_MS) return

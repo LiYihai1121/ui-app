@@ -6,6 +6,11 @@
     <!-- 持久化 JobScheduler 任务需要此权限（替代 BootReceiver） -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- 悬浮窗快捷开关：显示在其他应用上层（用户在系统设置中显式授权） -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- 悬浮开关由前台服务承载（Android 8+ 后台启动限制）；specialUse 为 Android 14+ 前台服务类型要求 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <!--
       内部广播权限（signature 级）：SkipAdService 的动态接收器接收「关停服务 / 导出前台节点快照」
@@ -110,5 +115,19 @@
             android:name=".sync.SyncJobService"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <!--
+          悬浮窗快捷开关（ROADMAP「悬浮窗快捷开关」）：任意应用上层的小面板，
+          一键暂停/恢复自动跳过与免打扰。不导出，只有本应用能启停。
+          契约由 ManifestContractTest 强制校验。
+        -->
+        <service
+            android:name=".service.FloatingToggleService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="floating_quick_toggle_overlay" />
+        </service>
     </application>
 </manifest>
