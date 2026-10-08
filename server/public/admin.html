@@ -72,8 +72,9 @@
   <div class="login-box">
     <h2>管理后台登录</h2>
     <input type="text" id="login-token" placeholder="输入 Admin Token" onkeydown="if(event.key==='Enter')doLogin()" />
+    <input type="text" id="login-2fa" placeholder="2FA 动态码（服务端启用时必填，6 位）" maxlength="6" inputmode="numeric" onkeydown="if(event.key==='Enter')doLogin()" />
     <button onclick="doLogin()">登录</button>
-    <p class="hint">Token 由服务端 ADMIN_TOKEN 环境变量配置<br/>统计看板可免登录查看</p>
+    <p class="hint">Token 由服务端 ADMIN_TOKEN 环境变量配置<br/>启用 2FA（ADMIN_TOTP_SECRET）后还需验证器动态码，30 秒内有效<br/>统计看板可免登录查看</p>
     <button class="ghost" style="width:100%;margin-top:8px;" onclick="skipLogin()">仅查看统计</button>
   </div>
 </div>
@@ -174,6 +175,7 @@
 const $ = (id) => document.getElementById(id);
 let rules = null;
 let token = sessionStorage.getItem('adskip_admin_token') || '';
+let twofaCode = sessionStorage.getItem('adskip_admin_2fa') || '';
 
 const esc = (value) => String(value).replace(/[&<>"']/g, (ch) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -189,6 +191,8 @@ function toast(msg) {
 function authHeaders(extra) {
   const h = { 'Content-Type': 'application/json', ...(extra || {}) };
   if (token) h['Authorization'] = 'Bearer ' + token;
+  // 服务端启用 2FA（ADMIN_TOTP_SECRET）时，管理端点要求携带 TOTP 动态码
+  if (twofaCode) h['X-2FA-Code'] = twofaCode;
   return h;
 }
 
@@ -200,7 +204,9 @@ function updateAuthStatus() {
 function doLogin() {
   token = $('login-token').value.trim();
   if (!token) return toast('请输入 token');
+  twofaCode = $('login-2fa').value.trim();
   sessionStorage.setItem('adskip_admin_token', token);
+  if (twofaCode) sessionStorage.setItem('adskip_admin_2fa', twofaCode);
   $('login-overlay').classList.add('hidden');
   updateAuthStatus();
   loadRules();

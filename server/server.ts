@@ -4,6 +4,7 @@ import * as os from "node:os";
 import { config } from "./src/config";
 import { handleApi } from "./src/api";
 import { withCors, errorJson, errorResponseFrom, HttpError } from "./src/utils/httpUtil";
+import { base32Decode } from "./src/utils/totp";
 import { cleanupOldStats, flush } from "./src/storage/store";
 import { recordAccess } from "./src/middleware/accessLog";
 import { logger } from "./src/utils/logger";
@@ -185,6 +186,23 @@ if (import.meta.main) {
   });
   if (!config.ADMIN_TOKEN) {
     logger.warn("admin_token_missing", { impact: "write_endpoints_503" });
+  }
+  if (config.ADMIN_TOTP_SECRET) {
+    // 启动即校验密钥合法性：坏密钥会让所有动态码校验失败（fail-closed），
+    // 不显式报错会表现为「管理员永远登录不上」且无从排查
+    try {
+      base32Decode(config.ADMIN_TOTP_SECRET);
+      logger.info("admin_2fa_enabled", { mode: "totp-sha1-6-30s" });
+    } catch {
+      logger.error("admin_2fa_secret_invalid", {
+        hint: "ADMIN_TOTP_SECRET 不是合法 base32，2FA 将拒绝所有动态码；运行 bun run totp:gen 重新生成",
+      });
+    }
+  } else {
+    logger.warn("admin_2fa_disabled", {
+      impact: "admin_token_compromise_grants_full_access",
+      hint: "运行 bun run totp:gen 生成密钥并配 ADMIN_TOTP_SECRET 启用双因素",
+    });
   }
   for (const info of Object.values(os.networkInterfaces())) {
     for (const ni of info ?? []) {

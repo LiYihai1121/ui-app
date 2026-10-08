@@ -23,6 +23,14 @@ export interface Config {
   /** 统计分片保留的备份份数（rotateStatsBackup 轮转） */
   STATS_BACKUP_COUNT: number;
   ADMIN_TOKEN: string;
+  /**
+   * 管理端 TOTP 二次因子密钥（base32；`bun run totp:gen` 生成）。
+   * 非空即强制启用 2FA：admin 端点除 Bearer token 外还要求 X-2FA-Code 头。
+   * 为空则 2FA 关闭（行为与旧版一致）。密钥不入库，仅经环境变量提供。
+   */
+  ADMIN_TOTP_SECRET: string;
+  /** otpauth:// 链接中的签发方标识（展示在验证器 App 条目上） */
+  ADMIN_TOTP_ISSUER: string;
   /** 统计汇总是否要求 admin 鉴权（STATS_READ_AUTH=1 开启；默认匿名可读，行为与旧版一致） */
   STATS_READ_AUTH: boolean;
   /**
@@ -73,6 +81,8 @@ export const config: Config = {
   BACKUP_COUNT: 5,
   STATS_BACKUP_COUNT: 5,
   ADMIN_TOKEN: process.env.ADMIN_TOKEN ?? "",
+  ADMIN_TOTP_SECRET: (process.env.ADMIN_TOTP_SECRET ?? "").replace(/[\s-]/g, "").toUpperCase(),
+  ADMIN_TOTP_ISSUER: process.env.ADMIN_TOTP_ISSUER ?? "AdSkip Server",
   STATS_READ_AUTH: ["1", "true", "yes"].includes(
     (process.env.STATS_READ_AUTH ?? "").toLowerCase()
   ),

@@ -14,7 +14,8 @@ import {
   VID_RE,
 } from "../src/utils/validate";
 import { applyCors } from "../src/utils/httpUtil";
-import { checkAdminAuth, requireAdmin } from "../src/middleware/auth";
+import { checkAdminAuth, requireAdmin, _resetTwofaForTests } from "../src/middleware/auth";
+import { totpAt } from "../src/utils/totp";
 import { summary as statsSummaryHandler } from "../src/api/statsApi";
 import {
   limitRead,
@@ -545,5 +546,129 @@ describe("cleanLabel（上报 label 数据卫生）", () => {
     expect(cleanLabel("a" + String.fromCharCode(7) + "b" + String.fromCharCode(31) + "c")).toBe("a b c");
     expect(cleanLabel("x".repeat(300)).length).toBe(256);
     expect(cleanLabel(null)).toBe("");
+  });
+});
+
+describe("admin 2FA（TOTP 第二因子）", () => {
+  // RFC 6238 测试密钥（仅测试用；生产密钥由 ADMIN_TOTP_SECRET 提供，不入库）
+  const SECRET = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
+
+  function with2fa(fn: () => void): void {
+    const savedSecret = config.ADMIN_TOTP_SECRET;
+    const savedToken = config.ADMIN_TOKEN;
+    config.ADMIN_TOTP_SECRET = SECRET;
+    config.ADMIN_TOKEN = "secret";
+    try {
+      fn();
+    } finally {
+      config.ADMIN_TOTP_SECRET = savedSecret;
+      config.ADMIN_TOKEN = savedToken;
+    }
+  }
+
+  beforeAll(() => {
+    _resetTwofaForTests();
+  });
+
+  it("未启用 2FA 时行为不变（只需 Bearer token）", () => {
+    with2fa(() => {
+      config.ADMIN_TOTP_SECRET = "";
+      expect(requireAdmin(req({ authorization: "Bearer secret" }), "10.1.1.1").ok).toBe(true);
+    });
+  });
+
+  it("启用后缺少 X-2FA-Code 返回 401（第二因子不可省）", () => {
+    with2fa(() => {
+      const res = requireAdmin(req({ authorization: "Bearer secret" }), "10.1.1.2");
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.status).toBe(401);
+        expect(res.error).toBe("2fa code required");
+      }
+    });
+  });
+
+  it("启用后错误 code 返回 401", () => {
+    with2fa(() => {
+      const res = requireAdmin(req({ authorization: "Bearer secret", "x-2fa-code": "000000" }), "10.1.1.3");
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.status).toBe(401);
+        expect(res.error).toBe("invalid 2fa code");
+      }
+    });
+  });
+
+  it("正确 code 通过", () => {
+    with2fa(() => {
+      const code = totpAt(SECRET, Date.now(), 6);
+      const res = requireAdmin(req({ authorization: "Bearer secret", "x-2fa-code": code }), "10.1.1.4");
+      expect(res.ok).toBe(true);
+    });
+  });
+
+  it("连续 5 次失败锁定该 IP（429），此后正确 code 也拒绝", () => {
+    with2fa(() => {
+      const ip = "10.1.1.5";
+      for (let i = 0; i < 5; i++) {
+        const res = requireAdmin(req({ authorization: "Bearer secret", "x-2fa-code": "000000" }), ip);
+        expect(res.ok).toBe(false);
+      }
+      const locked = requireAdmin(
+        req({ authorization: "Bearer secret", "x-2fa-code": totpAt(SECRET, Date.now(), 6) }),
+        ip
+      );
+      expect(locked.ok).toBe(false);
+      if (!locked.ok) expect(locked.status).toBe(429);
+    });
+  });
+
+  it("失败计数按 IP 隔离", () => {
+    with2fa(() => {
+      for (let i = 0; i < 5; i++) {
+        requireAdmin(req({ authorization: "Bearer secret", "x-2fa-code": "000000" }), "10.1.1.6");
+      }
+      // 另一个 IP 不受影响
+      const res = requireAdmin(
+        req({ authorization: "Bearer secret", "x-2fa-code": totpAt(SECRET, Date.now(), 6) }),
+        "10.1.1.7"
+      );
+      expect(res.ok).toBe(true);
+    });
+  });
+
+  it("验证成功会清除该 IP 的失败计数", () => {
+    with2fa(() => {
+      const ip = "10.1.1.8";
+      for (let i = 0; i < 3; i++) {
+        requireAdmin(req({ authorization: "Bearer secret", "x-2fa-code": "000000" }), ip);
+      }
+      expect(
+        requireAdmin(req({ authorization: "Bearer secret", "x-2fa-code": totpAt(SECRET, Date.now(), 6) }), ip).ok
+      ).toBe(true);
+      // 再错 3 次不应触发锁定（计数已被成功验证清零）
+      for (let i = 0; i < 3; i++) {
+        expect(
+          requireAdmin(req({ authorization: "Bearer secret", "x-2fa-code": "000000" }), ip).ok
+        ).toBe(false);
+      }
+      expect(
+        requireAdmin(req({ authorization: "Bearer secret", "x-2fa-code": totpAt(SECRET, Date.now(), 6) }), ip).ok
+      ).toBe(true);
+    });
+  });
+
+  it("token 错误时不消耗 2FA 失败计数（token 先校验）", () => {
+    with2fa(() => {
+      const ip = "10.1.1.9";
+      for (let i = 0; i < 5; i++) {
+        const res = requireAdmin(req({ authorization: "Bearer wrong" }), ip);
+        expect(res.ok).toBe(false);
+        if (!res.ok) expect(res.error).toBe("unauthorized");
+      }
+      expect(
+        requireAdmin(req({ authorization: "Bearer secret", "x-2fa-code": totpAt(SECRET, Date.now(), 6) }), ip).ok
+      ).toBe(true);
+    });
   });
 });
