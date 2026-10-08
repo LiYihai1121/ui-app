@@ -58,12 +58,12 @@
 | 层 | 模块 | 职责 | 不做的事 |
 | --- | --- | --- | --- |
 | **ui/** | 4 个 Composable Screen + ViewModel + `UiEffect` | 声明式 UI 与单向数据流状态管理：状态入 `UiState`（StateFlow），一次性事件经 `effects: SharedFlow<UiEffect>` 下发 | 不直接读 SharedPreferences、不碰网络、不依赖 `service/`、`net/`、`sync/`（设置读写经 `data/SettingsRepository`，边界契约见 2.1） |
-| **service/** | SkipAdService + FrameworkAdNode | 事件接收、节流去抖、点击执行、AccessibilityNodeInfo 节点适配 | 不含匹配规则逻辑、不做安全裁决、不依赖 `ui/` |
+| **service/** | SkipAdService + FrameworkAdNode + FloatingToggleService / PointPickService（悬浮层前台服务） | 事件接收、节流去抖、点击执行、AccessibilityNodeInfo 节点适配、悬浮快捷开关/取点模式 | 不含匹配规则逻辑、不做安全裁决、不依赖 `ui/` |
 | **engine/** | SkipRuleEngine + RuleSet + AdNode + SafetyGuard + selector/ | 纯匹配：文本/ViewID/选择器 三通道（选择器为类 CSS 子集，右到左求值，DESIGN-PHASE1） | 不执行点击、不读存储、不依赖任何 Android 类型 |
-| **data/** | Prefs / RulesRepository / StatsRepository / SettingsRepository | 存储原语 + 领域仓库（合并/LruCache/合批落盘）+ 设置门面（收口 net/sync 委托） | 不感知 UI 与网络格式 |
-| **net/** | SyncClient | HTTP 传输（v1: ETag/304/批量补报） | 不直接改存储键值 |
-| **core/** | AppEvents / AppExecutors / Clock / LogRing | 进程内事件总线、线程域收口、时钟注入、环形日志 | 不含业务逻辑 |
-| **device/** | VendorKeepAlive（纯数据）/ QuickTileLogic（纯逻辑）/ KeepAliveNavigator（跳转出口）/ SkipTileService（快捷磁贴） | 系统级入口：厂商 ROM 识别与自启动/后台管理跳转、下拉磁贴、系统设置页跳转 | 不读业务数据、不发起网络/同步、不依赖 `ui/`（允许依赖 `core/` 与 `service/` 的只读状态查询） |
+| **data/** | Prefs / RulesRepository / StatsRepository / SettingsRepository / PointRules（取点规则） | 存储原语 + 领域仓库（合并/LruCache/合批落盘）+ 设置门面（收口 net/sync 委托） | 不感知 UI 与网络格式 |
+| **net/** | SyncClient + RulesSignature（规则响应验签，协议字段见 API.md `X-Rules-Signature`） | HTTP 传输（v1: ETag/304/批量补报）+ 链路签名验证 | 不直接改存储键值 |
+| **core/** | AppEvents / AppExecutors / Clock / LogRing / SecureStore（加密偏好）/ LanguagePreferences | 进程内事件总线、线程域收口、时钟注入、环形日志、加密偏好唯一入口 | 不含业务逻辑 |
+| **device/** | VendorKeepAlive（纯数据）/ QuickTileLogic（纯逻辑）/ KeepAliveNavigator（跳转出口）/ SkipTileService（快捷磁贴）/ OverlayToggle（悬浮层门面） | 系统级入口：厂商 ROM 识别与自启动/后台管理跳转、下拉磁贴、系统设置页跳转、悬浮层启停门面 | 不读业务数据、不发起网络/同步、不依赖 `ui/`（允许依赖 `core/` 与 `service/` 的只读查询与受控动作） |
 | **sync/** | SyncJobService | JobScheduler 周期同步 | 不含同步逻辑（委托 SyncClient） |
 
 **关键设计**：
@@ -83,12 +83,12 @@
 | --- | --- | --- |
 | `engine/` | 仅 Kotlin/JDK 与 `engine/` 自身 | `android.*`、`androidx.*`、其他所有 `com.ldp.adskip.*` |
 | `core/` | Kotlin/JDK/协程、`core/` 自身 | 其他所有 `com.ldp.adskip.*` |
-| `ui/` | Compose/AndroidX、组合根（`AdskipApp`/`AppContainer`）、`core/`、`engine/`、`data/` 领域仓库（`RulesRepository`/`StatsRepository`/`SettingsRepository`）、`R` | `service/`、`net/`、`sync/`、`data.Prefs` |
-| `data/` | `engine/`（RuleSet）、`net/`（设置门面委托）、`sync/`（调度委托）、Android SDK | `ui/`、`service/` |
+| `ui/` | Compose/AndroidX、组合根（`AdskipApp`/`AppContainer`）、`core/`、`engine/`、`data/` 领域仓库（`RulesRepository`/`StatsRepository`/`SettingsRepository`）、`device/`（系统入口门面：`KeepAliveNavigator`/`OverlayToggle` 等）、`R` | `service/`、`net/`、`sync/`、`data.Prefs` |
+| `data/` | `engine/`（RuleSet）、`core/`（横切设施：`SecureStore`/`LanguagePreferences`）、`net/`（设置门面委托）、`sync/`（调度委托）、Android SDK | `ui/`、`service/` |
 | `net/` | `data/`、Android SDK、org.json | `ui/`、`service/` |
 | `sync/` | `data/`、`core/`、Android SDK | `ui/`、`service/` |
 | `service/` | `core/`、`data/`、`engine/`、`net/`、组合根 | `ui/` |
-| `device/` | `core/`（LogRing）、`service/`（无障碍真实状态 `isEnabled` 与关闭请求 `requestShutdown`）、Android SDK | `ui/`、`data/`、`net/`、`sync/` |
+| `device/` | `core/`（LogRing）、`service/`（只读状态查询 `isEnabled` + 受控动作 `requestShutdown` / 悬浮服务 `start`·`stop`）、Android SDK | `ui/`、`data/`、`net/`、`sync/` |
 | 组合根（`AdskipApp`/`AppContainer`） | 全部（唯一 DI 装配点） | —（不承载业务逻辑） |
 
 规则解读：
@@ -96,7 +96,7 @@
 - **ui 单向取值**：UI 只经 `StateFlow`/`UiEffect` 收状态与事件、经 `AppContainer` 拿仓库；不直连网络、后台调度与原始偏好。`data/SettingsRepository` 是设置页的唯一数据出口（收口 `SyncClient`/`SyncJobService`/`Prefs`）。
 - **core 零业务依赖**：`AppEvents` 初值不再引用 `SkipAdService`，Service 连接时主动写入真实状态；ui/service 双向都只经 core 中转。
 - **组合根兜底**：进程级初始化（如 JobScheduler 周期任务重注册）在 `AdskipApp.onCreate` 完成，不进 UI 层。
-- **device 单向向下**：`device/` 只允许「读系统状态 + 拉起系统页面」，因此可以依赖 `service/` 的只读查询，但不得反向依赖 `ui/`；磁贴关闭服务走 `SkipAdService.requestShutdown()` 发出的进程内定向广播，而非跨包持有 Service 实例。
+- **device 单向向下**：`device/` 只允许「读系统状态 + 拉起系统页面 + 受控启停自身服务」，因此可以依赖 `service/` 的只读查询与白名单动作（`SkipAdService.requestShutdown`、悬浮服务 `start`/`stop`），但不得持有 Service 实例状态、不得反向依赖 `ui/`；磁贴关闭服务走 `SkipAdService.requestShutdown()` 发出的进程内定向广播，而非跨包持有 Service 实例。
 
 > 另一条由测试守护的隐式约定：保活入口表依赖 Android 11+ 的包可见性，`<queries>` 声明必须与 `device/VendorKeepAlive.kt` 的入口表逐条对齐，
 > 由 `client/app/src/test/java/com/ldp/adskip/arch/ManifestContractTest.kt` 校验（漏声明只会让跳转静默失败，不会编译报错）。
@@ -282,21 +282,23 @@ AdSkip/                            全栈 monorepo
 │   ├── settings.gradle.kts        仓库配置（国内镜像优先）
 │   └── app/src/main/java/com/ldp/adskip/
 │       ├── ui/                   Compose UI（单 Activity + 4 Screen + ViewModel + UiEffect）
-│       ├── core/                 AppEvents / Clock / AppExecutors / LogRing
+│       ├── core/                 AppEvents / Clock / AppExecutors / LogRing / SecureStore / LanguagePreferences
 │       ├── service/              SkipAdService + FrameworkAdNode（无障碍服务/节点适配）
+│       │                       / FloatingToggleService（悬浮快捷开关）/ PointPickService（取点模式）
 │   │       ├── device/               系统级入口：VendorKeepAlive（ROM 识别 + 入口表）
 │   │       │                         / QuickTileLogic（磁贴决策）/ KeepAliveNavigator（跳转出口）
-│   │       │                         / SkipTileService（下拉磁贴）
+│   │       │                         / SkipTileService（下拉磁贴）/ OverlayToggle（悬浮层门面）
 │       ├── engine/               规则引擎（纯 JVM 可测：AdNode / RuleSet / SkipRuleEngine / SafetyGuard）
 │       │   └── selector/         选择器引擎（SelectorAst / SelectorParser / SelectorMatcher）
-│       ├── data/                 Prefs / RulesRepository / StatsRepository / SettingsRepository
-│       ├── net/                  SyncClient
+│       ├── data/                 Prefs / RulesRepository / StatsRepository / SettingsRepository / PointRules
+│       ├── net/                  SyncClient / RulesSignature（规则响应验签）
 │       └── sync/                 SyncJobService
 ├── server/                       Bun + TypeScript 后端
+│   ├── scripts/                  密钥生成（gen-totp.ts / gen-rules-keys.ts，密钥不入库）
 │   ├── src/
 │   │   ├── api/                  路由拆分（rulesApi / statsApi / healthApi）
 │   │   ├── middleware/           鉴权 + 限流 + 访问日志（auth / rateLimit / accessLog）
-│   │   ├── utils/                HTTP 工具 + 校验（httpUtil.ts / validate.ts）
+│   │   ├── utils/                HTTP 工具 + 校验 + 日志 + TOTP + 规则签名（httpUtil.ts / validate.ts / logger.ts / totp.ts / rulesSigner.ts）
 │   │   ├── storage/              规则 + 统计存储（store.ts）
 │   │   ├── types/                域模型类型（rules.ts）
 │   │   └── config.ts             全部可调参数

@@ -81,10 +81,11 @@ class SettingsRepository(private val context: Context, private val rulesRepo: Ru
     /**
      * 应用版本展示值，形如 `3.1 (10)`（versionName + versionCode）。
      *
-     * 为什么由 data 层查而不是让 UI 读 `BuildConfig`：约定插件
-     * `adskip.android.application` 未开启 `buildConfig`，`BuildConfig` 并未生成；
-     * 为一行展示文案打开它会给整个模块增加生成产物。对**本应用**查询
-     * `PackageManager` 也不受 Android 11+ 包可见性限制。
+     * 为什么由 data 层查而不是让 UI 读 `BuildConfig`：展示与版本事实源
+     * （`PackageManager`）解耦，且 `ui/` 不承担版本格式化。对**本应用**查询
+     * `PackageManager` 不受 Android 11+ 包可见性限制。（`BuildConfig` 现已生成
+     * ——规则验签公钥 `RULES_SIGNING_PUBKEY` 见 `app/build.gradle.kts`，
+     * 如需改读 `BuildConfig.VERSION_NAME/VERSION_CODE` 等价可换。）
      *
      * 仅当系统卸载/替换本应用时理论上会抛 `NameNotFoundException`，故兜底空串
      * 而非让「我的」页崩溃。
