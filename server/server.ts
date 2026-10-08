@@ -3,9 +3,10 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import { config } from "./src/config";
 import { handleApi } from "./src/api";
-import { withCors, errorJson } from "./src/utils/httpUtil";
+import { withCors, errorJson, errorResponseFrom, HttpError } from "./src/utils/httpUtil";
 import { cleanupOldStats, flush } from "./src/storage/store";
 import { recordAccess } from "./src/middleware/accessLog";
+import { logger } from "./src/utils/logger";
 
 export interface StartOptions {
   port?: number;
@@ -50,9 +51,26 @@ export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
   const port = options.port ?? config.PORT;
   const host = options.host ?? config.HOST;
 
+  // TLS 必须整对配置：只给一半（挂了证书忘配私钥）静默回退明文是最危险的失败方式
+  if (Boolean(config.TLS_CERT) !== Boolean(config.TLS_KEY)) {
+    throw new Error("TLS_CERT and TLS_KEY must be configured together (half-configured TLS is refused)");
+  }
+  const tlsConfig = config.TLS_CERT && config.TLS_KEY
+    ? { tls: { cert: Bun.file(config.TLS_CERT), key: Bun.file(config.TLS_KEY) } }
+    : {};
+
+  if (!tlsConfig.tls && host !== "127.0.0.1" && host !== "::1" && host !== "localhost") {
+    // 明文 + 非回环监听：admin bearer 令牌与规则流量可被同网段嗅探，必须显式知悉
+    logger.warn("plaintext_non_loopback", {
+      impact: "admin_token_and_traffic_cleartext",
+      hint: "配置 TLS_CERT/TLS_KEY 启用 HTTPS，或把 HOST 收到 127.0.0.1",
+    });
+  }
+
   const server: Bun.Server<undefined> = Bun.serve({
     port,
     hostname: host,
+    ...tlsConfig,
     // 协议层拒绝超大请求体（chunked 无 content-length 时由 Bun 直接拦截，堵内存放大）
     maxRequestBodySize: config.MAX_BODY,
     async fetch(req) {
@@ -66,15 +84,14 @@ export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
       try {
         resp = await route(req, url, origin, ctx);
       } catch (e: any) {
-        const status =
-          typeof e?.statusCode === "number" ? e.statusCode : 500;
-        resp = withCors(
-          new Response(JSON.stringify({ error: String(e?.message ?? e) }), {
-            status,
-            headers: { "Content-Type": "application/json; charset=utf-8" },
-          }),
-          origin
-        );
+        // 5xx 不回显内部错误细节（fs 异常等可能带完整路径）；细节只进 JSONL 日志
+        if (!(e instanceof HttpError)) {
+          logger.error("request_failed", {
+            path: url.pathname,
+            error: String(e?.message ?? e),
+          });
+        }
+        resp = withCors(errorResponseFrom(e), origin);
       }
       recordAccess({
         method: req.method,
@@ -151,7 +168,7 @@ export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
 }
 
 function shutdown(signal: string): void {
-  console.log(`\n[AdSkip Server] 收到 ${signal}，正在优雅停机…`);
+  logger.info("shutdown", { signal });
   flush();
   server?.stop(true);
   process.exit(0);
@@ -159,16 +176,20 @@ function shutdown(signal: string): void {
 
 if (import.meta.main) {
   server = startServer();
-  console.log(`[AdSkip Server] 运行于 http://${server.hostname}:${server.port}`);
-  console.log(`[AdSkip Server] 落地页: http://${server.hostname}:${server.port}/`);
-  console.log(`[AdSkip Server] 管理后台: http://${server.hostname}:${server.port}/admin`);
+  const protocol = config.TLS_CERT && config.TLS_KEY ? "https" : "http";
+  logger.info("server_started", {
+    protocol,
+    hostname: server.hostname,
+    port: server.port,
+    adminToken: config.ADMIN_TOKEN ? "configured" : "MISSING",
+  });
   if (!config.ADMIN_TOKEN) {
-    console.warn("[AdSkip Server] 警告：未配置 ADMIN_TOKEN，写接口将返回 503");
+    logger.warn("admin_token_missing", { impact: "write_endpoints_503" });
   }
   for (const info of Object.values(os.networkInterfaces())) {
     for (const ni of info ?? []) {
       if (ni.family === "IPv4" && !ni.internal) {
-        console.log(`  LAN: http://${ni.address}:${server.port}`);
+        logger.info("lan_endpoint", { address: ni.address, port: server.port, protocol });
       }
     }
   }

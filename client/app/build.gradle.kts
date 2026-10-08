@@ -21,19 +21,27 @@ val releaseSigningReady = listOf(
 
 /**
  * 未配置正式签名时的 release 行为：
- * - 默认回退 debug 签名，保证 assembleRelease 产物可直接安装
- *   （未签名 APK 在手机上必然报「解析软件包时出现问题」，见 Issue #23）；
- * - adskip.unsignedRelease=true 时保留未签名产物，仅供受信任环境自行签名。
+ * - 默认产出**未签名** APK：debug keystore 是公开已知密钥（口令 "android"），
+ *   用它签发的「release」可被任何拿到该密钥的人伪造升级（供应链风险）；
+ * - adskip.unsignedRelease=true：同样未签名（显式声明，语义同上）；
+ * - adskip.allowDebugSigning=true：显式选择回退 debug 签名，仅供本机试装调试，
+ *   **禁止**以该产物对外分发。
  */
 val unsignedRelease = signingProps.getProperty("adskip.unsignedRelease")?.toBoolean() ?: false
+val allowDebugSigning = signingProps.getProperty("adskip.allowDebugSigning")?.toBoolean() ?: false
 
 if (!releaseSigningReady) {
     logger.lifecycle(
-        if (unsignedRelease) {
-            "[adskip] release 未配置签名：按 adskip.unsignedRelease=true 产出未签名 APK（仅供受信任环境自行签名）"
-        } else {
-            "[adskip] release 未配置签名：已回退 debug 签名以保证 APK 可安装；正式分发请在 local.properties 配置 " +
-                "adskip.storeFile / adskip.storePassword / adskip.keyAlias / adskip.keyPassword"
+        when {
+            unsignedRelease ->
+                "[adskip] release 未配置签名：按 adskip.unsignedRelease=true 产出未签名 APK（仅供受信任环境自行签名）"
+
+            allowDebugSigning ->
+                "[adskip] release 未配置签名：按 adskip.allowDebugSigning=true 回退 debug 签名，仅供本机试装，禁止分发"
+
+            else ->
+                "[adskip] release 未配置签名：产出未签名 APK；本机试装可在 local.properties 设 adskip.allowDebugSigning=true，" +
+                    "正式分发请配置 adskip.storeFile / adskip.storePassword / adskip.keyAlias / adskip.keyPassword"
         },
     )
 }
@@ -69,10 +77,11 @@ android {
             signingConfig = when {
                 releaseSigningReady -> signingConfigs.getByName("release")
 
-                unsignedRelease -> null
+                // 显式选择才回退 debug 签名（仅供本机试装，禁止分发）
+                allowDebugSigning -> signingConfigs.getByName("debug")
 
-                // 仅在显式选择时产出未签名包
-                else -> signingConfigs.getByName("debug") // 回退：产物必须可安装
+                // 默认未签名：debug keystore 公开可得，用它签 release 等于交出升级签名权
+                else -> null
             }
         }
     }
@@ -98,6 +107,14 @@ dependencies {
 
     // 安全存储（EncryptedSharedPreferences）
     implementation(libs.androidx.security.crypto)
+
+    // HTTP 客户端（连接池、证书锁定、重试）
+    implementation(libs.okhttp)
+
+    // 网络层测试（MockWebServer）
+    testImplementation(libs.okhttp.mockwebserver)
+    // org.json：单测跑在 JVM，android.jar 只提供桩（returnDefaultValues 下方法全返回默认值），需真实实现
+    testImplementation(libs.org.json)
 
     testImplementation(libs.junit)
 }

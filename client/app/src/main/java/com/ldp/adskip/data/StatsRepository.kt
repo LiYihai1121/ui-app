@@ -3,6 +3,7 @@ package com.ldp.adskip.data
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import com.ldp.adskip.core.LogRing
 import java.util.concurrent.ExecutorService
 
 /**
@@ -54,14 +55,18 @@ class StatsRepository(private val context: Context, private val ioExecutor: Exec
 
         val action = Runnable {
             // 一次批量提交所有增量
-            val editor = Prefs.sp(context).edit()
-            val currentTotal = Prefs.getTotalSkips(context) + totalDelta
-            editor.putInt("total_skips", currentTotal)
-            for ((pkg, delta) in pkgDeltas) {
-                val current = Prefs.getPkgSkipCount(context, pkg) + delta
-                editor.putInt("pkg_count:$pkg", current)
+            try {
+                val editor = Prefs.sp(context).edit()
+                val currentTotal = Prefs.getTotalSkips(context) + totalDelta
+                editor.putInt("total_skips", currentTotal)
+                for ((pkg, delta) in pkgDeltas) {
+                    val current = Prefs.getPkgSkipCount(context, pkg) + delta
+                    editor.putInt("pkg_count:$pkg", current)
+                }
+                editor.apply()
+            } catch (e: Exception) {
+                LogRing.w("Stats", "flush failed: ${e.message}")
             }
-            editor.apply()
         }
 
         if (ioExecutor != null) ioExecutor.execute(action) else action.run()

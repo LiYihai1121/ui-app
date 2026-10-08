@@ -8,9 +8,10 @@ import {
   statusResponse,
   readBody,
   safeJsonParse,
+  errorResponseFrom,
   type Handler,
 } from "../utils/httpUtil";
-import { cleanRules, cleanBatchReport, cleanReportEvent, isValidPackage } from "../utils/validate";
+import { cleanRules, cleanBatchReport, cleanReportEvent, cleanLabel, isValidPackage } from "../utils/validate";
 
 export const v0_latest: Handler = () => {
   const r = getRules();
@@ -44,20 +45,22 @@ export const v1_latest: Handler = (req) => {
 };
 
 export const v0_publish: Handler = async (req, _url, ctx) => {
+  // 安全契约：限流必须先于鉴权——失败的鉴权尝试同样消耗令牌桶，
+  // 否则 admin token 可被无限次离线暴力猜测（限流是唯一的爆破防护）。
+  if (!limitWrite(req, ctx.ip)) return errorJson(429, "rate limited");
   const auth = requireAdmin(req);
   if (!auth.ok) return errorJson(auth.status, auth.error);
-  if (!limitWrite(req, ctx.ip)) return errorJson(429, "rate limited");
   let body: string;
   try {
     body = await readBody(req);
   } catch (e: any) {
-    return errorJson(e.statusCode ?? 400, e.message);
+    return errorResponseFrom(e);
   }
   let parsed: any;
   try {
     parsed = safeJsonParse(body);
   } catch (e: any) {
-    return errorJson(e.statusCode ?? 400, e.message);
+    return errorResponseFrom(e);
   }
   const cleaned = cleanRules(parsed);
   if (!cleaned) return errorJson(400, "invalid rules payload");
@@ -66,20 +69,21 @@ export const v0_publish: Handler = async (req, _url, ctx) => {
 };
 
 export const v1_publish: Handler = async (req, _url, ctx) => {
+  // 同 v0_publish：限流先于鉴权，失败尝试也消耗令牌桶
+  if (!limitWrite(req, ctx.ip)) return errorJson(429, "rate limited");
   const auth = requireAdmin(req);
   if (!auth.ok) return errorJson(auth.status, auth.error);
-  if (!limitWrite(req, ctx.ip)) return errorJson(429, "rate limited");
   let body: string;
   try {
     body = await readBody(req);
   } catch (e: any) {
-    return errorJson(e.statusCode ?? 400, e.message);
+    return errorResponseFrom(e);
   }
   let parsed: any;
   try {
     parsed = safeJsonParse(body);
   } catch (e: any) {
-    return errorJson(e.statusCode ?? 400, e.message);
+    return errorResponseFrom(e);
   }
   const cleaned = cleanRules(parsed);
   if (!cleaned) return errorJson(400, "invalid rules payload");
@@ -93,17 +97,18 @@ export const v0_skip: Handler = async (req, _url, ctx) => {
   try {
     body = await readBody(req);
   } catch (e: any) {
-    return errorJson(e.statusCode ?? 400, e.message);
+    return errorResponseFrom(e);
   }
   let parsed: any;
   try {
     parsed = safeJsonParse(body);
   } catch (e: any) {
-    return errorJson(e.statusCode ?? 400, e.message);
+    return errorResponseFrom(e);
   }
   const ev = cleanReportEvent(parsed);
   if (!ev) return errorJson(400, "invalid skip payload");
-  recordSkip(ev.pkg, String(parsed.label ?? ev.pkg).slice(0, 256), ev.channel);
+  // label 会持久化并经统计接口下发到所有端：先做数据卫生（去控制字符/截断）再入库
+  recordSkip(ev.pkg, cleanLabel(parsed.label ?? ev.pkg), ev.channel);
   return jsonResponse({ ok: true });
 };
 
@@ -114,13 +119,13 @@ export const v1_batchReport: Handler = async (req, _url, ctx) => {
   try {
     body = await readBody(req);
   } catch (e: any) {
-    return errorJson(e.statusCode ?? 400, e.message);
+    return errorResponseFrom(e);
   }
   let parsed: any;
   try {
     parsed = safeJsonParse(body);
   } catch (e: any) {
-    return errorJson(e.statusCode ?? 400, e.message);
+    return errorResponseFrom(e);
   }
   const cleaned = cleanBatchReport(parsed);
   if (!cleaned) return errorJson(400, "invalid batch report");
@@ -202,20 +207,21 @@ function evalSelector(expr: string, sample: string, viewId: string): SelectorVer
 }
 
 export const v1_testRule: Handler = async (req, _url, ctx) => {
+  // 同 v0_publish：限流先于鉴权，失败尝试也消耗令牌桶
+  if (!limitRead(req, ctx.ip)) return errorJson(429, "rate limited");
   const auth = requireAdmin(req);
   if (!auth.ok) return errorJson(auth.status, auth.error);
-  if (!limitRead(req, ctx.ip)) return errorJson(429, "rate limited");
   let body: string;
   try {
     body = await readBody(req);
   } catch (e: any) {
-    return errorJson(e.statusCode ?? 400, e.message);
+    return errorResponseFrom(e);
   }
   let parsed: any;
   try {
     parsed = safeJsonParse(body);
   } catch (e: any) {
-    return errorJson(e.statusCode ?? 400, e.message);
+    return errorResponseFrom(e);
   }
   // 与客户端 RulesRepository.ruleSetFor(pkg) 同源：全局 + 应用专属 + 禁用开关
   const pkgRaw = typeof parsed.pkg === "string" ? parsed.pkg.trim() : "";

@@ -2,29 +2,18 @@ package com.ldp.adskip.data
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
 import com.ldp.adskip.R
+import com.ldp.adskip.core.SecureStore
 import org.json.JSONArray
 import org.json.JSONObject
 
 /**
  * 关键词/规则/日志/统计的本地存储。
- * 存储经 AndroidX security-crypto 的 EncryptedSharedPreferences 加密；
- * 历史明文数据在首次访问时一次性迁移到加密存储。
+ * 存储经 [SecureStore]（EncryptedSharedPreferences）加密；
+ * 历史明文数据在首次访问时一次性迁移到加密存储（迁移逻辑在 SecureStore）。
  */
 object Prefs {
 
-    /** 旧明文存储文件名（迁移源）。 */
-    private const val LEGACY_SP_NAME = "adskip_prefs"
-
-    /** 新加密存储文件名。 */
-    private const val SP_NAME = "adskip_prefs_enc"
-
-    private var spInstance: SharedPreferences? = null
-
-    /** 进程内迁移仅执行一次；迁移幂等（源为空即跳过）。 */
-    private var migrated = false
     private const val KEY_KEYWORDS = "keywords"
     private const val KEY_KEYWORDS_JSON = "keywords_json"
     private const val KEY_VIEW_IDS = "view_ids"
@@ -52,44 +41,8 @@ object Prefs {
     private const val LOG_CAP = 200
     const val DEFAULT_SERVER = "http://192.168.1.100:3210"
 
-    fun sp(context: Context): SharedPreferences {
-        spInstance?.let { return it }
-        synchronized(this) {
-            spInstance?.let { return it }
-            val encrypted = EncryptedSharedPreferences.create(
-                context,
-                SP_NAME,
-                MasterKey.Builder(context).build(),
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-            )
-            spInstance = encrypted
-            if (!migrated) {
-                migrated = true
-                migrateLegacy(context, encrypted)
-            }
-            return encrypted
-        }
-    }
-
-    private fun migrateLegacy(context: Context, target: SharedPreferences) {
-        val legacy = context.getSharedPreferences(LEGACY_SP_NAME, Context.MODE_PRIVATE)
-        if (legacy.all.isEmpty()) return
-        val editor = target.edit()
-        for ((key, value) in legacy.all) {
-            when (value) {
-                is String -> editor.putString(key, value)
-                is Int -> editor.putInt(key, value)
-                is Long -> editor.putLong(key, value)
-                is Boolean -> editor.putBoolean(key, value)
-                is Set<*> -> editor.putStringSet(key, value as Set<String>)
-            }
-        }
-        // commit() 同步落盘：先确保加密副本持久化，再清空明文源，避免中途失败丢数据
-        if (editor.commit()) {
-            legacy.edit().clear().commit()
-        }
-    }
+    /** 加密偏好存储；创建与明文历史迁移统一收口在 [SecureStore]（core 层唯一入口）。 */
+    fun sp(context: Context): SharedPreferences = SecureStore.prefs(context)
 
     // ---------- 全局规则 ----------
     fun getKeywords(context: Context): MutableList<String> {

@@ -23,7 +23,14 @@ export interface Config {
   /** 统计分片保留的备份份数（rotateStatsBackup 轮转） */
   STATS_BACKUP_COUNT: number;
   ADMIN_TOKEN: string;
+  /** 统计汇总是否要求 admin 鉴权（STATS_READ_AUTH=1 开启；默认匿名可读，行为与旧版一致） */
   STATS_READ_AUTH: boolean;
+  /**
+   * 是否信任反向代理注入的 X-Forwarded-For 来判定客户端 IP。
+   * 默认 false：XFF 由请求方任意填写，若默认信任则限流桶可被随意换新（限流绕过）。
+   * 仅当服务端确实部署在可信反向代理之后时才置为 true（TRUST_PROXY=1）。
+   */
+  TRUST_PROXY: boolean;
   CORS_ORIGINS: string[] | null;
   RATE_LIMIT_READ_PER_MIN: number;
   RATE_LIMIT_REPORT_PER_MIN: number;
@@ -37,9 +44,15 @@ export interface Config {
   MAX_SELECTORS_PER_LIST: number;
   MAX_RULES_PER_APP: number;
   MAX_APPS: number;
+  /** 当日统计 byApp 条目数上限（未认证上报可伪造任意包名，超限聚合进 "_other"） */
+  MAX_STATS_APPS_PER_DAY: number;
   MAX_BATCH_EVENTS: number;
   MAX_BODY_KEYS: number;
   MAX_BODY_DEPTH: number;
+  /** TLS 证书路径（空字符串表示禁用 HTTPS）。 */
+  TLS_CERT: string;
+  /** TLS 私钥路径（空字符串表示禁用 HTTPS）。 */
+  TLS_KEY: string;
 }
 
 export const config: Config = {
@@ -60,7 +73,12 @@ export const config: Config = {
   BACKUP_COUNT: 5,
   STATS_BACKUP_COUNT: 5,
   ADMIN_TOKEN: process.env.ADMIN_TOKEN ?? "",
-  STATS_READ_AUTH: false,
+  STATS_READ_AUTH: ["1", "true", "yes"].includes(
+    (process.env.STATS_READ_AUTH ?? "").toLowerCase()
+  ),
+  TRUST_PROXY: ["1", "true", "yes"].includes(
+    (process.env.TRUST_PROXY ?? "").toLowerCase()
+  ),
   CORS_ORIGINS: process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(",").map((s) => s.trim())
     : null,
@@ -78,7 +96,10 @@ export const config: Config = {
   MAX_SELECTORS_PER_LIST: 128,
   MAX_RULES_PER_APP: 512,
   MAX_APPS: 2000,
+  MAX_STATS_APPS_PER_DAY: 2000,
   MAX_BATCH_EVENTS: 50,
   MAX_BODY_KEYS: 100,
   MAX_BODY_DEPTH: 5,
+  TLS_CERT: process.env.TLS_CERT ?? "",
+  TLS_KEY: process.env.TLS_KEY ?? "",
 };
