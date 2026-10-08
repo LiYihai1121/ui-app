@@ -129,5 +129,19 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="floating_quick_toggle_overlay" />
         </service>
+
+        <!--
+          取点模式（ROADMAP「截屏取点自定义规则」）：透明悬浮层盖在广告界面上，
+          用户手动标注「跳过」点击位置（坐标按屏幕比例存本机）。不导出。
+          契约由 ManifestContractTest 强制校验。
+        -->
+        <service
+            android:name=".service.PointPickService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="manual_tap_point_overlay" />
+        </service>
     </application>
 </manifest>

@@ -16,6 +16,7 @@ import com.ldp.adskip.R
 import com.ldp.adskip.core.AppEvents
 import com.ldp.adskip.core.Clock
 import com.ldp.adskip.core.LogRing
+import com.ldp.adskip.data.PointRules
 import com.ldp.adskip.data.Prefs
 import com.ldp.adskip.data.RulesRepository
 import com.ldp.adskip.data.StatsRepository
@@ -55,6 +56,14 @@ class SkipAdService : AccessibilityService() {
         const val EXTRA_PKG = "pkg"
 
         @Volatile var running = false
+            private set
+
+        /**
+         * 最近一次事件的前台应用包名（取点模式用它确定目标应用）。
+         * 由 [onAccessibilityEvent] 维护，忽略本应用自身与忽略清单。
+         */
+        @Volatile
+        var lastActivePkg: String? = null
             private set
 
         private const val CLICK_INTERVAL_MS = 1200L // 同一应用点击去抖
@@ -235,6 +244,8 @@ class SkipAdService : AccessibilityService() {
         if (pkg == IGNORE_PACKAGES) return
         if (pkg == packageName && !AppEvents.testActive) return
 
+        lastActivePkg = pkg
+
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED,
@@ -257,19 +268,24 @@ class SkipAdService : AccessibilityService() {
         lastScanAt = now
 
         val rootNode = FrameworkAdNode(root)
-        val target = engine.findTarget(rootNode, rules) ?: return
+        val target = engine.findTarget(rootNode, rules)
 
-        // 安全护栏：点击前复核
-        if (!SafetyGuard.canClick(target, pkg)) {
-            // 只记录标签长度，不落其他应用的界面文本：LogRing 可被用户导出分享
-            LogRing.w(
-                "Safety",
-                "blocked click on pkg=$pkg textLen=${target.text?.length ?: 0} descLen=${target.desc?.length ?: 0}",
-            )
-            return
+        val clicked = if (target != null) {
+            // 安全护栏：点击前复核
+            if (!SafetyGuard.canClick(target, pkg)) {
+                // 只记录标签长度，不落其他应用的界面文本：LogRing 可被用户导出分享
+                LogRing.w(
+                    "Safety",
+                    "blocked click on pkg=$pkg textLen=${target.text?.length ?: 0} descLen=${target.desc?.length ?: 0}",
+                )
+                return
+            }
+            clickNode(target)
+        } else {
+            // 节点没命中 → 自定义取点规则兜底（用户手动标注的跳过位置）
+            clickPointRule(pkg)
         }
-
-        if (!clickNode(target)) return
+        if (!clicked) return
 
         lastClickMap[pkg] = now
         val label = appLabel(pkg)
@@ -311,6 +327,31 @@ class SkipAdService : AccessibilityService() {
         val path = Path().apply {
             moveTo(cx, cy)
             lineTo(cx + 1f, cy + 1f)
+        }
+        val gesture = GestureDescription.Builder()
+            .addStroke(GestureDescription.StrokeDescription(path, 0, 60))
+            .build()
+        return dispatchGesture(gesture, null, null)
+    }
+
+    /**
+     * 自定义取点规则兜底：按用户标注的屏幕比例位置派发点击。
+     *
+     * 与节点点击共用 [SafetyGuard.canClickPackage] 包级护栏（防自触发 + 敏感
+     * 系统界面整包拒绝）；坐标经 [PointRules.scale] 统一换算（存储与点击同一套）。
+     */
+    private fun clickPointRule(pkg: String): Boolean {
+        val point = PointRules.get(this, pkg) ?: return false
+        if (!SafetyGuard.canClickPackage(pkg)) return false
+        val (x, y) = PointRules.scale(
+            point.fx,
+            point.fy,
+            resources.displayMetrics.widthPixels,
+            resources.displayMetrics.heightPixels,
+        )
+        val path = Path().apply {
+            moveTo(x, y)
+            lineTo(x + 1f, y + 1f)
         }
         val gesture = GestureDescription.Builder()
             .addStroke(GestureDescription.StrokeDescription(path, 0, 60))

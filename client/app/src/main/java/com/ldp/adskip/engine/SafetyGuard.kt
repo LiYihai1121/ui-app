@@ -53,10 +53,8 @@ object SafetyGuard {
      * @return true=可以点击, false=被安全护栏拦截
      */
     fun canClick(node: AdNode, pkg: String): Boolean {
-        // 防自触发死循环
-        if (pkg == SELF_PKG) return false
-        // 敏感系统界面整包拒绝
-        if (pkg in DENY_PACKAGES) return false
+        // 防自触发死循环 + 敏感系统界面整包拒绝
+        if (!canClickPackage(pkg)) return false
 
         // 合法性校验：必须可见且面积 > 0
         if (!node.isVisible) return false
@@ -73,4 +71,10 @@ object SafetyGuard {
         }
         return true
     }
+
+    /**
+     * 包级护栏：自定义取点规则这类**无节点目标**的点击路径也必须过同一份硬底线
+     * （防自触发 + 敏感系统界面整包拒绝），否则坐标点击会绕开 [canClick]。
+     */
+    fun canClickPackage(pkg: String): Boolean = pkg != SELF_PKG && pkg !in DENY_PACKAGES
 }

@@ -148,20 +148,22 @@ class ManifestContractTest {
     // ---------- 悬浮窗快捷开关（overlay 前台服务） ----------
 
     @Test
-    fun `floating toggle service is not exported and uses special-use foreground type`() {
-        val start = manifest.indexOf(".service.FloatingToggleService")
-        assertTrue("清单缺少 FloatingToggleService 声明", start >= 0)
-        val end = manifest.indexOf("</service>", start)
-        val block = manifest.substring(start, end)
-        assertTrue(
-            "悬浮开关服务必须 exported=false（否则任意应用可启停悬浮层）",
-            Regex("""android:exported\s*=\s*"false"""").containsMatchIn(block),
-        )
-        assertTrue(
-            "悬浮开关服务必须声明 foregroundServiceType=specialUse 与用途说明（Android 14+ 前台服务要求）",
-            block.contains("""android:foregroundServiceType="specialUse"""") &&
-                block.contains("PROPERTY_SPECIAL_USE_FGS_SUBTYPE"),
-        )
+    fun `overlay services are not exported and use special-use foreground type`() {
+        for (svc in listOf(".service.FloatingToggleService", ".service.PointPickService")) {
+            val start = manifest.indexOf(svc)
+            assertTrue("清单缺少 $svc 声明", start >= 0)
+            val end = manifest.indexOf("</service>", start)
+            val block = manifest.substring(start, end)
+            assertTrue(
+                "$svc 必须 exported=false（否则任意应用可启停悬浮层）",
+                Regex("""android:exported\s*=\s*"false"""").containsMatchIn(block),
+            )
+            assertTrue(
+                "$svc 必须声明 foregroundServiceType=specialUse 与用途说明（Android 14+ 前台服务要求）",
+                block.contains("""android:foregroundServiceType="specialUse"""") &&
+                    block.contains("PROPERTY_SPECIAL_USE_FGS_SUBTYPE"),
+            )
+        }
     }
 
     @Test

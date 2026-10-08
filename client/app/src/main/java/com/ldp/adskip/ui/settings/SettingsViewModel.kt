@@ -39,6 +39,9 @@ import java.util.Locale
  */
 class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
+    /** 取点规则列表项：坐标展示为屏幕百分比 */
+    data class PointRuleItem(val pkg: String, val xPercent: Int, val yPercent: Int)
+
     data class UiState(
         val serverUrlInput: String,
         val syncing: Boolean = false,
@@ -55,6 +58,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         val keepAliveVendor: Vendor = Vendor.GENERIC,
         /** 悬浮窗快捷开关是否在显示 */
         val floatingOverlay: Boolean = false,
+        /** 自定义取点规则（按包名排序） */
+        val pointRules: List<PointRuleItem> = emptyList(),
     ) {
         /**
          * 已确认豁免电池优化。
@@ -76,6 +81,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             language = LanguageMode.fromTag(container.settingsRepo.languageTag()),
             keepAliveVendor = KeepAliveNavigator.detectVendor(),
             floatingOverlay = OverlayToggle.isActive(),
+            pointRules = loadPointRules(),
         ),
     )
     val uiState: StateFlow<UiState> = _uiState
@@ -141,14 +147,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         val app = container.app
         if (enabled && !OverlayToggle.hasPermission(app)) {
             send(app.getString(R.string.settings_overlay_permission_needed))
-            runCatching {
-                app.startActivity(
-                    Intent(
-                        android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:" + app.packageName),
-                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                )
-            }
+            requestOverlayPermission()
             _uiState.value = _uiState.value.copy(floatingOverlay = false)
             return
         }
@@ -159,6 +158,53 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     /** 回到前台时对齐悬浮开关真实状态（授权后返回 / 服务被系统回收） */
     fun refreshOverlayState() {
         _uiState.value = _uiState.value.copy(floatingOverlay = OverlayToggle.isActive())
+    }
+
+    // ---------- 自定义取点规则 ----------
+
+    /** 进入取点模式：与悬浮开关同用「显示在其他应用上层」权限 */
+    fun startPointPick() {
+        val app = container.app
+        if (!OverlayToggle.hasPermission(app)) {
+            send(app.getString(R.string.settings_overlay_permission_needed))
+            requestOverlayPermission()
+            return
+        }
+        OverlayToggle.startPointPick(app)
+    }
+
+    fun deletePointRule(pkg: String) {
+        container.settingsRepo.removePointRule(pkg)
+        refreshPointRules()
+    }
+
+    fun clearPointRules() {
+        container.settingsRepo.clearPointRules()
+        refreshPointRules()
+    }
+
+    /** 取点保存/删除后刷新列表（ON_RESUME 也调用，覆盖取点模式返回的场景） */
+    fun refreshPointRules() {
+        _uiState.value = _uiState.value.copy(pointRules = loadPointRules())
+    }
+
+    private fun loadPointRules(): List<PointRuleItem> = container.settingsRepo.pointRuleEntries().map {
+        PointRuleItem(
+            pkg = it.pkg,
+            xPercent = (it.fx * 100).toInt(),
+            yPercent = (it.fy * 100).toInt(),
+        )
+    }
+
+    private fun requestOverlayPermission() {
+        runCatching {
+            container.app.startActivity(
+                Intent(
+                    android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + container.app.packageName),
+                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
     }
 
     /**

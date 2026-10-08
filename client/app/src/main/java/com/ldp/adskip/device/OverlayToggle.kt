@@ -3,6 +3,7 @@ package com.ldp.adskip.device
 import android.content.Context
 import android.provider.Settings
 import com.ldp.adskip.service.FloatingToggleService
+import com.ldp.adskip.service.PointPickService
 
 /**
  * 悬浮窗快捷开关的 UI 门面。
@@ -22,4 +23,10 @@ object OverlayToggle {
 
     /** 悬浮开关当前是否在显示（服务存活即显示） */
     fun isActive(): Boolean = FloatingToggleService.running
+
+    /** 进入取点模式（在目标广告界面上手动标注「跳过」位置） */
+    fun startPointPick(context: Context) = PointPickService.start(context)
+
+    /** 取点模式是否在显示 */
+    fun isPointPickActive(): Boolean = PointPickService.running
 }

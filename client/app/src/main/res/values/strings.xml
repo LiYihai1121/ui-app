@@ -201,4 +201,21 @@
     <string name="overlay_btn_dnd_on">免打扰：开</string>
     <string name="overlay_btn_dnd_off">免打扰：关</string>
     <string name="overlay_btn_close">关闭面板</string>
+
+    <!-- 自定义取点规则 -->
+    <string name="settings_point_section">自定义取点规则</string>
+    <string name="settings_point_hint">对无法识别的广告：在广告界面上打开悬浮开关 → 点「取点模式」，再点一下「跳过」按钮的位置；之后轻启会自动点击该位置。坐标按屏幕比例保存，仅存本机。</string>
+    <string name="settings_point_pick">进入取点模式</string>
+    <string name="settings_point_entry">%1$s ｜ %2$d%%, %3$d%%</string>
+    <string name="settings_point_delete">删除</string>
+    <string name="settings_point_clear">清空全部取点规则</string>
+    <string name="settings_point_empty">还没有取点规则</string>
+    <string name="point_pick_channel_name">取点模式</string>
+    <string name="point_pick_notif_title">轻启取点模式运行中</string>
+    <string name="point_pick_hint">点按广告的「跳过」按钮位置</string>
+    <string name="point_pick_current">当前应用：%1$s</string>
+    <string name="point_pick_cancel">取消</string>
+    <string name="point_pick_saved">已为 %1$s 保存取点规则</string>
+    <string name="point_pick_no_pkg">无法确定当前应用（或该应用不允许取点），已取消</string>
+    <string name="overlay_btn_pick">取点模式</string>
 </resources>
