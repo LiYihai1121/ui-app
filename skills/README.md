@@ -1,7 +1,7 @@
 # Agent 技能开发（skills/README.md）
 
 > 状态：已生效；最后更新：2026-10-07。
-> 适用范围：所有随仓库版本控制的 Agent 技能（`branch-guard`、`code-simplifier`、`software-development-full` 等）。
+> 适用范围：所有随仓库版本控制的 Agent 技能（`branch-guard`、`code-simplifier`、`software-development-full`、`release`、`security-audit`、`contract-first` 等）。
 > 挂载方式：`kilo.json` 的 `skills.paths: ["./skills"]`；技能加载与权限见 [kilo.json](../kilo.json)。
 
 本目录是**随仓库版本控制的 Agent 技能**的唯一存放处。技能不是「个人配置」：放进 `.kilo/` 等被
@@ -21,6 +21,13 @@ skills/
 │   ├── docs/specs/             引入 Spec 与决策记录
 │   ├── scripts/                校验脚本（validate.py）
 │   └── tests/                  决策场景集
+├── contract-first/             自研技能：契约先行（先红后绿的边界开发流程）
+│   └── SKILL.md
+├── release/                    自研技能：发布与回滚（SemVer / tag / 发布链路自检）
+│   └── SKILL.md
+├── scripts/                    技能开发工具：new_skill.py（脚手架，生成合规骨架）
+├── security-audit/             自研技能：安全审计（证据分级 / 残留风险，只报告不改码）
+│   └── SKILL.md
 └── software-development-full/  通用完整版软件开发规则（全场景开发协议；来源与许可状态见 NOTICE.md，
     │                         上游 LICENSE 未随附，对外分发前须补齐）
     ├── SKILL.md
@@ -52,7 +59,7 @@ metadata:            # 可选；按需补充
 ## 开发一个新技能
 
 1. 从最新 `main` 创建 `feature/<id>-<slug>` 分支（遵循 [CONTRIBUTING.md](../CONTRIBUTING.md) 分支策略）；
-2. 新建 `skills/<skill-name>/SKILL.md`，按上文格式编写 frontmatter 与正文；
+2. 新建 `skills/<skill-name>/SKILL.md`，按上文格式编写 frontmatter 与正文（可先用 `python skills/scripts/new_skill.py <skill-name> "<触发描述>"` 生成合规骨架）；
 3. 若技能需要额外材料（校验脚本、测试场景、spec），随技能目录一并提供，不预建无用的通用框架；
 4. 第三方技能必须随包携带 `LICENSE` 与 `NOTICE.md`（来源与署名），遵守上游许可；
 5. 提交前跑通相关门禁（`ktlintCheck` / `assembleDebug` / `testDebugUnitTest`，技能若带 Python 校验脚本则一并运行）；
@@ -60,6 +67,7 @@ metadata:            # 可选；按需补充
 
 ## 校验
 
+- **`SkillContractTest`（`testDebugUnitTest` 门禁，自动运行）**：机器校验技能格式与登记——frontmatter 含 name/description（description ≥ 30 字符）、name 与目录名一致且为小写连字符、技能已登记进本目录结构、LICENSE 必配 NOTICE；违反即门禁判红；
 - 自带 `scripts/validate.py` 的技能（如 `code-simplifier`）：改动 SKILL.md 或插件清单后必须运行，输出技能清单格式与
   唯一公开技能断言；
 - 仓库门禁 `ProjectStructureTest` 将根目录 `skills/` 列入白名单（新增技能目录不需要改测试，但根级**新目录**仍需登记）；
