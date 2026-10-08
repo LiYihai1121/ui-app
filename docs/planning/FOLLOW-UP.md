@@ -20,6 +20,16 @@
 | 11 | `SkipAdService` 接收器注册/注销模板重复 | 提取 `ReceiverHandle` 内部类，收敛注册/注销公共路径，消除 4 个重复方法 | `SkipAdService.kt` |
 | 12 | 服务端无结构化日志 | 新增 `src/utils/logger.ts`（JSONL 格式，零运行时依赖），替换 `server.ts` 中的 `console.*` | `server.ts`, `logger.ts` |
 | 13 | 服务端无 TLS 配置 | 新增 `TLS_CERT`/`TLS_KEY` 环境变量支持，`Bun.serve` 条件启用 TLS | `config.ts`, `server.ts` |
+| 14 | 限流键默认信任可伪造的 `X-Forwarded-For`（换头即绕过全部限频）；鉴权失败不消耗令牌桶（token 可无限暴力猜测）；令牌桶无上限 | 限流默认只认 socket IP（`TRUST_PROXY=1` 才信 XFF）、限流先于鉴权、令牌桶封顶 10000 淘汰最久未用 | `rateLimit.ts`, `rulesApi.ts`, `index.ts` |
+| 15 | `STATS_READ_AUTH` 是死配置，统计端点实际匿名可读 | 统计汇总真正消费该开关（`STATS_READ_AUTH=1` 即挡匿名读） | `statsApi.ts`, `config.ts` |
+| 16 | 未认证上报可伪造任意包名，无限扩张当日 byApp 结构 | 当日条目封顶 2000（超限聚合 `_other`）+ label 去控制字符后入库 | `store.ts`, `validate.ts` |
+| 17 | 错误响应回显内部细节；缺安全响应头；CORS 默认全开 | 5xx 归一化 `internal error`（细节只进日志）+ 统一安全头/HTML CSP/HSTS + CORS 未配置默认拒绝跨域 | `httpUtil.ts`, `server.ts` |
+| 18 | TLS 半配置静默回退明文 | 半配置启动即抛错；明文 + 非回环监听输出告警 | `server.ts` |
+| 19 | Android 8–12 动态注册接收器默认可被任意应用投递（远程关停服务 / 诱导导出前台界面文本） | signature 级 `INTERNAL` 权限收口全部 API 级别 + 快照导出补 `FLAG_ACTIVITY_NEW_TASK` + 契约测试 | `AndroidManifest.xml`, `SkipAdService.kt`, `ManifestContractTest.kt` |
+| 20 | `SafetyGuard` 可绕过：中文-only 黑名单、只看目标自身文案、不过滤敏感系统界面 | 补英文/中文敏感词、敏感系统包整包拒绝、父链 3 层文案检查 | `SafetyGuard.kt` |
+| 21 | 云端规则载荷无条目上限 + 响应体整包读内存 | 响应体 2MB 封顶 + 载荷条目/长度封顶 + 包名键合法性校验 | `SyncClient.kt` |
+| 22 | release 未配签名时静默回退 debug 签名（公开密钥可伪造升级） | 默认产出未签名包；回退 debug 签名需显式 `adskip.allowDebugSigning=true` | `app/build.gradle.kts` |
+| 23 | `LanguagePreferences` 实际仍在明文 SP（#9 未落地），且与 Prefs 旧存储同名，迁移删源文件会丢语言设置 | 偏好统一走 `core/SecureStore` 加密存储（含明文历史全量迁移） | `LanguagePreferences.kt`, `SecureStore.kt`, `Prefs.kt` |
 
 ---
 
@@ -30,7 +40,8 @@
 | 优先级 | 问题 | 建议修复方案 | 预计工作量 |
 |--------|------|--------------|------------|
 | P0 | 服务端 HTTPS 支持（TLS 配置已就绪，待部署证书） | 设置 `TLS_CERT`/`TLS_KEY` 环境变量即可启用 HTTPS；客户端 release 强制 HTTPS | 部署时配置 |
-| P0 | `SyncClient` HTTP 无证书锁定 | 引入 `OkHttp` 或自写 `HostnameVerifier` + `CertificatePinner`；受「零第三方依赖」约束，待项目决策后实施 | 待评估 |
+| P0 | 规则链路无签名：明文 HTTP 下 MITM 可注入规则驱动无障碍自动点击（泄露面：deviceId/使用画像） | 规则响应加签名（客户端内置公钥验签后才落地，跨端协议变更需同步 API.md + 契约测试）；或部署 HTTPS + 真实证书锁定后收紧 NSC | 待评估 |
+| P0 | `SyncClient` 证书锁定是空壳（`CertificatePinner` 无 pin 值，等于未启用） | OkHttp 已就位；部署证书后配置 `CertificatePinner.add(host, "sha256/…")` 并补 pin 覆盖测试 | 部署时配置 |
 | P1 | `Prefs` 迁移逻辑幂等性不足 | ✅ 已修复：改用 `deleteSharedPreferences` 删除明文源文件 | — |
 | P1 | `LanguagePreferences` 未使用加密存储 | ✅ 已修复：同步迁移至 `EncryptedSharedPreferences` | — |
 | P2 | `StatsRepository` 合批写 SP 无错误处理 | ✅ 已修复：`flush()` 添加 `try-catch` + `LogRing.w` | — |
