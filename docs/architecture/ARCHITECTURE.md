@@ -20,7 +20,7 @@
 │  │                             ├ RulesRepository（合并/LruCache）│
 │  │                             └ StatsRepository（合批落盘）     │
 │  │                                                                │
-│  └─── AppContainer ──▶ net/SyncClient（v1: ETag/批量）           │
+│  └─── AppContainer ──▶ net/SyncClient + HttpTransport（OkHttp） │
 │        (手动 DI)     └ sync/SyncJobService（JobScheduler）      │
 └──────────────────────────────┬───────────────────────────────────┘
                                │ HTTP（v1 协议）
@@ -61,7 +61,7 @@
 | **service/** | SkipAdService + FrameworkAdNode | 事件接收、节流去抖、点击执行、AccessibilityNodeInfo 节点适配 | 不含匹配规则逻辑、不做安全裁决、不依赖 `ui/` |
 | **engine/** | SkipRuleEngine + RuleSet + AdNode + SafetyGuard + selector/ | 纯匹配：文本/ViewID/选择器 三通道（选择器为类 CSS 子集，右到左求值，DESIGN-PHASE1） | 不执行点击、不读存储、不依赖任何 Android 类型 |
 | **data/** | Prefs / RulesRepository / StatsRepository / SettingsRepository | 存储原语 + 领域仓库（合并/LruCache/合批落盘）+ 设置门面（收口 net/sync 委托） | 不感知 UI 与网络格式 |
-| **net/** | SyncClient | HTTP 传输（v1: ETag/304/批量补报） | 不直接改存储键值 |
+| **net/** | SyncClient + HttpTransport | HTTP 传输（v1: ETag/304/批量补报），经 OkHttp（连接池/Keep-Alive/重试/`CertificatePinner` 证书锁定） | 不直接改存储键值 |
 | **core/** | AppEvents / AppExecutors / Clock / LogRing | 进程内事件总线、线程域收口、时钟注入、环形日志 | 不含业务逻辑 |
 | **device/** | VendorKeepAlive（纯数据）/ QuickTileLogic（纯逻辑）/ KeepAliveNavigator（跳转出口）/ SkipTileService（快捷磁贴） | 系统级入口：厂商 ROM 识别与自启动/后台管理跳转、下拉磁贴、系统设置页跳转 | 不读业务数据、不发起网络/同步、不依赖 `ui/`（允许依赖 `core/` 与 `service/` 的只读状态查询） |
 | **sync/** | SyncJobService | JobScheduler 周期同步 | 不含同步逻辑（委托 SyncClient） |
@@ -85,7 +85,7 @@
 | `core/` | Kotlin/JDK/协程、`core/` 自身 | 其他所有 `com.ldp.adskip.*` |
 | `ui/` | Compose/AndroidX、组合根（`AdskipApp`/`AppContainer`）、`core/`、`engine/`、`data/` 领域仓库（`RulesRepository`/`StatsRepository`/`SettingsRepository`）、`R` | `service/`、`net/`、`sync/`、`data.Prefs` |
 | `data/` | `engine/`（RuleSet）、`net/`（设置门面委托）、`sync/`（调度委托）、Android SDK | `ui/`、`service/` |
-| `net/` | `data/`、Android SDK、org.json | `ui/`、`service/` |
+| `net/` | `data/`、Android SDK、OkHttp、org.json | `ui/`、`service/` |
 | `sync/` | `data/`、`core/`、Android SDK | `ui/`、`service/` |
 | `service/` | `core/`、`data/`、`engine/`、`net/`、组合根 | `ui/` |
 | `device/` | `core/`（LogRing）、`service/`（无障碍真实状态 `isEnabled` 与关闭请求 `requestShutdown`）、Android SDK | `ui/`、`data/`、`net/`、`sync/` |
@@ -254,7 +254,7 @@ Doze 模式 → 系统推迟到维护窗口执行
 | 新增 UI 页面 | `ui/` 加 Composable Screen + ViewModel + NavHost 路由 |
 | 服务端换数据库 | 只改 `server/src/storage/store.ts` |
 | 新增 API | `src/api/` 加路由文件 + `api/index.ts` 加分发 |
-| 客户端换网络库 | 只改 `net/SyncClient` 内部实现 |
+| 客户端换网络库 | 只改 `net/HttpTransport`（SyncClient 依赖其稳定接口） |
 | 新增安全黑名单词 | `engine/SafetyGuard.DENY_WORDS` |
 
 > 选择器通道（`3.0.3` 内核）即按上表第一行「新匹配通道」的路径落地：`RuleSet` 增 `selectors` 字段 + `SkipRuleEngine` 增通道分支 + 新增 `engine/selector/` 子包，未改动既有两通道语义。
@@ -290,7 +290,7 @@ AdSkip/                            全栈 monorepo
 │       ├── engine/               规则引擎（纯 JVM 可测：AdNode / RuleSet / SkipRuleEngine / SafetyGuard）
 │       │   └── selector/         选择器引擎（SelectorAst / SelectorParser / SelectorMatcher）
 │       ├── data/                 Prefs / RulesRepository / StatsRepository / SettingsRepository
-│       ├── net/                  SyncClient
+│       ├── net/                  SyncClient + HttpTransport（OkHttp：连接池/证书锁定/重试）
 │       └── sync/                 SyncJobService
 ├── server/                       Bun + TypeScript 后端
 │   ├── src/

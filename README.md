@@ -121,14 +121,15 @@ client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，
 │   ├── RulesRepository.kt          # 规则仓库（LruCache 缓存/版本失效/schemaVersion 校验）
 │   └── StatsRepository.kt          # 统计仓库（合批落盘）
 ├── net/
-│   └── SyncClient.kt               # 网络层（v1: ETag/304/deviceId/批量补报）
+│   ├── SyncClient.kt               # 网络层（v1: ETag/304/deviceId/批量补报）
+│   └── HttpTransport.kt            # HTTP 原语收口（OkHttp：连接池/证书锁定/重试）
 └── sync/
     └── SyncJobService.kt           # JobScheduler 定时同步（三合一，跨重启持久化）
 
 client/app/src/test/java/com/ldp/adskip/   # JVM 单测（引擎/护栏/边界与清单契约守护/选择器），随门禁运行
 
 server/                             # 后端（Bun + TypeScript，零运行时依赖）
-├── server.ts                       # Bun.serve 入口、路由分发、优雅停机
+├── server.ts                       # Bun.serve 入口（TLS/HTTP2）、路由分发、优雅停机
 ├── src/
 │   ├── api/                        # 路由拆分（v0+v1）
 │   │   ├── index.ts                #   路由分发
