@@ -204,7 +204,7 @@ bun run typecheck     # tsc --noEmit
 > | 解析软件包时出现问题 | 传输中断，或被聊天工具改名/压缩（大小与 `SHA256SUMS` 不一致） | 比对 SHA-256 后重传，或改用服务端 `/download` |
 > | 应用未安装 / 签名冲突 | 手机上已装 debug 签名版或其它密钥版本 | 卸载 `com.ldp.adskip` 后重装 |
 
-要求：JDK 17+、Android SDK（compileSdk 35）、Bun 1.1+（服务端）。Android 部分也可直接用 Android Studio / IntelliJ 打开 `client/` 目录。
+要求：JDK 17+、Android SDK（compileSdk 37）、Bun 1.1+（服务端）。Android 部分也可直接用 Android Studio / IntelliJ 打开 `client/` 目录。
 
 ## 分支与版本
 
