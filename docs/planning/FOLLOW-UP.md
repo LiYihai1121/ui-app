@@ -6,7 +6,7 @@
 ## 已修复（2026-10-08）
 
 | # | 问题 | 修复内容 | 文件 |
-|---|------|----------|------|
+| --- | ------ | ---------- | ---- |
 | 1 | `reportSkip` 单参重载硬编码 `deviceId="pending"` | 改为直接走 v0 单条上报，避免伪造 deviceId | `SyncClient.kt` |
 | 2 | `usesCleartextTraffic="true"` 默认明文传输 | 明文策略显式收口到 `network_security_config.xml`；NSC `<domain>` 不支持私有网段前缀（10./172.16./192.168. 无效），base-config 放行明文（行为与旧版等价），HTTPS 迁移后收紧 | `AndroidManifest.xml`, `res/xml/network_security_config.xml` |
 | 3 | 网络请求裸创建 `Thread` | 统一改用 `AppExecutors.io.execute` | `SyncClient.kt` |
@@ -34,19 +34,19 @@
 ### 🔴 高危（安全/稳定性）
 
 | 优先级 | 问题 | 建议修复方案 | 预计工作量 |
-|--------|------|--------------|------------|
+| --- | --- | --- | --- |
 | P0 | 客户端 release 仍可能连明文 HTTP | 客户端默认空 server URL 已强制用户输入；进一步可对 release 构建强制 HTTPS scheme | 0.5 天 |
 
 ### 🟡 中危（架构/设计）
 
 | 优先级 | 问题 | 建议修复方案 | 预计工作量 |
-|--------|------|--------------|------------|
+| --- | --- | --- | --- |
 | P1 | `store.ts` 规则备份仅全量拷贝，无增量/压缩 | 长期运行可改用 WAL 或按天快照；当前 JSON 全量备份对小项目可接受 | 待评估 |
 
 ### 🟢 低危（测试/可观测/文档）
 
 | 优先级 | 问题 | 建议修复方案 | 预计工作量 |
-|--------|------|--------------|------------|
+| --- | --- | --- | --- |
 | P2 | 无端到端集成测试 | 补 `androidx.test` instrumentation 或 `AppTest`，覆盖 Service → Engine → 点击 → 上报全链路 | 2-3 天 |
 | P2 | 服务端结构化日志覆盖不足 | 当前日志器仅覆盖启动/存储/限流关键路径；可扩展请求日志中间件 | 1 天 |
 | P3 | `SettingsScreen.kt` 快照 UI 集成未完成 | 联调节点快照导出按钮与 `SkipAdService` 接收器 | 0.5 天 |
@@ -57,7 +57,7 @@
 ## 技术栈补充建议
 
 | 技术 | 用途 | 优先级 | 备注 |
-|------|------|--------|------|
+| --- | --- | --- | --- |
 | `androidx.security:security-crypto` | EncryptedSharedPreferences | ✅ 已引入 | 版本 1.1.0-alpha07 |
 | `OkHttp` | HTTP 客户端（连接池/证书锁定/重试） | ✅ 已引入 | 4.12.0，替代 `HttpURLConnection` |
 | `MockWebServer` | 网络层测试 | ✅ 已引入 | 与 OkHttp 配套，`okhttp-tls` 生成测试证书 |
@@ -70,6 +70,7 @@
 ## 里程碑建议
 
 ### v3.3.0（安全加固版）
+
 - [x] 明文流量策略显式收口（NSC base-config 放行，行为等价；HTTPS 迁移后收紧）
 - [x] EncryptedSharedPreferences 全量迁移
 - [x] `reportSkip` deviceId bug 修复
@@ -79,6 +80,7 @@
 - [x] `store.ts` 存储层单测
 
 ### v3.4.0（工程化版）
+
 - [ ] 端到端集成测试
 - [x] 服务端结构化日志
 - [x] `SkipAdService` 接收器抽象
@@ -86,6 +88,7 @@
 - [x] `rateLimit.ts` / `store.ts` 计时器显式清理
 
 ### v4.0.0（可观测版）
+
 - [ ] 指标导出（Prometheus/OTel）
 - [ ] 客户端崩溃上报（非强制，可选）
 - [ ] 服务端健康检查增强（/metrics）
