@@ -54,6 +54,8 @@ client/.vscode/
 
 # JDT 语言服务编译 included build 时会把源镜像到 convention/bin/，不是 Gradle 产物。
 client/build-logic/**/bin/
+# app 模块同样会被 JDT 镜像到 app/bin/（曾整棵被误暂存 102 个文件），不是 Gradle 产物。
+client/app/**/bin/
 
 # Kotlin 构建会话目录
 .kotlin/

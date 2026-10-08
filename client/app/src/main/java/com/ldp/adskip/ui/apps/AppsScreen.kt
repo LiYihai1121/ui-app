@@ -1,4 +1,4 @@
-package com.ldp.adskip.ui.apps
+﻿package com.ldp.adskip.ui.apps
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
@@ -38,7 +38,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ldp.adskip.R

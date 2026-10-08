@@ -8,6 +8,8 @@ plugins {
  * 签名信息从 local.properties（gitignored）读取：adskip.storeFile / storePassword / keyAlias / keyPassword。
  * local.properties 属于「本机/CI 秘密」，版本号事实源不包含签名——签名永远留在 :app，不进入约定插件。
  */
+private fun String?.hasValue(): Boolean = !this.isNullOrBlank()
+
 val signingProps = Properties().apply {
     val f = rootProject.file("local.properties")
     if (f.exists()) f.inputStream().use { load(it) }
@@ -17,7 +19,7 @@ val releaseSigningReady = listOf(
     "adskip.storePassword",
     "adskip.keyAlias",
     "adskip.keyPassword",
-).all { !signingProps.getProperty(it).isNullOrBlank() }
+).all { key -> signingProps.getProperty(key).hasValue() }
 
 /**
  * 未配置正式签名时的 release 行为：
@@ -25,7 +27,10 @@ val releaseSigningReady = listOf(
  *   （未签名 APK 在手机上必然报「解析软件包时出现问题」，见 Issue #23）；
  * - adskip.unsignedRelease=true 时保留未签名产物，仅供受信任环境自行签名。
  */
-val unsignedRelease = signingProps.getProperty("adskip.unsignedRelease")?.toBoolean() ?: false
+val unsignedRelease = signingProps.getProperty("adskip.unsignedRelease")
+    ?.trim()
+    ?.equals("true", ignoreCase = true)
+    ?: false
 
 if (!releaseSigningReady) {
     logger.lifecycle(
@@ -98,6 +103,9 @@ dependencies {
 
     // 安全存储（EncryptedSharedPreferences）
     implementation(libs.androidx.security.crypto)
+
+    // org.json：单测跑在 JVM，android.jar 只提供桩（returnDefaultValues 下方法全返回默认值），需真实实现
+    testImplementation(libs.org.json)
 
     testImplementation(libs.junit)
 }

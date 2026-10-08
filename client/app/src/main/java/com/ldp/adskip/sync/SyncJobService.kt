@@ -1,4 +1,4 @@
-package com.ldp.adskip.sync
+﻿package com.ldp.adskip.sync
 
 import android.app.job.JobInfo
 import android.app.job.JobParameters
@@ -6,8 +6,6 @@ import android.app.job.JobScheduler
 import android.app.job.JobService
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
-import android.os.PersistableBundle
 import com.ldp.adskip.AdskipApp
 import com.ldp.adskip.core.LogRing
 import com.ldp.adskip.data.Prefs

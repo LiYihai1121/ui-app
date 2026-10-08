@@ -19,6 +19,7 @@ docs/
 │   ├── ROADMAP-ADS.md             里程碑 / 周次 / 出口条件
 │   ├── DESIGN-PHASE1-SELECTOR.md  L1 技术设计与步骤 A–F
 │   ├── DESIGN-BUILD-FRAMEWORK.md  构建框架工程化（version catalog / build-logic / 模块拆分）
+│   ├── ROADMAP-ADS-VERIFY.md      能力边界「不做限制」：外部证据 / 风险评估 / 门禁验证记录
 │   ├── FOLLOW-UP.md               安全加固与技术补充计划（已修复清单 / 待修复 / 里程碑）
 │   └── RELEASE-HISTORY.md         发布链路（tag / 提交 / Release / 制品）
 └── diagrams/          架构图（adskip-architecture.json 源 + .html 渲染）
@@ -35,6 +36,7 @@ docs/
 | 对接服务端接口 | [api/API.md](api/API.md) |
 | 知道接下来做什么、按什么顺序做 | [planning/ROADMAP.md](planning/ROADMAP.md) → [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) |
 | 看某项能力的技术设计与实施步骤 | [planning/DESIGN-PHASE1-SELECTOR.md](planning/DESIGN-PHASE1-SELECTOR.md) |
+| 查「不做限制」边界变更的证据、风险评估与验证数字 | [planning/ROADMAP-ADS-VERIFY.md](planning/ROADMAP-ADS-VERIFY.md) |
 | 了解构建框架演进方案（version catalog / 约定插件 / 模块拆分） | [planning/DESIGN-BUILD-FRAMEWORK.md](planning/DESIGN-BUILD-FRAMEWORK.md) |
 | 配置本机开发环境 | [development/DEV-ENVIRONMENT.md](development/DEV-ENVIRONMENT.md) |
 | 查某版本发布到哪个提交、哪个 tag | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |

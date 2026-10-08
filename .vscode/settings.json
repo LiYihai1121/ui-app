@@ -98,7 +98,10 @@
   // 若依赖自定义 GRADLE_USER_HOME（DEV-ENVIRONMENT「构建启动失败排障」记录过
   // 未设置时回落到无缓存目录、导致发行版下载超时），在这里指明即可；
   // 也可以直接导出环境变量，两者取其一，不要都设。
-  // "java.import.gradle.user.home": "C:\\path\\to\\gradle-home",
+  // 本机启用 F:\All_Data\gradle，保证 Java LS 与命令行、CI 使用同一份 Gradle 发行版，
+  // 避免 IDE 进程未继承环境变量时而回落到旧版/无缓存发行版，导致 :app 配置期
+  // 触发 build-logic 约定插件按错误边界编译（表现为无细节的 "Compilation error"）。
+  "java.import.gradle.user.home": "F:\\All_Data\\gradle",
 
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
