@@ -30,6 +30,7 @@
 | 21 | 云端规则载荷无条目上限 + 响应体整包读内存 | 响应体 2MB 封顶 + 载荷条目/长度封顶 + 包名键合法性校验 | `SyncClient.kt` |
 | 22 | release 未配签名时静默回退 debug 签名（公开密钥可伪造升级） | 默认产出未签名包；回退 debug 签名需显式 `adskip.allowDebugSigning=true` | `app/build.gradle.kts` |
 | 23 | `LanguagePreferences` 实际仍在明文 SP（#9 未落地），且与 Prefs 旧存储同名，迁移删源文件会丢语言设置 | 偏好统一走 `core/SecureStore` 加密存储（含明文历史全量迁移） | `LanguagePreferences.kt`, `SecureStore.kt`, `Prefs.kt` |
+| 24 | 管理端单因子认证：ADMIN_TOKEN 泄露即全失守（可下发任意规则驱动客户端点击） | 启用 TOTP 双因素（RFC 6238，零依赖实现）：`ADMIN_TOTP_SECRET` 配置后管理端点须带 `X-2FA-Code`；单 IP 连错 5 次锁 15 分钟；`bun run totp:gen` 生成密钥，管理后台带动态码输入框 | `totp.ts`, `auth.ts`, `admin.html` |
 
 ---
 

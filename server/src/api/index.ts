@@ -37,7 +37,7 @@ export async function handleApi(
   if (method === "GET" && p === "/api/v1/admin/logs") {
     // 限流先于鉴权：失败的鉴权尝试也消耗令牌桶，阻断 admin token 暴力猜测
     if (!limitRead(req, ctx.ip)) return errorJson(429, "rate limited");
-    const auth = requireAdmin(req);
+    const auth = requireAdmin(req, ctx.ip);
     if (!auth.ok) return errorJson(auth.status, auth.error);
     return jsonResponse({ entries: recentAccess() });
   }

@@ -10,7 +10,7 @@ export const summary: Handler = (req, _url, ctx) => {
   // STATS_READ_AUTH 是真实的访问控制开关：开启后统计汇总（含各应用跳过量、
   // 设备事件记录）只允许 admin 令牌读取，避免匿名侧信道收集使用画像。
   if (config.STATS_READ_AUTH) {
-    const auth = requireAdmin(req);
+    const auth = requireAdmin(req, ctx.ip);
     if (!auth.ok) return errorJson(auth.status, auth.error);
   }
   return jsonResponse(statsSummary());

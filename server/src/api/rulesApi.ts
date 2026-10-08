@@ -48,7 +48,7 @@ export const v0_publish: Handler = async (req, _url, ctx) => {
   // 安全契约：限流必须先于鉴权——失败的鉴权尝试同样消耗令牌桶，
   // 否则 admin token 可被无限次离线暴力猜测（限流是唯一的爆破防护）。
   if (!limitWrite(req, ctx.ip)) return errorJson(429, "rate limited");
-  const auth = requireAdmin(req);
+  const auth = requireAdmin(req, ctx.ip);
   if (!auth.ok) return errorJson(auth.status, auth.error);
   let body: string;
   try {
@@ -71,7 +71,7 @@ export const v0_publish: Handler = async (req, _url, ctx) => {
 export const v1_publish: Handler = async (req, _url, ctx) => {
   // 同 v0_publish：限流先于鉴权，失败尝试也消耗令牌桶
   if (!limitWrite(req, ctx.ip)) return errorJson(429, "rate limited");
-  const auth = requireAdmin(req);
+  const auth = requireAdmin(req, ctx.ip);
   if (!auth.ok) return errorJson(auth.status, auth.error);
   let body: string;
   try {
@@ -209,7 +209,7 @@ function evalSelector(expr: string, sample: string, viewId: string): SelectorVer
 export const v1_testRule: Handler = async (req, _url, ctx) => {
   // 同 v0_publish：限流先于鉴权，失败尝试也消耗令牌桶
   if (!limitRead(req, ctx.ip)) return errorJson(429, "rate limited");
-  const auth = requireAdmin(req);
+  const auth = requireAdmin(req, ctx.ip);
   if (!auth.ok) return errorJson(auth.status, auth.error);
   let body: string;
   try {
