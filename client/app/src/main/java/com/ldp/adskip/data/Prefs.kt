@@ -45,7 +45,13 @@ object Prefs {
     private const val PREFIX_PKG_COUNT = "pkg_count:"
 
     private const val LOG_CAP = 200
-    const val DEFAULT_SERVER = "http://192.168.1.100:3210"
+
+    /**
+     * 服务器地址兜底值。为 `""` 而非硬编码局域网 IP：
+     * 客户端 device 段主机的 192.168.x 地址对每个用户都不同，写死会误导首次用户
+     * 连到一个不存在的服务器（FOLLOW-UP P2）。UI 侧应提示用户显式输入。
+     */
+    const val DEFAULT_SERVER = ""
 
     fun sp(context: Context): SharedPreferences {
         spInstance?.let { return it }

@@ -3,6 +3,7 @@ package com.ldp.adskip.data
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import com.ldp.adskip.core.LogRing
 import java.util.concurrent.ExecutorService
 
 /**
@@ -12,6 +13,10 @@ import java.util.concurrent.ExecutorService
  * - 合批落盘：计数先进内存，[Handler.postDelayed](5s) 延迟落盘，
  *   广播/退出时强制 flush，消除「每跳一次同步写 SP」。
  * - 读接口返回 SP 值 + 内存待落盘增量，保证实时一致。
+ *
+ * v3.3 修复：flush 消费快照后**立即清零**内存增量（此前 SP 已写入仍残留，
+ * 造成 `Prefs.total + pending` 重复计数）；写入改 [android.content.SharedPreferences.Editor.commit]
+ * 并捕获异常记录 LogRing，不再让统计丢失静默失败（FOLLOW-UP P2）。
  */
 class StatsRepository(private val context: Context, private val ioExecutor: ExecutorService? = null) {
 
@@ -50,18 +55,29 @@ class StatsRepository(private val context: Context, private val ioExecutor: Exec
         flushHandler.removeCallbacks(flushRunnable)
         val totalDelta = pendingTotal
         val pkgDeltas = pendingByPkg.toMap()
+        // 快照后**立即清零**待落盘增量：SP 写入成功后 total()/countFor() 直接读 SP，
+        // 否则原 pending 残留会让统计重复自增（真实缺陷：SP 已写入仍加内存值）。
+        pendingTotal = 0
+        pendingByPkg = mutableMapOf()
         dirty = false
 
         val action = Runnable {
-            // 一次批量提交所有增量
-            val editor = Prefs.sp(context).edit()
-            val currentTotal = Prefs.getTotalSkips(context) + totalDelta
-            editor.putInt("total_skips", currentTotal)
-            for ((pkg, delta) in pkgDeltas) {
-                val current = Prefs.getPkgSkipCount(context, pkg) + delta
-                editor.putInt("pkg_count:$pkg", current)
+            try {
+                // commit() 同步落盘并返回成功与否；apply() 异步无感知，
+                // EncryptedSharedPreferences 写失败时不做防护会让统计静默丢失（FOLLOW-UP P2）
+                val editor = Prefs.sp(context).edit()
+                val currentTotal = Prefs.getTotalSkips(context) + totalDelta
+                editor.putInt("total_skips", currentTotal)
+                for ((pkg, delta) in pkgDeltas) {
+                    val current = Prefs.getPkgSkipCount(context, pkg) + delta
+                    editor.putInt("pkg_count:$pkg", current)
+                }
+                if (!editor.commit()) {
+                    LogRing.e("Stats", "flush commit 返回 false，统计可能未落盘（总计=$totalDelta，应用=${pkgDeltas.size}）")
+                }
+            } catch (e: Exception) {
+                LogRing.e("Stats", "flush 写入失败，统计增量丢失：${e.message}")
             }
-            editor.apply()
         }
 
         if (ioExecutor != null) ioExecutor.execute(action) else action.run()
