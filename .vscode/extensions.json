@@ -4,6 +4,12 @@
   "recommendations": [
     // Kotlin 语言服务器：跳转定义 / 查找引用 / hover / 语义高亮 / 补全。
     // 装上后本仓库的 .editorconfig（import 排序、120 行宽）才能被正确应用。
+    // ⚠️ 版本下限：需内置 Kotlin 编译器 ≥ 2.4.0。0.2.36 内置 2.1.0，会撞上 Gradle 9.7.0
+    // 自带的 kotlin-stdlib-2.4.0 而报 INCOMPATIBLE_CLASS，且因 AGP 9 起本工程不再声明
+    // kotlin-android 插件，语言服务器取不到工具链版本只能回落自带编译器。该版本还会把
+    // .worktrees/ 下的 gradle 工程一并导入并误报 Redeclaration（它没有目录排除配置项）。
+    // 全部为误报，命令行构建为准；判据与处理见 docs/development/DEV-ENVIRONMENT.md
+    // 「IDE 语言服务诊断排障」。
     "fwcd.kotlin",
 
     // Java 语言服务器：redhat.jdt.ls 只管 Java；同时带来 XML 支持，

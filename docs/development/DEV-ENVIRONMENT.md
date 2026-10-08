@@ -128,6 +128,50 @@ Get-ChildItem "$env:GRADLE_USER_HOME\wrapper\dists" -Directory
 `.worktrees/`，含 `.git` 元数据），不要在仓库内复制整仓。细则见
 [AGENT-WORKFLOW.md](AGENT-WORKFLOW.md) 第 2.1 节。
 
+## IDE 语言服务诊断排障
+
+**症状：`.kt` 文件满屏红色（单个文件可达 80+ 条），但命令行构建全绿**
+
+```text
+Class 'kotlin.Unit' was compiled with an incompatible version of Kotlin.
+The actual metadata version is 2.4.0, but the compiler version 2.1.0 can read
+versions up to 2.2.0.
+The class is loaded from .../gradle-9.7.0/lib/kotlin-stdlib-2.4.0.jar
+
+Unresolved reference: junit / mutableListOf / mapOf / it / let / to / error / contains
+PACKAGE_OR_CLASSIFIER_REDECLARATION: Redeclaration: SelectorContractTest
+```
+
+**判定：这是 IDE 工具链版本错配，不是代码问题。** 三个判据：
+
+1. 报错里 class 的加载路径是 **`gradle-9.7.0/lib/kotlin-stdlib-2.4.0.jar`**——那是 Gradle 发行版**自身**
+   内置的 stdlib（供构建脚本 Kotlin DSL 用），**不是**本工程的依赖。本工程实际编译用的是 AGP 9.4.1
+   内置 Kotlin 2.2.10 的 `kotlin-stdlib-2.2.10`。
+2. `./gradlew testDebugUnitTest` **通过**。命令行构建是本项目的权威门禁，语言服务器报错不参与判定。
+3. 连锁特征：`kotlin.Unit` / `kotlin.text.Regex` / `MatchResult` 这类 stdlib 根类型都加载失败时，其上的
+   扩展与内建函数（`mutableListOf`、`mapOf`、`to`、`it`、`let`、`contains`、`error`、`associateBy`）
+   必然连带 unresolved，`+=` 也会因接收方为错误类型而报 `ASSIGNMENT_OPERATOR_SHOULD_RETURN_UNIT`。
+   同理 `org.junit` 报 unresolved 只是同一导入失败的另一半——`testImplementation(libs.junit)` 已在
+   `client/app/build.gradle.kts` 声明，Gradle 解析正常。
+
+**根因**：`fwcd.kotlin`（VS Code Kotlin 语言服务器）旧版本内置编译器为 2.1.0，只认 metadata ≤ 2.2.0；
+而 AGP 9 起 Kotlin 由 AGP 内置、本工程**不再声明 `kotlin-android` 插件**（见
+`client/build-logic/convention/build.gradle.kts`），语言服务器无法从 Gradle 模型取到 Kotlin 工具链版本，
+于是回落到自带编译器，再撞上 Gradle 9.7.0 自带的 stdlib 2.4.0。
+
+**处理**：升级 `fwcd.kotlin` 到内置 Kotlin ≥ 2.4.0 的版本，然后重载窗口。注意
+`.vscode/extensions.json` 只登记扩展 ID、**无法锁定版本**，需在各机手动升级。
+**不要为迁就语言服务器而改写已通过构建的代码**——那会污染正确的源码。
+
+**关于 `Redeclaration`**：`SelectorContractTest.kt` 在根与 `.worktrees/<agent>-<slug>/` 下各有副本
+（git worktree 落点，见 [AGENT-WORKFLOW.md](AGENT-WORKFLOW.md) 第 2.1 节）。`.vscode/settings.json`
+已用 `java.import.exclusions` 把这些目录排除出 Java 语言服务；但 `fwcd.kotlin` 0.2.36 的配置项里
+**没有目录排除开关**（只有 `kotlin.languageServer.*` / `kotlin.diagnostics.*` / `kotlin.scripts.*` 等），
+故它会把所有 worktree 的 gradle 工程一并导入，并对同包同类名报 `Redeclaration`。
+清理已完成协作的 worktree（`git worktree remove .worktrees/<name>`）即可消除；
+在此之前该报错同样可安全忽略。
+
+
 ## CI 构建失败排障
 
 **症状**：CI 报 `A problem occurred configuring root project` → `Could not resolve com.android:...` → `Repository maven is disabled due to earlier error` → `There are 28 more failures with identical causes`，**测试一条都没跑**。
