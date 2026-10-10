@@ -67,7 +67,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: verify-history
     env:
-      # 正式签名密钥（可选）：配置后发布制品用正式密钥签名，否则构建脚本回退 debug 签名
+      # 正式签名密钥（发布必需）：M2 起无签名时 assembleRelease 按 build.gradle.kts 三态策略
+      # 直接失败（不再回退 debug 签名）；未配置 Secrets 则发布流程在此中断，绝不产出不可安装/可被冒签的制品
       ADSKIP_KEYSTORE_BASE64: ${{ secrets.ADSKIP_KEYSTORE_BASE64 }}
       ADSKIP_STORE_PASSWORD: ${{ secrets.ADSKIP_STORE_PASSWORD }}
       ADSKIP_KEY_ALIAS: ${{ secrets.ADSKIP_KEY_ALIAS }}

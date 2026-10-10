@@ -167,10 +167,25 @@ export function saveRules(cleaned: CleanedRules): number {
   return version;
 }
 
+/**
+ * 备份文件名用的时间戳。
+ *
+ * 纯毫秒时间戳不够：同一毫秒内的多次轮转会生成同名文件互相覆盖
+ * （轮转保留份数静默变少，曾让 test 偶发红）。补齐进程内单调序号 +
+ * 随机后缀，保证同一进程任意速率轮转都不撞名。
+ */
+let backupSeq = 0;
+function backupStamp(): string {
+  backupSeq = (backupSeq + 1) % 1_000_000;
+  const rand = crypto.randomBytes(2).toString("hex");
+  const iso = new Date().toISOString().replace(/[:.]/g, "-");
+  return `${iso}-${backupSeq}-${rand}`;
+}
+
 function rotateBackup(): void {
   try {
     if (!dirOrFileExists(config.RULES_FILE)) return;
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const stamp = backupStamp();
     const name = `rules-${stamp}.json`;
     const dest = path.join(config.BACKUP_DIR, name);
     fs.mkdirSync(config.BACKUP_DIR, { recursive: true });
@@ -197,9 +212,8 @@ function rotateStatsBackup(day: string): void {
   try {
     const src = path.join(config.STATS_DIR, `${day}.json`);
     if (!dirOrFileExists(src)) return;
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const ms = Date.now();
-    const dest = path.join(config.STATS_DIR, "backups", `stats-${day}-${stamp}-${ms}.json`);
+    const stamp = backupStamp();
+    const dest = path.join(config.STATS_DIR, "backups", `stats-${day}-${stamp}.json`);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(src, dest);
 

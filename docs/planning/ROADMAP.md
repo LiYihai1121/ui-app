@@ -4,7 +4,7 @@
 >
 > 本页是**版本序列与能力意图的唯一事实源**：里程碑、周次与出口条件见 [ROADMAP-ADS.md](ROADMAP-ADS.md) 第 6 节，技术步骤见 [DESIGN-PHASE1-SELECTOR.md](DESIGN-PHASE1-SELECTOR.md) 第 10 节，文档入口见 [../README.md](../README.md)（文档地图）。
 >
-> 状态：活跃；最后更新：2026-10-07（v3.2.0 已发布，节点快照工具与「UI 重设计 + 权限体系重构」随本版落版；Phase 1 仅剩步骤 F 真机验收，见 [ROADMAP-ADS.md](ROADMAP-ADS.md)）。
+> 状态：活跃；最后更新：2026-10-10（v3.3.0 已发布——OkHttp 网络层迁移与服务端工程加固；步骤 F/M1d 的 Top 30 规则版本号因 `3.3.0` 被占用而重新排期，见下方条目与 [ROADMAP-ADS.md](ROADMAP-ADS.md)）。
 
 ## ✅ v1.0 — 核心可用（已完成）
 
@@ -63,7 +63,7 @@
 - [x] **测试体系**：服务端 `bun:test` 单元 + 进程内冒烟；客户端引擎/护栏 JVM 单测
 - [x] **CI**：GitHub Actions 双 job（Android 构建+单测 / 服务端测试）
 
-## 🔜 分层广告治理（增量发版，自 v3.0.3 起；已发布至 v3.2.0）
+## 🔜 分层广告治理（增量发版，自 v3.0.3 起；已发布至 v3.3.0）
 
 版本序列以 [ROADMAP-ADS.md](ROADMAP-ADS.md) 的里程碑为准（避免两份文档各自承诺同一版本号）。**每个版本独立走 `release/vX.Y.Z` → 全门禁 → Squash Merge → 签名 Release**；本表表达的是「发布意图」，版本号在发版冻结时按 SemVer 最终确认。
 
@@ -71,9 +71,11 @@
 - [x] **v3.0.4（M1a 补丁，已发布）**：安装可用性修复——`assembleRelease` 缺签名配置时回退 debug 签名、发布流水线强制 `apksigner verify` 并支持 Secrets 注入正式密钥，修复发布制品未签名导致手机报「解析软件包时出现问题」（[Issue #23](https://github.com/LiYihai1121/ui-app/issues/23)）；无功能行为变化
 - [x] **v3.1.0（M1b，已发布）**：协议 v2——服务端 `selectors` 字段与校验 + `SyncClient` 解析 + 点击结果校验与本地规则黑名单（步骤 C/D）；并随本版本一并交付品牌更名「轻启」、启动器/磁贴图标重设计、首页与「我的」页 UI 重设计、ktlint 静态门禁与 Compose BOM/compileSdk 升级（用户可见变更详见 [CHANGELOG.md](../../CHANGELOG.md) 3.1.0）。**真机矩阵（Android 8/13/14/15 × MIUI/HarmonyOS/ColorOS/OriginOS）尚未完成**，维护者显式决定先行发布正式版（见 CHANGELOG 3.1.0 发布验收覆盖声明）；Git tag `v3.1.0` 已创建于 `main` 提交 `ad188b0`（PR #42 经 Squash 合入），制品由正式密钥签名并经 `apksigner verify` 复核（见 [RELEASE-HISTORY.md](RELEASE-HISTORY.md)）。
 - [x] **v3.2.0（M1c，已发布）**：节点快照工具——App 内导出当前界面节点树 JSON，规则编写不再靠猜（步骤 E）。交付：`service/NodeSnapshot` 捕获与序列化 + 二分查找 96 KB 截断（`truncated=true` 标记）+ 设置页调试入口（服务未运行时显式提示）+ `ServiceIntentContractTest` 守护广播字面量与 `service/` 常量的单一真值源。**随本版本一并落版「UI 重新设计与权限体系重构」全部未发版内容**（语言选择、权限清单三态化等，详见 [CHANGELOG.md](../../CHANGELOG.md) 3.2.0）。已随 PR #46 Squash 合入 `main`（提交 `f5127dd`）并打 annotated tag `v3.2.0`（2026-10-06）发布，Release 资产 `AdSkip-v3.2.0.apk` 1,923,024 bytes + `SHA256SUMS`（见 [RELEASE-HISTORY.md](RELEASE-HISTORY.md)）。
-- [ ] **v3.3.0（M1d）**：Top 30 App 首批选择器规则入库 + 真机回归与性能采样 + 规则审核通道（步骤 F、L5 基础）
-- [ ] **v3.4.0（M2）**：L2 网络过滤层——DNS 过滤 + `filter-rules` 路由
-- [ ] **v3.5.0（M3）**：L3 防摇一摇模块（独立可选 APK）
+- [x] **v3.3.0（安全与工程补丁，已发布）**：`SyncClient` 迁移至 OkHttp 4.12（连接/读取/写入超时配置 + MockWebServer 回归测试）、服务端请求体大小上限、JSONL 结构化日志、`EncryptedSharedPreferences` 幂等初始化与可测试接收器抽象、统计备份文件名加随机后缀。**本版不含**规则 HMAC 签名/验签、未配置任何证书 pin、未强制 HTTPS（安全能力边界见 [CHANGELOG.md](../../CHANGELOG.md) 3.3.0「Security status correction」）。`bun test` 83 pass / `bun run typecheck` 绿，`ktlintCheck` + `assembleDebug` + `testDebugUnitTest` 全绿；tag `v3.3.0`（`1c296c0`，见 [RELEASE-HISTORY.md](RELEASE-HISTORY.md)）。
+- [x] **v3.4.0（monorepo 解耦 + 安全批次收官，已发布）**：`applicationId`/namespace 迁移 `com.qingqi.adskip`（**BREAKING，已装用户需卸载重装**）+ 服务端解耦 client 包名 + M1 接收器非导出/包级黑名单 + M2 签名禁回退。**序列调整**：原规划 `3.4.0 = M2 (L2 DNS 过滤)` 顺延，L2 仍待 Phase 0 合规评审获批。
+- [ ] **M1d（版本号待定，步骤 F）**：Top 30 App 首批选择器规则入库 + 真机回归与性能采样 + 规则审核通道（步骤 F、L5 基础）。**`3.3.0` 与 `3.4.0` 已被占用**，随下一可用 minor 承载；冻结时在下方与 [ROADMAP-ADS.md](ROADMAP-ADS.md) 第 6 节同步最终版本号。
+- [ ] **v3.5.0（M2）**：L2 网络过滤层——DNS 过滤 + `filter-rules` 路由
+- [ ] **v3.6.0（M3）**：L3 防摇一摇模块（独立可选 APK）
 - [ ] **v4.0.0（M4）**：L4 通知过滤 + ROM 指引 + 规则生态完善
 
 ### 🧪 预发布（RC，验收未完成）

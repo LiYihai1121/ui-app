@@ -1,0 +1,91 @@
+package com.qingqi.adskip.service
+
+import android.graphics.Rect
+import android.view.accessibility.AccessibilityNodeInfo
+import com.qingqi.adskip.engine.AdNode
+
+/**
+ * 生产用 [AdNode]：包装 [AccessibilityNodeInfo]。
+ *
+ * 归属 service 层：本类依赖 Android 框架类型，
+ * 移出 engine/ 以保持引擎包纯 JVM 可测（与 AdNode 抽象的设计初衷一致）。
+ * children() 做深度截断和数量限制，防过度遍历。
+ * click() 执行 ACTION_CLICK；false 时由服务层回退坐标手势。
+ */
+class FrameworkAdNode(private val node: AccessibilityNodeInfo, private val maxDepth: Int = 30) : AdNode {
+
+    override val text: String? get() = node.text?.toString()
+    override val desc: String? get() = node.contentDescription?.toString()
+    override val viewId: String? get() = node.viewIdResourceName
+    override val isVisible: Boolean get() = node.isVisibleToUser
+    override val isClickable: Boolean get() = node.isClickable
+    override val isEditable: Boolean get() = node.isEditable
+
+    override fun children(): List<AdNode> {
+        val out = mutableListOf<AdNode>()
+        for (i in 0 until node.childCount) {
+            node.getChild(i)?.let { out.add(FrameworkAdNode(it, maxDepth)) }
+        }
+        return out
+    }
+
+    override val parent: AdNode?
+        get() = node.parent?.let { FrameworkAdNode(it, maxDepth) }
+
+    /**
+     * 相邻前一个兄弟：沿父节点子列表用 [AccessibilityNodeInfo.equals] 定位自身，返回前一节点。
+     *
+     * 说明（DESIGN-PHASE1 §5.3）：`indexInParent` / `sourceNodeId` 均非公开 API，
+     * 故实现即设计文档的 equals 主路径（官方 API 21+ 覆写为 windowId+nodeId 比对）。
+     * 真机抽测如 equals 不可靠，按预案下线 `+` 组合符（语法保留、匹配恒 false）。
+     */
+    override fun previousSibling(): AdNode? {
+        val parentNode = node.parent ?: return null
+        var prev: AccessibilityNodeInfo? = null
+        for (i in 0 until parentNode.childCount) {
+            val child = parentNode.getChild(i) ?: continue
+            if (child == node) {
+                return prev?.let { FrameworkAdNode(it, maxDepth) }
+            }
+            prev = child
+        }
+        return null
+    }
+
+    override fun clickableParent(): AdNode? {
+        var current: AccessibilityNodeInfo? = node
+        var depth = 0
+        while (current != null && depth < 4) {
+            if (current.isClickable) return FrameworkAdNode(current, maxDepth)
+            current = current.parent
+            depth++
+        }
+        return null
+    }
+
+    override fun centerX(): Float {
+        val rect = Rect()
+        node.getBoundsInScreen(rect)
+        return rect.exactCenterX()
+    }
+
+    override fun centerY(): Float {
+        val rect = Rect()
+        node.getBoundsInScreen(rect)
+        return rect.exactCenterY()
+    }
+
+    override fun boundsWidth(): Int {
+        val rect = Rect()
+        node.getBoundsInScreen(rect)
+        return rect.width()
+    }
+
+    override fun boundsHeight(): Int {
+        val rect = Rect()
+        node.getBoundsInScreen(rect)
+        return rect.height()
+    }
+
+    override fun click(): Boolean = node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+}

@@ -49,7 +49,7 @@
 | 结构 | 引号个数、方括号个数配平（快检，不校验顺序） | 完整文法：key ∈ `text/desc/vid/click`、运算符 ∈ `= * ^ $`、组合符、最多 4 段 compound |
 | 不过时 | 丢弃该条 | 丢弃该条（静默） |
 
-**服务端是必要不充分的快检，语法权威在客户端。** 两端判定相同的向量固化在 `server/test/fixtures/selectors.contract.json`，由 `server/test/selectors.contract.test.ts`（服务端一侧）与 `client/app/src/test/java/com/ldp/adskip/engine/SelectorContractTest.kt`（客户端一侧）共同消费；有意判定不同的向量记在夹具的 `divergences` 段并写明原因，防止「有意的差异」被后续改动悄悄抹平。
+**服务端是必要不充分的快检，语法权威在客户端。** 两端判定相同的向量固化在 `server/test/fixtures/selectors.contract.json`，由 `server/test/selectors.contract.test.ts`（服务端一侧）与 `client/app/src/test/java/com/qingqi/adskip/engine/SelectorContractTest.kt`（客户端一侧）共同消费；有意判定不同的向量记在夹具的 `divergences` 段并写明原因，防止「有意的差异」被后续改动悄悄抹平。
 
 ### POST /api/v1/rules/test  `[admin]`
 

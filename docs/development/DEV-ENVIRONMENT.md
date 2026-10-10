@@ -1,19 +1,27 @@
 # 开发环境（DEV-ENVIRONMENT）
 
-本项目采用本机开发方式，不依赖 VS Code Dev Container。Android 客户端和 Bun 服务端可以分别启动，互不要求同时运行。
+本项目采用本机开发方式，不依赖 VS Code Dev Container。Android 客户端和 Bun 服务端可以分别启动，互不要求同时运行。工具版本以 Gradle Wrapper、Version Catalog 和 CI 为准；不要为适配本机而改动这些项目级版本。
 
 ## 前置条件
 
-- JDK 17 或更高版本，以及 Android SDK（compileSdk 35）。
-- Bun 1.1 或更高版本。
+- **JDK 17**：与 CI 和客户端 Java/Kotlin 字节码目标保持一致；不建议用更高版本替代已验证的工具链。
+- **Android SDK**：平台 `android-37.0`（Beta channel，`compileSdk = 37`）、Build Tools `36.0.0` 和 Platform Tools。`targetSdk = 35`、`minSdk = 26`；三者用途不同，不要把 target/min 误当成构建所需平台版本。
+- **Bun 1.1 或更高版本**：须满足 `server/package.json` 的 engines 要求；使用仓库 `server/bun.lock` 锁定依赖。
 - Windows 用户建议使用 PowerShell；macOS/Linux 使用 Bash。
-- 使用 VS Code 或 Android Studio 打开项目根目录 `ui-app`。
-- **`GRADLE_USER_HOME` 必须指向已缓存 Gradle 发行版的目录**（本机为 `F:\All_Data\gradle`）。
-  该变量是**机器级**配置而非项目配置，命令行、IDE、CI 与各类构建工具都必须继承它——
-  缺失时 Gradle 会回落到 `C:\Users\<用户>\.gradle`，那里没有缓存副本，
-  于是每次构建都要重新下载发行版；在本网络下会因 `services.gradle.org` / `dl.google.com`
-  不可达而直接失败。详见 [构建启动失败排障](#构建启动失败排障)。
+- **VS Code（推荐）或 Android Studio**：VS Code 打开仓库根目录；Android Studio 也可用于 SDK Manager、模拟器和设备管理。推荐扩展见 `.vscode/extensions.json`，不是构建依赖。
+- `GRADLE_USER_HOME` 是可选的机器级缓存位置，不是项目必须配置的路径。未设置时 Gradle 使用默认用户缓存目录；需要使用自定义缓存时，在启动 IDE/终端前设置该变量，且勿将个人绝对路径提交到仓库。
 - Gradle wrapper 已固化 `distributionSha256Sum`（Gradle 9.7.0 官方校验和），下载或镜像被篡改时 Gradle 会拒绝启动而非静默换源。
+
+### Android SDK 安装
+
+先安装 Android SDK Command-line Tools，并设置 `ANDROID_HOME`（或 `ANDROID_SDK_ROOT`）指向 SDK 根目录。也可以使用 Android Studio 的 SDK Manager 安装稳定通道的 Build Tools 和 Platform Tools。Android 17 平台仍在 Beta 通道，需要显式选择该通道：
+
+```powershell
+sdkmanager --install "platform-tools" "build-tools;36.0.0"
+sdkmanager --install "platforms;android-37.0" --channel=1
+```
+
+macOS/Linux 使用相同的 `sdkmanager` 参数。仅在本机需要固定 SDK 路径时，在 `client/local.properties` 写入 `sdk.dir`；此文件已忽略，不要提交本机 SDK 路径。
 
 ## 构建体系
 
@@ -34,11 +42,13 @@
 
 ## 启动
 
-服务端：
+在 VS Code 打开仓库根目录后，可先按扩展提示安装推荐项。然后在各自终端中启动/检查需要的模块。
+
+服务端（依赖安装后可在 `server/` 单独开发和测试）：
 
 ```powershell
 cd server
-bun install
+bun install --frozen-lockfile
 bun test
 bun run typecheck
 ```
@@ -53,6 +63,8 @@ cd client
 ```
 
 Linux/macOS 将 `.\gradlew.bat` 替换为 `./gradlew`。APK 输出在 `client/app/build/outputs/apk/debug/app-debug.apk`，该目录属于构建产物，不提交到 Git。
+
+完整 CI 还会运行 `assembleRelease` 并验证签名；日常开发通常只需运行格式检查、Debug 构建和 JVM 单测。跨模块变更或提交 PR 前，按 [CI 工作流](../../.github/workflows/ci.yml) 验证 Android 与服务端两侧。
 
 ## 本地运行
 
@@ -72,7 +84,7 @@ bun run server.ts
 
 ```powershell
 # 1. 校验签名：未签名包无法安装（apksigner 随 Android SDK build-tools 提供）
-& "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --print-certs .\app\build\outputs\apk\release\app-release.apk
+& "$env:ANDROID_HOME\build-tools\36.0.0\apksigner.bat" verify --print-certs .\app\build\outputs\apk\release\app-release.apk
 
 # 2. 校验分发文件完整性：与 Release 中 SHA256SUMS 比对
 #    分发包不入库，需自行从 GitHub Releases 下载到本地任意目录后再校验：
@@ -86,12 +98,12 @@ bun run server.ts
 
 - **未签名包**：`assembleRelease` 在 `client/local.properties` 缺少 `adskip.*` 签名配置时会回退 debug 签名；只有显式设置 `adskip.unsignedRelease=true` 才产出未签名包，而发布流水线会拒绝上传这类产物。
 - **`minSdk = 26`**：对应 Android 8.0，低于该版本的设备会直接解析失败。
-- **签名冲突**：与手机上已安装版本签名不一致时报「应用未安装」，需先卸载 `com.ldp.adskip`。
+- **签名冲突**：与手机上已安装版本签名不一致时报「应用未安装」，需先卸载 `com.qingqi.adskip`。
 - **分发完整性**：APK 经聊天工具转发可能被改名或截断，务必比对 SHA-256；本机分发可用 `bun run start` 起本地服务后按 [APK 安装排障](#apk-安装排障) 的方式下载比对。**仓库根不保留任何构建产物**（含 `*.apk`）：`assembleRelease` 的产物在 `client/app/build/outputs/apk/release/`，正式分发以 GitHub Releases + `SHA256SUMS` 为准。
 
 ## 构建启动失败排障
 
-**症状一：发行版下载失败（`BUILD FAILED in 1s`，一个任务都没跑）**
+**症状一：Gradle 发行版下载或启动失败（构建任务尚未执行）**
 
 ```text
 [error] [gradle-server] Could not run build action using connection to
@@ -99,24 +111,19 @@ bun run server.ts
 [error] Error getting build for <路径>/client: Could not run build action ...
 ```
 
-**判定**：这是 `GRADLE_USER_HOME` 未被该进程继承，**不是**代码或依赖问题。两个判据：
-
-1. 请求的 `distributionUrl` 指向 `services.gradle.org`——本项目 wrapper 固定使用
-   `mirrors.cloud.tencent.com`，**任何提交里都没有出现过 `services.gradle.org`**；
-   若日志里的 URL 与仓库中的不一致，说明构建的**不是当前这份代码**（陈旧副本或错误目录）。
-2. `BUILD FAILED in 1s` 且无任务执行记录——失败发生在下载发行版阶段，早于依赖解析与编译。
+**判定**：发行版下载发生在 Gradle 执行构建任务之前，通常与网络、wrapper 配置或缓存目录有关，不足以单独判断为代码/依赖错误，也不一定是 `GRADLE_USER_HOME` 未设置。先检查 `client/gradle/wrapper/gradle-wrapper.properties` 中的发行版 URL 和 Gradle 用户缓存；IDE 使用的环境变量可能与终端不同。
 
 **处理**：
 
 ```powershell
-# 确认变量已设置，且目标目录内确实有已解压的发行版
-$env:GRADLE_USER_HOME                       # 应为 F:\All_Data\gradle
-Get-ChildItem "$env:GRADLE_USER_HOME\wrapper\dists" -Directory
+# 查看 Gradle 实际使用的用户缓存目录；未设置时使用 Gradle 默认目录
+if ($env:GRADLE_USER_HOME) { $gradleHome = $env:GRADLE_USER_HOME } else { $gradleHome = Join-Path $HOME ".gradle" }
+$gradleHome
+$distributionCache = Join-Path $gradleHome "wrapper\dists"
+if (Test-Path $distributionCache) { Get-ChildItem $distributionCache -Directory } else { "Gradle 尚未在此用户目录缓存发行版" }
 ```
 
-若变量缺失就补上并**重启调用它的工具**（IDE、构建服务、Agent 宿主进程不继承新设的环境变量，
-必须重启才会生效）。若 URL 指向 `services.gradle.org`，先确认当前目录是不是仓库的
-`client/`，以及是否存在陈旧副本——见下方。
+若团队或本机网络需要自定义缓存/镜像，按机器实际路径设置 `GRADLE_USER_HOME`，并**重启调用它的工具**（IDE、构建服务、Agent 宿主进程不继承新设的环境变量，必须重启才会生效）。遇到下载失败时，确认正在使用本仓库的 `client/`、URL 与 Wrapper 配置一致，并检查网络代理/镜像状态；若只是首次构建且缓存为空，Gradle 需要先下载发行版。
 
 **症状二：整仓副本导致的「双重真相」**
 
@@ -127,6 +134,24 @@ Get-ChildItem "$env:GRADLE_USER_HOME\wrapper\dists" -Directory
 正确做法：`git worktree add .worktrees/<agent>-<slug> -b <branch> origin/main`（落点在
 `.worktrees/`，含 `.git` 元数据），不要在仓库内复制整仓。细则见
 [AGENT-WORKFLOW.md](AGENT-WORKFLOW.md) 第 2.1 节。
+
+## IDE 语言服务诊断排障
+
+**症状**：VS Code 里 `client/` 下所有 `.kt` 文件一片红——`Unresolved reference: junit` / `mutableListOf` / `it` / `to` / `error`，或 `Class 'kotlin.Unit' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.4.0, but the compiler version 2.1.0 can read versions up to 2.2.0`（`INCOMPATIBLE_CLASS`），个别文件还报 `Redeclaration: <类名>`。
+
+**判定**：这是**编辑器扩展与构建工具链的结构性版本不兼容，100% 是误报**，不是代码问题。三条判据：
+
+1. 命令行门禁全绿：`cd client && ./gradlew ktlintCheck testDebugUnitTest`——真实编译信号以此为准；
+2. 报错指向 `gradle-9.7.0/lib/kotlin-stdlib-2.4.0.jar`，而报错的编译器是 2.1.0：两个 Kotlin 版本对不上，版本低的编译器读不了版本高的 stdlib metadata（2.1.0 只认 ≤ 2.2.0）；
+3. 触发前提是 AGP 9 起 Kotlin 由 AGP 内置、本工程不再声明 `kotlin-android` 插件（见 `client/gradle/libs.versions.toml` 注释），语言服务器取不到工具链版本只能回落自带编译器。
+
+历史根因是社区扩展 `fwcd.kotlin`（0.2.36 即 Marketplace 最新版，已冻结，内置 Kotlin 2.1.0，「升级扩展」这条路走不通）。本仓库的 `.vscode/extensions.json` 已改推 JetBrains 官方扩展 `JetBrains.kotlin-server`（基于 IntelliJ IDEA 的 Kotlin 插件实现，支持最新 Kotlin 语言版本），不存在该结构性不兼容。
+
+**处理**：
+
+1. 扩展面板确认装的是 **Kotlin by JetBrains**（`JetBrains.kotlin-server`）；若同时装有 `fwcd.kotlin`，先卸载旧的再装官方扩展——两个语言服务抢注 `.kt` 文件会互相干扰，装完重载窗口；
+2. `Redeclaration` 误报来自多 Agent 的 `.worktrees/<name>/` 副本（每个 worktree 内含同一份 `client/` 工程，`fwcd.kotlin` 无目录排除配置项会一并导入）：协作收尾后按 [AGENT-WORKFLOW.md](AGENT-WORKFLOW.md) 删掉 worktree（`git worktree remove .worktrees/<name>`，分支与提交不受影响）即可消除；
+3. **不要为迁就语言服务器而改写已通过构建的代码**——那会污染正确的源码。
 
 ## CI 构建失败排障
 

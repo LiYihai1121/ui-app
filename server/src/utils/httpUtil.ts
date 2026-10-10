@@ -26,7 +26,11 @@ export function applyCors(headers: Headers, origin: string | null): void {
     headers.set("Access-Control-Allow-Origin", "*");
   }
   headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS");
-  headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, If-None-Match");
+  // X-Rules-Signature：规则完整性签名头，浏览器端工具（如后台）需要能读到
+  headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, If-None-Match, X-Rules-Signature"
+  );
 }
 
 /** 给任意响应附加 CORS 头 */

@@ -113,7 +113,19 @@
     <string name="settings_syncing">正在同步…</string>
     <string name="settings_last_sync">上次同步：%1$s</string>
     <string name="settings_never_sync">尚未同步过</string>
-    <string name="settings_desc">同步后：云端的关键词 / ViewID / 应用专属规则将覆盖本地，被云端标记禁用的应用将停止跳过。服务器可用 server 目录下的轻启服务端一键启动。</string>
+        <string name="settings_desc">同步后：云端的关键词 / ViewID / 应用专属规则将覆盖本地，被云端标记禁用的应用将停止跳过。服务器可用 server 目录下的轻启服务端一键启动。</string>
+
+        <!-- 安全配置（A 链：规则完整性签名 + 证书固定） -->
+        <string name="settings_security_section">规则安全</string>
+        <string name="settings_security_desc">规则签名密钥需与服务端 RULES_SIGNING_KEY 一致；未配置时客户端拒绝载入任何云端规则（防中间人篡改）。密钥保存在本设备，可被拥有设备控制权的人提取，请勿复用其他凭据。证书指纹为服务器证书公钥的 sha256/… 值（每行一个），仅 HTTPS 连接需要；配置后未匹配的证书将被拒绝。</string>
+        <string name="settings_signing_key_label">规则签名密钥</string>
+        <string name="settings_signing_key_hint">与服务端 RULES_SIGNING_KEY 相同，至少 16 位</string>
+        <string name="settings_signing_key_too_short">签名密钥太短（至少 16 位），无法保证防篡改强度</string>
+        <string name="settings_cert_pins_label">证书指纹（sha256/…，每行一个）</string>
+        <string name="settings_cert_pins_hint">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+        <string name="settings_cert_pin_invalid">证书指纹格式不正确：%1$s（应为 sha256/ 加 44 位标准 Base64）</string>
+        <string name="settings_cleartext_warning">当前使用明文 HTTP：局域网内可能被窃听或篡改规则。防篡改依赖签名密钥，但建议尽快迁移 HTTPS 并配置证书指纹。</string>
+        <string name="settings_save_security">保存安全配置</string>
     <string name="settings_auto_sync">每 12 小时自动同步</string>
     <string name="settings_dnd">免打扰时段</string>
     <string name="settings_dnd_start">开始时间</string>

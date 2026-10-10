@@ -20,32 +20,50 @@ val releaseSigningReady = listOf(
 ).all { !signingProps.getProperty(it).isNullOrBlank() }
 
 /**
- * 未配置正式签名时的 release 行为：
- * - 默认回退 debug 签名，保证 assembleRelease 产物可直接安装
- *   （未签名 APK 在手机上必然报「解析软件包时出现问题」，见 Issue #23）；
- * - adskip.unsignedRelease=true 时保留未签名产物，仅供受信任环境自行签名。
+ * 未配置正式签名时的 release 行为（M2 修复：不再静默回退 debug 签名）：
+ *
+ * - 历史版本默认回退 debug 签名只为「产物能装」，代价是正式分发路径上可能
+ *   静默发出 debug 证书签名的 APK——第三方可生成同签名的升级包覆盖安装。
+ * - 现在：请求 release 相关任务时直接失败；`adskip.unsignedRelease=true`
+ *   显式选择产出未签名 APK（仅供受信任环境自行签名）；本机调试用 assembleDebug。
+ *
+ * 为什么不在配置期 error：配置期抛错会连带挡掉 assembleDebug / ktlintCheck /
+ * testDebugUnitTest 等全部任务，把「发布路径加固」变成「全员本地不可开发」。
+ * 因此只对**点名了 release 的任务**失败；再禁用 release 变体本身，堵死
+ * `./gradlew build` 这类聚合任务带着无签名配置静默产出未签名 APK 的入口。
  */
 val unsignedRelease = signingProps.getProperty("adskip.unsignedRelease")?.toBoolean() ?: false
 
-if (!releaseSigningReady) {
-    logger.lifecycle(
-        if (unsignedRelease) {
-            "[adskip] release 未配置签名：按 adskip.unsignedRelease=true 产出未签名 APK（仅供受信任环境自行签名）"
-        } else {
-            "[adskip] release 未配置签名：已回退 debug 签名以保证 APK 可安装；正式分发请在 local.properties 配置 " +
-                "adskip.storeFile / adskip.storePassword / adskip.keyAlias / adskip.keyPassword"
-        },
-    )
+val releaseSigningHint =
+    "release 未配置正式签名（local.properties 缺少 adskip.storeFile/storePassword/keyAlias/keyPassword）。" +
+        "正式分发请配置签名；确需未签名产物请设置 adskip.unsignedRelease=true；本机调试请使用 assembleDebug。"
+
+if (!releaseSigningReady && !unsignedRelease) {
+    afterEvaluate {
+        val releaseRequested = gradle.startParameter.taskNames
+            .any { it.contains("release", ignoreCase = true) }
+        if (releaseRequested) {
+            throw GradleException(releaseSigningHint)
+        }
+    }
+
+    androidComponents {
+        beforeVariants(selector().withBuildType("release")) { variant ->
+            variant.enable = false
+        }
+    }
 }
 
 android {
     // namespace/compileSdk/minSdk/targetSdk 等公共项由 adskip.android.application 约定插件统一提供
     defaultConfig {
-        applicationId = "com.ldp.adskip"
-        // 单调递增，禁止复用已发布编号（v3.1.0 = 10，本版必须 > 10）
-        versionCode = 12
+        // BREAKING（v3.4.0，PR #74）：applicationId 与源码 namespace 一并迁移到 qingqi。
+        // 已装用户需卸载重装，旧 EncryptedSharedPreferences 数据无法跨包名迁移；re-install 分级在 CHANGELOG 3.4.0 说明。
+        applicationId = "com.qingqi.adskip"
+        // 单调递增，禁止复用已发布编号（v3.1.0 = 10，v3.2.0 = 12，v3.3.0 = 13）
+        versionCode = 14
         // 展示值用 X.Y（与 CONTRIBUTING「版本策略」一致；server 侧用完整 X.Y.Z）
-        versionName = "3.2"
+        versionName = "3.4"
     }
 
     signingConfigs {
@@ -66,13 +84,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            // M2 后这里的三态：已配置 → release 签名；显式 unsignedRelease → 未签名产物；
+            // 其余（未配置且未声明）的 release 变体已在上面被禁用，走到此处属纵深防御——
+            // 宁可 unsigned 让打包阶段报错，也绝不再回退 debug 签名混入发布路径。
             signingConfig = when {
                 releaseSigningReady -> signingConfigs.getByName("release")
-
                 unsignedRelease -> null
-
-                // 仅在显式选择时产出未签名包
-                else -> signingConfigs.getByName("debug") // 回退：产物必须可安装
+                else -> null
             }
         }
     }

@@ -61,7 +61,7 @@ docs/
 
 > **改规划的顺序**：先改 `docs/planning/ROADMAP.md`（版本意图）→ 再改同目录的 `ROADMAP-ADS.md` 与 `DESIGN-PHASE1-SELECTOR.md` 的版本归属 → 最后同步 `CHANGELOG.md` 与 `RELEASE-HISTORY.md` 的对应行。`docs/api/API.md`、`docs/architecture/ARCHITECTURE.md` 涉及协议字段时一并更新。
 
-## 当前规划全景（更新于 2026-10-07）
+## 当前规划全景（更新于 2026-10-10）
 
 | 版本 | 状态 | 内容 | 详见 |
 | --- | --- | --- | --- |
@@ -70,7 +70,8 @@ docs/
 | `3.0.4` | 已发布（tag 已建，制品已签名可直接安装） | 安装可用性修复：release 签名回退 + 发布强制签名校验 + Secrets 注入正式密钥（Issue #23） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
 | `3.1.0` | 已发布（tag `v3.1.0` @ `main` `ad188b0`；制品 `CN=AdSkip Release` 签名，`apksigner verify` 通过） | 协议 v2（`selectors` 字段）+ 点击结果校验 + 品牌更名「轻启」+ 图标/UI 重设计 + 快捷磁贴 + 厂商保活 + ktlint 门禁（用户可见变更见 [CHANGELOG.md](../CHANGELOG.md) 3.1.0） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
 | `3.2.0` | 已发布（tag `v3.2.0` @ `main` `f5127dd`；Release 资产 `AdSkip-v3.2.0.apk` 1,923,024 bytes + `SHA256SUMS`） | 节点快照工具 + 设置页入口（步骤 E）+ UI 重设计与权限体系重构落版 | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
-| `3.3.0` | **进行中**（步骤 F） | Top 30 规则入库 + 真机回归 + 规则审核通道 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 6 节 |
+| `3.3.0` | 已发布（tag `v3.3.0` @ `1c296c0`；Release 资产 `AdSkip-v3.3.0.apk` 2,047,331 bytes + `SHA256SUMS`） | OkHttp 网络层迁移 + 服务端请求体限制/结构化日志 + 统计备份唯一名；**无**规则 HMAC、证书 pin 与强制 HTTPS | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
+| M1d / 步骤 F | **未发布**（版本号待定，`3.3.0` 已被占用） | Top 30 规则入库 + 真机回归 + 规则审核通道 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 6 节 |
 | `3.4.0` / `3.5.0` / `4.0.0` | 规划 | L2 DNS 过滤 / L3 防摇一摇 / L4 通知与系统层 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 5~6 节 |
 
 未排期能力见 [planning/ROADMAP.md](planning/ROADMAP.md) 的「候选池」；L2/L3 启动前必须先完成 Phase 0 合规评审（见 [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 3 节）。
@@ -81,23 +82,30 @@ docs/
 
 | 文档 | 归属版本 | 说明 |
 | --- | --- | --- |
-| `docs/guide/RULE-AUTHORING.md` | `3.3.0` | 规则编写指南：选择器语法、快照 → 规则流程、审核提交流程（届时新建 `guide/` 目录） |
-| 覆盖度矩阵公示页 | `3.3.0` | 对用户公示各广告类型的覆盖口径（当前为 [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 4/9 节的内部口径） |
+| `docs/guide/RULE-AUTHORING.md` | M1d（版本号待定） | 规则编写指南：选择器语法、快照 → 规则流程、审核提交流程（届时新建 `guide/` 目录） |
+| 覆盖度矩阵公示页 | M1d（版本号待定） | 对用户公示各广告类型的覆盖口径（当前为 [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 4/9 节的内部口径） |
 
 ## 文档命名规范
 
 文档命名是**机器可读的约定**：新文件名必须能被规则解释，改名必须走同步流程。规则解释以本页为准。
 
-| 对象 | 规则 | 示例 |
-| --- | --- | --- |
-| 子目录名 | 小写、单数、无连字符 | `api/` `architecture/` `development/` `planning/` `diagrams/`（新模块如 `guide/` 同样小写） |
-| `.md` 文档文件名 | `UPPER-KEBAB-CASE.md`：全大写 + 短横线，结构 `<DOMAIN>[-<PHASE>]-<TOPIC>` | `DESIGN-PHASE1-SELECTOR.md`（类型=方案、阶段=PHASE1、主题=选择器） |
-| 目录主文档 | 用目录名本身作 `DOMAIN` | `api/API.md`、`architecture/ARCHITECTURE.md`、`planning/ROADMAP.md` |
-| 入口文档 | `README.md` 为固定例外（目录入口不参与 KEBAB 规则） | `docs/README.md` |
-| 非文档资产 | `lower-kebab-case`，与可阅读文档区分 | `diagrams/adskip-architecture.json` / `.html` |
-| 标题（H1） | `<中文主题>（<文件基名>）`，便于搜索与引用溯源 | `# 多 Agent 协作规范（AGENT-WORKFLOW）` |
+| 文档模块 | 目录用途 | 文件名格式 | 示例 |
+| --- | --- | --- | --- |
+| `api/` | 对外接口、数据格式与协议契约 | `API[-<TOPIC>].md` | `API.md` |
+| `architecture/` | 系统架构、模块职责与边界 | `ARCHITECTURE[-<TOPIC>].md` | `ARCHITECTURE.md` |
+| `development/` | 开发环境和协作流程；环境类用 `DEV`，协作类用 `AGENT` | `<DEV\|AGENT>-<TOPIC>.md` | `DEV-ENVIRONMENT.md`、`AGENT-WORKFLOW.md` |
+| `planning/` | 路线图、技术设计、跟进事项和发布记录 | `ROADMAP[-<TOPIC>].md`、`DESIGN-<TOPIC>.md`、`FOLLOW-UP[-<TOPIC>].md`、`RELEASE[-<TOPIC>].md` | `ROADMAP-ADS.md`、`DESIGN-PHASE1-SELECTOR.md`、`FOLLOW-UP.md`、`RELEASE-HISTORY.md` |
+| `guide/`（按需创建） | 面向用户或贡献者的操作指南 | `GUIDE-<TOPIC>.md` | `GUIDE-RULE-AUTHORING.md` |
 
-- `DOMAIN` 词汇表：`API` / `ARCHITECTURE` / `ROADMAP` / `DESIGN` / `DEV` / `AGENT` / `RELEASE`（`guide/` 目录用 `GUIDE`）；同目录多份同域文档用 `<DOMAIN>-<SUFFIX>` 区分（`ROADMAP-ADS`、`RELEASE-HISTORY`、`DEV-ENVIRONMENT`、`AGENT-WORKFLOW`）。
+通用规则：
+
+- 文档分类目录使用**小写 kebab-case**；按内容归类到上表模块，新增目录前先登记文档地图和结构守护测试。`diagrams/` 专门存放图表等非 Markdown 资产，不用作文档模块。
+- `.md` 文件名使用**全大写 ASCII 字母、数字与短横线**，扩展名固定为 `.md`。`<TOPIC>` 和可选部分用短横线分词；`PHASE1` 等阶段编号中的数字紧跟词干，不插入空格或下划线。
+- 模块前缀按上表固定，不得跨目录复用其他模块的前缀；一个模块内同一主题的多份文档用额外主题词区分，禁止用 `NEW`、`FINAL`、日期或版本号代替主题。
+- 目录入口 `README.md` 是固定例外，不参与模块前缀规则；当前 `docs/README.md` 是唯一的文档地图入口。
+- 非文档资产采用 `lower-kebab-case`，与可阅读文档区分，例如 `diagrams/adskip-architecture.json` / `.html`。
+- H1 使用 `<中文主题>（<文件基名>）`，基名不带 `.md`；入口文档可用其入口主题，不强制重复 `README`。例如 `# 多 Agent 协作规范（AGENT-WORKFLOW）`。
+
 - **改名流程**：`git mv` 改文件名 → `git grep` 全仓同步所有引用（含本文档地图）→ 守护测试若硬编码文档名（如 `RepoHygieneTest.WORKFLOW_DOC`）一并更新 → 跑相关门禁后提交。
 
 ## 维护规则

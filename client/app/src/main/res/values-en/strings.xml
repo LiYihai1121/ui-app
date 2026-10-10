@@ -127,6 +127,16 @@
     <string name="settings_battery_allow">Allow Background</string>
     <string name="settings_battery_done">Background allowed</string>
     <string name="settings_url_invalid">URL must start with http:// or https://</string>
+    <string name="settings_security_section">Rule Security</string>
+    <string name="settings_security_desc">The signing key must match RULES_SIGNING_KEY on the server. It is stored on this device and can be extracted by someone who controls the device; do not reuse other credentials. HTTPS connections also require the server SHA-256 certificate pin, one per line.</string>
+    <string name="settings_signing_key_label">Rules signing key</string>
+    <string name="settings_signing_key_hint">Must match RULES_SIGNING_KEY on the server; at least 16 characters</string>
+    <string name="settings_signing_key_too_short">Signing key is too short (at least 16 characters)</string>
+    <string name="settings_cert_pins_label">Certificate pins (sha256/…, one per line)</string>
+    <string name="settings_cert_pins_hint">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="settings_cert_pin_invalid">Invalid certificate pin: %1$s (expected sha256/ followed by 44-character Base64)</string>
+    <string name="settings_cleartext_warning">This server uses plain HTTP. Traffic may be intercepted or modified on the local network. The signing key protects rule integrity; HTTPS is recommended.</string>
+    <string name="settings_save_security">Save Security Settings</string>
 
     <!-- Vendor keep-alive guide & quick settings tile (device/ layer) -->
     <string name="settings_keepalive_title">System Keep-alive &amp; Shortcuts</string>

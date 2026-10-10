@@ -7,7 +7,7 @@ import { cleanRules, isValidSelector } from "../src/utils/validate";
 /**
  * 选择器双端契约的服务端一侧（DESIGN-PHASE1 §6.2）。
  *
- * 与 `client/app/src/test/java/com/ldp/adskip/engine/SelectorContractTest.kt`
+ * 与 `client/app/src/test/java/com/qingqi/adskip/engine/SelectorContractTest.kt`
  * 消费同一份 `test/fixtures/selectors.contract.json`：同一批向量两端必须给出
  * 一致的「接受 / 拒绝」判定，防止两套校验随时间漂移。
  *
