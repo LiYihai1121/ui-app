@@ -93,7 +93,7 @@ AdSkip/            # 全栈 monorepo
 ├── docs/          # 文档地图 README.md（规划事实源入口）+ api/ architecture/ development/ planning/ diagrams/
 └── .github/       # CI 工作流
 
-client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，零第三方依赖）
+client/app/src/main/java/com/qingqi/adskip/   # Android 客户端源码（Kotlin，零第三方依赖）
 ├── AdskipApp.kt                    # Application + AppContainer（手动 DI）
 ├── core/                           # Clock / AppExecutors / LogRing / AppEvents（状态总线）
 ├── ui/                             # 界面层（Compose 单 Activity + Navigation）
@@ -125,7 +125,7 @@ client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，
 └── sync/
     └── SyncJobService.kt           # JobScheduler 定时同步（三合一，跨重启持久化）
 
-client/app/src/test/java/com/ldp/adskip/   # JVM 单测（引擎/护栏/边界与清单契约守护/选择器），随门禁运行
+client/app/src/test/java/com/qingqi/adskip/   # JVM 单测（引擎/护栏/边界与清单契约守护/选择器），随门禁运行
 
 server/                             # 后端（Bun + TypeScript，零运行时依赖）
 ├── server.ts                       # Bun.serve 入口、路由分发、优雅停机

@@ -55,7 +55,7 @@ jobs:
         run: |
           set -o pipefail
           chmod +x gradlew
-          ./gradlew testDebugUnitTest --tests 'com.ldp.adskip.arch.*' --no-daemon 2>&1 | tee /tmp/android-contract.log
+          ./gradlew testDebugUnitTest --tests 'com.qingqi.adskip.arch.*' --no-daemon 2>&1 | tee /tmp/android-contract.log
 
       - name: Upload contract logs
         if: always()

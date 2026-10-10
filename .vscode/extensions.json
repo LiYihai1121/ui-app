@@ -16,6 +16,9 @@
     // 若其导入行为有变，先跑门禁 ./gradlew ktlintCheck testDebugUnitTest 再判断。
     "JetBrains.kotlin-server",
 
+    // Bun 官方扩展：为服务端提供 Bun 运行/调试集成；项目命令仍以 package.json scripts 为准。
+    "oven.bun-vscode",
+
     // Java 语言服务器：redhat.jdt.ls 只管 Java；同时带来 XML 支持，
     // 读 AndroidManifest.xml 的 <queries> 与权限声明时用得上。
     "vscjava.vscode-java-pack",
