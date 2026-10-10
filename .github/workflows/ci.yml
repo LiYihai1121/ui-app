@@ -129,7 +129,9 @@ jobs:
           set -o pipefail
           printf 'adskip.unsignedRelease=true\n' >> local.properties
           ./gradlew assembleRelease --no-daemon 2>&1 | tee /tmp/android-release-build.log
-          test -s app/build/outputs/apk/release/app-release.apk
+          # unsignedRelease 模式产物名为 app-release-unsigned.apk（有签名时为 app-release.apk），
+          # 用通配符匹配任一形态，仅验证 release 变体（R8/minify）构建产出非空 APK。
+          test -n "$(find app/build/outputs/apk/release -maxdepth 1 -type f -name 'app-release*.apk' -print -quit)"
 
       - name: Upload Android logs
         if: always()
