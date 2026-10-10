@@ -76,6 +76,8 @@
 - [ ] **M1d（版本号待定，步骤 F）**：Top 30 App 首批选择器规则入库 + 真机回归与性能采样 + 规则审核通道（步骤 F、L5 基础）。**`3.3.0` 与 `3.4.0` 已被占用**，随下一可用 minor 承载；冻结时在下方与 [ROADMAP-ADS.md](ROADMAP-ADS.md) 第 6 节同步最终版本号。
 - [ ] **v3.5.0（M2）**：L2 网络过滤层——DNS 过滤 + `filter-rules` 路由
 - [ ] **v3.6.0（M3）**：L3 防摇一摇模块（独立可选 APK）
+- [ ] **v3.7.0（M5，边界解除扩展）**：激励视频代跳——倒计时后跳过/关闭控件 L1 选择器点击，方案与出口条件见 [ROADMAP-ADS.md](ROADMAP-ADS.md) 第 10 节，技术决策见 [DESIGN-ADS-FILTERING.md](DESIGN-ADS-FILTERING.md)
+- [ ] **v3.8.0（M6，边界解除扩展）**：内容型素材拦截扩展 + 商店/搜索场景评估（L2+L1），方案见 [ROADMAP-ADS.md](ROADMAP-ADS.md) 第 10 节
 - [ ] **v4.0.0（M4）**：L4 通知过滤 + ROM 指引 + 规则生态完善
 
 ### 🧪 预发布（RC，验收未完成）
