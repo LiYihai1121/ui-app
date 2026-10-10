@@ -78,11 +78,21 @@ git rev-parse --show-toplevel  # 确认工作区根
 
 | Agent | 工作区 | 分支 | 认领路径 | 状态 |
 | --- | --- | --- | --- | --- |
-| `agent-a` | `.worktrees/agent-a-tile` | `feature/29-quick-tile` | `client/.../device/**`、`client/.../AndroidManifest.xml` | 进行中 |
-| `agent-b` | `.worktrees/agent-b-protocol` | `feature/30-protocol-v2` | `server/src/**`、`client/.../net/**` | 进行中 |
+| `gzdx` | `.worktrees/gzdx-home-redesign` | `feature/94-home-compose-redesign` | `client/.../ui/home/**`、`ui/components/Common.kt`、`ui/MainActivity.kt`、`res/values*/strings.xml` | 待合并 |
 | — | — | — | `docs/architecture/ARCHITECTURE.md`、`CHANGELOG.md` | 预留：仅集成者写 |
 
 状态取值：`进行中` / `待合并` / `阻塞` / `已完成`。任务认领与状态广播优先使用协作工具的任务清单与信箱，其次才用本表（避免两处状态打架）。
+
+> **⚠️ 协作事件记录与硬性要求（2026-10-11）**
+>
+> 两个会话同时写入**主检出**（`F:/LocaRepository/ui-app`），造成一次实际冲突：一方的未提交改动
+> 被另一方 stash（`stashed unrelated feature changes`），且 `a6f8150`（移除 code-simplifier）
+> 被提交进了他人分支。所幸改动经 `git stash pop` 全量恢复，未丢失工作。
+>
+> **硬性要求**：主检出只用于分支整合与查看，**禁止任何会话在主检出直接开发**。
+> 每个会话必须先执行 `git worktree add .worktrees/<agent>-<slug> <branch>` 并在其中工作
+> （AGENTS.md「多 Agent 协作」一票否决项）。`release/v3.4.1` 的进行中改动（versionCode 15）
+> 应迁入 `.worktrees/<agent>-v341/` 后继续，并在此表登记认领。
 
 ### 3.3 文档单写者
 
