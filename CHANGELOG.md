@@ -47,31 +47,29 @@
 
 ## [3.3.0] - 2026-10-10
 
+本版将客户端网络层迁移到 OkHttp，并补充服务端请求体大小限制、限流和结构化日志。
+
 ### Added (3.3.0)
 
-- **OkHttp 迁移与证书锁定**：`SyncClient` 从 Android 内置 `HttpURLConnection` 迁移到 OkHttp 4.12，支持 TLS 1.2+、连接池与自动重试。服务器证书通过 SHA-256 公钥哈希进行钝化（certificate pinning），防止中间人攻击。
-- **MockWebServer 测试**：新增 `SyncClientTest` 覆盖握手失败、证书钝化不匹配、限流退避与重试逻辑 4 个场景，提升网络层可测试性。
-- **结构化日志器**：服务端新增 `logger.ts`，统一请求日志格式，便于安全审计与故障排查。
+- **OkHttp 网络客户端**：`SyncClient` 迁移至 OkHttp 4.12，配置连接、读取和写入超时；新增 MockWebServer 网络回归测试。
+- **结构化日志**：服务端增加 JSONL 格式日志工具。
 
 ### Changed (3.3.0)
 
-- **TLS 配置加固**：服务端强制 HTTPS，拒绝明文传输；客户端同步配置网络安全策略。
-- **EncryptedSharedPreferences 幂等**：修复安全存储初始化可能重复写入的竞态问题。
-- **ReceiverHandle 抽象**：无障碍服务状态变更接收器抽象为可测试接口，降低模拟器与真机行为差异。
+- **本地加密存储与接收器抽象**：EncryptedSharedPreferences 初始化/迁移幂等性修复，并增加可测试的无障碍接收器抽象。
+- **可选 TLS 配置**：服务端可通过证书和私钥配置 HTTPS；未配置时仍以 HTTP 启动。
 
 ### Fixed (3.3.0)
 
-- **规则 HMAC 签名校验**：修正服务端规则响应签名计算与客户端校验逻辑，防止规则被篡改。
-- **证书钝化验证**：修正证书公钥哈希比对逻辑，避免误伤合法服务器。
+- **统计备份轮转**：备份名加入随机后缀，降低快速重复轮转时同名覆盖的概率。
+- **服务端请求体限制**：在协议层设置请求体大小上限。
 
-### Security (3.3.0)
+### Security status correction (3.3.0)
 
-- 服务端请求体协议层上限校验、常时比较令牌验证、安全响应头（HSTS/CSP/X-Content-Type-Options）、500 错误通用化（不泄露堆栈）。
-- 限流信任链加固：仅信任配置的反向代理 IP 读取 `X-Forwarded-For`，防止 IP 欺骗绕过限流。
-- 规则 API 限流在鉴权前执行，攻击者无法利用未授权请求耗尽后端资源。
-- 规则备份文件名增加单调序号与随机后缀，防止预测性路径遍历。
-- `server/data/` 与 `.env` 加入 `.gitignore`，防止运行时数据与密钥意外入库。
-- 发布 APK 强制 `apksigner verify`，缺少正式签名时回退 debug 签名保证可安装，未签名产物拒绝上传。
+- 本版源码**没有**规则 HMAC 签名/验签实现；该功能不应被视为 v3.3.0 的保护。
+- OkHttp `CertificatePinner` 未配置任何主机 pin，且 Android 网络安全配置仍允许明文流量；本版不强制 HTTPS，也未启用有效的证书 pinning。使用 HTTP 同步规则时，网络中间人可能篡改传输内容。服务端 TLS 需显式配置。
+- 服务端限流直接读取 `X-Forwarded-For`，尚未按可信代理配置验证来源；部署时不得将该头视为可信身份来源。
+- 厂商 ROM 上的保活和磁贴行为未完成真机验收。
 
 ## [3.2.0] - 2026-10-06
 
@@ -238,7 +236,7 @@
 ### Changed (3.0.3)
 
 - 原规划的 `3.1.0`「L1 引擎 + 快照工具 + Top 30 规则」大礼包里程碑**已剥离**，改为增量发版：
-  `3.0.3`（引擎内核）→ `3.1.0`（协议 v2 + 点击校验）→ `3.2.0`（快照工具）→ `3.3.0`（Top 30 规则与真机验收）→ `3.4.0` / `3.5.0` / `4.0.0`（L2 / L3 / L4）。
+  `3.0.3`（引擎内核）→ `3.1.0`（协议 v2 + 点击校验）→ `3.2.0`（快照工具）→ `3.3.0`（OkHttp 迁移与服务端工程加固；Top 30 规则与真机验收顺延至版本号待定的 M1d）→ `3.4.0` / `3.5.0` / `4.0.0`（L2 / L3 / L4）。
 - 详见 [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md) 与 [docs/planning/ROADMAP-ADS.md](docs/planning/ROADMAP-ADS.md)；技术方案与步骤划分见 [docs/planning/DESIGN-PHASE1-SELECTOR.md](docs/planning/DESIGN-PHASE1-SELECTOR.md)。
 
 ## [3.0.2] - 2026-09-04
