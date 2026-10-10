@@ -261,7 +261,7 @@ git rebase -i --autosquash origin/main
 | 禁止扩展名 | `apk` `aab` `apks` `aar` / `log` `tmp` `bak` `orig` `rej` `swp` `hprof` / `zip` `tar` `gz` `7z` `rar` `jar` / `keystore` `jks` `p12` `kdb` `pem` / `iml` `exe` `dll` `so` `dylib` |
 | 唯一例外 | `client/gradle/wrapper/gradle-wrapper.jar`——**必须入库**，否则任何人克隆后都无法构建 |
 | 系统/编辑器残留 | `.DS_Store`、`Thumbs.db`、`desktop.ini` |
-| 忽略规则完整性 | 根 `.gitignore` 必须覆盖 `.mimosa`、`.workbuddy`、`.kilo`、`.kilocode`、`.worktrees`、`.agents`（由 `RepoHygieneTest` 校验） |
+| 忽略规则完整性 | 根 `.gitignore` 必须覆盖 `.mimosa`、`.workbuddy`、`.kilo`、`.kilocode`、`.worktrees`、`.agents`、`.cursor`（由 `RepoHygieneTest` 校验） |
 
 **为什么忽略规则必须写在共享 `.gitignore` 而不是本机 `.git/info/exclude`**：只写本机忽略会造成「`git status` 干净、但文件检索与读取仍能命中」的双重真相——协作方与工具会读到看不见的第二份源码，进而改错副本。本仓库已实际发生过该故障。
 

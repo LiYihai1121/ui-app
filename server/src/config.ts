@@ -20,8 +20,24 @@ export interface Config {
   STATS_DIR_CLEANUP_ON_START: boolean;
   BACKUP_DIR: string;
   BACKUP_COUNT: number;
+  /** 统计分片保留的备份份数（rotateStatsBackup 轮转） */
+  STATS_BACKUP_COUNT: number;
   ADMIN_TOKEN: string;
   STATS_READ_AUTH: boolean;
+  /**
+   * 规则签名密钥（HMAC-SHA256，env RULES_SIGNING_KEY）。
+   *
+   * 置空时 v0/v1 的 rules latest 端点不下发签名头——客户端配了签名密钥会
+   * 因此拒绝载入云端规则（失败关闭）；两端都置空则退回明文生态（历史行为，
+   * 不推荐）。读取端点本身无鉴权，签名是防「规则被中间人改写」的唯一完整性手段。
+   */
+  RULES_SIGNING_KEY: string;
+  /**
+   * 受信反向代理 IP 列表（env TRUSTED_PROXIES，逗号分隔）。
+   * 只有来自这些 IP 的请求才采信 X-Forwarded-For；空 = 任何人伪造的 XFF 都不认，
+   * 限流一律以 socket 对端 IP 为键（B 链修复：否则所有限流可被绕过）。
+   */
+  TRUSTED_PROXIES: string[];
   CORS_ORIGINS: string[] | null;
   RATE_LIMIT_READ_PER_MIN: number;
   RATE_LIMIT_REPORT_PER_MIN: number;
@@ -38,6 +54,10 @@ export interface Config {
   MAX_BATCH_EVENTS: number;
   MAX_BODY_KEYS: number;
   MAX_BODY_DEPTH: number;
+  /** TLS 证书路径（空字符串表示禁用 HTTPS）。 */
+  TLS_CERT: string;
+  /** TLS 私钥路径（空字符串表示禁用 HTTPS）。 */
+  TLS_KEY: string;
 }
 
 export const config: Config = {
@@ -56,8 +76,13 @@ export const config: Config = {
   STATS_DIR_CLEANUP_ON_START: true,
   BACKUP_DIR: path.join(ROOT, "data", "backups"),
   BACKUP_COUNT: 5,
+  STATS_BACKUP_COUNT: 5,
   ADMIN_TOKEN: process.env.ADMIN_TOKEN ?? "",
   STATS_READ_AUTH: false,
+  RULES_SIGNING_KEY: process.env.RULES_SIGNING_KEY ?? "",
+  TRUSTED_PROXIES: process.env.TRUSTED_PROXIES
+    ? process.env.TRUSTED_PROXIES.split(",").map((s) => s.trim()).filter(Boolean)
+    : [],
   CORS_ORIGINS: process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(",").map((s) => s.trim())
     : null,
@@ -78,4 +103,6 @@ export const config: Config = {
   MAX_BATCH_EVENTS: 50,
   MAX_BODY_KEYS: 100,
   MAX_BODY_DEPTH: 5,
+  TLS_CERT: process.env.TLS_CERT ?? "",
+  TLS_KEY: process.env.TLS_KEY ?? "",
 };

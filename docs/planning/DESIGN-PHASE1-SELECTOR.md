@@ -1,7 +1,7 @@
 # Phase 1 技术方案：选择器引擎（DESIGN-PHASE1-SELECTOR）
 
 > 实现 [ROADMAP-ADS.md](ROADMAP-ADS.md) Phase 1（L1 无障碍引擎增强）的详细设计。
-> 状态：已评审通过（2026-09-24）；步骤 A/B 已并入 `main`（PR #12），待随 `3.0.3` 发版；步骤 C（协议 v2：服务端字段 + 校验 + 双端契约夹具 + 管理后台）已落地，随 `3.1.0` 发版；步骤 D–F 分别归属 `3.1.0` / `3.2.0` / `3.3.0`（见 [ROADMAP.md](ROADMAP.md)）；最后更新：2026-09-28。
+> 状态：步骤 A/B 已随 `3.0.3` 发布（PR #12）；步骤 C/D 已随 `3.1.0` 发布（协议 v2 + 点击校验）；步骤 E 已随 `3.2.0` 发布（快照工具）；步骤 F（Top 30 规则 + 真机验收）**版本号待定**（`3.3.0` 已由 OkHttp/服务端工程补丁发布占用），见 [ROADMAP.md](ROADMAP.md)；最后更新：2026-10-10（按 v3.3.0 发布事实校准步骤 F 归属）。
 
 ## 1. 目标与非目标
 
@@ -73,7 +73,7 @@ value      := 除 '"' 外的可见字符（长度 ≤ 64，见 3.3 限制）
 
 ## 4. 模块设计（客户端）
 
-新增包 `com.ldp.adskip.engine.selector`，保持引擎层纯 JVM 可测、零第三方依赖：
+新增包 `com.qingqi.adskip.engine.selector`，保持引擎层纯 JVM 可测、零第三方依赖：
 
 ```text
 engine/selector/
@@ -190,7 +190,7 @@ MAX_SELECTOR_LEN = 256; MAX_SELECTORS_PER_LIST = 128;
 - **契约测试防漂移**：共享夹具 `server/test/fixtures/selectors.contract.json` 固化了三段向量——
   `accepted` / `rejected`（两端判定必须一致，合法与非法各 ≥12 条）与 `divergences`（有意判定不同者，写明原因）。
   **bun test 与 Gradle JVM 单测共同消费**：`server/test/selectors.contract.test.ts` 断言服务端一侧，
-  `client/app/src/test/java/com/ldp/adskip/engine/SelectorContractTest.kt` 断言客户端一侧
+  `client/app/src/test/java/com/qingqi/adskip/engine/SelectorContractTest.kt` 断言客户端一侧
   （客户端「接受」= `SelectorParser.parse` 编译成功）。
   设计取舍：服务端只做快检，是必要不充分条件，故 `divergences` 段显式登记「服务端放行、客户端拒收」
   的 7 类向量（未知 key / 缺引号 / 缺 key / 缺中括号 / 括号乱序 / value 超 64 字符 / compound 超 4 段），
@@ -229,7 +229,7 @@ event.pkg 为其他应用                        → 判定劫持：
                "flags": { "click": false, "vis": true, "edit": false } } ] }
 ```
 
-- 文本/描述截断 40 字符；总量超 100KB 截断尾部节点并标注 `truncated: true`；
+- 文本/描述截断 40 字符；分享文本总字节数经**二分查找**截断至 ≤ 96 KB（`Intent.EXTRA_TEXT` 的实际安全上限，较原 100 KB 设计收紧以防分享面板截断/卡死），超出部分丢弃并标注 `truncated: true`（已随 `3.2.0` 落地）；
 - 复用日志页既有「分享为文本」导出通道（零新增网络面）；**仅用户手动触发、仅当前屏幕**，不自动上传。
 
 ## 9. 改动清单
@@ -258,12 +258,12 @@ event.pkg 为其他应用                        → 判定劫持：
 
 | 步骤 | 版本 | 周 | 内容 | 出口条件 |
 | --- | --- | --- | --- | --- |
-| A | `3.0.3` | W3~W4 | AST + 解析器 + 匹配器 + `AdNode` 扩展（纯 JVM） | ✅ 已并入 `main`：解析/匹配单测全绿（39 + 31 例） |
-| B | `3.0.3` | W4~W5 | `RuleSet`/引擎/`RulesRepository`/`Prefs` 集成 | ✅ 已并入 `main`：存量 44 例零回归，集成新增 7 例（合计 121 例） |
-| C | `3.1.0` | W5~W6 | 协议 v2：服务端字段 + 校验 + 契约夹具 + 管理后台 | ✅ 已落地：`SCHEMA_VERSION=2`；`bun test` 82 例绿 + `typecheck` 绿；`selectors.contract.json` 17 合法 / 14 非法 / 7 有意差异向量由 bun 与 Gradle 双端消费，判定逐条一致 |
-| D | `3.1.0` | W6 | `SyncClient` 解析 + 点击结果校验状态机 + 黑名单 | 劫持场景单测绿 |
-| E | `3.2.0` | W7 | 快照工具 + 设置页入口 | 真机导出 JSON 可读 |
-| F | `3.3.0` | W7~W8 | Top 30 App 规则编写 + 真机回归 + 性能采样 | 验收指标（下节）全达标 |
+| A | `3.0.3` | W3~W4 | AST + 解析器 + 匹配器 + `AdNode` 扩展（纯 JVM） | ✅ 已随 `3.0.3` 发布：解析/匹配单测全绿（39 + 31 例） |
+| B | `3.0.3` | W4~W5 | `RuleSet`/引擎/`RulesRepository`/`Prefs` 集成 | ✅ 已随 `3.0.3` 发布：存量 44 例零回归，集成新增 7 例（合计 121 例） |
+| C | `3.1.0` | W5~W6 | 协议 v2：服务端字段 + 校验 + 契约夹具 + 管理后台 | ✅ 已随 `3.1.0` 发布：`SCHEMA_VERSION=2`；`bun test` 82 例绿 + `typecheck` 绿；`selectors.contract.json` 17 合法 / 14 非法 / 7 有意差异向量由 bun 与 Gradle 双端消费，判定逐条一致 |
+| D | `3.1.0` | W6 | `SyncClient` 解析 + 点击结果校验状态机 + 黑名单 | ✅ 已随 `3.1.0` 发布：劫持场景单测绿 |
+| E | `3.2.0` | W7 | 快照工具 + 设置页入口 | ✅ 已随 `3.2.0` 发布：96 KB 分享截断生效（二分查找）；导出经模拟器目视可用 |
+| F | M1d（版本号待定） | W7~W8 | Top 30 App 规则编写 + 真机回归 + 性能采样 | ⏳ 进行中：验收指标（下节）全达标 |
 
 ## 11. 测试计划与验收
 
@@ -284,7 +284,7 @@ event.pkg 为其他应用                        → 判定劫持：
 4. 性能：128 条规则下 `findTarget` p99 < 8ms（中端真机 LogRing 采样）；
 5. 兼容：旧客户端对 schema 2 载荷行为不变（冒烟用例固化）。
 
-**验收分层（2026-09-26）**：步骤 C–E 以工程门禁为出口（CI 全绿 + 契约夹具一致 + 单测覆盖），上列第 1/2/4 条真机指标集中在 `3.3.0`（步骤 F）执行——避免真机验收阻塞协议与工具的发版。
+**验收分层（2026-09-26）**：步骤 C–E 以工程门禁为出口（CI 全绿 + 契约夹具一致 + 单测覆盖），上列第 1/2/4 条真机指标集中在步骤 F 所在版本执行——避免真机验收阻塞协议与工具的发版。
 
 ## 12. 风险与回滚
 

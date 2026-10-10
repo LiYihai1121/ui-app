@@ -167,10 +167,25 @@ export function saveRules(cleaned: CleanedRules): number {
   return version;
 }
 
+/**
+ * 备份文件名用的时间戳。
+ *
+ * 纯毫秒时间戳不够：同一毫秒内的多次轮转会生成同名文件互相覆盖
+ * （轮转保留份数静默变少，曾让 test 偶发红）。补齐进程内单调序号 +
+ * 随机后缀，保证同一进程任意速率轮转都不撞名。
+ */
+let backupSeq = 0;
+function backupStamp(): string {
+  backupSeq = (backupSeq + 1) % 1_000_000;
+  const rand = crypto.randomBytes(2).toString("hex");
+  const iso = new Date().toISOString().replace(/[:.]/g, "-");
+  return `${iso}-${backupSeq}-${rand}`;
+}
+
 function rotateBackup(): void {
   try {
     if (!dirOrFileExists(config.RULES_FILE)) return;
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const stamp = backupStamp();
     const name = `rules-${stamp}.json`;
     const dest = path.join(config.BACKUP_DIR, name);
     fs.mkdirSync(config.BACKUP_DIR, { recursive: true });
@@ -190,6 +205,33 @@ function rotateBackup(): void {
     }
   } catch (e) {
     console.warn("[store] backup rotation failed:", e);
+  }
+}
+
+function rotateStatsBackup(day: string): void {
+  try {
+    const src = path.join(config.STATS_DIR, `${day}.json`);
+    if (!dirOrFileExists(src)) return;
+    const stamp = backupStamp();
+    const dest = path.join(config.STATS_DIR, "backups", `stats-${day}-${stamp}.json`);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.copyFileSync(src, dest);
+
+    const dir = path.dirname(dest);
+    const files = fs
+      .readdirSync(dir)
+      .filter((f) => f.startsWith(`stats-${day}-`) && f.endsWith(".json"))
+      .sort()
+      .reverse();
+    for (const f of files.slice(config.STATS_BACKUP_COUNT)) {
+      try {
+        fs.unlinkSync(path.join(dir, f));
+      } catch {
+        /* ignore */
+      }
+    }
+  } catch (e) {
+    console.warn("[store] stats backup rotation failed:", e);
   }
 }
 
@@ -347,6 +389,11 @@ export function _resetRulesCacheForTests(): void {
   rulesCache = null;
 }
 
+/** 仅供测试：触发统计分片备份轮转（验证 rotateStatsBackup 行为） */
+export function _rotateStatsBackupForTests(day: string): void {
+  rotateStatsBackup(day);
+}
+
 function flushDay(day: string): void {
   const c = statsCache.get(day);
   if (!c) return;
@@ -355,6 +402,7 @@ function flushDay(day: string): void {
     c.timer = null;
   }
   if (!c.dirty) return;
+  rotateStatsBackup(day);
   writeJson(path.join(config.STATS_DIR, `${day}.json`), c.data);
   c.dirty = false;
 }

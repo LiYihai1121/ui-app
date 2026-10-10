@@ -11,9 +11,21 @@ captures/
 
 # 签名密钥与本地签名配置（绝不入库）
 signing/
+*.jks
+*.keystore
+*.p12
+*.pem
+.env
+.env.*
 
 # APK 产物（构建输出已忽略；根目录发布副本同样不入库）
 *.apk
+
+# 服务端运行数据：真实规则/统计/备份（数据可能暴露用户的真实应用包名，不入库）
+server/data/
+
+# 依赖安装产物（server/ 零运行时依赖，本地 bun install 时生成；绝不含锁文件语义）
+node_modules/
 
 # 本地工具状态目录（安全扫描 / AI 助手会话产物，不入库）
 .mimosa/
@@ -27,6 +39,7 @@ signing/
 .kilocode/
 .worktrees/
 .agents/
+.cursor/
 
 # IDE 配置：只入库团队共享的两个文件，其余个人文件仍不入库。
 #
@@ -44,10 +57,21 @@ signing/
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+# 根级 `.vscode/*` 含中间斜杠，只匹配仓库根。Java 语言服务以 client/ 为 Gradle
+# 工程根打开时会另写 client/.vscode/，必须单独忽略，否则会作为未跟踪文件出现。
+client/.vscode/
+
+# JDT 语言服务编译 included build 时会把源镜像到 convention/bin/，不是 Gradle 产物。
+client/build-logic/**/bin/
 
 # Kotlin 构建会话目录
 .kotlin/
 
-# 服务端运行时产物（测试/部署生成，非源码；种子规则固化在 server/seed/）
-server/data/
-server/node_modules/
+# Pre-commit hooks：配置入库，检测基线不落地（detect-secrets 每次扫描重新生成，
+# 历史版本曾把「忽略 .pre-commit-config.yaml」与「例外放行」两份互相矛盾的
+# 规则留在这里，实际生效的是后者前者纯噪音，删除以正本清源）
+!.pre-commit-config.yaml
+.secrets.baseline
+
+# 本机 ACL 修复工具的审计输出目录（机器本地产物，不入库）
+.acl-recovery/

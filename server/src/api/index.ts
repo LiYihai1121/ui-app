@@ -35,9 +35,10 @@ export async function handleApi(
     return healthApi.health(req, url, ctx);
   }
   if (method === "GET" && p === "/api/v1/admin/logs") {
+    // 限流先于鉴权：未认证尝试也计入读限额，避免 token 暴力破解零成本
+    if (!limitRead(req, ctx.ip)) return errorJson(429, "rate limited");
     const auth = requireAdmin(req);
     if (!auth.ok) return errorJson(auth.status, auth.error);
-    if (!limitRead(req, ctx.ip)) return errorJson(429, "rate limited");
     return jsonResponse({ entries: recentAccess() });
   }
   if (method === "GET" && p === "/api/rules/latest") {

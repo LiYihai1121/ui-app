@@ -1,0 +1,24 @@
+# CODEOWNERS
+
+# Default owners for everything
+* @gzdx1121
+
+# Android client code
+/client/ @gzdx1121
+
+# Server code
+/server/ @gzdx1121
+
+# Documentation
+/docs/ @gzdx1121
+
+# CI/CD and build configuration
+/.github/ @gzdx1121
+/client/build.gradle.kts @gzdx1121
+/client/settings.gradle.kts @gzdx1121
+/client/build-logic/ @gzdx1121
+
+# Security and compliance
+/SECURITY.md @gzdx1121
+/CONTRIBUTING.md @gzdx1121
+/AGENTS.md @gzdx1121

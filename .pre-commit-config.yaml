@@ -1,0 +1,66 @@
+# Pre-commit hooks for ui-app
+# Enforces code quality standards before commits are created
+# Install: pip install pre-commit && pre-commit install
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+      - id: check-yaml
+        exclude: 'gradle/libs\.versions\.toml'
+      - id: check-toml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1024']
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Kotlin formatting with ktlint
+  - repo: https://github.com/shyiko/ktlint
+    rev: 1.8.0
+    hooks:
+      - id: ktlint
+        files: \.(kt|kts)$
+        additional_dependencies:
+          - "ktlint==1.8.0"
+
+  # TypeScript/JavaScript formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.5.0
+    hooks:
+      - id: prettier
+        files: \.(ts|js|json|md|yml|yaml)$
+        exclude: 'gradle/libs\.versions\.toml'
+
+  # Conventional Commits validation
+  - repo: https://github.com/compilerla/conventional-pre-commit-linter
+    rev: v1.3.0
+    hooks:
+      - id: conventional-pre-commit-linter
+        args: ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert']
+        stages: [commit-msg]
+
+  # Detect secrets in code
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: '\.lock$|package-lock\.json|yarn\.lock'
+
+  # Gradle wrapper validation
+  - repo: local
+    hooks:
+      - id: gradle-wrapper-validate
+        name: Validate Gradle wrapper
+        entry: bash -c 'cd client && ./gradlew --version'
+        language: system
+        pass_filenames: []
+        always_run: true

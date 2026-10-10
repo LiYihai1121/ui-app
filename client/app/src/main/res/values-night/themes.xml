@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  深色系统下的窗口主题覆盖（Compose 绘制**之前**的那一段：窗口背景与启动闪屏）。
+
+  为什么需要这个文件：framework 的 `android:Theme.Material` 没有 DayNight 变体
+  （那套只在 AppCompat 里），因此固定浅色父主题会让深色系统下的窗口背景与闪屏
+  仍是浅色——Compose 只在首帧绘制后才接管，中间那一段就是刺眼的白屏。
+
+  这里**只覆盖窗口级颜色**：`android:windowBackground` 给深色底，状态栏转透明
+  （内容已 enableEdgeToEdge，明暗下都该由内容自己延伸到状态栏）。
+  注意与 ui/theme/Color.kt 的分工：此处管 Compose 绘制之前，那边管绘制之后，
+  两者不是同一层，不构成第二份真相。
+-->
+<resources>
+    <style name="Theme.AdSkip" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#121316</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@color/brand</item>
+    </style>
+</resources>

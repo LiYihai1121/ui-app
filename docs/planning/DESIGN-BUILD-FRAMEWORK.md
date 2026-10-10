@@ -1,4 +1,4 @@
-# 构建框架工程化设计（version catalog / build-logic / 模块拆分）
+# 构建框架工程化设计（DESIGN-BUILD-FRAMEWORK）
 
 > **状态**：阶段 B（version catalog + build-logic 约定插件 + Gradle 硬化）已实施（见 CHANGELOG Unreleased）；
 > 阶段 C（`core:common` / `core:engine` 模块拆分）待排期。阶段 A（目录结构契约）已落地，见
@@ -26,7 +26,7 @@
 
 ## 2. 现状事实
 
-- Gradle **9.7.0**（wrapper 走腾讯云镜像），AGP **8.7.3**，Kotlin **2.0.21**，JDK 17，compileSdk/targetSdk 35，minSdk 26。
+- Gradle **9.7.0**（wrapper 走腾讯云镜像），AGP **8.7.3**，Kotlin **2.0.21**，JDK 17，compileSdk 37（Compose 1.12 强制要求），targetSdk 35，minSdk 26。
 - 依赖版本全部硬编码：`client/build.gradle.kts` 三处插件版本 + `client/app/build.gradle.kts` 的 Compose BOM 与 5 个 AndroidX 坐标。
 - 仓库源全部使用**阿里云镜像优先**（注释明确：本机直连 `dl.google.com`/`mavenCentral` 会读超时）。
 - `repositoriesMode = FAIL_ON_PROJECT_REPOS` 已开启（正确，勿在模块内写仓库）。
@@ -168,7 +168,6 @@ client/
 
 > 阶段 B/C 均不触碰 `applicationId`、`versionCode`、签名配置与发布流水线，
 > 因此**不需要重新走发版验证**；但阶段 B 会改 `ci.yml` 的缓存方式，需确认 Release workflow 同步。
-
 
 ⚠️ **`configuration-cache=true` 必须最后单独提交验证**：它与「构建期读取 `local.properties` 做签名决策」这种
 配置期文件系统读取可能冲突。若报冲突，改为在 `settings.gradle.kts` 用 `providers.fileContents` 惰性读取，

@@ -17,7 +17,15 @@
     "**/.kotlin": true,
     "**/node_modules": true,
     "**/server/data": true,
-    "**/.kilo": true
+    // 多 Agent 协作产物与工作区：与根 .gitignore 同步，避免文件树里出现
+    // 一堆 worktree 副本——它们也会被 Java 语言服务当作重复 gradle 项目导入。
+    "**/.kilo": true,
+    "**/.kilocode": true,
+    "**/.worktrees": true,
+    "**/.agents": true,
+    "**/.mimosa": true,
+    "**/.workbuddy": true,
+    "**/.cursor": true
   },
   "search.exclude": {
     "**/build": true,
@@ -25,8 +33,39 @@
     "**/.kotlin": true,
     "**/node_modules": true,
     "**/server/data": true,
-    "**/.kilo": true
+    "**/.kilo": true,
+    "**/.kilocode": true,
+    "**/.worktrees": true,
+    "**/.agents": true,
+    "**/.mimosa": true,
+    "**/.workbuddy": true,
+    "**/.cursor": true
   },
+
+  // Java 语言服务（redhat.jdt.ls，由 vscode-java-pack 带入）默认会扫描并导入
+  // 工作区里所有 gradle 项目。本仓库的 git worktree 各自带一份 client/，
+  // 它们与根 client/ 同名（AdSkip-client），导入时报：
+  //   "A project with the name AdSkip-client already exists.
+  //    Duplicate root element AdSkip-client"
+  // 把这些 worktree / agent 产物目录排除掉，Java LS 就只剩根 client/ 一个项目，
+  // 重复即消失。本清单会整体覆盖默认值，故把常用默认项一并保留。
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/.metadata/**",
+    "**/archetype-resources/**",
+    "**/META-INF/maven/**",
+    "**/build/**",
+    "**/.git/**",
+    "**/.gradle/**",
+    "**/.kotlin/**",
+    "**/.kilo/**",
+    "**/.kilocode/**",
+    "**/.worktrees/**",
+    "**/.agents/**",
+    "**/.mimosa/**",
+    "**/.workbuddy/**",
+    "**/.cursor/**"
+  ],
 
   // 120 与 .editorconfig 的 max_line_length 对齐。**这是一处必须手工同步的耦合**：
   // VS Code 不支持从 .editorconfig 读标尺显示，改 max_line_length 时这里要一起改。
@@ -51,6 +90,11 @@
   // VS Code 打开工作区时自动完成的，保留迁移后的写法，否则每次打开都会再被改一次。
   "js/ts.tsserver.experimental.enableProjectDiagnostics": true,
 
+  // Java 空值分析交给语言服务自动判定。Kotlin 侧同样关心 NPE
+  // （`System.getProperty` 可能返回 null），由编辑器实时提示比等门禁快。
+  // 团队开关只写仓库根：client/.vscode 已忽略，写到那里不会入库，但会造成两份真相。
+  "java.compile.nullAnalysis.mode": "automatic",
+
   // 若依赖自定义 GRADLE_USER_HOME（DEV-ENVIRONMENT「构建启动失败排障」记录过
   // 未设置时回落到无缓存目录、导致发行版下载超时），在这里指明即可；
   // 也可以直接导出环境变量，两者取其一，不要都设。
@@ -58,5 +102,10 @@
 
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
-  "files.eol": "\n"
+  "files.eol": "\n",
+
+  // 构建文件（settings.gradle.kts / build.gradle.kts 等）变更时自动重载 Java 项目模型，
+  // 不再逐次弹「build file has been changed」询问。本仓库是单一 gradle 工程
+  // （worktree 副本已被 java.import.exclusions 排除），自动重载没有误伤风险。
+  "java.configuration.updateBuildConfiguration": "automatic"
 }

@@ -5,6 +5,7 @@
     <string name="service_desc">Automatically detects and clicks the "Skip" button on splash ads. Supports text keyword and ViewID matching. Runs locally only.</string>
 
     <!-- Main page -->
+    <string name="home_title">Home</string>
     <string name="status_off">Service is off</string>
     <string name="status_on">Service is running</string>
     <string name="status_off_hint">Please enable "轻启" in system Accessibility settings</string>
@@ -18,6 +19,25 @@
     <string name="nav_logs">Logs</string>
     <string name="btn_confirm">OK</string>
     <string name="btn_cancel">Cancel</string>
+    <string name="btn_retry">Retry</string>
+    <string name="error_generic_title">Couldn\'t load</string>
+    <string name="error_generic_hint">The data didn\'t come through. Try again; if it keeps failing, share the logs.</string>
+    <string name="state_loading_announcement">Loading</string>
+
+    <!-- Default rules. English builds must not fall back to the Chinese defaults:
+         「跳过」 is meaningless matching text for an English user. -->
+    <string-array name="default_keywords">
+        <item>skip</item>
+        <item>skip ad</item>
+        <item>skip ads</item>
+        <item>close ad</item>
+        <item>close ads</item>
+        <item>no ads</item>
+    </string-array>
+    <string-array name="default_view_ids">
+        <item>skip</item>
+        <item>jump</item>
+    </string-array>
     <string name="action_undo">Undo</string>
 
     <!-- Keywords -->
@@ -35,7 +55,10 @@
     <!-- Test -->
     <string name="fake_ad_title">Sample Splash Ad</string>
     <string name="fake_ad_subtitle">If the accessibility service is enabled, this ad will be auto-skipped</string>
-    <string name="fake_ad_countdown">Auto-close in %1$d seconds</string>
+    <plurals name="fake_ad_countdown">
+        <item quantity="one">Auto-close in %1$d second</item>
+        <item quantity="other">Auto-close in %1$d seconds</item>
+    </plurals>
     <string name="fake_ad_skip">Skip 5</string>
     <string name="test_need_service">Service is off. Please enable accessibility service first</string>
     <string name="test_success">✅ Test passed! Ad was auto-skipped (%1$s)</string>
@@ -48,21 +71,27 @@
     <!-- App Manager -->
     <string name="apps_title">App Manager</string>
     <string name="apps_hint">Toggle off to stop auto-skipping in that app</string>
-    <string name="apps_loading">Loading app list…</string>
-    <string name="apps_count">Skipped %1$d times</string>
+    <plurals name="apps_count">
+        <item quantity="one">Skipped %1$d time</item>
+        <item quantity="other">Skipped %1$d times</item>
+    </plurals>
     <string name="apps_never">Never skipped</string>
     <string name="apps_disabled">Disabled</string>
     <string name="apps_search_placeholder">Search app name or package</string>
     <string name="apps_search_clear">Clear search</string>
     <string name="apps_filter_enabled">Enabled only</string>
     <string name="apps_empty">No manageable apps found</string>
+    <string name="apps_empty_hint">No third-party app with a launcher icon was detected on this device</string>
     <string name="apps_no_match">No matching apps</string>
     <string name="apps_no_match_hint">Try another keyword, or turn off the “Enabled only” filter</string>
     <string name="apps_clear_filters">Clear search and filters</string>
 
     <!-- Skip Logs -->
     <string name="logs_title">Skip Logs</string>
-    <string name="logs_subtitle">%1$d records, only the latest 200 are kept</string>
+    <plurals name="logs_subtitle">
+        <item quantity="one">%1$d record, only the latest 200 are kept</item>
+        <item quantity="other">%1$d records, only the latest 200 are kept</item>
+    </plurals>
     <string name="logs_empty">No records yet</string>
     <string name="logs_empty_hint">Once the service is on, every auto-skip will show up here</string>
     <string name="logs_clear">Clear Logs</string>
@@ -73,6 +102,14 @@
 
     <!-- Cloud Sync Settings -->
     <string name="settings_cloud_section">Cloud Rules</string>
+    <string name="settings_language_section">Language</string>
+    <string name="settings_language_label">App language</string>
+    <string name="settings_language_hint">Follow system uses the device language; you can also pin one.</string>
+    <!-- Language names stay in their own language on purpose: a user who cannot read
+         the current UI language still needs to recognise their own. -->
+    <string name="language_system">Follow system</string>
+    <string name="language_zh">简体中文</string>
+    <string name="language_en">English</string>
     <string name="settings_schedule_section">Sync &amp; Do Not Disturb</string>
     <string name="settings_server_label">Server Address</string>
     <string name="settings_server_hint">http://your-pc-ip:3210</string>
@@ -87,10 +124,19 @@
     <string name="settings_dnd">Do Not Disturb</string>
     <string name="settings_dnd_start">Start Time</string>
     <string name="settings_dnd_end">End Time</string>
-    <string name="settings_battery">Battery Optimization</string>
     <string name="settings_battery_allow">Allow Background</string>
     <string name="settings_battery_done">Background allowed</string>
     <string name="settings_url_invalid">URL must start with http:// or https://</string>
+    <string name="settings_security_section">Rule Security</string>
+    <string name="settings_security_desc">The signing key must match RULES_SIGNING_KEY on the server. It is stored on this device and can be extracted by someone who controls the device; do not reuse other credentials. HTTPS connections also require the server SHA-256 certificate pin, one per line.</string>
+    <string name="settings_signing_key_label">Rules signing key</string>
+    <string name="settings_signing_key_hint">Must match RULES_SIGNING_KEY on the server; at least 16 characters</string>
+    <string name="settings_signing_key_too_short">Signing key is too short (at least 16 characters)</string>
+    <string name="settings_cert_pins_label">Certificate pins (sha256/…, one per line)</string>
+    <string name="settings_cert_pins_hint">sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+    <string name="settings_cert_pin_invalid">Invalid certificate pin: %1$s (expected sha256/ followed by 44-character Base64)</string>
+    <string name="settings_cleartext_warning">This server uses plain HTTP. Traffic may be intercepted or modified on the local network. The signing key protects rule integrity; HTTPS is recommended.</string>
+    <string name="settings_save_security">Save Security Settings</string>
 
     <!-- Vendor keep-alive guide & quick settings tile (device/ layer) -->
     <string name="settings_keepalive_title">System Keep-alive &amp; Shortcuts</string>
@@ -134,7 +180,28 @@
     <string name="profile_active_apps_label">Apps skipped for</string>
     <string name="profile_value_unknown">Unknown</string>
     <string name="profile_privacy_hint">Skip logs and statistics stay on this device and are never uploaded.</string>
-    <string name="profile_accessibility_section">Accessibility service</string>
-    <string name="stats_total_short">Skipped %1$d times</string>
+    <string name="permission_section">Permissions &amp; system switches</string>
+    <string name="permission_summary">%1$d of %2$d ready</string>
+    <string name="permission_accessibility">Accessibility service</string>
+    <string name="permission_battery">Background (battery optimization)</string>
+    <string name="permission_vendor_keepalive">Autostart / background allowlist</string>
+    <string name="permission_quick_tile">Quick Settings tile</string>
+    <string name="permission_state_ready">Ready</string>
+    <string name="permission_state_needs_action">Needs action</string>
+    <string name="permission_state_unknown">Can\'t verify automatically — check manually</string>
+    <!-- Keep this short: the row gives the title column weight(1f), so a long action label
+         squeezes the title down to a single character (measured). -->
+    <string name="permission_open">Open</string>
+    <plurals name="stats_total_short">
+        <item quantity="one">Skipped %1$d time</item>
+        <item quantity="other">Skipped %1$d times</item>
+    </plurals>
     <string name="stats_recent_short">Last: %1$s</string>
+
+    <!-- Node snapshot tool (debug) -->
+    <string name="settings_snapshot_section">Debug tools</string>
+    <string name="settings_snapshot_export">Export screen snapshot (debug)</string>
+    <string name="settings_snapshot_hint">Exports the current screen\'s accessibility node tree as JSON, for writing and validating selector rules. Current screen only; never uploaded.</string>
+    <string name="settings_snapshot_empty">Accessibility service is not running; cannot capture the current screen</string>
+    <string name="settings_snapshot_exported">Snapshot exported; save it from the share sheet</string>
 </resources>

@@ -1,8 +1,10 @@
-# 净启动 AdSkip 产品路线图
+# 净启动 AdSkip 产品路线图（ROADMAP）
 
 > 分层广告治理专项计划（覆盖 60+ 种广告类型的能力矩阵、分阶段计划与合规边界）见 [ROADMAP-ADS.md](ROADMAP-ADS.md)。
 >
 > 本页是**版本序列与能力意图的唯一事实源**：里程碑、周次与出口条件见 [ROADMAP-ADS.md](ROADMAP-ADS.md) 第 6 节，技术步骤见 [DESIGN-PHASE1-SELECTOR.md](DESIGN-PHASE1-SELECTOR.md) 第 10 节，文档入口见 [../README.md](../README.md)（文档地图）。
+>
+> 状态：活跃；最后更新：2026-10-10（v3.3.0 已发布——OkHttp 网络层迁移与服务端工程加固；步骤 F/M1d 的 Top 30 规则版本号因 `3.3.0` 被占用而重新排期，见下方条目与 [ROADMAP-ADS.md](ROADMAP-ADS.md)）。
 
 ## ✅ v1.0 — 核心可用（已完成）
 
@@ -61,17 +63,19 @@
 - [x] **测试体系**：服务端 `bun:test` 单元 + 进程内冒烟；客户端引擎/护栏 JVM 单测
 - [x] **CI**：GitHub Actions 双 job（Android 构建+单测 / 服务端测试）
 
-## 🔜 v3.0.3 起 — 分层广告治理（增量发版）
+## 🔜 分层广告治理（增量发版，自 v3.0.3 起；已发布至 v3.3.0）
 
 版本序列以 [ROADMAP-ADS.md](ROADMAP-ADS.md) 的里程碑为准（避免两份文档各自承诺同一版本号）。**每个版本独立走 `release/vX.Y.Z` → 全门禁 → Squash Merge → 签名 Release**；本表表达的是「发布意图」，版本号在发版冻结时按 SemVer 最终确认。
 
 - [x] **v3.0.3（M1a，已发布）**：L1 引擎内核——选择器第三通道（`engine/selector/` AST / 解析器 / 匹配器 + `AdNode.parent` / `previousSibling()`）。纯内核增量、无用户可见行为变化；技术方案见 [DESIGN-PHASE1-SELECTOR.md](DESIGN-PHASE1-SELECTOR.md) 步骤 A/B
 - [x] **v3.0.4（M1a 补丁，已发布）**：安装可用性修复——`assembleRelease` 缺签名配置时回退 debug 签名、发布流水线强制 `apksigner verify` 并支持 Secrets 注入正式密钥，修复发布制品未签名导致手机报「解析软件包时出现问题」（[Issue #23](https://github.com/LiYihai1121/ui-app/issues/23)）；无功能行为变化
 - [x] **v3.1.0（M1b，已发布）**：协议 v2——服务端 `selectors` 字段与校验 + `SyncClient` 解析 + 点击结果校验与本地规则黑名单（步骤 C/D）；并随本版本一并交付品牌更名「轻启」、启动器/磁贴图标重设计、首页与「我的」页 UI 重设计、ktlint 静态门禁与 Compose BOM/compileSdk 升级（用户可见变更详见 [CHANGELOG.md](../../CHANGELOG.md) 3.1.0）。**真机矩阵（Android 8/13/14/15 × MIUI/HarmonyOS/ColorOS/OriginOS）尚未完成**，维护者显式决定先行发布正式版（见 CHANGELOG 3.1.0 发布验收覆盖声明）；Git tag `v3.1.0` 已创建于 `main` 提交 `ad188b0`（PR #42 经 Squash 合入），制品由正式密钥签名并经 `apksigner verify` 复核（见 [RELEASE-HISTORY.md](RELEASE-HISTORY.md)）。
-- [ ] **v3.2.0（M1c）**：节点快照工具——App 内导出当前界面节点树 JSON，规则编写不再靠猜（步骤 E）
-- [ ] **v3.3.0（M1d）**：Top 30 App 首批选择器规则入库 + 真机回归与性能采样 + 规则审核通道（步骤 F、L5 基础）
-- [ ] **v3.4.0（M2）**：L2 网络过滤层——DNS 过滤 + `filter-rules` 路由
-- [ ] **v3.5.0（M3）**：L3 防摇一摇模块（独立可选 APK）
+- [x] **v3.2.0（M1c，已发布）**：节点快照工具——App 内导出当前界面节点树 JSON，规则编写不再靠猜（步骤 E）。交付：`service/NodeSnapshot` 捕获与序列化 + 二分查找 96 KB 截断（`truncated=true` 标记）+ 设置页调试入口（服务未运行时显式提示）+ `ServiceIntentContractTest` 守护广播字面量与 `service/` 常量的单一真值源。**随本版本一并落版「UI 重新设计与权限体系重构」全部未发版内容**（语言选择、权限清单三态化等，详见 [CHANGELOG.md](../../CHANGELOG.md) 3.2.0）。已随 PR #46 Squash 合入 `main`（提交 `f5127dd`）并打 annotated tag `v3.2.0`（2026-10-06）发布，Release 资产 `AdSkip-v3.2.0.apk` 1,923,024 bytes + `SHA256SUMS`（见 [RELEASE-HISTORY.md](RELEASE-HISTORY.md)）。
+- [x] **v3.3.0（安全与工程补丁，已发布）**：`SyncClient` 迁移至 OkHttp 4.12（连接/读取/写入超时配置 + MockWebServer 回归测试）、服务端请求体大小上限、JSONL 结构化日志、`EncryptedSharedPreferences` 幂等初始化与可测试接收器抽象、统计备份文件名加随机后缀。**本版不含**规则 HMAC 签名/验签、未配置任何证书 pin、未强制 HTTPS（安全能力边界见 [CHANGELOG.md](../../CHANGELOG.md) 3.3.0「Security status correction」）。`bun test` 83 pass / `bun run typecheck` 绿，`ktlintCheck` + `assembleDebug` + `testDebugUnitTest` 全绿；tag `v3.3.0`（`1c296c0`，见 [RELEASE-HISTORY.md](RELEASE-HISTORY.md)）。
+- [x] **v3.4.0（monorepo 解耦 + 安全批次收官，已发布）**：`applicationId`/namespace 迁移 `com.qingqi.adskip`（**BREAKING，已装用户需卸载重装**）+ 服务端解耦 client 包名 + M1 接收器非导出/包级黑名单 + M2 签名禁回退。**序列调整**：原规划 `3.4.0 = M2 (L2 DNS 过滤)` 顺延，L2 仍待 Phase 0 合规评审获批。
+- [ ] **M1d（版本号待定，步骤 F）**：Top 30 App 首批选择器规则入库 + 真机回归与性能采样 + 规则审核通道（步骤 F、L5 基础）。**`3.3.0` 与 `3.4.0` 已被占用**，随下一可用 minor 承载；冻结时在下方与 [ROADMAP-ADS.md](ROADMAP-ADS.md) 第 6 节同步最终版本号。
+- [ ] **v3.5.0（M2）**：L2 网络过滤层——DNS 过滤 + `filter-rules` 路由
+- [ ] **v3.6.0（M3）**：L3 防摇一摇模块（独立可选 APK）
 - [ ] **v4.0.0（M4）**：L4 通知过滤 + ROM 指引 + 规则生态完善
 
 ### 🧪 预发布（RC，验收未完成）
@@ -107,6 +111,36 @@
   > M4 保留通知过滤与通知类 ROM 指引。详见 [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) 第 2/2.1/3 节。
 
 > **为什么剥离原 `3.1.0`**：原计划把「选择器引擎 + 快照工具 + Top 30 规则 + 真机验收 ≥95%」压在单个 `3.1.0` 里，而引擎内核（步骤 A/B）已按 PR 增量并入 `main` 却无版本承载——继续维持大礼包会让未发布内容堆积，且真机指标反过来阻塞协议与工具。现按「是否产生用户可见能力」切分小版本：每个版本可独立验收、独立回滚（选择器是纯增量字段，服务端停发即回退 v1 行为，无数据迁移）。
+
+### ✅ 已随 v3.2.0 发布（UI 重设计与权限体系重构）
+
+> 本轮「UI 重新设计与权限体系重构」已随 v3.2.0（2026-10-06，tag `v3.2.0`）正式发布，具体用户可见变更见 [CHANGELOG.md](../../CHANGELOG.md) 3.2.0。贯穿三条原则：
+> **① 权限与系统开关一律三态**——无法确认 ≠ 未开启；**② 同一事实只有一份真值源**；
+> **③ 能机器检查的约定都写成门禁**（契约由 4 条增至 40 余条）。
+
+- [x] **权限与系统开关清单**：四类开关（无障碍 / 电池豁免 / 厂商自启动 / 快捷磁贴）由三处收敛为一张可核对清单，
+  置于「我的」页首位。厂商自启动与快捷磁贴**刻意停在「无法自动确认」**——系统无公开查询 API，
+  谎报「未开启」会让已经配好的用户在系统页反复来回而状态永不变。
+- [x] **无障碍与电池豁免改读系统真值**：此前 UI 只订阅进程信号，用户在系统设置里改完开关而 Service 回调未到时，
+  首页会显示过期的「运行中」，与读真值的快捷磁贴说法不一致。现两屏都在 `ON_RESUME` 重查。
+- [x] **三态化重构**：`device/AccessibilityStatus` 与 `device/BatteryExemption` 把「真值 / 进程信号 / 查询失败」
+  收敛为 `ON`/`OFF`/`UNKNOWN`，判定为纯函数、可 JVM 单测穷举。
+- [x] **UI 层交互细节**：补齐错误态（此前只有空态，失败会显示成「暂无内容」）、修复骨架屏永久卡死、
+  首页补页面标题、大屏内容封顶抽为 `Modifier.screenContentWidth()`、组件库新增 `ErrorState` / `StatusDot`。
+- [x] **无障碍修复**：标题补 `heading()` 语义、消除四处重复播报、全屏浮层做语义隔离（此前被遮住的控件
+  仍可被 TalkBack 聚焦激活）、关键词 chip 的删除语义修正。
+- [x] **配色补全**：补上一直走 M3 默认值的 `surfaceContainer*` 三个角色（默认值是紫调中性色，
+  与品牌蓝不同色相）；新增 `values-night/themes.xml` 消除深色系统下的启动白屏。
+- [x] **应用内界面语言选择**：可选跟随系统 / 简体中文 / English（默认跟随系统）。
+  **双路径**：API 33+ 用平台 `LocaleManager`（系统级生效，会同步到系统「应用语言」设置），
+  API 26–32 无平台 API，靠 `attachBaseContext` 包 Context + 重建 Activity。
+  已在模拟器实测可逆（切中文 → 平台返回 `[zh-CN]`；切回跟随系统 → 返回 `[]` 且界面复原）。
+
+> **已发布的遗留项（待后续版本处理）**：字阶 15 个 M3 角色中 7 个零引用、形状槽位 `medium`/`extraLarge` 零引用——
+> 这是 M3 要求完整体系所致，已用契约固化「体系完整」，非遗漏；快捷磁贴的「是否已添加」若要可确认，
+> 需在磁贴服务里持久化标志。**该存储问题的解法已在语言功能中出现**：把跨层共享的偏好放进
+> `core/`（`ui/` 与 `device/` 都允许依赖它），即可绕开「`device/` 不能依赖 `data/`」的限制
+> （见 `core/LanguagePreferences`）。API 26–32 的低版本语言路径亦待真机覆盖（与 v3.1.0 真机矩阵欠账一并处理）。
 
 ### 候选池（未排期，不承诺版本）
 
