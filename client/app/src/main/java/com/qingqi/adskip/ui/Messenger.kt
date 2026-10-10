@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
  * - Toast 会被后一条顶掉、时长由系统决定、深色背景上容易被忽略；
  *   Snackbar 可排队、可关闭、可带 action。
  *
- * 外壳在 `AdskipShell` 里创建 [SnackbarHostState] 并作为 `Scaffold.snackbarHost`，
+ * 外壳在 `AdSkipShell` 里创建 [SnackbarHostState] 并作为 `Scaffold.snackbarHost`，
  * 再把 [Messenger] **显式传参**给需要发消息的页面。这里刻意不用 CompositionLocal：
  * 依赖显式可见，页面签名即它的能力清单，Preview 与单测也能直接注入假实现。
  */

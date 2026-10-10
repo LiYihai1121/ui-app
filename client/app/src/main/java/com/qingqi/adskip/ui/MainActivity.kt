@@ -46,7 +46,7 @@ import com.qingqi.adskip.ui.apps.AppsScreen
 import com.qingqi.adskip.ui.home.HomeScreen
 import com.qingqi.adskip.ui.logs.LogsScreen
 import com.qingqi.adskip.ui.profile.ProfileScreen
-import com.qingqi.adskip.ui.theme.AdskipTheme
+import com.qingqi.adskip.ui.theme.AdSkipTheme
 import com.qingqi.adskip.ui.theme.screenContentWidth
 
 /**
@@ -57,7 +57,7 @@ import com.qingqi.adskip.ui.theme.screenContentWidth
  *
  * 边到边（edge-to-edge）约定：
  * `targetSdk = 35` 在 Android 15 上强制边到边，内容必然绘制到状态栏/导航栏之下。
- * 因此 insets 的唯一收口点是 [AdskipApp] 的 `Scaffold`：页面自身不再各自处理
+ * 因此 insets 的唯一收口点是 [AdSkipApp] 的 `Scaffold`：页面自身不再各自处理
  * `statusBarsPadding`（旧版只有 Home 漏了，导致标题压在时钟上）。
  * 页面内容统一只消费 `innerPadding`。
  */
@@ -80,7 +80,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 自动同步 Job 的兜底重注册在组合根 AdskipApp.onCreate 中完成
+        // 自动同步 Job 的兜底重注册在组合根 AdSkipApp.onCreate 中完成
 
         // 显式开启边到边，不依赖 targetSdk 的隐式行为（隐式行为随系统版本变化，过于脆弱）
         enableEdgeToEdge()
@@ -92,8 +92,8 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            AdskipTheme {
-                AdskipShell()
+            AdSkipTheme {
+                AdSkipShell()
             }
         }
     }
@@ -120,7 +120,7 @@ private val TopLevelDestinations = listOf(
  * 只有将来真的出现「列表 → 详情」这类二级页面时，才应恢复方向性转场。
  */
 @Composable
-private fun AdskipShell() {
+private fun AdSkipShell() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination

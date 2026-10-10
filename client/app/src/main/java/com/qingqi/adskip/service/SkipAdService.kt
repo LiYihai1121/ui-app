@@ -11,7 +11,7 @@ import android.graphics.Rect
 import android.view.accessibility.AccessibilityEvent
 import android.widget.Toast
 import androidx.core.content.ContextCompat
-import com.qingqi.adskip.AdskipApp
+import com.qingqi.adskip.AdSkipApp
 import com.qingqi.adskip.R
 import com.qingqi.adskip.core.AppEvents
 import com.qingqi.adskip.core.Clock
@@ -31,7 +31,7 @@ import com.qingqi.adskip.net.SyncClient
  * 匹配策略在 engine 层，规则存取在 data 层，网络在 net 层。
  *
  * v2.2 增强：
- * - 经 [AdskipApp.container] 取依赖（手动 DI）
+ * - 经 [AdSkipApp.container] 取依赖（手动 DI）
  * - 使用 [Clock] 注入时间（节流去抖不硬依赖 SystemClock）
  * - 点击前过 [SafetyGuard]（黑名单/合法性护栏）
  * - [onServiceConnected] 重建全部运行态
@@ -165,7 +165,7 @@ class SkipAdService : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        val container = AdskipApp.get(this)
+        val container = AdSkipApp.get(this)
         clock = container.clock
         rulesRepo = container.rulesRepo
         statsRepo = container.statsRepo

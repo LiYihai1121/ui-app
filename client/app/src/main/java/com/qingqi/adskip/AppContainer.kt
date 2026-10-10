@@ -14,7 +14,7 @@ import com.qingqi.adskip.net.SyncClient
 /**
  * 手动 DI 容器：收口所有依赖，不引入任何第三方 DI 框架。
  *
- * UI 层经 `(application as AdskipApp).container` 取依赖；
+ * UI 层经 `(application as AdSkipApp).container` 取依赖；
  * Service 层同理。ViewModel 经容器取仓库并暴露 StateFlow。
  */
 class AppContainer(val app: Application, context: Context) {

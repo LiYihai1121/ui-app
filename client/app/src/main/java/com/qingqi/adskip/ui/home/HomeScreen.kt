@@ -79,7 +79,7 @@ import com.qingqi.adskip.ui.theme.UiSizes
  * 主页：服务状态、跳过统计、关键词管理、模拟测试。
  *
  * 版式约定（v3.2 首页重设计）：
- * - 页面自身**不**创建 `Scaffold`，inset 由外壳 `AdskipShell` 统一分发；
+ * - 页面自身**不**创建 `Scaffold`，inset 由外壳 `AdSkipShell` 统一分发；
  * - 根节点挂 `imePadding()`，软键盘弹出时关键词输入框不会被遮住；
  * - 状态语义（运行 / 停止）只用两种颜色表达，其余元素一律走中性色，
  *   避免旧版「绿 / 蓝 / 紫」三色各说各话。

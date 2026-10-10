@@ -21,7 +21,7 @@ import org.jlleitschuh.gradle.ktlint.KtlintExtension
  * 设计依据：docs/planning/DESIGN-BUILD-FRAMEWORK.md 阶段 B。
  * 约定边界：模块特有内容（applicationId / versionCode / versionName / 签名 / 依赖）留在 :app。
  */
-class AdskipAndroidApplicationPlugin : Plugin<Project> {
+class AdSkipAndroidApplicationPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             pluginManager.apply("com.android.application")

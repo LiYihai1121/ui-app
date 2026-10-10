@@ -86,9 +86,9 @@ client/
     └── convention/
         ├── build.gradle.kts          # 声明依赖、gradlePlugin{ id("adskip.android.application") }
         └── src/main/kotlin/
-            ├── AdskipAndroidApplicationPlugin.kt   # id("adskip.android.application") 已实施
-            ├── AdskipLibraryPlugin.kt               # id("adskip.android.library")（阶段 C 用）
-            └── AdskipJvmPlugin.kt                   # id("adskip.jvm")（阶段 C 用）
+            ├── AdSkipAndroidApplicationPlugin.kt   # id("adskip.android.application") 已实施
+            ├── AdSkipLibraryPlugin.kt               # id("adskip.android.library")（阶段 C 用）
+            └── AdSkipJvmPlugin.kt                   # id("adskip.jvm")（阶段 C 用）
 ```
 
 插件编号建议 `adskip.*` 前缀，便于与其他插件区分。`build-logic` 内部通过 `libs` 访问器直接引用主工程的

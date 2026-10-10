@@ -20,7 +20,7 @@ private val LineHeightCentered = LineHeightStyle(
     trim = LineHeightStyle.Trim.None,
 )
 
-val AdskipTypography = Typography(
+val AdSkipTypography = Typography(
     displayLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.SemiBold,

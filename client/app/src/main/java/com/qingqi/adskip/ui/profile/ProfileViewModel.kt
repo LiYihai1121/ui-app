@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.qingqi.adskip.AdskipApp
+import com.qingqi.adskip.AdSkipApp
 import com.qingqi.adskip.AppContainer
 import com.qingqi.adskip.core.AppEvents
 import com.qingqi.adskip.device.AccessibilityStatus
@@ -132,7 +132,7 @@ class ProfileViewModel(private val container: AppContainer) : ViewModel() {
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val app = this[APPLICATION_KEY] as AdskipApp
+                val app = this[APPLICATION_KEY] as AdSkipApp
                 ProfileViewModel(app.container)
             }
         }

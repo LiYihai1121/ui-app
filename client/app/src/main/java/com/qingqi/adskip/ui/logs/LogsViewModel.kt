@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.qingqi.adskip.AdskipApp
+import com.qingqi.adskip.AdSkipApp
 import com.qingqi.adskip.AppContainer
 import com.qingqi.adskip.data.StatsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,7 +67,7 @@ class LogsViewModel(private val container: AppContainer) : ViewModel() {
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val app = this[APPLICATION_KEY] as AdskipApp
+                val app = this[APPLICATION_KEY] as AdSkipApp
                 LogsViewModel(app.container)
             }
         }
