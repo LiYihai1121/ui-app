@@ -74,6 +74,44 @@ describe("smoke", () => {
     expect(j.hash.startsWith("sha256:")).toBe(true);
   });
 
+  it("安全头覆盖 API 响应（nosniff/XFO/Referrer/CSP）", async () => {
+    const res = await fetch(`${base}/api/v1/health`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(res.headers.get("x-frame-options")).toBe("DENY");
+    expect(res.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(res.headers.get("content-security-policy")).toContain("default-src 'self'");
+    // 明文部署不得下发 HSTS
+    expect(res.headers.get("strict-transport-security")).toBeNull();
+  });
+
+  it("未配置签名密钥时不下发 X-Rules-Signature", async () => {
+    const res = await fetch(`${base}/api/v1/rules/latest`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-rules-signature")).toBeNull();
+  });
+
+  it("配置签名密钥后签发并可验签（按原始字节串）", async () => {
+    const { config } = await import("../src/config");
+    const saved = config.RULES_SIGNING_KEY;
+    config.RULES_SIGNING_KEY = "smoke-sign-key";
+    try {
+      const res = await fetch(`${base}/api/v1/rules/latest`);
+      expect(res.status).toBe(200);
+      const sig = res.headers.get("x-rules-signature");
+      expect(sig).not.toBeNull();
+      // 用独立实现复算：签名必须覆盖响应体原文
+      const crypto = await import("node:crypto");
+      const expected = crypto
+        .createHmac("sha256", "smoke-sign-key")
+        .update(await res.clone().text(), "utf8")
+        .digest("hex");
+      expect(sig).toBe(expected);
+    } finally {
+      config.RULES_SIGNING_KEY = saved;
+    }
+  });
+
   it("ETag 与 hash 一致", async () => {
     const res = await fetch(`${base}/api/v1/rules/latest`);
     const j = (await res.json()) as any;

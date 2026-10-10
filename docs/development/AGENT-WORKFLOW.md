@@ -69,7 +69,7 @@ git rev-parse --show-toplevel  # 确认工作区根
 
 - **同一时刻，一个文件只有一个写入者**。开工前在认领板登记「我负责哪些路径」；
 - 需要改别人认领的文件时，**先在认领板发起交接请求**，由对方确认或改由自己接手，不得直接改；
-- 认领粒度建议到目录：例如 `client/app/src/main/java/com/ldp/adskip/device/`、`server/src/api/`、`docs/planning/`；
+- 认领粒度建议到目录：例如 `client/app/src/main/java/com/qingqi/adskip/device/`、`server/src/api/`、`docs/planning/`；
 - **不允许两个 Agent 在同一分支上工作**（分支与 Agent 一一对应，见第 4 节）。
 
 ### 3.2 认领板
@@ -162,7 +162,7 @@ Agent 之间移交任务或收工时，输出以下五项，缺一项都会让�
 
 ## 9. 卫生检查（已落到 CI）
 
-以下规则由 `client/app/src/test/java/com/ldp/adskip/arch/RepoHygieneTest.kt` 随 `testDebugUnitTest` 强制执行，违反即测试失败：
+以下规则由 `client/app/src/test/java/com/qingqi/adskip/arch/RepoHygieneTest.kt` 随 `testDebugUnitTest` 强制执行，违反即测试失败：
 
 | 检查 | 拦截的混乱 |
 | --- | --- |

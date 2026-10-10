@@ -11,10 +11,34 @@ import {
   type Handler,
 } from "../utils/httpUtil";
 import { cleanRules, cleanBatchReport, cleanReportEvent, isValidPackage } from "../utils/validate";
+import { RULES_SIGNATURE_HEADER, signRulesBody } from "../utils/sign";
 
-export const v0_latest: Handler = () => {
+/**
+ * 规则下发响应：对「即将发出的字节串原文」做 HMAC-SHA256 签名。
+ *
+ * 为什么先序列化再签发：签名必须覆盖客户端收到的那串字节。若签的是重新
+ * 序列化的对象，两端键序/数字格式一旦漂移就会出现假失配。密钥未配置
+ * （RULES_SIGNING_KEY 为空）时不下发签名头——客户端配了密钥会失败关闭
+ * 拒载；两端都没配则退回历史明文生态。
+ */
+function signedRulesJson(
+  payload: unknown,
+  extra: Record<string, string> = {}
+): Response {
+  const body = JSON.stringify(payload);
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json; charset=utf-8",
+    ...extra,
+  };
+  const sig = signRulesBody(body);
+  if (sig) headers[RULES_SIGNATURE_HEADER] = sig;
+  return new Response(body, { status: 200, headers });
+}
+
+export const v0_latest: Handler = (req, _url, ctx) => {
+  if (!limitRead(req, ctx.ip)) return errorJson(429, "rate limited");
   const r = getRules();
-  return jsonResponse({
+  return signedRulesJson({
     version: r.version,
     updatedAt: r.updatedAt,
     keywords: r.keywords,
@@ -26,11 +50,12 @@ export const v0_latest: Handler = () => {
   });
 };
 
-export const v1_latest: Handler = (req) => {
+export const v1_latest: Handler = (req, _url, ctx) => {
+  if (!limitRead(req, ctx.ip)) return errorJson(429, "rate limited");
   const rules = getRules();
   const ifNoneMatch = req.headers.get("if-none-match");
   if (ifNoneMatch && ifNoneMatch === rules.hash) return statusResponse(304);
-  return jsonResponse(
+  return signedRulesJson(
     {
       schemaVersion: rules.schemaVersion,
       version: rules.version,
@@ -38,15 +63,15 @@ export const v1_latest: Handler = (req) => {
       updatedAt: rules.updatedAt,
       rules: rules.rules,
     },
-    200,
     { ETag: rules.hash }
   );
 };
 
 export const v0_publish: Handler = async (req, _url, ctx) => {
+  // 限流先于鉴权：401/503 不计入令牌桶的话，admin token 可被无限速暴力破解
+  if (!limitWrite(req, ctx.ip)) return errorJson(429, "rate limited");
   const auth = requireAdmin(req);
   if (!auth.ok) return errorJson(auth.status, auth.error);
-  if (!limitWrite(req, ctx.ip)) return errorJson(429, "rate limited");
   let body: string;
   try {
     body = await readBody(req);
@@ -66,9 +91,9 @@ export const v0_publish: Handler = async (req, _url, ctx) => {
 };
 
 export const v1_publish: Handler = async (req, _url, ctx) => {
+  if (!limitWrite(req, ctx.ip)) return errorJson(429, "rate limited");
   const auth = requireAdmin(req);
   if (!auth.ok) return errorJson(auth.status, auth.error);
-  if (!limitWrite(req, ctx.ip)) return errorJson(429, "rate limited");
   let body: string;
   try {
     body = await readBody(req);
@@ -202,9 +227,10 @@ function evalSelector(expr: string, sample: string, viewId: string): SelectorVer
 }
 
 export const v1_testRule: Handler = async (req, _url, ctx) => {
+  // 同 v*_publish：限流先于鉴权，堵住未认证暴力尝试
+  if (!limitRead(req, ctx.ip)) return errorJson(429, "rate limited");
   const auth = requireAdmin(req);
   if (!auth.ok) return errorJson(auth.status, auth.error);
-  if (!limitRead(req, ctx.ip)) return errorJson(429, "rate limited");
   let body: string;
   try {
     body = await readBody(req);

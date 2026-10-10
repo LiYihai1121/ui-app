@@ -21,7 +21,7 @@ junit = "4.13.2"
 orgjson = "20240303"                 # 单测用真实 org.json 实现（AGP android.jar 桩在 returnDefaultValues 下全返回默认值）
 
 # 安全存储
-securityCrypto = "1.1.0-alpha07"
+securityCrypto = "1.1.0"
 
 # HTTP 客户端
 okhttp = "4.12.0"

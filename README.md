@@ -93,7 +93,7 @@ AdSkip/            # 全栈 monorepo
 ├── docs/          # 文档地图 README.md（规划事实源入口）+ api/ architecture/ development/ planning/ diagrams/
 └── .github/       # CI 工作流
 
-client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，零第三方依赖）
+client/app/src/main/java/com/qingqi/adskip/   # Android 客户端源码（Kotlin，零第三方依赖）
 ├── AdskipApp.kt                    # Application + AppContainer（手动 DI）
 ├── core/                           # Clock / AppExecutors / LogRing / AppEvents（状态总线）
 ├── ui/                             # 界面层（Compose 单 Activity + Navigation）
@@ -125,7 +125,7 @@ client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，
 └── sync/
     └── SyncJobService.kt           # JobScheduler 定时同步（三合一，跨重启持久化）
 
-client/app/src/test/java/com/ldp/adskip/   # JVM 单测（引擎/护栏/边界与清单契约守护/选择器），随门禁运行
+client/app/src/test/java/com/qingqi/adskip/   # JVM 单测（引擎/护栏/边界与清单契约守护/选择器），随门禁运行
 
 server/                             # 后端（Bun + TypeScript，零运行时依赖）
 ├── server.ts                       # Bun.serve 入口、路由分发、优雅停机
@@ -204,7 +204,7 @@ bun run typecheck     # tsc --noEmit
 > | 解析软件包时出现问题 | 传输中断，或被聊天工具改名/压缩（大小与 `SHA256SUMS` 不一致） | 比对 SHA-256 后重传，或改用服务端 `/download` |
 > | 应用未安装 / 签名冲突 | 手机上已装 debug 签名版或其它密钥版本 | 卸载 `com.ldp.adskip` 后重装 |
 
-要求：JDK 17+、Android SDK（compileSdk 35）、Bun 1.1+（服务端）。Android 部分也可直接用 Android Studio / IntelliJ 打开 `client/` 目录。
+要求：JDK 17+、Android SDK（compileSdk 37）、Bun 1.1+（服务端）。Android 部分也可直接用 Android Studio / IntelliJ 打开 `client/` 目录。
 
 ## 分支与版本
 
