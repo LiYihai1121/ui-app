@@ -21,6 +21,8 @@
 
 ## 功能（v3.4）
 
+> **当前交付范围：** 已发布版本主要提供 L1 无障碍规则匹配与明确“跳过”控件点击。Top 30 国产 App 规则与真机验收仍未完成；L2 DNS/VpnService 过滤、L3 Root/LSPosed Hook、L4 通知推广治理均为规划项，**当前版本未实现、未启用**。不承诺全量去广告。详见 [广告治理路线图](docs/planning/ROADMAP-ADS.md)。
+
 ### Android 客户端（Kotlin + Jetpack Compose，MVVM）
 
 - ✅ 自动点击开屏广告「跳过」按钮，**三通道识别**：**选择器**（类 CSS 子集，表达节点上下文关系，优先级最高）+ **文本关键词** + **控件 ViewID**（支持纯图片按钮）
