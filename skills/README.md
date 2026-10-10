@@ -21,10 +21,20 @@ skills/
 │   ├── docs/specs/             引入 Spec 与决策记录
 │   ├── scripts/                校验脚本（validate.py）
 │   └── tests/                  决策场景集
-└── software-development-full/  通用完整版软件开发规则（全场景开发协议；来源与许可状态见 NOTICE.md，
-    │                         上游 LICENSE 未随附，对外分发前须补齐）
-    ├── SKILL.md
-    └── NOTICE.md
+├── software-development-full/  通用完整版软件开发规则（全场景开发协议；来源与许可状态见 NOTICE.md，
+│   │                         上游 LICENSE 未随附，对外分发前须补齐）
+│   ├── SKILL.md
+│   └── NOTICE.md
+├── android-compose-design/     自研技能：Compose UI 规范（theme token / 共享组件 / UI 契约测试）
+│   └── SKILL.md
+├── accessibility-engine-guard/ 自研技能：L1 引擎硬护栏（选择器子集 / SafetyGuard / 点击校验）
+│   └── SKILL.md
+├── android-vpn-dns-filter/     自研技能：L2 DNS 过滤护栏（合规前置 / 默认关闭 / 只拦不改）
+│   └── SKILL.md
+├── vendor-rom-keepalive/       自研技能：厂商 ROM 保活与跳转（入口表 / 逐级降级 / queries 契约）
+│   └── SKILL.md
+└── architecture-boundary-guard/ 自研技能：架构边界与契约测试驱动（契约先行 / 测试地图）
+    └── SKILL.md
 ```
 
 ## SKILL.md 格式
