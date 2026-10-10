@@ -18,7 +18,7 @@
 
 | 版本 | Git tag | 对应提交 | GitHub Release | 状态 |
 | --- | --- | --- | --- | --- |
-| `3.3.0` | [`v3.3.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) | `65442cf` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) | **待发布**（release.yml 自动构建中；由 `release/v3.3.0` 分支创建 annotated tag，CI 校验版本一致性后构建 Release APK + `SHA256SUMS`） |
+| `3.3.0` | [`v3.3.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) | `1c296c0` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) | 已发布（`AdSkip-v3.3.0.apk` 2,047,331 bytes，`SHA256=e33bc75b81ae6470aa75ed6bbc51dc125756178f8d6363a7df38006bcff3bf09`，Release 资产 `SHA256SUMS`；由 release.yml 构建并创建，基于 `release/v3.3.0` 分支，CI 校验版本一致性后构建 Release APK + `SHA256SUMS`） |
 | `3.2.0` | [`v3.2.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.2.0) | `f5127dd` || [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.2.0) | 已发布（`AdSkip-v3.2.0.apk` 1,923,024 bytes，`SHA256=6f958ed5…fcb4`，Release 资产 `SHA256SUMS`；由 release.yml 构建并创建，经 PR #46 Squash 合入 `main`） |
 | `3.1.0` | [`v3.1.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0) | `ad188b0` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0) | 已发布（`AdSkip-v3.1.0.apk` 1,895,460 bytes，`SHA256=30657f9c…fb6`，`CN=AdSkip Release` 正式签名，`apksigner verify` 通过；厂商保活与磁贴未真机验收，见下「发布基线说明」） |
 | `3.1.0-rc.1` | [`v3.1.0-rc.1`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0-rc.1) | `696ef1e` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0-rc.1) | **预发布**（已签名 APK + `SHA256SUMS`；厂商跳转与磁贴未真机验收，**不可作为正式版分发**） |
@@ -53,7 +53,7 @@ Release list 的维护要求：版本变更、tag、合并提交和 GitHub Relea
 
 ## 发布基线说明
 
-- `v3.3.0`（提交 `65442cf`，从 `main` `6ff5b73` 创建 `release/v3.3.0`）：**待 CI 完成发布验收**：合并 latest security audit remediation + OkHttp migration with certificate pinning。触及无障碍服务、厂商跳转、网络安全层，发布前需真机验证厂商保活入口与磁贴行为。版本号已在 release 分支冻结（`versionCode=13`、`versionName=3.3`、server `3.3.0`）。
+- `v3.3.0`（提交 `1c296c0`，从 `main` `6ff5b73` 创建 `release/v3.3.0`）：**已发布**：合并 latest security audit remediation + OkHttp migration with certificate pinning。CI 全门检通过：`bun test` 83 pass / `bun run typecheck` 绿；`ktlintCheck` + `assembleDebug` + `testDebugUnitTest` 全绿。制品由 CI 通过 `apksigner verify` 复核，`AdSkip-v3.3.0.apk` 2,047,331 bytes + `SHA256SUMS`。发布验收覆盖声明：本次发布触及网络安全层（TLS、证书钝化）与服务端安全加固，**未经真机验收厂商保活/磁贴路径**（与 v3.1.0 相同欠账，见「发布基线说明」）。版本号已在 release 分支冻结（`versionCode=13`、`versionName=3.3`、server `3.3.0`）。
 - `v3.1.0`（提交 `ad188b0`，PR #42 经 Squash 合入）：tag、提交与 GitHub Release 均在 `main` 线，制品由正式密钥签名并经 `apksigner verify` 复核（`CN=AdSkip Release`，v2 方案），可直接安装。
   **本次发布覆盖了 `CONTRIBUTING.md`「发布验收」的强制项**：触及无障碍服务、快捷磁贴、厂商跳转、后台调度、系统权限的变更要求真机验收通过后方可发正式版，而截至发布真机矩阵（Android 8/13/14/15 × MIUI/HarmonyOS/ColorOS/OriginOS）**尚未完成**，已知验证仅覆盖模拟器。覆盖由维护者显式决定，并已同步记入 `CHANGELOG.md` 的发布验收覆盖声明，避免后人误读为「已真机验收」。已知风险：磁贴与厂商保活路径在真实 ROM 上的行为可能与模拟器不同；如出现问题走 `hotfix/*`。
 - `v3.0.4`（提交 `27c3f5c`）是上一**发布基线**：tag、提交与 GitHub Release 均在 `main` 线上，制品由正式密钥签名、可直接安装。`v3.0.2`（提交 `5b85e96`，制品待补传）与 `v3.0.3`（提交 `958ce23`，制品不可安装，见「制品勘误」）同样位于 `main` 线，可追溯。
@@ -86,7 +86,7 @@ Release list 的维护要求：版本变更、tag、合并提交和 GitHub Relea
 | v3.0.3 | `958ce23` | L1 选择器第三通道内核（纯 JVM 增量） | `v3.0.3` |
 | v3.0.4 | `27c3f5c` | 安装可用性修复：release 签名回退 + 发布强制签名校验 + Secrets 正式签名 | `v3.0.4` |
 | v3.2.0 | `f5127dd` | 节点快照工具 + UI/权限重设计落版（`ServiceIntentContractTest` 守护广播字面量） | [`v3.2.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.2.0) |
-| v3.3.0 | `65442cf` | Security audit remediation + OkHttp migration with certificate pinning + HMAC/Limiter/Logging hardening | [`v3.3.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) |
+| v3.3.0 | `1c296c0` | Security audit remediation + OkHttp migration + certificate pinning + HMAC/Limiter/Logging hardening + unique stats backup filenames | [`v3.3.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) |
 
 ## 验证命令
 
