@@ -42,10 +42,10 @@ android {
     // namespace/compileSdk/minSdk/targetSdk 等公共项由 adskip.android.application 约定插件统一提供
     defaultConfig {
         applicationId = "com.ldp.adskip"
-        // 单调递增，禁止复用已发布编号（v3.1.0 = 10，本版必须 > 10）
-        versionCode = 12
+        // 单调递增，禁止复用已发布编号（v3.1.0 = 10，v3.2.0 = 12）
+        versionCode = 13
         // 展示值用 X.Y（与 CONTRIBUTING「版本策略」一致；server 侧用完整 X.Y.Z）
-        versionName = "3.2"
+        versionName = "3.3"
     }
 
     signingConfigs {
@@ -98,6 +98,14 @@ dependencies {
 
     // 安全存储（EncryptedSharedPreferences）
     implementation(libs.androidx.security.crypto)
+
+    // HTTP 客户端（连接池、证书锁定、重试）
+    implementation(libs.okhttp)
+
+    // 网络层测试（MockWebServer）
+    testImplementation(libs.okhttp.mockwebserver)
+    // org.json：单测跑在 JVM，android.jar 只提供桩（returnDefaultValues 下方法全返回默认值），需真实实现
+    testImplementation(libs.org.json)
 
     testImplementation(libs.junit)
 }
