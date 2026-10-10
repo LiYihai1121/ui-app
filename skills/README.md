@@ -4,7 +4,7 @@
 > 适用范围：所有随仓库版本控制的 Agent 技能（`branch-guard`、`code-simplifier`、`software-development-full` 等）。
 > 挂载方式：`kilo.json` 的 `skills.paths: ["./skills"]`；技能加载与权限见 [kilo.json](../kilo.json)。
 
-本目录是**随仓库版本控制的 Agent 技能**的唯一存放处。技能不是「个人配置」：放进 `.kilo/` 等被
+本目录是**随仓库版本控制的 Agent 技能**的唯一存放处。**许可门禁：** 任何来源或再分发权限未核实的外部技能，禁止放入可分发分支、构建产物或默认挂载清单；应暂时隔离，待来源、作者、版本与许可证核实后再恢复。技能不是「个人配置」：放进 `.kilo/` 等被
 `.gitignore` 忽略的目录的技能无法入库，等于每个 Agent 各有一套技能集——那正是「第二份真相」的另一种
 形态。因此所有技能放在 `skills/`，由 `kilo.json` 显式挂载，并由本文登记开发约定。
 
@@ -21,10 +21,7 @@ skills/
 │   ├── docs/specs/             引入 Spec 与决策记录
 │   ├── scripts/                校验脚本（validate.py）
 │   └── tests/                  决策场景集
-└── software-development-full/  通用完整版软件开发规则（全场景开发协议；来源与许可状态见 NOTICE.md，
-    │                         上游 LICENSE 未随附，对外分发前须补齐）
-    ├── SKILL.md
-    └── NOTICE.md
+└── software-development-full/  **临时隔离（quarantined）**：来源/再分发授权未核实；当前分支删除 SKILL.md，仅保留 NOTICE.md 记录处置原因
 ```
 
 ## SKILL.md 格式
@@ -54,7 +51,7 @@ metadata:            # 可选；按需补充
 1. 从最新 `main` 创建 `feature/<id>-<slug>` 分支（遵循 [CONTRIBUTING.md](../CONTRIBUTING.md) 分支策略）；
 2. 新建 `skills/<skill-name>/SKILL.md`，按上文格式编写 frontmatter 与正文；
 3. 若技能需要额外材料（校验脚本、测试场景、spec），随技能目录一并提供，不预建无用的通用框架；
-4. 第三方技能必须随包携带 `LICENSE` 与 `NOTICE.md`（来源与署名），遵守上游许可；
+4. 第三方技能必须先核实来源/许可，随包携带 `LICENSE` 与 `NOTICE.md`（来源与署名）；无法核实的技能必须暂时隔离，不得默认挂载或分发；
 5. 提交前跑通相关门禁（`ktlintCheck` / `assembleDebug` / `testDebugUnitTest`，技能若带 Python 校验脚本则一并运行）；
 6. 在 [docs/README.md](../docs/README.md) 的文档地图登记本目录与技能文档（目录结构 + 阅读顺序 + 事实源表）。
 
