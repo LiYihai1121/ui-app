@@ -18,7 +18,7 @@
 
 | 版本 | Git tag | 对应提交 | GitHub Release | 状态 |
 | --- | --- | --- | --- | --- |
-| `3.3.0` | [`v3.3.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) | `1c296c0` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) | 已发布（`AdSkip-v3.3.0.apk` 2,047,331 bytes，`SHA256=e33bc75b81ae6470aa75ed6bbc51dc125756178f8d6363a7df38006bcff3bf09`，`CN=AdSkip Release`，证书 SHA-256 `040d7afd0e288b7fe8df2aab43fb3f2b9b8eb458e88ab4d104d89921c9993edc`，含 `SHA256SUMS`；release workflow #38044504424 成功） |
+| `3.3.0` | [`v3.3.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) | `1c296c0` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) | 已发布（`AdSkip-v3.3.0.apk` 2,047,331 bytes，`SHA256=e33bc75b81ae6470aa75ed6bbc51dc125756178f8d6363a7df38006bcff3bf09`，`CN=AdSkip Release`，证书 SHA-256 `040d7afd0e288b7fe8df2aab43fb3f2b9b8eb458e88ab4d104d89921c9993edc`，与 v3.2.0 相同；applicationId 均为 `com.ldp.adskip`；含 `SHA256SUMS`；release workflow #38044504424 成功） |
 | `3.2.0` | [`v3.2.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.2.0) | `f5127dd` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.2.0) | 已发布（`AdSkip-v3.2.0.apk` 1,923,024 bytes，`SHA256=6f958ed5…fcb4`，Release 资产 `SHA256SUMS`；由 release.yml 构建并创建，经 PR #46 Squash 合入 `main`） |
 | `3.1.0` | [`v3.1.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0) | `ad188b0` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0) | 已发布（`AdSkip-v3.1.0.apk` 1,895,460 bytes，`SHA256=30657f9c…fb6`，`CN=AdSkip Release` 正式签名，`apksigner verify` 通过；厂商保活与磁贴未真机验收，见下「发布基线说明」） |
 | `3.1.0-rc.1` | [`v3.1.0-rc.1`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0-rc.1) | `696ef1e` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0-rc.1) | **预发布**（已签名 APK + `SHA256SUMS`；厂商跳转与磁贴未真机验收，**不可作为正式版分发**） |
@@ -55,7 +55,7 @@ Release list 的维护要求：版本变更、tag、合并提交和 GitHub Relea
 
 - `v3.3.0`（tag 目标 `1c296c0`，发布分支 `release/v3.3.0`）：2026-10-10 已发布，版本包含安全审计修复、OkHttp 迁移/证书锁定及统计备份文件名修复。首次发布运行 [#38043906806](https://github.com/LiYihai1121/ui-app/actions/runs/38043906806) 因备份轮转测试失败；后续修复提交 `1c296c0`，运行 [#38044504424](https://github.com/LiYihai1121/ui-app/actions/runs/38044504424) 成功生成 APK 和 `SHA256SUMS`。下载后复核 APK SHA-256 与资产校验文件相符；CI `apksigner verify` 通过，签名证书为 `CN=AdSkip Release`，证书 SHA-256 `040d7afd0e288b7fe8df2aab43fb3f2b9b8eb458e88ab4d104d89921c9993edc`。APK 为 2,047,331 bytes，SHA-256 `e33bc75b81ae6470aa75ed6bbc51dc125756178f8d6363a7df38006bcff3bf09`。
   **发布治理偏差（保留作审计记录，不得再次移动/删除 tag）：**最初 `v3.3.0` tag 指向版本提交 `65442cf`；首次构建失败后，tag 目标被更新为 `1c296c0` 并再次触发发布。当前目标 `1c296c0` 不在 `origin/main` 历史中，因此不满足“先合入 main 再打 tag”的发布要求。发布时安全/协议 PR #70 也尚未完成独立领域审查。不得将此流程作为后续发布范例。
-  发布验收覆盖声明：本次发布未完成厂商 ROM 真机验收，厂商保活与磁贴路径未实测；发布制品已由 CI 验证签名，但仍应按安装升级兼容性核对设备上已安装版本的签名证书。
+  发布验收覆盖声明：本次发布未完成厂商 ROM 真机验收，厂商保活与磁贴路径未实测；本地复核 v3.2.0 与 v3.3.0 APK 的签名证书 SHA-256 相同，且 `applicationId` 相同，可按同一签名身份升级。
 - `v3.1.0`（提交 `ad188b0`，PR #42 经 Squash 合入）：tag、提交与 GitHub Release 均在 `main` 线，制品由正式密钥签名并经 `apksigner verify` 复核（`CN=AdSkip Release`，v2 方案），可直接安装。
   **本次发布覆盖了 `CONTRIBUTING.md`「发布验收」的强制项**：触及无障碍服务、快捷磁贴、厂商跳转、后台调度、系统权限的变更要求真机验收通过后方可发正式版，而截至发布真机矩阵（Android 8/13/14/15 × MIUI/HarmonyOS/ColorOS/OriginOS）**尚未完成**，已知验证仅覆盖模拟器。覆盖由维护者显式决定，并已同步记入 `CHANGELOG.md` 的发布验收覆盖声明，避免后人误读为「已真机验收」。已知风险：磁贴与厂商保活路径在真实 ROM 上的行为可能与模拟器不同；如出现问题走 `hotfix/*`。
 - `v3.0.4`（提交 `27c3f5c`）是上一**发布基线**：tag、提交与 GitHub Release 均在 `main` 线上，制品由正式密钥签名、可直接安装。`v3.0.2`（提交 `5b85e96`，制品待补传）与 `v3.0.3`（提交 `958ce23`，制品不可安装，见「制品勘误」）同样位于 `main` 线，可追溯。
