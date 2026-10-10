@@ -7,6 +7,7 @@ import com.qingqi.adskip.core.AppExecutors
 import com.qingqi.adskip.core.LogRing
 import com.qingqi.adskip.data.Prefs
 import com.qingqi.adskip.data.RulesRepository
+import com.qingqi.adskip.data.ServerEndpoint
 import okhttp3.CertificatePinner
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
@@ -52,7 +53,7 @@ object SyncClient {
         .readTimeout(TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
         .writeTimeout(TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
 
-    /** 无 pins 的通用客户端：仅上报等低敏请求使用 */
+    /** 无 pins 的通用客户端：仅上报等低敏请求使用（httpPost 已强制 HTTPS-only） */
     private val plainClient: OkHttpClient by lazy { baseBuilder().build() }
 
     private fun clientForPins(host: String, pins: List<String>): OkHttpClient {
@@ -297,13 +298,14 @@ object SyncClient {
      * @return 拒绝原因；通过时返回 null。
      */
     private fun securityGuard(context: Context, base: String): String? {
+        if (!ServerEndpoint.isValid(base)) {
+            return "仅支持有效的 HTTPS 服务器地址，已拒绝明文连接"
+        }
         if (Prefs.getRulesSigningKey(context).isBlank()) {
             return "未配置规则签名密钥，已拒绝云端规则（防篡改）。请在本页底部配置"
         }
-        if (base.startsWith("https://", ignoreCase = true)) {
-            if (Prefs.getCertPins(context).isEmpty()) {
-                return "未配置证书指纹，已拒绝 HTTPS 连接。请在本页底部填入 sha256/... 指纹"
-            }
+        if (Prefs.getCertPins(context).isEmpty()) {
+            return "未配置证书指纹，已拒绝 HTTPS 连接。请在本页底部填入 sha256/... 指纹"
         }
         return null
     }
@@ -363,6 +365,7 @@ object SyncClient {
     }
 
     private fun httpPost(url: String, body: String) {
+        require(ServerEndpoint.isValid(url)) { "Only valid HTTPS URLs are allowed" }
         val request = Request.Builder()
             .url(url)
             .post(body.toRequestBody("application/json; charset=utf-8".toMediaType()))

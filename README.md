@@ -60,10 +60,12 @@
 1. 安装 APK 后打开应用
 2. 点「打开无障碍设置」→ 开启「净启动 AdSkip」服务
 3. （建议）将应用加入电池优化白名单，防止后台被清理
-4. 点「云端规则同步」→ 服务器地址填 `http://<本机IP>:3210` → 「立即同步云端规则」
+4. 点「云端规则同步」→ 填写启用了 TLS 的服务器 HTTPS 地址，并配置签名密钥和证书指纹 → 「立即同步云端规则」
 5. 打开任意带开屏广告的 App 即可自动跳过；可先用「测试：模拟开屏广告」验证
 
 > 仅用本地内置规则时无需后端，跳过功能开箱即用；自建后端（规则下发 / 统计 / 管理后台）的启动步骤见 [DEV-ENVIRONMENT.md](docs/development/DEV-ENVIRONMENT.md)。
+
+云同步仅接受 HTTPS。服务端对非 loopback 监听要求同时配置 `TLS_CERT` 与 `TLS_KEY`；使用 TLS 终止反向代理时，将服务绑定到 `127.0.0.1`，不要将明文监听端口暴露到网络。
 
 ## 技术原理
 
@@ -192,7 +194,7 @@ bun run typecheck     # tsc --noEmit
 
 | 渠道 | 说明 |
 | --- | --- |
-| 本地副本 | 将 Release APK 放在仓库根并命名为 `AdSkip-latest.apk`；服务端 `/download` 路由直接提供下载，手机浏览器访问 `http://<本机IP>:3210/download` 即可。 |
+| 本地副本 | 将 Release APK 放在仓库根并命名为 `AdSkip-latest.apk`；服务端 `/download` 路由直接提供下载，手机浏览器访问 `https://<服务器域名>:3210/download`。 |
 | GitHub Release | 由版本 tag 自动创建，上传 Release APK 和 `SHA256SUMS`。配置 `ADSKIP_KEYSTORE_BASE64` / `ADSKIP_STORE_PASSWORD` / `ADSKIP_KEY_ALIAS` / `ADSKIP_KEY_PASSWORD` Secrets 时用正式密钥签名；**M2 起不再回退 debug 签名**——未配置 Secrets 时 `assembleRelease` 直接失败，不再产出可被冒签/不可安装的制品。打包步骤强制 `apksigner verify`。 |
 
 > **手机安装报错排查**
