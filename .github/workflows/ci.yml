@@ -120,14 +120,16 @@ jobs:
           set -o pipefail
           ./gradlew testDebugUnitTest --no-daemon 2>&1 | tee /tmp/android-test.log
 
-      - name: Build release APK and verify it is signed
+      - name: Build release APK (unsigned, R8 gate)
+        # M2 起禁止静默回退 debug 签名（fix a446e89）：无正式签名时 assembleRelease 会按
+        # build.gradle.kts 的三态策略失败。CI 无发布密钥，这里显式 adskip.unsignedRelease=true
+        # 仅验证 release 变体（R8/minify）可构建；签名与可安装性校验由 release.yml 在
+        # 发布链路强制 apksigner verify（未签名产物一律拒绝上传，Issue #23）。
         run: |
           set -o pipefail
+          printf 'adskip.unsignedRelease=true\n' >> local.properties
           ./gradlew assembleRelease --no-daemon 2>&1 | tee /tmp/android-release-build.log
-          # 无签名配置时必须回退 debug 签名，产物必须可安装（未签名 APK 在手机上报「解析软件包时出现问题」，Issue #23）
-          apksigner="$(find "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/build-tools" -maxdepth 2 -type f -name apksigner | sort | tail -n 1)"
-          test -n "$apksigner"
-          "$apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
+          test -s app/build/outputs/apk/release/app-release.apk
 
       - name: Upload Android logs
         if: always()
