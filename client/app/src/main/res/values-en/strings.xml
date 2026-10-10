@@ -112,7 +112,7 @@
     <string name="language_en">English</string>
     <string name="settings_schedule_section">Sync &amp; Do Not Disturb</string>
     <string name="settings_server_label">Server Address</string>
-    <string name="settings_server_hint">http://your-pc-ip:3210</string>
+    <string name="settings_server_hint">https://your-server-host:3210</string>
     <string name="settings_save">Save Address</string>
     <string name="settings_saved">Server address saved</string>
     <string name="settings_sync">Sync Cloud Rules Now</string>
@@ -126,7 +126,7 @@
     <string name="settings_dnd_end">End Time</string>
     <string name="settings_battery_allow">Allow Background</string>
     <string name="settings_battery_done">Background allowed</string>
-    <string name="settings_url_invalid">URL must start with http:// or https://</string>
+    <string name="settings_url_invalid">Enter a valid HTTPS server URL</string>
     <string name="settings_security_section">Rule Security</string>
     <string name="settings_security_desc">The signing key must match RULES_SIGNING_KEY on the server. It is stored on this device and can be extracted by someone who controls the device; do not reuse other credentials. HTTPS connections also require the server SHA-256 certificate pin, one per line.</string>
     <string name="settings_signing_key_label">Rules signing key</string>

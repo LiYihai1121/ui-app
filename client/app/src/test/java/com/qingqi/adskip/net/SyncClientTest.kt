@@ -1,9 +1,12 @@
 package com.qingqi.adskip.net
 
+import com.qingqi.adskip.data.ServerEndpoint
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -24,13 +27,25 @@ class SyncClientTest {
     @Before
     fun setUp() {
         server = MockWebServer()
+        val serverCertificate = HeldCertificate.Builder()
+            .addSubjectAlternativeName("localhost")
+            .addSubjectAlternativeName("127.0.0.1")
+            .build()
+        val serverCertificates = HandshakeCertificates.Builder()
+            .heldCertificate(serverCertificate)
+            .build()
+        val clientCertificates = HandshakeCertificates.Builder()
+            .addTrustedCertificate(serverCertificate.certificate)
+            .build()
+        server.useHttps(serverCertificates.sslSocketFactory(), false)
         server.start()
 
-        // 注入测试用 OkHttpClient（禁用证书锁定，允许 MockWebServer 自签名证书）
+        // 注入信任测试证书的客户端；生产连接仍使用平台信任链与配置的证书 pin。
         SyncClient.testClient = okhttp3.OkHttpClient.Builder()
             .connectTimeout(2, TimeUnit.SECONDS)
             .readTimeout(2, TimeUnit.SECONDS)
             .certificatePinner(okhttp3.CertificatePinner.Builder().build())
+            .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager)
             .build()
     }
 
@@ -67,6 +82,13 @@ class SyncClientTest {
     fun `hostOf excludes credentials and custom port`() {
         assertEquals("example.com", SyncClient.hostOf("https://user:secret@example.com:8443/rules"))
         assertEquals("invalid-url", SyncClient.hostOf("not a url"))
+    }
+
+    @Test
+    fun `server endpoint accepts only valid HTTPS URLs`() {
+        assertTrue(ServerEndpoint.isValid("https://example.com:8443"))
+        assertFalse(ServerEndpoint.isValid("http://example.com:3210"))
+        assertFalse(ServerEndpoint.isValid("not a URL"))
     }
 
     @Test
