@@ -198,11 +198,27 @@ function rotateStatsBackup(day: string): void {
     const src = path.join(config.STATS_DIR, `${day}.json`);
     if (!dirOrFileExists(src)) return;
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const dest = path.join(config.STATS_DIR, "backups", `stats-${day}-${stamp}.json`);
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.copyFileSync(src, dest);
+    const dir = path.join(config.STATS_DIR, "backups");
+    fs.mkdirSync(dir, { recursive: true });
+    let dest: string;
+    while (true) {
+      dest = path.join(dir, `stats-${day}-${stamp}-${crypto.randomUUID()}.json`);
+      try {
+        fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL);
+        break;
+      } catch (error) {
+        if (
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          error.code === "EEXIST"
+        ) {
+          continue;
+        }
+        throw error;
+      }
+    }
 
-    const dir = path.dirname(dest);
     const files = fs
       .readdirSync(dir)
       .filter((f) => f.startsWith(`stats-${day}-`) && f.endsWith(".json"))
@@ -367,6 +383,10 @@ export function _resetSummaryCacheForTests(): void {
 export function _resetStatsCacheForTests(): void {
   statsCache.clear();
   summaryCache = null;
+}
+
+export function _rotateStatsBackupForTests(day: string): void {
+  rotateStatsBackup(day);
 }
 
 /** 仅供测试：清空规则缓存（隔离种子兜底测试的 config.RULES_FILE 切换） */
