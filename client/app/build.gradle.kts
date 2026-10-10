@@ -41,8 +41,8 @@ if (!releaseSigningReady) {
 android {
     // namespace/compileSdk/minSdk/targetSdk 等公共项由 adskip.android.application 约定插件统一提供
     defaultConfig {
-        // Keep the install identity stable while Kotlin sources move to the qingqi namespace.
-        applicationId = "com.ldp.adskip"
+        // applicationId 与源码 namespace 一并迁移到 qingqi（BREAKING: 已装用户需卸载重装，旧 EncryptedSharedPreferences 数据无法跨包名迁移）。
+        applicationId = "com.qingqi.adskip"
         // 单调递增，禁止复用已发布编号（v3.1.0 = 10，本版必须 > 10）
         versionCode = 12
         // 展示值用 X.Y（与 CONTRIBUTING「版本策略」一致；server 侧用完整 X.Y.Z）
