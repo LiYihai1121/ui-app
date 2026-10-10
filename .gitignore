@@ -11,9 +11,18 @@ captures/
 
 # 签名密钥与本地签名配置（绝不入库）
 signing/
+*.jks
+*.keystore
+*.p12
+*.pem
+.env
+.env.*
 
 # APK 产物（构建输出已忽略；根目录发布副本同样不入库）
 *.apk
+
+# 服务端运行数据：真实规则/统计/备份（数据可能暴露用户的真实应用包名，不入库）
+server/data/
 
 # 依赖安装产物（server/ 零运行时依赖，本地 bun install 时生成；绝不含锁文件语义）
 node_modules/
@@ -58,13 +67,11 @@ client/build-logic/**/bin/
 # Kotlin 构建会话目录
 .kotlin/
 
-# Pre-commit hooks
+# Pre-commit hooks：配置入库，检测基线不落地（detect-secrets 每次扫描重新生成，
+# 历史版本曾把「忽略 .pre-commit-config.yaml」与「例外放行」两份互相矛盾的
+# 规则留在这里，实际生效的是后者前者纯噪音，删除以正本清源）
 !.pre-commit-config.yaml
 .secrets.baseline
 
 # 本机 ACL 修复工具的审计输出目录（机器本地产物，不入库）
 .acl-recovery/
-
-# Pre-commit hooks
-.pre-commit-config.yaml
-.secrets.baseline

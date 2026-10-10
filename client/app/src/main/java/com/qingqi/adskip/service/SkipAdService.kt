@@ -8,9 +8,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Path
 import android.graphics.Rect
-import android.os.Build
 import android.view.accessibility.AccessibilityEvent
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import com.qingqi.adskip.AdskipApp
 import com.qingqi.adskip.R
 import com.qingqi.adskip.core.AppEvents
@@ -131,12 +131,18 @@ class SkipAdService : AccessibilityService() {
             if (registered) return
             val filter = IntentFilter(action)
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    service.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
-                } else {
-                    @Suppress("DEPRECATION")
-                    service.registerReceiver(receiver, filter)
-                }
+                // M1 修复：全 API 级别显式声明非导出。
+                // API < 33 的 flagless registerReceiver 在 AOSP 里默认 **exported**
+                // （BroadcastController: "Dynamic receivers are exported by default
+                // for versions prior to T"），第三方应用可向这两个进程内 action
+                // 投递触发（关机 DoS / 快照导出社工）。ContextCompat 在低 API 上
+                // 自动退化为等价的原生 flag，行为一致。
+                ContextCompat.registerReceiver(
+                    service,
+                    receiver,
+                    filter,
+                    ContextCompat.RECEIVER_NOT_EXPORTED,
+                )
                 registered = true
             } catch (e: Exception) {
                 LogRing.w("Service", "register $action receiver failed: ${e.message}")
@@ -216,6 +222,8 @@ class SkipAdService : AccessibilityService() {
         val pkg = event.packageName?.toString() ?: return
 
         if (pkg == IGNORE_PACKAGES) return
+        // A 链-4：包级硬底线（支付/银行类）在匹配入口整包拦截，不进任何通道
+        if (SafetyGuard.isPackageDenied(pkg)) return
         if (pkg == packageName && !AppEvents.testActive) return
 
         when (event.eventType) {
@@ -242,7 +250,8 @@ class SkipAdService : AccessibilityService() {
 
         // 安全护栏：点击前复核
         if (!SafetyGuard.canClick(target, pkg)) {
-            LogRing.w("Safety", "blocked click on pkg=$pkg label=${target.text}/${target.desc}")
+            // LOW-2：日志只记包名与结果，不记屏幕文本（节点 text/desc 属用户屏幕内容）
+            LogRing.w("Safety", "blocked click on pkg=$pkg")
             return
         }
 

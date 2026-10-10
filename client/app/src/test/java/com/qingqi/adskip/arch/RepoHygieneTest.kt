@@ -44,6 +44,30 @@ class RepoHygieneTest {
         )
     }
 
+    // ---------- 1b. 运行数据与密钥材料必须入库即被忽略 ----------
+
+    @Test
+    fun `gitignore covers runtime data and key material`() {
+        val patterns = gitignorePatterns()
+        val required = listOf(
+            "server/data", // 规则/统计运行数据与备份（含真实应用包名）
+            ".env", // 环境变量秘密
+            "local.properties", // 签名密钥与 SDK 路径
+            "*.jks",
+            "*.keystore",
+            "*.p12",
+            "*.pem",
+        )
+        val missing = required.filterNot { patterns.contains(it) }
+        assertTrue(
+            "根 .gitignore 必须覆盖以下模式（运行数据含用户隐私、密钥材料一旦入库即视为泄露，" +
+                "只能轮换不能撤回）：\n" +
+                missing.joinToString("\n") { "  $it" } +
+                "\n详见 docs/development/DEV-ENVIRONMENT.md 安全小节。",
+            missing.isEmpty(),
+        )
+    }
+
     // ---------- 2. 不得存在没有 VCS 元数据的整仓副本 ----------
 
     @Test
