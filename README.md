@@ -10,7 +10,7 @@
 
 ## 目录
 
-- [功能（v3.0）](#功能v30)
+- [功能（v3.4）](#功能v34)
 - [快速开始](#快速开始)
 - [技术原理](#技术原理)
 - [工程结构](#工程结构)
@@ -19,29 +19,33 @@
 - [合规提示](#合规提示)
 - [许可证](#许可证)
 
-## 功能（v3.0）
+## 功能（v3.4）
 
 ### Android 客户端（Kotlin + Jetpack Compose，MVVM）
 
-- ✅ 自动点击开屏广告「跳过」按钮，双通道识别：**文本关键词** + **控件 ViewID**（支持纯图片按钮）
+- ✅ 自动点击开屏广告「跳过」按钮，**三通道识别**：**选择器**（类 CSS 子集，表达节点上下文关系，优先级最高）+ **文本关键词** + **控件 ViewID**（支持纯图片按钮）
 - ✅ **安全护栏 SafetyGuard**：硬编码黑名单防误触敏感按钮（支付/授权/登录等），云规则不可覆盖
 - ✅ 应用管理：逐项开启/关闭跳过，各应用跳过次数统计
 - ✅ 跳过日志：最近 200 条记录，可清空
-- ✅ 云端规则同步（v1 协议：ETag/304 省流量、deviceId 限频、批量补报）
+- ✅ 云端规则同步（`/api/v1`：ETag/304 省流量、deviceId 限频、批量补报）
+- ✅ 规则快照导出：设置页一键导出当前界面节点树 JSON（≤100 KB），用于编写选择器规则
+- ✅ 传输安全：仅接受 HTTPS、证书固定（必须配置指纹）、规则 HMAC 签名校验（防止规则被篡改下发）
 - ✅ 内置模拟开屏广告测试
 - ✅ 跳过上报服务端（服务端不在线时静默跳过，纯本地照常工作）
 - ✅ 自动同步规则（JobScheduler 每 12 小时，跨重启持久化，无需 BootReceiver）
 - ✅ 免打扰时段与电池优化白名单引导
+- ✅ 下拉磁贴（Quick Tile）+ ROM 适配保活引导
 - ✅ 环形日志（内存 500 条，设置页可导出分享）
 - ✅ 中英双语资源（values / values-en）
 
 ### 后端服务（`server/`，Bun + TypeScript，零运行时依赖）
 
-- ✅ 规则中心：全局关键词、ViewID 规则、应用专属规则、禁用列表
+- ✅ 规则中心：全局关键词、ViewID 规则、选择器规则（全局 + 应用专属）、禁用列表
 - ✅ **鉴权**（ADMIN_TOKEN）、**载荷校验**（与客户端同源约束）、**限频**（令牌桶 per-IP/per-deviceId）
+- ✅ 规则 HMAC 签名下发，客户端本地校验；HTTPS 强制（非 loopback 监听要求 `TLS_CERT`/`TLS_KEY`）
 - ✅ 统计 API：累计 / 今日 / 14 天趋势 / 按应用排行 / 最近记录（按天分片存储）
 - ✅ 管理后台网页：登录 + **diff 预览** + **规则模拟器** + 统计看板
-- ✅ 协议 v1：ETag/304、批量上报、健康检查（旧 v0 路由兼容保留）
+- ✅ `/api/v1`：ETag/304、批量上报、健康检查（旧 `/api/v0` 路由兼容保留）
 - ✅ 优雅停机（SIGTERM/SIGINT → 落盘再退出）、CORS 白名单、规则备份轮转
 - ✅ 访问日志（内存 200 条，`/api/v1/admin/logs` 管理令牌查看）；请求体 1MiB 协议层上限 + `application/json` 强制
 - ✅ API 参考文档：[docs/api/API.md](docs/api/API.md)
@@ -72,8 +76,9 @@
 ```text
 应用启动 → 开屏广告出现
    ↓ 无障碍事件（窗口状态/内容变化）
-遍历节点树 → ① 文本/描述命中关键词（≤12字、可见、非输入框）
-            ② 控件 ID 命中 ViewID 规则（如 com.x:id/skip_view）
+遍历节点树 → ① 选择器命中（类 CSS 子集，表达上下文关系）
+            ② 文本/描述命中关键词（≤12字、可见、非输入框）
+            ③ 控件 ID 命中 ViewID 规则（如 com.x:id/skip_view）
    ↓ 命中
 SafetyGuard 安全护栏复核（黑名单/可见性/面积）
    ↓ 通过
@@ -84,7 +89,7 @@ SafetyGuard 安全护栏复核（黑名单/可见性/面积）
 
 防误触：同应用 1.2s 去抖、150ms 全局节流、单次遍历 ≤500 节点、忽略系统 UI、按应用禁用、SafetyGuard 硬编码黑名单。
 
-> 选择器第三通道（`engine/selector/`，类 CSS 子集：`[vid$=":id/skip_view"]`、`[text*="跳过"] > [vid$="id/iv_close"]`、`[desc^="跳过"] + [vid$="id/iv_close"]` 等）已在内核落地（步骤 A/B，方案见 [DESIGN-PHASE1-SELECTOR.md](docs/planning/DESIGN-PHASE1-SELECTOR.md)）；服务端下发选择器规则后自动生效，当前发布版行为仍是上述「文本 + ViewID」双通道。发版节奏见 [ROADMAP.md](docs/planning/ROADMAP.md)。
+> 第三通道选择器（`engine/selector/`，类 CSS 子集：`[vid$=":id/skip_view"]`、`[text*="跳过"] > [vid$="id/iv_close"]`、`[desc^="跳过"] + [vid$="id/iv_close"]` 等）已随 `3.1.0` 以规则 `schemaVersion 2` 全链路上线（服务端下发 → 客户端编译求值），按优先级先于文本与 ViewID 通道求值；语法与硬限制（单条 ≤256 字符、每列表 ≤128 条、value ≤64、组合链 ≤4 段）见 [DESIGN-PHASE1-SELECTOR.md](docs/planning/DESIGN-PHASE1-SELECTOR.md)。Top 30 App 规则编写与真机验收（步骤 F）仍在进行，发版节奏见 [ROADMAP.md](docs/planning/ROADMAP.md)。
 
 ## 工程结构
 
@@ -95,42 +100,69 @@ AdSkip/            # 全栈 monorepo
 ├── docs/          # 文档地图 README.md（规划事实源入口）+ api/ architecture/ development/ planning/ diagrams/
 └── .github/       # CI 工作流
 
-client/app/src/main/java/com/qingqi/adskip/   # Android 客户端源码（Kotlin，零第三方依赖）
-├── AdskipApp.kt                    # Application + AppContainer（手动 DI）
-├── core/                           # Clock / AppExecutors / LogRing / AppEvents（状态总线）
-├── ui/                             # 界面层（Compose 单 Activity + Navigation）
-│   ├── MainActivity.kt            #   唯一 Activity
-│   ├── Routes.kt                  #   导航路由
-│   ├── theme/Theme.kt             #   主题
-│   ├── home/                      #   主页 Screen + ViewModel
-│   ├── apps/                      #   应用管理 Screen + ViewModel
-│   ├── logs/                      #   跳过日志 Screen + ViewModel
-│   └── settings/                  #   云同步设置 Screen + ViewModel
-├── service/
+client/app/src/main/java/com/qingqi/adskip/   # Android 客户端源码（Kotlin；engine/ 层零第三方依赖，见 ArchitectureBoundaryTest）
+├── AdskipApp.kt                    # Application 入口
+├── AppContainer.kt                 # 手动 DI 容器（不引入 Hilt/Koin）
+├── core/                           # 基础设施（时钟/线程/日志/状态总线，可单测）
+│   ├── Clock.kt                    # 时钟注入（确定性判定）
+│   ├── SystemClockAdapter.kt       # 系统时钟适配
+│   ├── LanguagePreferences.kt      # 语言偏好
+│   ├── AppExecutors.kt             # 线程池
+│   ├── LogRing.kt                  # 环形日志（内存 500 条）
+│   └── AppEvents.kt                # 状态总线
+├── ui/                             # 界面层（Compose 单 Activity + Navigation + UiEffect 单向事件）
+│   ├── MainActivity.kt             #   唯一 Activity
+│   ├── Routes.kt                   #   导航路由
+│   ├── Messenger.kt                #   页面消息总线
+│   ├── UiEffect.kt                 #   一次性 UI 事件（sealed interface）
+│   ├── VendorLabels.kt             #   厂商显示名映射
+│   ├── theme/                      #   主题（Color/Spacing/Type）
+│   ├── components/                 #   通用组件（StatusOrb/Common/Feedback）
+│   ├── home/                       #   主页 Screen + ViewModel
+│   ├── apps/                       #   应用管理 Screen + ViewModel
+│   ├── logs/                       #   跳过日志 Screen + ViewModel
+│   ├── profile/                    #   设备与权限 Screen + ViewModel + PermissionCard
+│   └── settings/                   #   云同步设置 Screen + ViewModel
+├── device/                         # 系统集成（ROM 识别与保活、权限、下拉磁贴、语言）
+│   ├── VendorKeepAlive.kt          #   ROM 识别与厂商保活引导
+│   ├── BatteryExemption.kt         #   电池优化白名单判定
+│   ├── AccessibilityStatus.kt      #   无障碍权限状态判定
+│   ├── KeepAliveNavigator.kt       #   厂商设置页跳转
+│   ├── PermissionCenter.kt         #   权限引导中心
+│   ├── LanguageMode.kt             #   语言模式（enum）
+│   ├── LocaleApplier.kt            #   语言应用
+│   ├── QuickTileLogic.kt           #   下拉磁贴逻辑
+│   └── SkipTileService.kt          #   下拉磁贴 Service
+├── service/                        # Android 框架编排层（薄编排，保证 engine 纯 JVM）
 │   ├── SkipAdService.kt            # 服务层（薄编排：事件/节流/点击/SafetyGuard）
-│   └── FrameworkAdNode.kt          # 框架适配（包装 AccessibilityNodeInfo；归 service 保 engine 纯 JVM）
+│   ├── FrameworkAdNode.kt          # 框架适配（包装 AccessibilityNodeInfo；归 service 保 engine 纯 JVM）
+│   └── NodeSnapshot.kt             # 节点树快照导出（≤100 KB，设置页分享）
 ├── engine/                         # 纯 JVM：接口/引擎/护栏/规则集（可跑无 Android 单测）
 │   ├── AdNode.kt                   # 节点抽象接口（引擎不依赖框架类）
-│   ├── SafetyGuard.kt              # 安全护栏（黑名单/合法性）
-│   ├── SkipRuleEngine.kt           # 引擎层（纯匹配逻辑，文本/ViewID/选择器 三通道）
-│   ├── RuleSet.kt                  # 规则集模型（keywords/viewIds/selectors + schemaVersion）
+│   ├── SafetyGuard.kt              # 安全护栏（黑名单/可见性/面积）
+│   ├── SkipRuleEngine.kt           # 引擎层（纯匹配逻辑，选择器/文本/ViewID 三通道）
+│   ├── RuleSet.kt                  # 规则集模型（schemaVersion 2，含 keywords/viewIds/selectors）
 │   └── selector/                   # 选择器引擎（类 CSS 子集，纯 JVM）
 │       ├── SelectorAst.kt          #   AST（组合符/属性断言/CompoundSelector）
 │       ├── SelectorParser.kt       #   解析器（非法输入返回 null，fail-safe）
 │       └── SelectorMatcher.kt      #   右到左求值（祖先/子/前兄弟关系匹配）
-├── data/
-│   ├── Prefs.kt                    # 存储原语（SharedPreferences + deviceId + rulesHash）
+├── data/                           # 数据与持久化
+│   ├── Prefs.kt                    # 存储原语（SharedPreferences + deviceId + rulesHash + 证书指纹 + 签名密钥）
 │   ├── RulesRepository.kt          # 规则仓库（LruCache 缓存/版本失效/schemaVersion 校验）
+│   ├── ServerEndpoint.kt           # 服务端地址与环境配置
+│   ├── SettingsRepository.kt       # 设置项持久化
 │   └── StatsRepository.kt          # 统计仓库（合批落盘）
-├── net/
-│   └── SyncClient.kt               # 网络层（v1: ETag/304/deviceId/批量补报）
-└── sync/
-    └── SyncJobService.kt           # JobScheduler 定时同步（三合一，跨重启持久化）
+├── net/                            # 网络
+│   └── SyncClient.kt               # 网络层（v1: ETag/304/deviceId/批量补报 + 证书固定 + 规则签名校验）
+└── sync/                           # 定时同步
+    └── SyncJobService.kt           # JobScheduler 定时同步（12 小时，跨重启持久化）
 
-client/app/src/test/java/com/qingqi/adskip/   # JVM 单测（引擎/护栏/边界与清单契约守护/选择器），随门禁运行
+client/app/src/test/java/com/qingqi/adskip/   # JVM 单测（引擎/护栏/选择器/边界与清单契约守护），随门禁运行
 
 server/                             # 后端（Bun + TypeScript，零运行时依赖）
+├── package.json                    # 零运行时依赖（无 dependencies 字段）
 ├── server.ts                       # Bun.serve 入口、路由分发、优雅停机
+├── tsconfig.json                   # TypeScript 配置
 ├── src/
 │   ├── api/                        # 路由拆分（v0+v1）
 │   │   ├── index.ts                #   路由分发
@@ -139,19 +171,26 @@ server/                             # 后端（Bun + TypeScript，零运行时�
 │   │   └── healthApi.ts            #   健康检查
 │   ├── middleware/
 │   │   ├── auth.ts                 #   Bearer token 鉴权
-│   │   └── rateLimit.ts            #   内存令牌桶限流
+│   │   ├── rateLimit.ts            #   内存令牌桶限流
+│   │   └── accessLog.ts            #   访问日志（内存环形，200 条）
 │   ├── storage/
 │   │   └── store.ts                #   规则（缓存+备份轮转）/ 统计（分日分片+延迟刷盘）
+│   ├── types/
+│   │   └── rules.ts                #   规则集类型定义
 │   ├── utils/
 │   │   ├── httpUtil.ts             #   CORS 白名单 / 安全 JSON 解析 / Handler 类型
-│   │   └── validate.ts             #   载荷校验（与客户端同源约束）
+│   │   ├── sign.ts                 #   规则签名（HMAC-SHA256，客户端本地校验）
+│   │   ├── validate.ts             #   载荷校验（与客户端同源约束）
+│   │   └── logger.ts               #   日志输出
 │   └── config.ts                   # 集中配置（env 覆盖）
 ├── public/
 │   ├── index.html                  # 产品落地页
 │   └── admin.html                  # 管理后台（登录 + diff 预览 + 规则模拟器）
 ├── test/
 │   ├── unit.test.ts                # 单元测试（validate/auth/rateLimit/种子兜底）
-│   └── smoke.test.ts               # 冒烟测试（in-process，全部路由 v0+v1）
+│   ├── smoke.test.ts               # 冒烟测试（in-process，全部路由 v0+v1）
+│   ├── selectors.contract.test.ts  # 选择器双端契约向量（服务端轻量校验）
+│   └── selectorSimulator.test.ts   # 管理后台规则模拟器
 ├── seed/rules.json                 # 初始规则种子（入库；运行时文件缺失时兜底）
 └── data/                           # 运行时数据（不入库）：rules.json / stats/ / backups/
 ```
@@ -172,10 +211,13 @@ cd client
 # 正式签名参数写在 client/local.properties（不入库）：
 #   adskip.storeFile=<keystore 路径>  adskip.storePassword=***
 #   adskip.keyAlias=<别名>           adskip.keyPassword=***
-# 未配置正式签名时自动回退 debug 签名，保证产物可直接安装
-# 仅在需要未签名包（交由受信任环境自行签名）时显式设置 adskip.unsignedRelease=true
+# M2 起三态策略（不再回退 debug 签名）：
+#   ① 已配置 adskip.* → release 正式签名，可直接安装
+#   ② 显式 adskip.unsignedRelease=true → 未签名包（交由受信任环境自行签名）
+#   ③ 两者皆无 → assembleRelease 直接失败，不产出任何 APK
 ./gradlew assembleRelease
-# CI 发布使用同样的 Release 变体；配置 ADSKIP_KEYSTORE_BASE64 等仓库 Secrets 时用正式密钥签名，否则回退 debug 签名
+# CI 同样跑 Release 变体，但显式 adskip.unsignedRelease=true，仅验证 R8/minify 可构建，
+# 产物（app-release-unsigned.apk）不用于分发；正式发布走 release.yml，由仓库 Secrets 签名
 
 # JVM 单测
 ./gradlew testDebugUnitTest
@@ -186,7 +228,7 @@ cd client
 ```bash
 cd server
 bun install
-bun test              # 单元 + 冒烟（54 项）
+bun test              # 单元 + 冒烟 + 选择器契约（87 项 / 4 文件）
 bun run typecheck     # tsc --noEmit
 ```
 
@@ -194,14 +236,14 @@ bun run typecheck     # tsc --noEmit
 
 | 渠道 | 说明 |
 | --- | --- |
-| 本地副本 | 将 Release APK 放在仓库根并命名为 `AdSkip-latest.apk`；服务端 `/download` 路由直接提供下载，手机浏览器访问 `https://<服务器域名>:3210/download`。 |
-| GitHub Release | 由版本 tag 自动创建，上传 Release APK 和 `SHA256SUMS`。配置 `ADSKIP_KEYSTORE_BASE64` / `ADSKIP_STORE_PASSWORD` / `ADSKIP_KEY_ALIAS` / `ADSKIP_KEY_PASSWORD` Secrets 时用正式密钥签名；**M2 起不再回退 debug 签名**——未配置 Secrets 时 `assembleRelease` 直接失败，不再产出可被冒签/不可安装的制品。打包步骤强制 `apksigner verify`。 |
+| 本地副本 | 服务端 `/download` 固定从 `server/` 上一级读取 `AdSkip-latest.apk`（`config.ts` 硬编码，无 env 覆盖），把 Release APK 放到**部署目录**的该位置，手机浏览器访问 `https://<服务器域名>:3210/download`。别放进开发用的仓库检出——`ProjectStructureTest` 的根目录白名单不含 `*.apk`，本地跑 `testDebugUnitTest` 会判红。 |
+| GitHub Release | 由版本 tag 自动创建，上传 Release APK 和 `SHA256SUMS`。`ADSKIP_KEYSTORE_BASE64` / `ADSKIP_STORE_PASSWORD` / `ADSKIP_KEY_ALIAS` / `ADSKIP_KEY_PASSWORD` 是发布**必需** Secrets（写入 `client/local.properties` 后按正式密钥签名）；**M2 起不再回退 debug 签名**——缺任一 Secrets 时 `assembleRelease` 按三态策略直接失败，不再产出可被冒签的制品。打包步骤强制 `apksigner verify`，未签名产物一律拒绝上传。 |
 
 > **手机安装报错排查**
 >
 > | 手机提示 | 原因 | 处理 |
 > | --- | --- | --- |
-> | 解析软件包时出现问题 | APK 未签名（历史上 CI 无签名密钥时上传的制品） | 改用当前链路产物：CI 已强制 `apksigner verify`，本地 `assembleRelease` 默认回退 debug 签名；校验命令见 [DEV-ENVIRONMENT.md](docs/development/DEV-ENVIRONMENT.md) |
+> | 解析软件包时出现问题 | APK 未签名（历史上 CI 无签名密钥时上传的制品） | 改用当前链路产物：发布链路强制 `apksigner verify`，未签名产物一律拒绝上传；本地 `assembleRelease` 无签名配置会直接失败（M2 起不再回退 debug 签名）；校验命令见 [DEV-ENVIRONMENT.md](docs/development/DEV-ENVIRONMENT.md) |
 > | 解析软件包时出现问题 | 手机 Android 版本低于 `minSdk`（26 = Android 8.0） | 换用 Android 8.0 及以上设备 |
 > | 解析软件包时出现问题 | 传输中断，或被聊天工具改名/压缩（大小与 `SHA256SUMS` 不一致） | 比对 SHA-256 后重传，或改用服务端 `/download` |
 > | 应用未安装 / 签名冲突 | 手机上已装 debug 签名版或其它密钥版本 | 卸载 `com.qingqi.adskip` 后重装 |

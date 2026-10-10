@@ -62,5 +62,5 @@ repos:
         name: Validate Gradle wrapper
         entry: bash -c 'cd client && ./gradlew --version'
         language: system
-        pass_filenames: []
+        pass_filenames: false
         always_run: true
