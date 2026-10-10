@@ -101,7 +101,7 @@ describe("validate", () => {
 
   it("isValidPackage 正则边界", () => {
     expect(isValidPackage("com.example.app")).toBe(true);
-    expect(isValidPackage("com.ldp.adskip")).toBe(true);
+    expect(isValidPackage("com.example.other")).toBe(true);
     expect(isValidPackage("invalid")).toBe(false);
     expect(isValidPackage(".com.example")).toBe(false);
     expect(isValidPackage("com..app")).toBe(false);
