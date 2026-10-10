@@ -52,7 +52,18 @@ object Prefs {
     private const val PREFIX_PKG_COUNT = "pkg_count:"
 
     private const val LOG_CAP = 200
-    const val DEFAULT_SERVER = "https://192.168.1.100:3210"
+
+    /**
+     * 服务器地址的默认值：空串。
+     *
+     * 历史上这里写过形如 `https://192.168.1.100:3210` 的「默认地址」，那台设备
+     * 只存在于开发者局域网里。对任何其他用户它都是一个连不通的假默认：设置页
+     * 会把它回填进输入框，用户以为「已经配好了」，实际每次同步都静默失败。故
+     * 置空——[getServerUrl] 未保存时返回空串，上报/同步入口都会因此跳过
+     * （[SyncClient.reportSkip] 判空短路、[SyncClient.securityGuard] 拒绝空地址），
+     * 设置页输入框留空，强制用户显式填写自己的有效 HTTPS 地址。
+     */
+    const val DEFAULT_SERVER = ""
 
     fun sp(context: Context): SharedPreferences {
         spInstance?.let { return it }

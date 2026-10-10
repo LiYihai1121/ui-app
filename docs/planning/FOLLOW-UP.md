@@ -41,7 +41,7 @@
 |--------|------|--------------|------------|
 | P1 | `SkipAdService` 接收器注册/注销模板重复 | ✅ 已修复：提取 `ReceiverHandle` 抽象 | — |
 | P1 | `store.ts` 规则备份仅全量拷贝，无增量/压缩 | 长期运行可改用 WAL 或按天快照；当前 JSON 全量备份对小项目可接受 | 待评估 |
-| P2 | `Prefs.DEFAULT_SERVER` 硬编码本地 IP | 增加 URL 合法性校验（禁止私有地址回环）；或在 UI 隐藏默认值，强制用户输入 | 0.5 天 |
+| P2 | `Prefs.DEFAULT_SERVER` 硬编码本地 IP | ✅ 已修复：默认值改空串；配合 HTTPS-only 门禁，未填地址时上报/同步均短路跳过 | — |
 | P2 | `rateLimit.ts` / `store.ts` 使用 `setInterval` 做 GC/清理 | Bun 优雅停机可能截断；改用 `setTimeout` 递归或显式清理钩子 | 0.5 天 |
 | P3 | `SyncClient` 无连接池/Keep-Alive/重试 | 引入 `OkHttp`（若允许）或手写连接池 + 指数退避；受「零第三方依赖」约束，待项目决策后实施 | 待评估 |
 
