@@ -41,6 +41,7 @@ docs/
 | 配置本机开发环境 | [development/DEV-ENVIRONMENT.md](development/DEV-ENVIRONMENT.md) |
 | 查某版本发布到哪个提交、哪个 tag | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
 | 查安全加固/技术短板跟进计划（已修复清单 / 待修复 / 里程碑） | [planning/FOLLOW-UP.md](planning/FOLLOW-UP.md) |
+| 查开发流程合规审计结论与历史豁免线（2026-10） | [planning/FOLLOW-UP-PROCESS-AUDIT.md](planning/FOLLOW-UP-PROCESS-AUDIT.md) |
 | 了解提交/分支/发布/回滚规范 | [CONTRIBUTING.md](../CONTRIBUTING.md)（执行摘要见 [AGENTS.md](../AGENTS.md)） |
 | 多个 Agent / 多分支并行开发时的隔离与协作 | [development/AGENT-WORKFLOW.md](development/AGENT-WORKFLOW.md) |
 | 开发或维护 Agent 技能（SKILL.md 格式 / 校验 / 登记） | [../skills/README.md](../skills/README.md) |

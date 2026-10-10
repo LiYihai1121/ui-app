@@ -57,6 +57,7 @@ Git 历史的成本是**长期**的：`git log`、`git blame`、事故复盘、�
 - **type**：`feat`、`fix`、`refactor`、`perf`、`test`、`docs`、`build`、`ci`、`chore`、`revert`
 - **scope**：模块或领域名（`client`、`server`、`ui`、`engine`、`rules`、`protocol`、`contract`、`roadmap`……）。**禁止用人的名字或工号**——人员会流动，模块名不会。
 - **描述**：祈使句写「做了什么」，不写「改成了什么」；同一 type 下用一致的动词。
+- **机器校验**：格式与长度由 `githooks/commit-msg` 拦截（启用方式见「一人一工作区」的 hooksPath 说明）；历史违规样例与豁免线见 [FOLLOW-UP-PROCESS-AUDIT.md](docs/planning/FOLLOW-UP-PROCESS-AUDIT.md)。
 
 破坏性变更必须在标题追加 `!`（`feat(protocol)!:`）**或**正文使用 `BREAKING CHANGE:` 段落，并同步更新协议/API 文档。
 
@@ -436,6 +437,9 @@ git push origin vX.Y.Z
 ```
 
 版本标签一经推送不得删除或移动；指向非 `main` 提交的 tag 不得补建 Release、不得复用版本号。
+- **标签唯一性**：一个提交不得承载多个版本标签（历史反例：v3.0.0 与 v3.0.1 曾指向同一提交，见 [FOLLOW-UP-PROCESS-AUDIT.md](docs/planning/FOLLOW-UP-PROCESS-AUDIT.md) 第 2 节豁免线）。
+- **发布提交同样走 PR**：`chore(release): vX.Y.Z` 的版本 bump 在 `release/vX.Y.Z` 分支提交并经 PR 合入，禁止在主检出直推。
+- **main 历史线性**：合并一律 Squash（每个 main 提交携带 `(#N)`）；本地不得产生进入 main 的 merge commit。
 
 ### 发布顺序
 

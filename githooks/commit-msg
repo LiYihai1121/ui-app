@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+#
+# 提交信息机器校验（CONTRIBUTING「提交信息规范」）：
+#   1. 标题必须符合 Conventional Commits（merge 提交豁免）；
+#   2. 标题 ≤ 72 字符。
+# 背景：2026-10-11 流程审计发现 ≥13 例格式违规与 ≥5 例超长标题（FOLLOW-UP-PROCESS-AUDIT.md）。
+#
+# 逃生口与 pre-commit 一致：ADSKIP_ALLOW_MAIN_COMMIT=1（事后须在 PR 说明）。
+
+set -o errexit
+
+msg_file="$1"
+title="$(head -n 1 "$msg_file")"
+
+# merge 提交豁免：git 会生成固定格式的 merge 标题，不适用本契约。
+if [ -f "$(git rev-parse --git-dir)/MERGE_HEAD" ]; then
+    exit 0
+fi
+
+if [ "${ADSKIP_ALLOW_MAIN_COMMIT:-0}" = "1" ]; then
+    exit 0
+fi
+
+if ! printf '%s' "$title" | grep -qE '^(feat|fix|docs|ci|test|refactor|chore|style|perf|build|revert)(\([^)]*\))?(!)?: .+'; then
+    cat >&2 <<MSG
+✗ 提交标题不符合 Conventional Commits：
+    $title
+  要求：<type>(<scope>): <描述>，type ∈ feat/fix/docs/ci/test/refactor/chore/style/perf/build/revert
+  规则见 CONTRIBUTING.md「提交信息规范」。
+MSG
+    exit 1
+fi
+
+if [ "${#title}" -gt 72 ]; then
+    echo "✗ 提交标题 ${#title} 字符，超过 72 字符上限：$title" >&2
+    exit 1
+fi
