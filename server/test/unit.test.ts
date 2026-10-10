@@ -216,9 +216,32 @@ describe("rateLimit", () => {
     expect(limitReport(req(), "10.0.0.4", "dev12345678")).toBe(true);
   });
 
-  it("clientIp 优先取 x-forwarded-for，回退 remoteIp", () => {
-    expect(clientIp(req({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" }), "9.9.9.9")).toBe("1.2.3.4");
-    expect(clientIp(req(), "9.9.9.9")).toBe("9.9.9.9");
+  it("clientIp 未配置受信代理时忽略 X-Forwarded-For", () => {
+    const saved = config.TRUSTED_PROXIES;
+    config.TRUSTED_PROXIES = [];
+    try {
+      // 伪造的 XFF 不得成为限流键，否则任何人换头部即可重生令牌桶
+      expect(clientIp(req({ "x-forwarded-for": "1.2.3.4" }), "9.9.9.9")).toBe("9.9.9.9");
+      expect(clientIp(req(), "9.9.9.9")).toBe("9.9.9.9");
+    } finally {
+      config.TRUSTED_PROXIES = saved;
+    }
+  });
+
+  it("clientIp 对端是受信代理时采信 X-Forwarded-For", () => {
+    const saved = config.TRUSTED_PROXIES;
+    config.TRUSTED_PROXIES = ["10.1.1.1"];
+    try {
+      expect(
+        clientIp(req({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" }), "10.1.1.1")
+      ).toBe("1.2.3.4");
+      // 代理未带头时回退 socket IP
+      expect(clientIp(req(), "10.1.1.1")).toBe("10.1.1.1");
+      // 非受信对端即使带头也不采信
+      expect(clientIp(req({ "x-forwarded-for": "1.2.3.4" }), "9.9.9.9")).toBe("9.9.9.9");
+    } finally {
+      config.TRUSTED_PROXIES = saved;
+    }
   });
 
   it("probeReportIp 探测不扣减令牌", () => {
