@@ -23,7 +23,6 @@ export interface Config {
   /** 统计分片保留的备份份数（rotateStatsBackup 轮转） */
   STATS_BACKUP_COUNT: number;
   ADMIN_TOKEN: string;
-  STATS_READ_AUTH: boolean;
   /**
    * 规则签名密钥（HMAC-SHA256，env RULES_SIGNING_KEY）。
    *
@@ -78,7 +77,6 @@ export const config: Config = {
   BACKUP_COUNT: 5,
   STATS_BACKUP_COUNT: 5,
   ADMIN_TOKEN: process.env.ADMIN_TOKEN ?? "",
-  STATS_READ_AUTH: false,
   RULES_SIGNING_KEY: process.env.RULES_SIGNING_KEY ?? "",
   TRUSTED_PROXIES: process.env.TRUSTED_PROXIES
     ? process.env.TRUSTED_PROXIES.split(",").map((s) => s.trim()).filter(Boolean)

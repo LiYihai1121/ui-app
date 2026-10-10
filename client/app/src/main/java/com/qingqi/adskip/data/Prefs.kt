@@ -52,7 +52,15 @@ object Prefs {
     private const val PREFIX_PKG_COUNT = "pkg_count:"
 
     private const val LOG_CAP = 200
-    const val DEFAULT_SERVER = "https://192.168.1.100:3210"
+
+    /**
+     * 默认服务器地址：空串。
+     *
+     * 不预填任何地址：预填 LAN 地址会在用户未配置时「看起来已配好」却每次同步
+     * 必然失败（HTTPS 门禁要求证书指纹，局域网自签证书无法满足）。留空让设置
+     * 页强制用户显式输入自己的有效 HTTPS 地址（[ServerEndpoint.isValid] 校验）。
+     */
+    const val DEFAULT_SERVER = ""
 
     fun sp(context: Context): SharedPreferences {
         spInstance?.let { return it }
