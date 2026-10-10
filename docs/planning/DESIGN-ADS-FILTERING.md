@@ -96,3 +96,39 @@
 - Android `VpnService`：https://developer.android.com/develop/connectivity/vpn
 - Android `NotificationListenerService`：https://developer.android.com/reference/android/service/notification/NotificationListenerService
 - Google Play 的 VPN 服务政策（如未来考虑商店分发，发布前重新核对）：https://support.google.com/googleplay/android-developer/answer/12564964
+
+
+## 9. Phase 0 决策记录（提案，尚未获批准）
+
+### ADR-ADS-001：L2 过滤形态
+
+**状态：Proposed。** 推荐首选非 Root、本地 \`VpnService\` DNS 原型，但本记录不授权开始将其并入发布分支。
+
+| 选项 | 优点 | 风险/成本 | 结论 |
+|---|---|---|---|
+| A. 内置本地 DNS \`VpnService\` | 不依赖 Root；本机处理；离线规则可用；可集成白名单与状态 UI | 需要处理 VPN 独占、IPv4/IPv6、TCP/UDP DNS、Private DNS、网络切换、电量、崩溃恢复与 OEM 行为；共享域名会误拦 | 推荐作为隔离原型；所有恢复/兼容性测试通过前不进入发布 |
+| B. 用户自配 AdGuard Home / 可信 DNS | 项目不接管设备 VPN；减少自研网络协议与故障风险 | 依赖外部服务、DNS 配置与用户运维；不能解决同域混投与 UI 广告 | 同时保留为低风险替代路径 |
+| C. Root hosts 或全局规则写入 | 系统范围覆盖可能更大 | 权限、兼容性、回滚与误拦风险更高；扩大攻击面 | 不作为非 Root 主线；本 Phase 0 不批准实现 |
+
+**L2 设计门禁：** 不解密 TLS、不安装 CA、不拦非 DNS 流量；默认关闭；用户主动确认 VPN 授权；规则源与许可证可追溯；白名单、一键暂停、清除规则；崩溃与停止后网络恢复；最小化日志且不上传 DNS 查询明细。DNS 无法保证识别每种广告，也不能区分相同域名承载的广告与正常业务。
+
+### ADR-ADS-002：L3 Root/LSPosed
+
+**状态：Deferred / 未批准。** Root 扩展必须与主 APK 分离，拥有独立安装、开关、卸载与测试矩阵。不得 Hook 支付、登录、授权、反作弊、安全校验或奖励流程；不作为非 Root 主线依赖。只有在明确的设备所有权、兼容性和合规评审完成后，才考虑窄范围的概念验证。
+
+### ADR-ADS-003：L4 通知治理
+
+**状态：Proposed。** 先提供用户可配置的本地包名/频道白名单与规则预览；明确展示 Notification Listener 的系统级读取权限。第一阶段不自动删除通知正文，默认只做静默建议/可恢复操作；重要通知类别优先保护，不存储或上传通知正文。各 OEM 的行为需在真实设备逐项验证。
+
+### 评审与放行签署
+
+只有下列项目均获得书面证据，才可将 Phase 0 标记为通过：
+
+- [ ] 项目维护者确认上述 ADR 决策及用户可见免责声明。
+- [ ] 法务/许可复核确认项目自身与每个外部规则源/依赖的再分发依据；无来源许可文件的材料暂停分发。
+- [ ] 隐私审查确认 DNS、通知、节点快照与统计数据的数据流、留存期和用户控制。
+- [ ] 为 Android VpnService 的断网恢复、IPv6、Private DNS、VPN 冲突和误拦恢复定义测试，并在目标设备执行。
+- [ ] 明确发布渠道政策和用户权限文案；正式发布前重新核查平台当期政策。
+- [ ] Issue #84 中记录决策人、日期、证据链接与剩余风险。未通过前 L2/L3 禁止进入发布分支。
+
+**当前决定：** L1 维持现有实现；L2 只可做隔离原型；L3 暂缓；L4 先做权限/数据保护设计。以上为工程提案，不构成法律意见或已完成的合规批准。
