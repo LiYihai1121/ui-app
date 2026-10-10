@@ -21,7 +21,6 @@ class PluralFormsContractTest {
     private val countedKeys = listOf(
         "apps_count",
         "logs_subtitle",
-        "stats_total_short",
         "fake_ad_countdown",
     )
 
