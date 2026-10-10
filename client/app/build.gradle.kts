@@ -121,6 +121,7 @@ dependencies {
 
     // 网络层测试（MockWebServer）
     testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.okhttp.tls)
     // org.json：单测跑在 JVM，android.jar 只提供桩（returnDefaultValues 下方法全返回默认值），需真实实现
     testImplementation(libs.org.json)
 

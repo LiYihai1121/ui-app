@@ -1,10 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- NSC 的 <domain> 仅支持主机后缀或精确 IP，不支持 IP 段前缀 / CIDR
-         （10.、172.16.、192.168. 这类写法无法匹配任何真实主机，会把所有明文连接禁掉，
-          内网同步/上报随之不可用）。而服务器地址可在设置页自定义为任意内网 IP，
-         当前部署仍为明文 HTTP（默认 192.168.1.100:3210），故在 base-config 显式放行明文——
-         行为与旧版 usesCleartextTraffic="true" 等价。
-         后续迁移 HTTPS 后，应改回 cleartextTrafficPermitted="false" 并在此精确列出可信主机。 -->
-    <base-config cleartextTrafficPermitted="true" />
+    <base-config cleartextTrafficPermitted="false" />
 </network-security-config>
