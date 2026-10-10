@@ -93,10 +93,12 @@ bun run server.ts
 
 > **仓库根目录不保留任何构建产物**（含 `*.apk`）：`assembleRelease` 的输出在
 > `client/app/build/outputs/apk/release/`，正式分发以 GitHub Releases + `SHA256SUMS` 为准。
+> 服务端 `/download` 路由固定读 `server/` 上一级的 `AdSkip-latest.apk`，需要时在**部署目录**放该文件，
+> 不要放进开发检出——根目录白名单（`ProjectStructureTest`）不含 `*.apk`，会让 `testDebugUnitTest` 判红。
 
 判定要点：
 
-- **未签名包**：`assembleRelease` 在 `client/local.properties` 缺少 `adskip.*` 签名配置时会回退 debug 签名；只有显式设置 `adskip.unsignedRelease=true` 才产出未签名包，而发布流水线会拒绝上传这类产物。
+- **无签名不再回退 debug**：`assembleRelease` 在 `client/local.properties` 缺少 `adskip.*` 签名配置时**直接失败**（M2 起三态策略，见 `client/app/build.gradle.kts`）；只有显式设置 `adskip.unsignedRelease=true` 才产出未签名包（仅供受信任环境自行签名），而发布流水线会拒绝上传这类产物。
 - **`minSdk = 26`**：对应 Android 8.0，低于该版本的设备会直接解析失败。
 - **签名冲突**：与手机上已安装版本签名不一致时报「应用未安装」，需先卸载 `com.qingqi.adskip`。
 - **分发完整性**：APK 经聊天工具转发可能被改名或截断，务必比对 SHA-256；本机分发可用 `bun run start` 起本地服务后按 [APK 安装排障](#apk-安装排障) 的方式下载比对。**仓库根不保留任何构建产物**（含 `*.apk`）：`assembleRelease` 的产物在 `client/app/build/outputs/apk/release/`，正式分发以 GitHub Releases + `SHA256SUMS` 为准。

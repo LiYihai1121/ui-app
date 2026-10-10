@@ -27,8 +27,8 @@
 - ✅ **安全护栏 SafetyGuard**：硬编码黑名单防误触敏感按钮（支付/授权/登录等），云规则不可覆盖
 - ✅ 应用管理：逐项开启/关闭跳过，各应用跳过次数统计
 - ✅ 跳过日志：最近 200 条记录，可清空
-- ✅ 云端规则同步（v1 协议：ETag/304 省流量、deviceId 限频、批量补报）
-- ✅ 规则快照导出：设置页一键导出当前界面节点树 JSON（≤96 KB），用于编写选择器规则
+- ✅ 云端规则同步（`/api/v1`：ETag/304 省流量、deviceId 限频、批量补报）
+- ✅ 规则快照导出：设置页一键导出当前界面节点树 JSON（≤100 KB），用于编写选择器规则
 - ✅ 传输安全：仅接受 HTTPS、证书固定（必须配置指纹）、规则 HMAC 签名校验（防止规则被篡改下发）
 - ✅ 内置模拟开屏广告测试
 - ✅ 跳过上报服务端（服务端不在线时静默跳过，纯本地照常工作）
@@ -45,7 +45,7 @@
 - ✅ 规则 HMAC 签名下发，客户端本地校验；HTTPS 强制（非 loopback 监听要求 `TLS_CERT`/`TLS_KEY`）
 - ✅ 统计 API：累计 / 今日 / 14 天趋势 / 按应用排行 / 最近记录（按天分片存储）
 - ✅ 管理后台网页：登录 + **diff 预览** + **规则模拟器** + 统计看板
-- ✅ 协议 v1：ETag/304、批量上报、健康检查（旧 v0 路由兼容保留）
+- ✅ `/api/v1`：ETag/304、批量上报、健康检查（旧 `/api/v0` 路由兼容保留）
 - ✅ 优雅停机（SIGTERM/SIGINT → 落盘再退出）、CORS 白名单、规则备份轮转
 - ✅ 访问日志（内存 200 条，`/api/v1/admin/logs` 管理令牌查看）；请求体 1MiB 协议层上限 + `application/json` 强制
 - ✅ API 参考文档：[docs/api/API.md](docs/api/API.md)
@@ -89,7 +89,7 @@ SafetyGuard 安全护栏复核（黑名单/可见性/面积）
 
 防误触：同应用 1.2s 去抖、150ms 全局节流、单次遍历 ≤500 节点、忽略系统 UI、按应用禁用、SafetyGuard 硬编码黑名单。
 
-> 第三通道选择器（`engine/selector/`，类 CSS 子集：`[vid$=":id/skip_view"]`、`[text*="跳过"] > [vid$="id/iv_close"]`、`[desc^="跳过"] + [vid$="id/iv_close"]` 等）已随 `3.1.0` 协议 v2 全链路上线（服务端下发 → 客户端编译求值），按优先级先于文本与 ViewID 通道求值；语法与硬限制（单条 ≤256 字符、每列表 ≤128 条、value ≤64、组合链 ≤4 段）见 [DESIGN-PHASE1-SELECTOR.md](docs/planning/DESIGN-PHASE1-SELECTOR.md)。Top 30 App 规则编写与真机验收（步骤 F）仍在进行，发版节奏见 [ROADMAP.md](docs/planning/ROADMAP.md)。
+> 第三通道选择器（`engine/selector/`，类 CSS 子集：`[vid$=":id/skip_view"]`、`[text*="跳过"] > [vid$="id/iv_close"]`、`[desc^="跳过"] + [vid$="id/iv_close"]` 等）已随 `3.1.0` 以规则 `schemaVersion 2` 全链路上线（服务端下发 → 客户端编译求值），按优先级先于文本与 ViewID 通道求值；语法与硬限制（单条 ≤256 字符、每列表 ≤128 条、value ≤64、组合链 ≤4 段）见 [DESIGN-PHASE1-SELECTOR.md](docs/planning/DESIGN-PHASE1-SELECTOR.md)。Top 30 App 规则编写与真机验收（步骤 F）仍在进行，发版节奏见 [ROADMAP.md](docs/planning/ROADMAP.md)。
 
 ## 工程结构
 
@@ -136,7 +136,7 @@ client/app/src/main/java/com/qingqi/adskip/   # Android 客户端源码（Kotlin
 ├── service/                        # Android 框架编排层（薄编排，保证 engine 纯 JVM）
 │   ├── SkipAdService.kt            # 服务层（薄编排：事件/节流/点击/SafetyGuard）
 │   ├── FrameworkAdNode.kt          # 框架适配（包装 AccessibilityNodeInfo；归 service 保 engine 纯 JVM）
-│   └── NodeSnapshot.kt             # 节点树快照导出（≤96 KB，设置页分享）
+│   └── NodeSnapshot.kt             # 节点树快照导出（≤100 KB，设置页分享）
 ├── engine/                         # 纯 JVM：接口/引擎/护栏/规则集（可跑无 Android 单测）
 │   ├── AdNode.kt                   # 节点抽象接口（引擎不依赖框架类）
 │   ├── SafetyGuard.kt              # 安全护栏（黑名单/可见性/面积）
@@ -211,10 +211,13 @@ cd client
 # 正式签名参数写在 client/local.properties（不入库）：
 #   adskip.storeFile=<keystore 路径>  adskip.storePassword=***
 #   adskip.keyAlias=<别名>           adskip.keyPassword=***
-# 未配置正式签名时自动回退 debug 签名，保证产物可直接安装
-# 仅在需要未签名包（交由受信任环境自行签名）时显式设置 adskip.unsignedRelease=true
+# M2 起三态策略（不再回退 debug 签名）：
+#   ① 已配置 adskip.* → release 正式签名，可直接安装
+#   ② 显式 adskip.unsignedRelease=true → 未签名包（交由受信任环境自行签名）
+#   ③ 两者皆无 → assembleRelease 直接失败，不产出任何 APK
 ./gradlew assembleRelease
-# CI 发布使用同样的 Release 变体；配置 ADSKIP_KEYSTORE_BASE64 等仓库 Secrets 时用正式密钥签名，否则回退 debug 签名
+# CI 同样跑 Release 变体，但显式 adskip.unsignedRelease=true，仅验证 R8/minify 可构建，
+# 产物（app-release-unsigned.apk）不用于分发；正式发布走 release.yml，由仓库 Secrets 签名
 
 # JVM 单测
 ./gradlew testDebugUnitTest
@@ -233,14 +236,14 @@ bun run typecheck     # tsc --noEmit
 
 | 渠道 | 说明 |
 | --- | --- |
-| 本地副本 | 将 Release APK 放在仓库根并命名为 `AdSkip-latest.apk`；服务端 `/download` 路由直接提供下载，手机浏览器访问 `https://<服务器域名>:3210/download`。 |
-| GitHub Release | 由版本 tag 自动创建，上传 Release APK 和 `SHA256SUMS`。配置 `ADSKIP_KEYSTORE_BASE64` / `ADSKIP_STORE_PASSWORD` / `ADSKIP_KEY_ALIAS` / `ADSKIP_KEY_PASSWORD` Secrets 时用正式密钥签名；**M2 起不再回退 debug 签名**——未配置 Secrets 时 `assembleRelease` 直接失败，不再产出可被冒签/不可安装的制品。打包步骤强制 `apksigner verify`。 |
+| 本地副本 | 服务端 `/download` 固定从 `server/` 上一级读取 `AdSkip-latest.apk`（`config.ts` 硬编码，无 env 覆盖），把 Release APK 放到**部署目录**的该位置，手机浏览器访问 `https://<服务器域名>:3210/download`。别放进开发用的仓库检出——`ProjectStructureTest` 的根目录白名单不含 `*.apk`，本地跑 `testDebugUnitTest` 会判红。 |
+| GitHub Release | 由版本 tag 自动创建，上传 Release APK 和 `SHA256SUMS`。`ADSKIP_KEYSTORE_BASE64` / `ADSKIP_STORE_PASSWORD` / `ADSKIP_KEY_ALIAS` / `ADSKIP_KEY_PASSWORD` 是发布**必需** Secrets（写入 `client/local.properties` 后按正式密钥签名）；**M2 起不再回退 debug 签名**——缺任一 Secrets 时 `assembleRelease` 按三态策略直接失败，不再产出可被冒签的制品。打包步骤强制 `apksigner verify`，未签名产物一律拒绝上传。 |
 
 > **手机安装报错排查**
 >
 > | 手机提示 | 原因 | 处理 |
 > | --- | --- | --- |
-> | 解析软件包时出现问题 | APK 未签名（历史上 CI 无签名密钥时上传的制品） | 改用当前链路产物：CI 已强制 `apksigner verify`，本地 `assembleRelease` 默认回退 debug 签名；校验命令见 [DEV-ENVIRONMENT.md](docs/development/DEV-ENVIRONMENT.md) |
+> | 解析软件包时出现问题 | APK 未签名（历史上 CI 无签名密钥时上传的制品） | 改用当前链路产物：发布链路强制 `apksigner verify`，未签名产物一律拒绝上传；本地 `assembleRelease` 无签名配置会直接失败（M2 起不再回退 debug 签名）；校验命令见 [DEV-ENVIRONMENT.md](docs/development/DEV-ENVIRONMENT.md) |
 > | 解析软件包时出现问题 | 手机 Android 版本低于 `minSdk`（26 = Android 8.0） | 换用 Android 8.0 及以上设备 |
 > | 解析软件包时出现问题 | 传输中断，或被聊天工具改名/压缩（大小与 `SHA256SUMS` 不一致） | 比对 SHA-256 后重传，或改用服务端 `/download` |
 > | 应用未安装 / 签名冲突 | 手机上已装 debug 签名版或其它密钥版本 | 卸载 `com.qingqi.adskip` 后重装 |
