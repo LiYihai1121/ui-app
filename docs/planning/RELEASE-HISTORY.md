@@ -2,7 +2,7 @@
 
 本文记录版本阶段、Git tag、合并提交和 GitHub Release 的对应关系，避免仅凭短哈希或提交标题判断历史是否断链。每次项目更迭完成后，必须同步更新本页的 Release list，并核对对应的 annotated tag。
 
-标签发布由 [.github/workflows/release.yml](../../.github/workflows/release.yml) 自动执行：先校验 annotated tag、提交对象和 Android/服务端版本一致性，再构建 R8 Release 变体、运行服务端检查、生成 APK SHA-256 校验和并创建 GitHub Release。打包步骤强制 `apksigner verify`：配置 `ADSKIP_KEYSTORE_BASE64` 等仓库 Secrets 时用正式密钥签名，未配置时构建脚本回退 debug 签名（保证制品可安装），未签名产物一律拒绝上传（见「制品勘误」）。目标分支保护和发布前合并要求由仓库规则及 GitHub 分支保护执行。
+标签发布由 [.github/workflows/release.yml](../../.github/workflows/release.yml) 自动执行：先校验 annotated tag、提交对象和 Android/服务端版本一致性，再构建 R8 Release 变体、运行服务端检查、生成 APK SHA-256 校验和并创建 GitHub Release。Android SDK 安装与 `.github/workflows/ci.yml` 保持一致（Build Tools 36.0.0，并从 beta 通道安装 Android API 37.0 平台）。打包步骤强制 `apksigner verify`：只有配置 `ADSKIP_KEYSTORE_BASE64` 等仓库 Secrets 才会使用正式密钥签名；未配置正式签名时，当前构建脚本不会回退到 debug 签名，发布任务会失败，除非显式选择仅用于受信任环境的未签名构建，而发布工作流仍会因 `apksigner verify` 拦截未签名制品。目标分支保护和发布前合并要求由仓库规则及 GitHub 分支保护执行。
 
 ## 目录
 
