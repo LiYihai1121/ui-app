@@ -10,13 +10,7 @@
     "skip",
     "jump"
   ],
-  "packages": {
-    "com.ldp.adskip": {
-      "keywords": [],
-      "viewIds": [],
-      "disabled": false
-    }
-  },
+  "packages": {},
   "version": 3,
   "updatedAt": "2026-08-21T15:04:32.982Z"
 }

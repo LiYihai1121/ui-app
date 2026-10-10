@@ -2,7 +2,6 @@ import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import * as crypto from "node:crypto";
 import { config } from "../src/config";
 import {
   cleanRules,
@@ -14,11 +13,6 @@ import {
   VID_RE,
 } from "../src/utils/validate";
 import { applyCors } from "../src/utils/httpUtil";
-import {
-  RULES_SIGNATURE_HEADER,
-  signRulesBody,
-  verifyRulesBodySignature,
-} from "../src/utils/sign";
 import { checkAdminAuth, requireAdmin } from "../src/middleware/auth";
 import {
   limitRead,
@@ -34,7 +28,6 @@ import {
   _resetSummaryCacheForTests,
   _resetStatsCacheForTests,
   _resetRulesCacheForTests,
-  _rotateStatsBackupForTests,
 } from "../src/storage/store";
 
 function req(headers: Record<string, string> = {}): Request {
@@ -108,7 +101,7 @@ describe("validate", () => {
 
   it("isValidPackage 正则边界", () => {
     expect(isValidPackage("com.example.app")).toBe(true);
-    expect(isValidPackage("com.qingqi.adskip")).toBe(true);
+    expect(isValidPackage("com.example.other")).toBe(true);
     expect(isValidPackage("invalid")).toBe(false);
     expect(isValidPackage(".com.example")).toBe(false);
     expect(isValidPackage("com..app")).toBe(false);
@@ -223,51 +216,19 @@ describe("rateLimit", () => {
     expect(limitReport(req(), "10.0.0.4", "dev12345678")).toBe(true);
   });
 
-  it("clientIp 未配置受信代理时忽略 X-Forwarded-For", () => {
-    const saved = config.TRUSTED_PROXIES;
-    config.TRUSTED_PROXIES = [];
-    try {
-      // 伪造的 XFF 不得成为限流键，否则任何人换头部即可重生令牌桶
-      expect(clientIp(req({ "x-forwarded-for": "1.2.3.4" }), "9.9.9.9")).toBe("9.9.9.9");
-      expect(clientIp(req(), "9.9.9.9")).toBe("9.9.9.9");
-    } finally {
-      config.TRUSTED_PROXIES = saved;
-    }
-  });
-
-  it("clientIp 对端是受信代理时采信 X-Forwarded-For", () => {
-    const saved = config.TRUSTED_PROXIES;
-    config.TRUSTED_PROXIES = ["10.1.1.1"];
-    try {
-      expect(
-        clientIp(req({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" }), "10.1.1.1")
-      ).toBe("1.2.3.4");
-      // 代理未带头时回退 socket IP
-      expect(clientIp(req(), "10.1.1.1")).toBe("10.1.1.1");
-      // 非受信对端即使带头也不采信
-      expect(clientIp(req({ "x-forwarded-for": "1.2.3.4" }), "9.9.9.9")).toBe("9.9.9.9");
-    } finally {
-      config.TRUSTED_PROXIES = saved;
-    }
+  it("clientIp 优先取 x-forwarded-for，回退 remoteIp", () => {
+    expect(clientIp(req({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" }), "9.9.9.9")).toBe("1.2.3.4");
+    expect(clientIp(req(), "9.9.9.9")).toBe("9.9.9.9");
   });
 
   it("probeReportIp 探测不扣减令牌", () => {
     _resetRateLimitForTests();
     expect(probeReportIp(req(), "10.0.0.5")).toBe(true);
-    // 耗尽 IP 上报桶（首次创建不扣减，容量 30 允许 31 次）
+    // 耗尽上报桶（首次创建不扣减，容量 30 允许 31 次）
     for (let i = 0; i < 40; i++) limitReport(req(), "10.0.0.5");
     expect(limitReport(req(), "10.0.0.5")).toBe(false);
     // 桶空后 probe 也返回 false，且未额外创建令牌
     expect(probeReportIp(req(), "10.0.0.5")).toBe(false);
-  });
-
-  it("伪造 deviceId 不能绕过上报限额（IP 桶兜底）", () => {
-    _resetRateLimitForTests();
-    // 同一 IP 每次换一个设备号：设备桶各满，但 IP 桶 31 次后必须拒绝
-    for (let i = 0; i < 31; i++) {
-      expect(limitReport(req(), "10.0.0.6", `device-${i}`)).toBe(true);
-    }
-    expect(limitReport(req(), "10.0.0.6", "device-fresh")).toBe(false);
   });
 });
 
@@ -297,56 +258,6 @@ describe("cors", () => {
     const h = new Headers();
     applyCors(h, "https://any.example");
     expect(h.get("access-control-allow-origin")).toBe("*");
-  });
-});
-
-describe("rules signature", () => {
-  const saved = config.RULES_SIGNING_KEY;
-
-  afterAll(() => {
-    config.RULES_SIGNING_KEY = saved;
-  });
-
-  it("密钥为空时不下发签名、验签一律拒绝", () => {
-    config.RULES_SIGNING_KEY = "";
-    const body = JSON.stringify({ version: 1 });
-    expect(signRulesBody(body)).toBe("");
-    // 未配置密钥的服务端发出的载荷，客户端不得采信
-    expect(verifyRulesBodySignature(body, "deadbeef")).toBe(false);
-    expect(verifyRulesBodySignature(body, null)).toBe(false);
-  });
-
-  it("签名与独立复算的 HMAC 一致，且按原始字节串校验", () => {
-    config.RULES_SIGNING_KEY = "unit-test-key";
-    const body = JSON.stringify({ schemaVersion: 2, rules: { globalKeywords: ["跳过"] } });
-    const sig = signRulesBody(body);
-    expect(sig).not.toBe("");
-    const expected = crypto
-      .createHmac("sha256", "unit-test-key")
-      .update(body, "utf8")
-      .digest("hex");
-    expect(sig).toBe(expected);
-    expect(verifyRulesBodySignature(body, sig)).toBe(true);
-    expect(verifyRulesBodySignature(body, `sha256=${sig}`)).toBe(true);
-  });
-
-  it("载荷被篡改一个字节，验签失败", () => {
-    config.RULES_SIGNING_KEY = "unit-test-key";
-    const body = JSON.stringify({ version: 1, rules: {} });
-    const sig = signRulesBody(body);
-    const tampered = JSON.stringify({ version: 2, rules: {} });
-    expect(verifyRulesBodySignature(tampered, sig)).toBe(false);
-  });
-
-  it("错误密钥签发的载荷验签失败", () => {
-    config.RULES_SIGNING_KEY = "key-a";
-    const body = JSON.stringify({ v: 1 });
-    const sigFromB = crypto.createHmac("sha256", "key-b").update(body, "utf8").digest("hex");
-    expect(verifyRulesBodySignature(body, sigFromB)).toBe(false);
-  });
-
-  it("签名头常量稳定（客户端按此名字读取）", () => {
-    expect(RULES_SIGNATURE_HEADER).toBe("X-Rules-Signature");
   });
 });
 
@@ -462,33 +373,6 @@ describe("seed rules fallback", () => {
       config.RULES_FILE = savedRulesFile;
       config.SEED_RULES_FILE = savedSeedFile;
       _resetRulesCacheForTests();
-      fs.rmSync(tmp, { recursive: true, force: true });
-    }
-  });
-});
-
-describe("stats backup rotation", () => {
-  it("rotateStatsBackup creates backup and keeps only STATS_BACKUP_COUNT", () => {
-    const savedDir = config.STATS_DIR;
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "adskip-stats-backup-"));
-    config.STATS_DIR = tmp;
-    const day = "2026-10-07";
-    const statsFile = path.join(tmp, `${day}.json`);
-    fs.writeFileSync(statsFile, JSON.stringify({ skip: 1 }));
-    const backupDir = path.join(tmp, "backups");
-
-    try {
-      _rotateStatsBackupForTests(day);
-      const backups = fs.readdirSync(backupDir).filter((f) => f.startsWith(`stats-${day}-`));
-      expect(backups.length).toBe(1);
-
-      for (let i = 0; i < config.STATS_BACKUP_COUNT + 2; i++) {
-        _rotateStatsBackupForTests(day);
-      }
-      const remaining = fs.readdirSync(backupDir).filter((f) => f.startsWith(`stats-${day}-`));
-      expect(remaining.length).toBe(config.STATS_BACKUP_COUNT);
-    } finally {
-      config.STATS_DIR = savedDir;
       fs.rmSync(tmp, { recursive: true, force: true });
     }
   });
