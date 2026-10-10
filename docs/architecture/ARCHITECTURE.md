@@ -76,13 +76,13 @@
 ### 2.1 边界契约
 
 分层不只是目录约定，更是**可执行的依赖规则**。下表为各包允许/禁止的 import 关系，
-由 `client/app/src/test/java/com/ldp/adskip/arch/ArchitectureBoundaryTest.kt` 在每次
+由 `client/app/src/test/java/com/qingqi/adskip/arch/ArchitectureBoundaryTest.kt` 在每次
 `testDebugUnitTest`（及 CI 门禁）中扫描源码强制校验，违反即测试失败。
 
 | 包 | 允许依赖 | 禁止依赖（守护测试强制） |
 | --- | --- | --- |
-| `engine/` | 仅 Kotlin/JDK 与 `engine/` 自身 | `android.*`、`androidx.*`、其他所有 `com.ldp.adskip.*` |
-| `core/` | Kotlin/JDK/协程、`core/` 自身 | 其他所有 `com.ldp.adskip.*` |
+| `engine/` | 仅 Kotlin/JDK 与 `engine/` 自身 | `android.*`、`androidx.*`、其他所有 `com.qingqi.adskip.*` |
+| `core/` | Kotlin/JDK/协程、`core/` 自身 | 其他所有 `com.qingqi.adskip.*` |
 | `ui/` | Compose/AndroidX、组合根（`AdskipApp`/`AppContainer`）、`core/`、`engine/`、`data/` 领域仓库（`RulesRepository`/`StatsRepository`/`SettingsRepository`）、`R` | `service/`、`net/`、`sync/`、`data.Prefs` |
 | `data/` | `engine/`（RuleSet）、`net/`（设置门面委托）、`sync/`（调度委托）、Android SDK | `ui/`、`service/` |
 | `net/` | `data/`、Android SDK、org.json | `ui/`、`service/` |
@@ -99,7 +99,7 @@
 - **device 单向向下**：`device/` 只允许「读系统状态 + 拉起系统页面」，因此可以依赖 `service/` 的只读查询，但不得反向依赖 `ui/`；磁贴关闭服务走 `SkipAdService.requestShutdown()` 发出的进程内定向广播，而非跨包持有 Service 实例。
 
 > 另一条由测试守护的隐式约定：保活入口表依赖 Android 11+ 的包可见性，`<queries>` 声明必须与 `device/VendorKeepAlive.kt` 的入口表逐条对齐，
-> 由 `client/app/src/test/java/com/ldp/adskip/arch/ManifestContractTest.kt` 校验（漏声明只会让跳转静默失败，不会编译报错）。
+> 由 `client/app/src/test/java/com/qingqi/adskip/arch/ManifestContractTest.kt` 校验（漏声明只会让跳转静默失败，不会编译报错）。
 
 > **广播必须收窄到本应用**：所有 `sendBroadcast` 都要带 `setPackage(...)`。
 > `ACTION_SKIPPED` 携带用户正在使用的应用名，未收窄的隐式广播可被任意第三方应用注册同名 action 监听；
@@ -114,7 +114,7 @@
 ### 2.2 目录结构契约
 
 2.1 管的是**包之间的依赖**，2.2 管的是**仓库与工程结构本身**。后者同样由
-`client/app/src/test/java/com/ldp/adskip/arch/ProjectStructureTest.kt` 强制，
+`client/app/src/test/java/com/qingqi/adskip/arch/ProjectStructureTest.kt` 强制，
 随 `testDebugUnitTest` 运行，并在 CI 中作为独立 job（`Structure Contract`）最先执行——让结构问题在几分钟内失败，而不是等完整构建结束。
 
 | 契约 | 强制内容 | 背景（实测故障） |
@@ -280,7 +280,7 @@ AdSkip/                            全栈 monorepo
 ├── client/                        Android 客户端（Kotlin + Compose，Gradle 工程根）
 │   ├── build.gradle.kts           模块与签名配置（签名参数读 local.properties）
 │   ├── settings.gradle.kts        仓库配置（国内镜像优先）
-│   └── app/src/main/java/com/ldp/adskip/
+│   └── app/src/main/java/com/qingqi/adskip/
 │       ├── ui/                   Compose UI（单 Activity + 4 Screen + ViewModel + UiEffect）
 │       ├── core/                 AppEvents / Clock / AppExecutors / LogRing
 │       ├── service/              SkipAdService + FrameworkAdNode（无障碍服务/节点适配）

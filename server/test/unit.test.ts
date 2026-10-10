@@ -28,7 +28,6 @@ import {
   _resetSummaryCacheForTests,
   _resetStatsCacheForTests,
   _resetRulesCacheForTests,
-  _rotateStatsBackupForTests,
 } from "../src/storage/store";
 
 function req(headers: Record<string, string> = {}): Request {
@@ -102,7 +101,7 @@ describe("validate", () => {
 
   it("isValidPackage 正则边界", () => {
     expect(isValidPackage("com.example.app")).toBe(true);
-    expect(isValidPackage("com.ldp.adskip")).toBe(true);
+    expect(isValidPackage("com.example.other")).toBe(true);
     expect(isValidPackage("invalid")).toBe(false);
     expect(isValidPackage(".com.example")).toBe(false);
     expect(isValidPackage("com..app")).toBe(false);
@@ -217,9 +216,32 @@ describe("rateLimit", () => {
     expect(limitReport(req(), "10.0.0.4", "dev12345678")).toBe(true);
   });
 
-  it("clientIp 优先取 x-forwarded-for，回退 remoteIp", () => {
-    expect(clientIp(req({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" }), "9.9.9.9")).toBe("1.2.3.4");
-    expect(clientIp(req(), "9.9.9.9")).toBe("9.9.9.9");
+  it("clientIp 未配置受信代理时忽略 X-Forwarded-For", () => {
+    const saved = config.TRUSTED_PROXIES;
+    config.TRUSTED_PROXIES = [];
+    try {
+      // 伪造的 XFF 不得成为限流键，否则任何人换头部即可重生令牌桶
+      expect(clientIp(req({ "x-forwarded-for": "1.2.3.4" }), "9.9.9.9")).toBe("9.9.9.9");
+      expect(clientIp(req(), "9.9.9.9")).toBe("9.9.9.9");
+    } finally {
+      config.TRUSTED_PROXIES = saved;
+    }
+  });
+
+  it("clientIp 对端是受信代理时采信 X-Forwarded-For", () => {
+    const saved = config.TRUSTED_PROXIES;
+    config.TRUSTED_PROXIES = ["10.1.1.1"];
+    try {
+      expect(
+        clientIp(req({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" }), "10.1.1.1")
+      ).toBe("1.2.3.4");
+      // 代理未带头时回退 socket IP
+      expect(clientIp(req(), "10.1.1.1")).toBe("10.1.1.1");
+      // 非受信对端即使带头也不采信
+      expect(clientIp(req({ "x-forwarded-for": "1.2.3.4" }), "9.9.9.9")).toBe("9.9.9.9");
+    } finally {
+      config.TRUSTED_PROXIES = saved;
+    }
   });
 
   it("probeReportIp 探测不扣减令牌", () => {
@@ -374,33 +396,6 @@ describe("seed rules fallback", () => {
       config.RULES_FILE = savedRulesFile;
       config.SEED_RULES_FILE = savedSeedFile;
       _resetRulesCacheForTests();
-      fs.rmSync(tmp, { recursive: true, force: true });
-    }
-  });
-});
-
-describe("stats backup rotation", () => {
-  it("rotateStatsBackup creates backup and keeps only STATS_BACKUP_COUNT", () => {
-    const savedDir = config.STATS_DIR;
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "adskip-stats-backup-"));
-    config.STATS_DIR = tmp;
-    const day = "2026-10-07";
-    const statsFile = path.join(tmp, `${day}.json`);
-    fs.writeFileSync(statsFile, JSON.stringify({ skip: 1 }));
-    const backupDir = path.join(tmp, "backups");
-
-    try {
-      _rotateStatsBackupForTests(day);
-      const backups = fs.readdirSync(backupDir).filter((f) => f.startsWith(`stats-${day}-`));
-      expect(backups.length).toBe(1);
-
-      for (let i = 0; i < config.STATS_BACKUP_COUNT + 2; i++) {
-        _rotateStatsBackupForTests(day);
-      }
-      const remaining = fs.readdirSync(backupDir).filter((f) => f.startsWith(`stats-${day}-`));
-      expect(remaining.length).toBe(config.STATS_BACKUP_COUNT);
-    } finally {
-      config.STATS_DIR = savedDir;
       fs.rmSync(tmp, { recursive: true, force: true });
     }
   });

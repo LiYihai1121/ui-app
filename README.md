@@ -93,7 +93,7 @@ AdSkip/            # 全栈 monorepo
 ├── docs/          # 文档地图 README.md（规划事实源入口）+ api/ architecture/ development/ planning/ diagrams/
 └── .github/       # CI 工作流
 
-client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，零第三方依赖）
+client/app/src/main/java/com/qingqi/adskip/   # Android 客户端源码（Kotlin，零第三方依赖）
 ├── AdskipApp.kt                    # Application + AppContainer（手动 DI）
 ├── core/                           # Clock / AppExecutors / LogRing / AppEvents（状态总线）
 ├── ui/                             # 界面层（Compose 单 Activity + Navigation）
@@ -125,7 +125,7 @@ client/app/src/main/java/com/ldp/adskip/   # Android 客户端源码（Kotlin，
 └── sync/
     └── SyncJobService.kt           # JobScheduler 定时同步（三合一，跨重启持久化）
 
-client/app/src/test/java/com/ldp/adskip/   # JVM 单测（引擎/护栏/边界与清单契约守护/选择器），随门禁运行
+client/app/src/test/java/com/qingqi/adskip/   # JVM 单测（引擎/护栏/边界与清单契约守护/选择器），随门禁运行
 
 server/                             # 后端（Bun + TypeScript，零运行时依赖）
 ├── server.ts                       # Bun.serve 入口、路由分发、优雅停机
@@ -193,7 +193,7 @@ bun run typecheck     # tsc --noEmit
 | 渠道 | 说明 |
 | --- | --- |
 | 本地副本 | 将 Release APK 放在仓库根并命名为 `AdSkip-latest.apk`；服务端 `/download` 路由直接提供下载，手机浏览器访问 `http://<本机IP>:3210/download` 即可。 |
-| GitHub Release | 由版本 tag 自动创建，上传 Release APK 和 `SHA256SUMS`。配置 `ADSKIP_KEYSTORE_BASE64` / `ADSKIP_STORE_PASSWORD` / `ADSKIP_KEY_ALIAS` / `ADSKIP_KEY_PASSWORD` Secrets 时用正式密钥签名，否则回退 debug 签名；打包步骤强制 `apksigner verify`，不再发布未签名包。 |
+| GitHub Release | 由版本 tag 自动创建，上传 Release APK 和 `SHA256SUMS`。配置 `ADSKIP_KEYSTORE_BASE64` / `ADSKIP_STORE_PASSWORD` / `ADSKIP_KEY_ALIAS` / `ADSKIP_KEY_PASSWORD` Secrets 时用正式密钥签名；**M2 起不再回退 debug 签名**——未配置 Secrets 时 `assembleRelease` 直接失败，不再产出可被冒签/不可安装的制品。打包步骤强制 `apksigner verify`。 |
 
 > **手机安装报错排查**
 >
@@ -202,9 +202,9 @@ bun run typecheck     # tsc --noEmit
 > | 解析软件包时出现问题 | APK 未签名（历史上 CI 无签名密钥时上传的制品） | 改用当前链路产物：CI 已强制 `apksigner verify`，本地 `assembleRelease` 默认回退 debug 签名；校验命令见 [DEV-ENVIRONMENT.md](docs/development/DEV-ENVIRONMENT.md) |
 > | 解析软件包时出现问题 | 手机 Android 版本低于 `minSdk`（26 = Android 8.0） | 换用 Android 8.0 及以上设备 |
 > | 解析软件包时出现问题 | 传输中断，或被聊天工具改名/压缩（大小与 `SHA256SUMS` 不一致） | 比对 SHA-256 后重传，或改用服务端 `/download` |
-> | 应用未安装 / 签名冲突 | 手机上已装 debug 签名版或其它密钥版本 | 卸载 `com.ldp.adskip` 后重装 |
+> | 应用未安装 / 签名冲突 | 手机上已装 debug 签名版或其它密钥版本 | 卸载 `com.qingqi.adskip` 后重装 |
 
-要求：JDK 17+、Android SDK（compileSdk 35）、Bun 1.1+（服务端）。Android 部分也可直接用 Android Studio / IntelliJ 打开 `client/` 目录。
+要求：JDK 17+、Android SDK（compileSdk 37）、Bun 1.1+（服务端）。Android 部分也可直接用 Android Studio / IntelliJ 打开 `client/` 目录。
 
 ## 分支与版本
 

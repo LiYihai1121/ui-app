@@ -26,7 +26,7 @@
 
 ## 2. 现状事实
 
-- Gradle **9.7.0**（wrapper 走腾讯云镜像），AGP **8.7.3**，Kotlin **2.0.21**，JDK 17，compileSdk/targetSdk 35，minSdk 26。
+- Gradle **9.7.0**（wrapper 走腾讯云镜像），AGP **8.7.3**，Kotlin **2.0.21**，JDK 17，compileSdk 37（Compose 1.12 强制要求），targetSdk 35，minSdk 26。
 - 依赖版本全部硬编码：`client/build.gradle.kts` 三处插件版本 + `client/app/build.gradle.kts` 的 Compose BOM 与 5 个 AndroidX 坐标。
 - 仓库源全部使用**阿里云镜像优先**（注释明确：本机直连 `dl.google.com`/`mavenCentral` 会读超时）。
 - `repositoriesMode = FAIL_ON_PROJECT_REPOS` 已开启（正确，勿在模块内写仓库）。

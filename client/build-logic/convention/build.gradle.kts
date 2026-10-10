@@ -3,7 +3,7 @@ plugins {
     `java-gradle-plugin`
 }
 
-group = "com.ldp.adskip.buildlogic"
+group = "com.qingqi.adskip.buildlogic"
 
 dependencies {
     // 把 AGP / Compose 编译器插件放进约定插件自己的 classpath，
@@ -23,7 +23,7 @@ gradlePlugin {
     plugins {
         create("adskipAndroidApplication") {
             id = "adskip.android.application"
-            implementationClass = "com.ldp.adskip.gradle.AdskipAndroidApplicationPlugin"
+            implementationClass = "com.qingqi.adskip.gradle.AdskipAndroidApplicationPlugin"
         }
     }
 }

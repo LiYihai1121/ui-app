@@ -73,7 +73,7 @@ value      := 除 '"' 外的可见字符（长度 ≤ 64，见 3.3 限制）
 
 ## 4. 模块设计（客户端）
 
-新增包 `com.ldp.adskip.engine.selector`，保持引擎层纯 JVM 可测、零第三方依赖：
+新增包 `com.qingqi.adskip.engine.selector`，保持引擎层纯 JVM 可测、零第三方依赖：
 
 ```text
 engine/selector/
@@ -190,7 +190,7 @@ MAX_SELECTOR_LEN = 256; MAX_SELECTORS_PER_LIST = 128;
 - **契约测试防漂移**：共享夹具 `server/test/fixtures/selectors.contract.json` 固化了三段向量——
   `accepted` / `rejected`（两端判定必须一致，合法与非法各 ≥12 条）与 `divergences`（有意判定不同者，写明原因）。
   **bun test 与 Gradle JVM 单测共同消费**：`server/test/selectors.contract.test.ts` 断言服务端一侧，
-  `client/app/src/test/java/com/ldp/adskip/engine/SelectorContractTest.kt` 断言客户端一侧
+  `client/app/src/test/java/com/qingqi/adskip/engine/SelectorContractTest.kt` 断言客户端一侧
   （客户端「接受」= `SelectorParser.parse` 编译成功）。
   设计取舍：服务端只做快检，是必要不充分条件，故 `divergences` 段显式登记「服务端放行、客户端拒收」
   的 7 类向量（未知 key / 缺引号 / 缺 key / 缺中括号 / 括号乱序 / value 超 64 字符 / compound 超 4 段），

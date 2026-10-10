@@ -89,16 +89,23 @@ docs/
 
 文档命名是**机器可读的约定**：新文件名必须能被规则解释，改名必须走同步流程。规则解释以本页为准。
 
-| 对象 | 规则 | 示例 |
-| --- | --- | --- |
-| 子目录名 | 小写、单数、无连字符 | `api/` `architecture/` `development/` `planning/` `diagrams/`（新模块如 `guide/` 同样小写） |
-| `.md` 文档文件名 | `UPPER-KEBAB-CASE.md`：全大写 + 短横线，结构 `<DOMAIN>[-<PHASE>]-<TOPIC>` | `DESIGN-PHASE1-SELECTOR.md`（类型=方案、阶段=PHASE1、主题=选择器） |
-| 目录主文档 | 用目录名本身作 `DOMAIN` | `api/API.md`、`architecture/ARCHITECTURE.md`、`planning/ROADMAP.md` |
-| 入口文档 | `README.md` 为固定例外（目录入口不参与 KEBAB 规则） | `docs/README.md` |
-| 非文档资产 | `lower-kebab-case`，与可阅读文档区分 | `diagrams/adskip-architecture.json` / `.html` |
-| 标题（H1） | `<中文主题>（<文件基名>）`，便于搜索与引用溯源 | `# 多 Agent 协作规范（AGENT-WORKFLOW）` |
+| 文档模块 | 目录用途 | 文件名格式 | 示例 |
+| --- | --- | --- | --- |
+| `api/` | 对外接口、数据格式与协议契约 | `API[-<TOPIC>].md` | `API.md` |
+| `architecture/` | 系统架构、模块职责与边界 | `ARCHITECTURE[-<TOPIC>].md` | `ARCHITECTURE.md` |
+| `development/` | 开发环境和协作流程；环境类用 `DEV`，协作类用 `AGENT` | `<DEV\|AGENT>-<TOPIC>.md` | `DEV-ENVIRONMENT.md`、`AGENT-WORKFLOW.md` |
+| `planning/` | 路线图、技术设计、跟进事项和发布记录 | `ROADMAP[-<TOPIC>].md`、`DESIGN-<TOPIC>.md`、`FOLLOW-UP[-<TOPIC>].md`、`RELEASE[-<TOPIC>].md` | `ROADMAP-ADS.md`、`DESIGN-PHASE1-SELECTOR.md`、`FOLLOW-UP.md`、`RELEASE-HISTORY.md` |
+| `guide/`（按需创建） | 面向用户或贡献者的操作指南 | `GUIDE-<TOPIC>.md` | `GUIDE-RULE-AUTHORING.md` |
 
-- `DOMAIN` 词汇表：`API` / `ARCHITECTURE` / `ROADMAP` / `DESIGN` / `DEV` / `AGENT` / `RELEASE`（`guide/` 目录用 `GUIDE`）；同目录多份同域文档用 `<DOMAIN>-<SUFFIX>` 区分（`ROADMAP-ADS`、`RELEASE-HISTORY`、`DEV-ENVIRONMENT`、`AGENT-WORKFLOW`）。
+通用规则：
+
+- 文档分类目录使用**小写 kebab-case**；按内容归类到上表模块，新增目录前先登记文档地图和结构守护测试。`diagrams/` 专门存放图表等非 Markdown 资产，不用作文档模块。
+- `.md` 文件名使用**全大写 ASCII 字母、数字与短横线**，扩展名固定为 `.md`。`<TOPIC>` 和可选部分用短横线分词；`PHASE1` 等阶段编号中的数字紧跟词干，不插入空格或下划线。
+- 模块前缀按上表固定，不得跨目录复用其他模块的前缀；一个模块内同一主题的多份文档用额外主题词区分，禁止用 `NEW`、`FINAL`、日期或版本号代替主题。
+- 目录入口 `README.md` 是固定例外，不参与模块前缀规则；当前 `docs/README.md` 是唯一的文档地图入口。
+- 非文档资产采用 `lower-kebab-case`，与可阅读文档区分，例如 `diagrams/adskip-architecture.json` / `.html`。
+- H1 使用 `<中文主题>（<文件基名>）`，基名不带 `.md`；入口文档可用其入口主题，不强制重复 `README`。例如 `# 多 Agent 协作规范（AGENT-WORKFLOW）`。
+
 - **改名流程**：`git mv` 改文件名 → `git grep` 全仓同步所有引用（含本文档地图）→ 守护测试若硬编码文档名（如 `RepoHygieneTest.WORKFLOW_DOC`）一并更新 → 跑相关门禁后提交。
 
 ## 维护规则
