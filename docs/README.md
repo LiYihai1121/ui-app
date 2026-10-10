@@ -18,6 +18,8 @@ docs/
 │   ├── ROADMAP.md                 版本序列（唯一事实源）
 │   ├── ROADMAP-ADS.md             里程碑 / 周次 / 出口条件
 │   ├── DESIGN-PHASE1-SELECTOR.md  L1 技术设计与步骤 A–F
+│   ├── testing/                  真机验收计划与证据模板
+│   │   └── TOP30-REAL-DEVICE-ACCEPTANCE.md
 │   ├── DESIGN-ADS-FILTERING.md    L2/L3/L4 分层边界与 Phase 0 决策提案
 │   ├── DESIGN-BUILD-FRAMEWORK.md  构建框架工程化（version catalog / build-logic / 模块拆分）
 │   ├── FOLLOW-UP.md               安全加固与技术补充计划（已修复清单 / 待修复 / 里程碑）
@@ -36,6 +38,7 @@ docs/
 | 对接服务端接口 | [api/API.md](api/API.md) |
 | 知道接下来做什么、按什么顺序做 | [planning/ROADMAP.md](planning/ROADMAP.md) → [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) |
 | 看某项能力的技术设计与实施步骤 | [planning/DESIGN-PHASE1-SELECTOR.md](planning/DESIGN-PHASE1-SELECTOR.md) |
+| 查看 Top 30 App 的真机验收标准和记录模板 | [testing/TOP30-REAL-DEVICE-ACCEPTANCE.md](testing/TOP30-REAL-DEVICE-ACCEPTANCE.md)（尚未实测） |
 | 审查广告治理分层、L2/L3/L4 决策提案与放行条件 | [planning/DESIGN-ADS-FILTERING.md](planning/DESIGN-ADS-FILTERING.md)（提案未获批准） |
 | 了解构建框架演进方案（version catalog / 约定插件 / 模块拆分） | [planning/DESIGN-BUILD-FRAMEWORK.md](planning/DESIGN-BUILD-FRAMEWORK.md) |
 | 配置本机开发环境 | [development/DEV-ENVIRONMENT.md](development/DEV-ENVIRONMENT.md) |
@@ -53,6 +56,7 @@ docs/
 | 版本序列与能力意图（`3.0.3` → `3.1.0` → …） | [planning/ROADMAP.md](planning/ROADMAP.md) | 只引用版本号，不另立序列 |
 | 专项里程碑、周次、出口条件 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md)（第 5~6 节） | 引用 ROADMAP 的版本号 |
 | L1 选择器技术方案与步骤 A–F | [planning/DESIGN-PHASE1-SELECTOR.md](planning/DESIGN-PHASE1-SELECTOR.md) | 引用版本号与里程碑编号 |
+| Top 30 真机验收口径、试次记录与放行证据 | [testing/TOP30-REAL-DEVICE-ACCEPTANCE.md](testing/TOP30-REAL-DEVICE-ACCEPTANCE.md) | 只记录实际设备结果，不将模拟器/单测标为真机通过 |
 | L2 DNS、L3 Root、L4 通知治理边界与 Phase 0 决策提案 | [planning/DESIGN-ADS-FILTERING.md](planning/DESIGN-ADS-FILTERING.md) | 提案不代表正式合规批准；L2/L3 仍禁用 |
 | 构建框架演进方案（version catalog / build-logic / 模块拆分） | [planning/DESIGN-BUILD-FRAMEWORK.md](planning/DESIGN-BUILD-FRAMEWORK.md) | 本页不复制其坑位清单；目录结构的**已生效**规则见 [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) 第 2.2 节 |
 | 已发布版本链路（tag / 提交 / Release / 制品） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) | CHANGELOG 只记用户可见变更，不复述链路 |
