@@ -1,7 +1,7 @@
 # Agent 技能开发（skills/README.md）
 
 > 状态：已生效；最后更新：2026-10-07。
-> 适用范围：所有随仓库版本控制的 Agent 技能（`branch-guard`、`code-simplifier` 等）。
+> 适用范围：所有随仓库版本控制的 Agent 技能（`branch-guard`、`code-simplifier`、`software-development-full` 等）。
 > 挂载方式：`kilo.json` 的 `skills.paths: ["./skills"]`；技能加载与权限见 [kilo.json](../kilo.json)。
 
 本目录是**随仓库版本控制的 Agent 技能**的唯一存放处。技能不是「个人配置」：放进 `.kilo/` 等被
@@ -12,15 +12,19 @@
 
 ```text
 skills/
-├── branch-guard/      自研技能：分支治理（规则指针 + 自检动作，不复述规则）
+├── branch-guard/               自研技能：分支治理（规则指针 + 自检动作，不复述规则）
 │   └── SKILL.md
-└── code-simplifier/   第三方上游技能：代码简化（Apache-2.0，随包携带 LICENSE / NOTICE）
+├── code-simplifier/            第三方上游技能：代码简化（Apache-2.0，随包携带 LICENSE / NOTICE）
+│   ├── SKILL.md
+│   ├── README.md
+│   ├── LICENSE / NOTICE.md
+│   ├── docs/specs/             引入 Spec 与决策记录
+│   ├── scripts/                校验脚本（validate.py）
+│   └── tests/                  决策场景集
+└── software-development-full/  通用完整版软件开发规则（全场景开发协议；来源与许可状态见 NOTICE.md，
+    │                         上游 LICENSE 未随附，对外分发前须补齐）
     ├── SKILL.md
-    ├── README.md
-    ├── LICENSE / NOTICE.md
-    ├── docs/specs/    引入 Spec 与决策记录
-    ├── scripts/       校验脚本（validate.py）
-    └── tests/         决策场景集
+    └── NOTICE.md
 ```
 
 ## SKILL.md 格式
