@@ -11,43 +11,38 @@ agp = "9.4.1"                        # Android Gradle Plugin（Gradle 9.6+ 移�
 kotlin = "2.2.10"                   # 仅用于 Compose 编译器插件：必须与 AGP 9.4.1 内置 Kotlin 版本一致
 
 # AndroidX（BOM 之外的坐标也统一收口）
-# 官方明确要求「always use the latest Compose BOM」：BOM 是同一时刻各 Compose 库
-# 互相兼容的快照，单独升某个库反而会制造不匹配组合。
-composeBom = "2026.08.00"           # Jetpack Compose BOM（core 1.12 + material3 1.5 Expressive：Mesh Gradients、
-                                     # Wide Color Gamut、Grid 具名区域；compose 1.12 起强制 compileSdk 37，
-                                     # 故本 BOM 必须与约定插件的 compileSdk 同步抬升；镜像已核对）
+composeBom = "2026.08.00"           # Jetpack Compose BOM
 activityCompose = "1.9.3"
-lifecycle = "2.8.7"                 # lifecycle-viewmodel-compose / lifecycle-runtime-compose
+lifecycle = "2.8.7"
 navigationCompose = "2.8.5"
 
 # 测试
 junit = "4.13.2"
+orgjson = "20240303"                 # 单测用真实 org.json 实现（AGP android.jar 桩在 returnDefaultValues 下全返回默认值）
 
-# 安全存储（EncryptedSharedPreferences）
+# 安全存储
 securityCrypto = "1.1.0-alpha07"
 
-# 静态检查（构建期工具，不进运行时依赖，故不影响「客户端零第三方依赖」承诺）
-ktlint = "14.2.0"                   # ktlint-gradle 包装插件；其默认内含的 ktlint 版本会随补丁版变动，
-                                    # 故下方显式锁定 ktlint 本体版本，避免「同一提交不同时间跑出不同结果」
-ktlintCli = "1.8.0"                 # ktlint 本体版本（ktlint_standard_* 规则集随此版本演进）
+# HTTP 客户端
+okhttp = "4.12.0"
 
-# 约定插件自身版本（随发布节奏递增；被 libs.plugins.adskip-android-application 引用）
+# 静态检查
+ktlint = "14.2.0"
+ktlintCli = "1.8.0"
+
+# 约定插件
 adskipPlugins = "1.0.0"
 
 [libraries]
-# AndroidX Compose（版本由 BOM 控制，此处不写版本号）
+# AndroidX Compose
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
-# compose 1.9+ 起 material3 不再传递依赖图标库，需显式声明 core 图标集
 androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
-# 注意：底部导航栏**刻意不使用** material-icons-extended。该制品体积巨大，
-# 实测让 assembleDebug 的 dex 合并多花数分钟、debug APK 增大 ~7 MB，
-# 对本项目（轻量工具 + assembleDebug 作为 CI 门禁）不划算；改用 core 图标集。
 
-# AndroidX MVVM + 导航
+# MVVM + 导航
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
@@ -55,20 +50,25 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 
 # 测试
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+# AGP 本地单测的 android.jar 只含 org.json 桩（isReturnDefaultValues=true 时方法全返回默认值），
+# 需引入真实实现，否则 JSONObject 链式调用直接 NPE
+org-json = { group = "org.json", name = "json", version.ref = "orgjson" }
 
 # 安全存储
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 
-# build-logic 约定插件运行时依赖（供 build-logic/convention 将 AGP/Compose 编译器/ktlint 插件应用到目标工程）
-# 注意：id 标注的插件应用走 pluginManagement 仓库解析，这里要求的是构成 classpath 的实际制品坐标
+# HTTP 客户端
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+# 注意：别名只能用字母/数字/连字符/下划线，禁止含点号；点号会被当作访问器分组分隔符，
+# Gradle 9 对含非法点号的别名直接报 TOML syntax error（InvalidUserDataException）。
+# 另注意：okhttp 4.x 只有 mockwebserver 一个制品（内部用 JUnit4 的 @Before/@After 生命周期），
+# 没有 mockwebserver-junit4 / mockwebserver3-junit4（后者仅存在于 5.x 的 mockwebserver3 系列）。
+okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
+
+# build-logic 约定插件运行时依赖
 android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 kotlin-compose-compiler-plugin = { group = "org.jetbrains.kotlin", name = "compose-compiler-gradle-plugin", version.ref = "kotlin" }
-# 注意：这里用插件**本体**坐标而非 `*.gradle.plugin` marker 制品。
-# marker 只发布在 Gradle Plugin Portal，而本项目的仓库解析以阿里云镜像优先
-# （build-logic/settings.gradle.kts），marker 在镜像上缺失会导致约定插件编译期解析失败；
-# 本体制品在 Maven Central 与镜像上都有，且约定插件本来就是以 pluginManager.apply(id) 应用它。
 ktlint-gradle = { group = "org.jlleitschuh.gradle", name = "ktlint-gradle", version.ref = "ktlint" }
-# ktlint 本体（运行时由 ktlint-gradle 在 code-analysis 任务里下载）
 ktlint-cli = { group = "com.pinterest.ktlint", name = "ktlint-cli", version.ref = "ktlintCli" }
 
 [plugins]

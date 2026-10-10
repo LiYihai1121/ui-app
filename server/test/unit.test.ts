@@ -28,6 +28,7 @@ import {
   _resetSummaryCacheForTests,
   _resetStatsCacheForTests,
   _resetRulesCacheForTests,
+  _rotateStatsBackupForTests,
 } from "../src/storage/store";
 
 function req(headers: Record<string, string> = {}): Request {
@@ -373,6 +374,33 @@ describe("seed rules fallback", () => {
       config.RULES_FILE = savedRulesFile;
       config.SEED_RULES_FILE = savedSeedFile;
       _resetRulesCacheForTests();
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("stats backup rotation", () => {
+  it("rotateStatsBackup creates backup and keeps only STATS_BACKUP_COUNT", () => {
+    const savedDir = config.STATS_DIR;
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "adskip-stats-backup-"));
+    config.STATS_DIR = tmp;
+    const day = "2026-10-07";
+    const statsFile = path.join(tmp, `${day}.json`);
+    fs.writeFileSync(statsFile, JSON.stringify({ skip: 1 }));
+    const backupDir = path.join(tmp, "backups");
+
+    try {
+      _rotateStatsBackupForTests(day);
+      const backups = fs.readdirSync(backupDir).filter((f) => f.startsWith(`stats-${day}-`));
+      expect(backups.length).toBe(1);
+
+      for (let i = 0; i < config.STATS_BACKUP_COUNT + 2; i++) {
+        _rotateStatsBackupForTests(day);
+      }
+      const remaining = fs.readdirSync(backupDir).filter((f) => f.startsWith(`stats-${day}-`));
+      expect(remaining.length).toBe(config.STATS_BACKUP_COUNT);
+    } finally {
+      config.STATS_DIR = savedDir;
       fs.rmSync(tmp, { recursive: true, force: true });
     }
   });

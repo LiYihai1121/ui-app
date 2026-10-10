@@ -198,7 +198,8 @@ function rotateStatsBackup(day: string): void {
     const src = path.join(config.STATS_DIR, `${day}.json`);
     if (!dirOrFileExists(src)) return;
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const dest = path.join(config.STATS_DIR, "backups", `stats-${day}-${stamp}.json`);
+    const ms = Date.now();
+    const dest = path.join(config.STATS_DIR, "backups", `stats-${day}-${stamp}-${ms}.json`);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(src, dest);
 
@@ -372,6 +373,11 @@ export function _resetStatsCacheForTests(): void {
 /** 仅供测试：清空规则缓存（隔离种子兜底测试的 config.RULES_FILE 切换） */
 export function _resetRulesCacheForTests(): void {
   rulesCache = null;
+}
+
+/** 仅供测试：触发统计分片备份轮转（验证 rotateStatsBackup 行为） */
+export function _rotateStatsBackupForTests(day: string): void {
+  rotateStatsBackup(day);
 }
 
 function flushDay(day: string): void {

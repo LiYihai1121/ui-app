@@ -40,6 +40,10 @@ export interface Config {
   MAX_BATCH_EVENTS: number;
   MAX_BODY_KEYS: number;
   MAX_BODY_DEPTH: number;
+  /** TLS 证书路径（空字符串表示禁用 HTTPS）。 */
+  TLS_CERT: string;
+  /** TLS 私钥路径（空字符串表示禁用 HTTPS）。 */
+  TLS_KEY: string;
 }
 
 export const config: Config = {
@@ -81,4 +85,6 @@ export const config: Config = {
   MAX_BATCH_EVENTS: 50,
   MAX_BODY_KEYS: 100,
   MAX_BODY_DEPTH: 5,
+  TLS_CERT: process.env.TLS_CERT ?? "",
+  TLS_KEY: process.env.TLS_KEY ?? "",
 };
