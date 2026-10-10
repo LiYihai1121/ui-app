@@ -89,7 +89,7 @@ SafetyGuard 安全护栏复核（黑名单/可见性/面积）
 
 防误触：同应用 1.2s 去抖、150ms 全局节流、单次遍历 ≤500 节点、忽略系统 UI、按应用禁用、SafetyGuard 硬编码黑名单。
 
-> 第三通道选择器（`engine/selector/`，类 CSS 子集：`[vid$=":id/skip_view"]`、`[text*="跳过"] > [vid$="id/iv_close"]`、`[desc^="跳过"] + [vid$="id/iv_close"]` 等）已随 `3.1.0` 随协议 v2 全链路上线（服务端下发 → 客户端编译求值），按优先级先于文本与 ViewID 通道求值；语法与硬限制（单条 ≤256 字符、每列表 ≤128 条、value ≤64、组合链 ≤4 段）见 [DESIGN-PHASE1-SELECTOR.md](docs/planning/DESIGN-PHASE1-SELECTOR.md)。Top 30 App 规则编写与真机验收（步骤 F）仍在进行，发版节奏见 [ROADMAP.md](docs/planning/ROADMAP.md)。
+> 第三通道选择器（`engine/selector/`，类 CSS 子集：`[vid$=":id/skip_view"]`、`[text*="跳过"] > [vid$="id/iv_close"]`、`[desc^="跳过"] + [vid$="id/iv_close"]` 等）已随 `3.1.0` 协议 v2 全链路上线（服务端下发 → 客户端编译求值），按优先级先于文本与 ViewID 通道求值；语法与硬限制（单条 ≤256 字符、每列表 ≤128 条、value ≤64、组合链 ≤4 段）见 [DESIGN-PHASE1-SELECTOR.md](docs/planning/DESIGN-PHASE1-SELECTOR.md)。Top 30 App 规则编写与真机验收（步骤 F）仍在进行，发版节奏见 [ROADMAP.md](docs/planning/ROADMAP.md)。
 
 ## 工程结构
 
@@ -100,42 +100,69 @@ AdSkip/            # 全栈 monorepo
 ├── docs/          # 文档地图 README.md（规划事实源入口）+ api/ architecture/ development/ planning/ diagrams/
 └── .github/       # CI 工作流
 
-client/app/src/main/java/com/qingqi/adskip/   # Android 客户端源码（Kotlin，零第三方依赖）
-├── AdskipApp.kt                    # Application + AppContainer（手动 DI）
-├── core/                           # Clock / AppExecutors / LogRing / AppEvents（状态总线）
-├── ui/                             # 界面层（Compose 单 Activity + Navigation）
-│   ├── MainActivity.kt            #   唯一 Activity
-│   ├── Routes.kt                  #   导航路由
-│   ├── theme/Theme.kt             #   主题
-│   ├── home/                      #   主页 Screen + ViewModel
-│   ├── apps/                      #   应用管理 Screen + ViewModel
-│   ├── logs/                      #   跳过日志 Screen + ViewModel
-│   └── settings/                  #   云同步设置 Screen + ViewModel
-├── service/
+client/app/src/main/java/com/qingqi/adskip/   # Android 客户端源码（Kotlin；engine/ 层零第三方依赖，见 ArchitectureBoundaryTest）
+├── AdskipApp.kt                    # Application 入口
+├── AppContainer.kt                 # 手动 DI 容器（不引入 Hilt/Koin）
+├── core/                           # 基础设施（时钟/线程/日志/状态总线，可单测）
+│   ├── Clock.kt                    # 时钟注入（确定性判定）
+│   ├── SystemClockAdapter.kt       # 系统时钟适配
+│   ├── LanguagePreferences.kt      # 语言偏好
+│   ├── AppExecutors.kt             # 线程池
+│   ├── LogRing.kt                  # 环形日志（内存 500 条）
+│   └── AppEvents.kt                # 状态总线
+├── ui/                             # 界面层（Compose 单 Activity + Navigation + UiEffect 单向事件）
+│   ├── MainActivity.kt             #   唯一 Activity
+│   ├── Routes.kt                   #   导航路由
+│   ├── Messenger.kt                #   页面消息总线
+│   ├── UiEffect.kt                 #   一次性 UI 事件（sealed interface）
+│   ├── VendorLabels.kt             #   厂商显示名映射
+│   ├── theme/                      #   主题（Color/Spacing/Type）
+│   ├── components/                 #   通用组件（StatusOrb/Common/Feedback）
+│   ├── home/                       #   主页 Screen + ViewModel
+│   ├── apps/                       #   应用管理 Screen + ViewModel
+│   ├── logs/                       #   跳过日志 Screen + ViewModel
+│   ├── profile/                    #   设备与权限 Screen + ViewModel + PermissionCard
+│   └── settings/                   #   云同步设置 Screen + ViewModel
+├── device/                         # 系统集成（ROM 识别与保活、权限、下拉磁贴、语言）
+│   ├── VendorKeepAlive.kt          #   ROM 识别与厂商保活引导
+│   ├── BatteryExemption.kt         #   电池优化白名单判定
+│   ├── AccessibilityStatus.kt      #   无障碍权限状态判定
+│   ├── KeepAliveNavigator.kt       #   厂商设置页跳转
+│   ├── PermissionCenter.kt         #   权限引导中心
+│   ├── LanguageMode.kt             #   语言模式（enum）
+│   ├── LocaleApplier.kt            #   语言应用
+│   ├── QuickTileLogic.kt           #   下拉磁贴逻辑
+│   └── SkipTileService.kt          #   下拉磁贴 Service
+├── service/                        # Android 框架编排层（薄编排，保证 engine 纯 JVM）
 │   ├── SkipAdService.kt            # 服务层（薄编排：事件/节流/点击/SafetyGuard）
-│   └── FrameworkAdNode.kt          # 框架适配（包装 AccessibilityNodeInfo；归 service 保 engine 纯 JVM）
+│   ├── FrameworkAdNode.kt          # 框架适配（包装 AccessibilityNodeInfo；归 service 保 engine 纯 JVM）
+│   └── NodeSnapshot.kt             # 节点树快照导出（≤96 KB，设置页分享）
 ├── engine/                         # 纯 JVM：接口/引擎/护栏/规则集（可跑无 Android 单测）
 │   ├── AdNode.kt                   # 节点抽象接口（引擎不依赖框架类）
-│   ├── SafetyGuard.kt              # 安全护栏（黑名单/合法性）
-│   ├── SkipRuleEngine.kt           # 引擎层（纯匹配逻辑，文本/ViewID/选择器 三通道）
-│   ├── RuleSet.kt                  # 规则集模型（keywords/viewIds/selectors + schemaVersion）
+│   ├── SafetyGuard.kt              # 安全护栏（黑名单/可见性/面积）
+│   ├── SkipRuleEngine.kt           # 引擎层（纯匹配逻辑，选择器/文本/ViewID 三通道）
+│   ├── RuleSet.kt                  # 规则集模型（schemaVersion 2，含 keywords/viewIds/selectors）
 │   └── selector/                   # 选择器引擎（类 CSS 子集，纯 JVM）
 │       ├── SelectorAst.kt          #   AST（组合符/属性断言/CompoundSelector）
 │       ├── SelectorParser.kt       #   解析器（非法输入返回 null，fail-safe）
 │       └── SelectorMatcher.kt      #   右到左求值（祖先/子/前兄弟关系匹配）
-├── data/
-│   ├── Prefs.kt                    # 存储原语（SharedPreferences + deviceId + rulesHash）
+├── data/                           # 数据与持久化
+│   ├── Prefs.kt                    # 存储原语（SharedPreferences + deviceId + rulesHash + 证书指纹 + 签名密钥）
 │   ├── RulesRepository.kt          # 规则仓库（LruCache 缓存/版本失效/schemaVersion 校验）
+│   ├── ServerEndpoint.kt           # 服务端地址与环境配置
+│   ├── SettingsRepository.kt       # 设置项持久化
 │   └── StatsRepository.kt          # 统计仓库（合批落盘）
-├── net/
-│   └── SyncClient.kt               # 网络层（v1: ETag/304/deviceId/批量补报）
-└── sync/
-    └── SyncJobService.kt           # JobScheduler 定时同步（三合一，跨重启持久化）
+├── net/                            # 网络
+│   └── SyncClient.kt               # 网络层（v1: ETag/304/deviceId/批量补报 + 证书固定 + 规则签名校验）
+└── sync/                           # 定时同步
+    └── SyncJobService.kt           # JobScheduler 定时同步（12 小时，跨重启持久化）
 
-client/app/src/test/java/com/qingqi/adskip/   # JVM 单测（引擎/护栏/边界与清单契约守护/选择器），随门禁运行
+client/app/src/test/java/com/qingqi/adskip/   # JVM 单测（引擎/护栏/选择器/边界与清单契约守护），随门禁运行
 
 server/                             # 后端（Bun + TypeScript，零运行时依赖）
+├── package.json                    # 零运行时依赖（无 dependencies 字段）
 ├── server.ts                       # Bun.serve 入口、路由分发、优雅停机
+├── tsconfig.json                   # TypeScript 配置
 ├── src/
 │   ├── api/                        # 路由拆分（v0+v1）
 │   │   ├── index.ts                #   路由分发
@@ -144,9 +171,12 @@ server/                             # 后端（Bun + TypeScript，零运行时�
 │   │   └── healthApi.ts            #   健康检查
 │   ├── middleware/
 │   │   ├── auth.ts                 #   Bearer token 鉴权
-│   │   └── rateLimit.ts            #   内存令牌桶限流
+│   │   ├── rateLimit.ts            #   内存令牌桶限流
+│   │   └── accessLog.ts            #   访问日志（内存环形，200 条）
 │   ├── storage/
 │   │   └── store.ts                #   规则（缓存+备份轮转）/ 统计（分日分片+延迟刷盘）
+│   ├── types/
+│   │   └── rules.ts                #   规则集类型定义
 │   ├── utils/
 │   │   ├── httpUtil.ts             #   CORS 白名单 / 安全 JSON 解析 / Handler 类型
 │   │   ├── sign.ts                 #   规则签名（HMAC-SHA256，客户端本地校验）
