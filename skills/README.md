@@ -14,13 +14,6 @@
 skills/
 ├── branch-guard/               自研技能：分支治理（规则指针 + 自检动作，不复述规则）
 │   └── SKILL.md
-├── code-simplifier/            第三方上游技能：代码简化（Apache-2.0，随包携带 LICENSE / NOTICE）
-│   ├── SKILL.md
-│   ├── README.md
-│   ├── LICENSE / NOTICE.md
-│   ├── docs/specs/             引入 Spec 与决策记录
-│   ├── scripts/                校验脚本（validate.py）
-│   └── tests/                  决策场景集
 └── software-development-full/  通用完整版软件开发规则（全场景开发协议；来源与许可状态见 NOTICE.md，
     │                         上游 LICENSE 未随附，对外分发前须补齐）
     ├── SKILL.md
