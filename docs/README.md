@@ -20,6 +20,7 @@ docs/
 │   ├── DESIGN-PHASE1-SELECTOR.md  L1 技术设计与步骤 A–F
 │   ├── DESIGN-ADS-FILTERING.md    L2/L3/L4 分层边界与 Phase 0 决策提案
 │   ├── DESIGN-BUILD-FRAMEWORK.md  构建框架工程化（version catalog / build-logic / 模块拆分）
+│   ├── DESIGN-ARCH-EVOLUTION.md   架构演进计划（R1 多模块化 / R2 SQLite 存储 / R3 部署）
 │   ├── FOLLOW-UP.md               安全加固与技术补充计划（已修复清单 / 待修复 / 里程碑）
 │   └── RELEASE-HISTORY.md         发布链路（tag / 提交 / Release / 制品）
 └── diagrams/          架构图（adskip-architecture.json 源 + .html 渲染）
@@ -38,6 +39,7 @@ docs/
 | 看某项能力的技术设计与实施步骤 | [planning/DESIGN-PHASE1-SELECTOR.md](planning/DESIGN-PHASE1-SELECTOR.md) |
 | 审查广告治理分层、L2/L3/L4 决策提案与放行条件 | [planning/DESIGN-ADS-FILTERING.md](planning/DESIGN-ADS-FILTERING.md)（提案未获批准） |
 | 了解构建框架演进方案（version catalog / 约定插件 / 模块拆分） | [planning/DESIGN-BUILD-FRAMEWORK.md](planning/DESIGN-BUILD-FRAMEWORK.md) |
+| 了解前后端架构演进方向与技术选型（R1–R3） | [planning/DESIGN-ARCH-EVOLUTION.md](planning/DESIGN-ARCH-EVOLUTION.md) |
 | 配置本机开发环境 | [development/DEV-ENVIRONMENT.md](development/DEV-ENVIRONMENT.md) |
 | 查某版本发布到哪个提交、哪个 tag | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
 | 查安全加固/技术短板跟进计划（已修复清单 / 待修复 / 里程碑） | [planning/FOLLOW-UP.md](planning/FOLLOW-UP.md) |
@@ -54,7 +56,8 @@ docs/
 | 专项里程碑、周次、出口条件 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md)（第 5~6 节） | 引用 ROADMAP 的版本号 |
 | L1 选择器技术方案与步骤 A–F | [planning/DESIGN-PHASE1-SELECTOR.md](planning/DESIGN-PHASE1-SELECTOR.md) | 引用版本号与里程碑编号 |
 | L2 DNS、L3 Root、L4 通知治理边界与 Phase 0 决策提案 | [planning/DESIGN-ADS-FILTERING.md](planning/DESIGN-ADS-FILTERING.md) | 提案不代表正式合规批准；L2/L3 仍禁用 |
-| 构建框架演进方案（version catalog / build-logic / 模块拆分） | [planning/DESIGN-BUILD-FRAMEWORK.md](planning/DESIGN-BUILD-FRAMEWORK.md) | 本页不复制其坑位清单；目录结构的**已生效**规则见 [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) 第 2.2 节 |
+| 构建框架演进方案（version catalog / build-logic / 模块拆分） | [planning/DESIGN-BUILD-FRAMEWORK.md](planning/DESIGN-BUILD-FRAMEWORK.md) | 本页不复制其坑位清单；
+| 架构演进（客户端多模块化 / 服务端存储 / 部署） | [planning/DESIGN-ARCH-EVOLUTION.md](planning/DESIGN-ARCH-EVOLUTION.md) | 引用 ROADMAP 版本号；与 L1–L5 能力里程碑的合并点见其第 7 节 |目录结构的**已生效**规则见 [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) 第 2.2 节 |
 | 已发布版本链路（tag / 提交 / Release / 制品） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) | CHANGELOG 只记用户可见变更，不复述链路 |
 | 协议与接口 | [api/API.md](api/API.md) + [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md)（第 7 节） | DESIGN 只描述增量字段 |
 | 客户端/服务端分层与模块职责 | [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) | README 只给目录树摘要 |
