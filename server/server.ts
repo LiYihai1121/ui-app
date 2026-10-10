@@ -1,6 +1,7 @@
 import * as path from "node:path";
 import * as fs from "node:fs";
 import * as os from "node:os";
+import { isIP } from "node:net";
 import { config } from "./src/config";
 import { handleApi } from "./src/api";
 import { withCors, errorJson } from "./src/utils/httpUtil";
@@ -13,6 +14,12 @@ export interface StartOptions {
   adminToken?: string;
   apkFile?: string;
   dataDir?: string;
+}
+
+function isLoopbackHost(host: string): boolean {
+  const normalized = host.replace(/^\[|\]$/g, "").toLowerCase();
+  if (normalized === "localhost" || normalized === "::1") return true;
+  return isIP(normalized) === 4 && Number(normalized.split(".")[0]) === 127;
 }
 
 /**
@@ -67,8 +74,21 @@ function applySecurityHeaders(resp: Response): Response {
   return resp;
 }
 
-/** 启动 HTTP 服务，返回 Bun.Server（供测试注入端口/数据目录/令牌） */
+/** 启动服务；明文 HTTP 仅允许 loopback 绑定用于本地开发或反向代理。 */
 export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
+  const port = options.port ?? config.PORT;
+  const host = options.host ?? config.HOST;
+  const hasTlsCert = Boolean(config.TLS_CERT);
+  const hasTlsKey = Boolean(config.TLS_KEY);
+  if (hasTlsCert !== hasTlsKey) {
+    throw new Error("TLS_CERT and TLS_KEY must both be configured");
+  }
+  if (!hasTlsCert && !isLoopbackHost(host)) {
+    throw new Error(
+      "TLS_CERT and TLS_KEY are required for non-loopback binds; use a loopback bind behind a TLS-terminating reverse proxy for proxy deployments"
+    );
+  }
+
   if (options.adminToken !== undefined) config.ADMIN_TOKEN = options.adminToken;
   if (options.apkFile !== undefined) config.APK_FILE = options.apkFile;
   if (options.dataDir !== undefined) {
@@ -80,10 +100,7 @@ export function startServer(options: StartOptions = {}): Bun.Server<undefined> {
 
   if (config.STATS_DIR_CLEANUP_ON_START) cleanupOldStats();
 
-  const port = options.port ?? config.PORT;
-  const host = options.host ?? config.HOST;
-
-  const tlsConfig = config.TLS_CERT && config.TLS_KEY
+  const tlsConfig = hasTlsCert && hasTlsKey
     ? { tls: { cert: Bun.file(config.TLS_CERT), key: Bun.file(config.TLS_KEY) } }
     : {};
 

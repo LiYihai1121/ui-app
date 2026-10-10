@@ -1,7 +1,6 @@
 package com.qingqi.adskip.ui.settings
 
 import android.content.Intent
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -12,6 +11,7 @@ import com.qingqi.adskip.AdskipApp
 import com.qingqi.adskip.AppContainer
 import com.qingqi.adskip.R
 import com.qingqi.adskip.core.AppEvents
+import com.qingqi.adskip.data.ServerEndpoint
 import com.qingqi.adskip.device.BatteryExemption
 import com.qingqi.adskip.device.KeepAliveNavigator
 import com.qingqi.adskip.device.LanguageMode
@@ -102,10 +102,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         _uiState.value = _uiState.value.copy(certPinsInput = value)
     }
 
-    fun isValidServerUrl(url: String): Boolean {
-        val uri = Uri.parse(url)
-        return uri.scheme in setOf("http", "https") && !uri.host.isNullOrBlank()
-    }
+    fun isValidServerUrl(url: String): Boolean = ServerEndpoint.isValid(url)
 
     /** 校验并保存服务器地址，返回是否成功 */
     fun saveServerUrl(raw: String): Boolean {

@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { startServer } from "../server";
+import { config } from "../src/config";
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "adskip-test-"));
 const apkSrc = path.join(import.meta.dir, "..", "..", "AdSkip-latest.apk");
@@ -31,6 +32,26 @@ afterAll(() => {
 const TOKEN = "test123";
 
 describe("smoke", () => {
+  it("rejects non-loopback HTTP binds unless TLS is configured", () => {
+    const savedCert = config.TLS_CERT;
+    const savedKey = config.TLS_KEY;
+    config.TLS_CERT = "";
+    config.TLS_KEY = "";
+    try {
+      config.TLS_CERT = "certificate.pem";
+      expect(() => startServer({ port: 0, host: "0.0.0.0" })).toThrow(
+        "TLS_CERT and TLS_KEY must both be configured"
+      );
+      config.TLS_CERT = "";
+      expect(() => startServer({ port: 0, host: "0.0.0.0" })).toThrow(
+        "TLS_CERT and TLS_KEY are required for non-loopback binds"
+      );
+    } finally {
+      config.TLS_CERT = savedCert;
+      config.TLS_KEY = savedKey;
+    }
+  });
+
   it("GET / 返回 HTML 并注入当前版本号", async () => {
     const res = await fetch(`${base}/`);
     const html = await res.text();

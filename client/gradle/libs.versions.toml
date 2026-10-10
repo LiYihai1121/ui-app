@@ -64,6 +64,7 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhtt
 # 另注意：okhttp 4.x 只有 mockwebserver 一个制品（内部用 JUnit4 的 @Before/@After 生命周期），
 # 没有 mockwebserver-junit4 / mockwebserver3-junit4（后者仅存在于 5.x 的 mockwebserver3 系列）。
 okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
+okhttp-tls = { group = "com.squareup.okhttp3", name = "okhttp-tls", version.ref = "okhttp" }
 
 # build-logic 约定插件运行时依赖
 android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }

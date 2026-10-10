@@ -52,7 +52,7 @@ object Prefs {
     private const val PREFIX_PKG_COUNT = "pkg_count:"
 
     private const val LOG_CAP = 200
-    const val DEFAULT_SERVER = "http://192.168.1.100:3210"
+    const val DEFAULT_SERVER = "https://192.168.1.100:3210"
 
     fun sp(context: Context): SharedPreferences {
         spInstance?.let { return it }
