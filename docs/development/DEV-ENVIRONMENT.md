@@ -128,6 +128,24 @@ Get-ChildItem "$env:GRADLE_USER_HOME\wrapper\dists" -Directory
 `.worktrees/`，含 `.git` 元数据），不要在仓库内复制整仓。细则见
 [AGENT-WORKFLOW.md](AGENT-WORKFLOW.md) 第 2.1 节。
 
+## IDE 语言服务诊断排障
+
+**症状**：VS Code 里 `client/` 下所有 `.kt` 文件一片红——`Unresolved reference: junit` / `mutableListOf` / `it` / `to` / `error`，或 `Class 'kotlin.Unit' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.4.0, but the compiler version 2.1.0 can read versions up to 2.2.0`（`INCOMPATIBLE_CLASS`），个别文件还报 `Redeclaration: <类名>`。
+
+**判定**：这是**编辑器扩展与构建工具链的结构性版本不兼容，100% 是误报**，不是代码问题。三条判据：
+
+1. 命令行门禁全绿：`cd client && ./gradlew ktlintCheck testDebugUnitTest`——真实编译信号以此为准；
+2. 报错指向 `gradle-9.7.0/lib/kotlin-stdlib-2.4.0.jar`，而报错的编译器是 2.1.0：两个 Kotlin 版本对不上，版本低的编译器读不了版本高的 stdlib metadata（2.1.0 只认 ≤ 2.2.0）；
+3. 触发前提是 AGP 9 起 Kotlin 由 AGP 内置、本工程不再声明 `kotlin-android` 插件（见 `client/gradle/libs.versions.toml` 注释），语言服务器取不到工具链版本只能回落自带编译器。
+
+历史根因是社区扩展 `fwcd.kotlin`（0.2.36 即 Marketplace 最新版，已冻结，内置 Kotlin 2.1.0，「升级扩展」这条路走不通）。本仓库的 `.vscode/extensions.json` 已改推 JetBrains 官方扩展 `JetBrains.kotlin-server`（基于 IntelliJ IDEA 的 Kotlin 插件实现，支持最新 Kotlin 语言版本），不存在该结构性不兼容。
+
+**处理**：
+
+1. 扩展面板确认装的是 **Kotlin by JetBrains**（`JetBrains.kotlin-server`）；若同时装有 `fwcd.kotlin`，先卸载旧的再装官方扩展——两个语言服务抢注 `.kt` 文件会互相干扰，装完重载窗口；
+2. `Redeclaration` 误报来自多 Agent 的 `.worktrees/<name>/` 副本（每个 worktree 内含同一份 `client/` 工程，`fwcd.kotlin` 无目录排除配置项会一并导入）：协作收尾后按 [AGENT-WORKFLOW.md](AGENT-WORKFLOW.md) 删掉 worktree（`git worktree remove .worktrees/<name>`，分支与提交不受影响）即可消除；
+3. **不要为迁就语言服务器而改写已通过构建的代码**——那会污染正确的源码。
+
 ## CI 构建失败排障
 
 **症状**：CI 报 `A problem occurred configuring root project` → `Could not resolve com.android:...` → `Repository maven is disabled due to earlier error` → `There are 28 more failures with identical causes`，**测试一条都没跑**。

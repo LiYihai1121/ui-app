@@ -62,6 +62,9 @@ client/build-logic/**/bin/
 !.pre-commit-config.yaml
 .secrets.baseline
 
+# 本机 ACL 修复工具的审计输出目录（机器本地产物，不入库）
+.acl-recovery/
+
 # Pre-commit hooks
 .pre-commit-config.yaml
 .secrets.baseline

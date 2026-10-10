@@ -2,9 +2,19 @@
   // 推荐扩展：让「追一个功能到源码」这件事在所有人的编辑器里表现一致。
   // 属于建议而非强制——缺少某扩展不应该导致项目无法构建或测试。
   "recommendations": [
-    // Kotlin 语言服务器：跳转定义 / 查找引用 / hover / 语义高亮 / 补全。
+    // Kotlin 语言服务器：JetBrains 官方扩展，基于 IntelliJ IDEA 的 Kotlin 插件实现。
     // 装上后本仓库的 .editorconfig（import 排序、120 行宽）才能被正确应用。
-    "fwcd.kotlin",
+    //
+    // 为什么不是 fwcd.kotlin：其 0.2.36（Marketplace 最新版）内置 Kotlin 2.1.0 编译器，
+    // 只认 metadata ≤ 2.2.0，而 Gradle 9.7.0 自带 kotlin-stdlib-2.4.0，于是全仓 .kt 报
+    // INCOMPATIBLE_CLASS，连带 mutableListOf / mapOf / it / let / to / error 等 stdlib
+    // 符号全部 unresolved（单文件可达 80+ 条误报）。同时它没有目录排除配置项，会把
+    // .worktrees/ 下的 gradle 工程一并导入并对同名类报 Redeclaration。
+    // 本扩展基于 IntelliJ 实现，支持最新 Kotlin 语言版本，不存在该结构性不兼容。
+    //
+    // 注意：本扩展处于 Alpha 阶段（Marketplace 33k+ 安装），诊断以真实编译为准；
+    // 若其导入行为有变，先跑门禁 ./gradlew ktlintCheck testDebugUnitTest 再判断。
+    "JetBrains.kotlin-server",
 
     // Java 语言服务器：redhat.jdt.ls 只管 Java；同时带来 XML 支持，
     // 读 AndroidManifest.xml 的 <queries> 与权限声明时用得上。
