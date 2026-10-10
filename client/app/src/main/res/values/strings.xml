@@ -15,8 +15,8 @@
     <string name="settings_open_failed">无法打开无障碍设置页，请手动前往 设置 → 无障碍</string>
     <string name="stats_total_label">累计跳过（次）</string>
     <string name="nav_home">首页</string>
-    <string name="nav_apps">应用管理</string>
-    <string name="nav_logs">跳过日志</string>
+    <string name="nav_apps">应用</string>
+    <string name="nav_logs">记录</string>
     <string name="btn_confirm">确定</string>
     <string name="btn_cancel">取消</string>
     <string name="btn_retry">重试</string>
@@ -66,7 +66,7 @@
     <string name="toast_skipped">已跳过 %1$s 的开屏广告</string>
 
     <!-- 应用管理 -->
-    <string name="apps_title">应用管理</string>
+    <string name="apps_title">应用</string>
     <string name="apps_hint">关闭开关后，将不在该应用内自动跳过广告</string>
     <plurals name="apps_count">
         <item quantity="other">已跳过 %1$d 次</item>
@@ -83,7 +83,7 @@
     <string name="apps_clear_filters">清除搜索与筛选</string>
 
     <!-- 跳过日志 -->
-    <string name="logs_title">跳过日志</string>
+    <string name="logs_title">记录</string>
     <plurals name="logs_subtitle">
         <item quantity="other">共 %1$d 条记录，仅保留最近 200 条</item>
     </plurals>
