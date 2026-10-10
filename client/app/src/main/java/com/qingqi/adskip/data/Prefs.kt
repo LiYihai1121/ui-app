@@ -327,6 +327,7 @@ object Prefs {
     }
 
     // ---------- 规则签名密钥（HMAC-SHA256，与服务端 RULES_SIGNING_KEY 配对） ----------
+
     /**
      * 云端规则完整性密钥。
      *
@@ -334,14 +335,14 @@ object Prefs {
      * 未配置密钥时 [com.qingqi.adskip.net.SyncClient] 一律拒绝载入云端规则
      * （失败关闭）——读取端点无鉴权，签名是防规则被中间人改写的唯一手段。
      */
-    fun getRulesSigningKey(context: Context): String =
-        sp(context).getString(KEY_RULES_SIGNING_KEY, "") ?: ""
+    fun getRulesSigningKey(context: Context): String = sp(context).getString(KEY_RULES_SIGNING_KEY, "") ?: ""
 
     fun saveRulesSigningKey(context: Context, key: String) {
         sp(context).edit().putString(KEY_RULES_SIGNING_KEY, key.trim()).apply()
     }
 
     // ---------- 证书指纹（OkHttp CertificatePinner，每行一个 sha256/...） ----------
+
     /** 取证书公钥指纹列表；为空表示未固定证书。 */
     fun getCertPins(context: Context): List<String> {
         val raw = sp(context).getString(KEY_CERT_PINS, "") ?: ""

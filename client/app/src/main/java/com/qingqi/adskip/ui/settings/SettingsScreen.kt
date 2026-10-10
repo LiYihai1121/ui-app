@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -169,7 +170,46 @@ fun SettingsContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(Spacing.sm))
+            if (state.isCleartextServer) {
+                Text(
+                    text = stringResource(R.string.settings_cleartext_warning),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+                Spacer(Modifier.height(Spacing.sm))
+            }
             SectionHint(stringResource(R.string.settings_desc))
+        }
+
+        SectionCard {
+            SectionTitle(stringResource(R.string.settings_security_section))
+            Spacer(Modifier.height(Spacing.sm))
+            SectionHint(stringResource(R.string.settings_security_desc))
+            Spacer(Modifier.height(Spacing.md))
+            OutlinedTextField(
+                value = state.signingKeyInput,
+                onValueChange = viewModel::onSigningKeyChanged,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.settings_signing_key_label)) },
+                placeholder = { Text(stringResource(R.string.settings_signing_key_hint)) },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+            )
+            Spacer(Modifier.height(Spacing.md))
+            OutlinedTextField(
+                value = state.certPinsInput,
+                onValueChange = viewModel::onCertPinsChanged,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.settings_cert_pins_label)) },
+                placeholder = { Text(stringResource(R.string.settings_cert_pins_hint)) },
+                minLines = 2,
+            )
+            Spacer(Modifier.height(Spacing.md))
+            FilledTonalButton(
+                onClick = { viewModel.saveSecurityConfig(state.signingKeyInput, state.certPinsInput) },
+            ) {
+                Text(stringResource(R.string.settings_save_security))
+            }
         }
 
         SectionCard {

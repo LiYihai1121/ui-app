@@ -40,6 +40,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
     data class UiState(
         val serverUrlInput: String,
+        val signingKeyInput: String = "",
+        val certPinsInput: String = "",
         val syncing: Boolean = false,
         val syncResult: String? = null,
         val lastSyncAt: Long = 0L,
@@ -59,11 +61,20 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
          * [BatteryExemption.UNKNOWN] 不算已豁免：不确定时不该对用户承诺后台不会被杀。
          */
         val isBatteryExempt: Boolean get() = batteryExemption == BatteryExemption.EXEMPT
+
+        /**
+         * 服务器地址为明文 http 时为 true（A 链告警：明文下规则可被 LAN 内改写，
+         * 防篡改靠签名密钥而非传输保密；仍应提示用户尽快迁 HTTPS）。
+         */
+        val isCleartextServer: Boolean
+            get() = serverUrlInput.trim().startsWith("http://", ignoreCase = true)
     }
 
     private val _uiState = MutableStateFlow(
         UiState(
             serverUrlInput = container.settingsRepo.serverUrl(),
+            signingKeyInput = container.settingsRepo.rulesSigningKey(),
+            certPinsInput = container.settingsRepo.certPins().joinToString("\n"),
             lastSyncAt = container.settingsRepo.lastSyncAt(),
             autoSync = container.settingsRepo.isAutoSyncEnabled(),
             dndEnabled = container.settingsRepo.isDoNotDisturbEnabled(),
@@ -83,6 +94,14 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         _uiState.value = _uiState.value.copy(serverUrlInput = value)
     }
 
+    fun onSigningKeyChanged(value: String) {
+        _uiState.value = _uiState.value.copy(signingKeyInput = value)
+    }
+
+    fun onCertPinsChanged(value: String) {
+        _uiState.value = _uiState.value.copy(certPinsInput = value)
+    }
+
     fun isValidServerUrl(url: String): Boolean {
         val uri = Uri.parse(url)
         return uri.scheme in setOf("http", "https") && !uri.host.isNullOrBlank()
@@ -95,6 +114,31 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             return false
         }
         container.settingsRepo.saveServerUrl(raw.trim())
+        send(container.app.getString(R.string.settings_saved))
+        return true
+    }
+
+    /**
+     * 保存规则签名密钥与证书指纹（安全段，A 链配套）。
+     *
+     * 证书指纹逐条校验 `sha256/` 前缀 + Base64 长度，防止把无关文本存进去
+     * 后到同步时才以「无 pins」形式悄悄退化。
+     */
+    fun saveSecurityConfig(rawKey: String, rawPins: String): Boolean {
+        val key = rawKey.trim()
+        if (key.length < 16) {
+            send(container.app.getString(R.string.settings_signing_key_too_short))
+            return false
+        }
+        val pins = rawPins.split('\n', ',').map { it.trim() }.filter { it.isNotEmpty() }
+        val bad = pins.filterNot(::isValidCertificatePin)
+        if (bad.isNotEmpty()) {
+            send(container.app.getString(R.string.settings_cert_pin_invalid, bad.first()))
+            return false
+        }
+        container.settingsRepo.saveRulesSigningKey(key)
+        container.settingsRepo.saveCertPins(pins)
+        _uiState.value = _uiState.value.copy(signingKeyInput = key, certPinsInput = pins.joinToString("\n"))
         send(container.app.getString(R.string.settings_saved))
         return true
     }
@@ -231,5 +275,9 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 SettingsViewModel(app.container)
             }
         }
+
+        internal fun isValidCertificatePin(pin: String): Boolean = certificatePinPattern.matches(pin)
+
+        private val certificatePinPattern = Regex("sha256/[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=")
     }
 }

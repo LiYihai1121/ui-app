@@ -43,6 +43,33 @@ class SyncClientTest {
     // ---------- 规则解析 ----------
 
     @Test
+    fun `hmac signature matches the standard test vector`() {
+        val signature = SyncClient.hmacSha256Hex(
+            "key",
+            "The quick brown fox jumps over the lazy dog",
+        )
+
+        assertEquals("f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8", signature)
+        assertTrue(SyncClient.verifyRulesSignature("key", "The quick brown fox jumps over the lazy dog", signature))
+        assertTrue(
+            SyncClient.verifyRulesSignature(
+                "key",
+                "The quick brown fox jumps over the lazy dog",
+                "sha256=${signature.uppercase()}",
+            ),
+        )
+        assertFalse(
+            SyncClient.verifyRulesSignature("wrong-key", "The quick brown fox jumps over the lazy dog", signature),
+        )
+    }
+
+    @Test
+    fun `hostOf excludes credentials and custom port`() {
+        assertEquals("example.com", SyncClient.hostOf("https://user:secret@example.com:8443/rules"))
+        assertEquals("invalid-url", SyncClient.hostOf("not a url"))
+    }
+
+    @Test
     fun `parseRulesResponse handles v1 format`() {
         val body = JSONObject()
             .put("schemaVersion", 2)

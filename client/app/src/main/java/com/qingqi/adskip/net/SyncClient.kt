@@ -8,6 +8,7 @@ import com.qingqi.adskip.core.LogRing
 import com.qingqi.adskip.data.Prefs
 import com.qingqi.adskip.data.RulesRepository
 import okhttp3.CertificatePinner
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -46,11 +47,10 @@ object SyncClient {
     /** OkHttp 客户端按（host + pins）缓存：CertificatePinner.pin 是 host 维度，单例做不到按配置切换 */
     private val pinnedClients = ConcurrentHashMap<String, OkHttpClient>()
 
-    private fun baseBuilder(): OkHttpClient.Builder =
-        OkHttpClient.Builder()
-            .connectTimeout(TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
-            .readTimeout(TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
-            .writeTimeout(TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
+    private fun baseBuilder(): OkHttpClient.Builder = OkHttpClient.Builder()
+        .connectTimeout(TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
+        .readTimeout(TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
+        .writeTimeout(TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
 
     /** 无 pins 的通用客户端：仅上报等低敏请求使用 */
     private val plainClient: OkHttpClient by lazy { baseBuilder().build() }
@@ -141,6 +141,10 @@ object SyncClient {
 
     /**
      * 拉取云端规则并落地（v1 协议：带 If-None-Match）。
+     *
+     * 失败关闭链：未配签名密钥 → 拒载；https 未配证书指纹 → 拒连；
+     * 验签不通过 → 拒载。三者任一不满足都不触碰本地规则。
+     *
      * @param onResult 主线程回调：(成功?, 提示信息)
      */
     fun syncRules(
@@ -150,15 +154,29 @@ object SyncClient {
         onResult: (Boolean, String) -> Unit,
     ) {
         executors.io.execute {
-            val result = try {
-                val base = serverUrl.trimEnd('/')
-                val knownHash = Prefs.getRulesHash(context)
+            val result = runSync(context, serverUrl.trimEnd('/'), rulesRepo)
+            mainHandler.post { onResult(result.first, result.second) }
+        }
+    }
 
-                // v1 路由优先，回退 v0
-                val (body, notModified) = httpGetWithETagBlocking("$base/api/v1/rules/latest", knownHash)
-                if (notModified) {
-                    Prefs.setLastSyncAt(context, System.currentTimeMillis())
-                    Pair(true, "规则已是最新（304 Not Modified）")
+    /** 单次同步的阻塞实现：验签/证书门禁 + 落地；失败一律不动本地规则 */
+    private fun runSync(context: Context, base: String, rulesRepo: RulesRepository): Pair<Boolean, String> {
+        val guard = securityGuard(context, base)
+        if (guard != null) return Pair(false, guard)
+        return try {
+            val knownHash = Prefs.getRulesHash(context)
+            val pins = Prefs.getCertPins(context)
+            // v1 路由优先，回退 v0
+            val (body, signature, notModified) =
+                httpGetWithETagBlocking("$base/api/v1/rules/latest", knownHash, base, pins)
+            if (notModified) {
+                Prefs.setLastSyncAt(context, System.currentTimeMillis())
+                Pair(true, "规则已是最新（304 Not Modified）")
+            } else {
+                val signingKey = Prefs.getRulesSigningKey(context)
+                if (!verifyRulesSignature(signingKey, body, signature)) {
+                    // 验签失败：载荷可能被中间人改写，直接丢弃
+                    Pair(false, "规则签名校验失败，已拒绝载入（本地密钥与服务端不一致，或连接被劫持）")
                 } else {
                     val parsed = parseRulesResponse(body)
                     val ok = rulesRepo.applyCloudRules(
@@ -176,10 +194,11 @@ object SyncClient {
                         Pair(true, "同步成功：规则 v${parsed.version}，含 ${parsed.pkgRules.size} 个应用专属规则")
                     }
                 }
-            } catch (e: Exception) {
-                Pair(false, "同步失败：" + (e.message ?: "网络错误"))
             }
-            mainHandler.post { onResult(result.first, result.second) }
+        } catch (e: Exception) {
+            // 不回显 URL（可能含 userinfo 凭据），日志只留主机名
+            LogRing.w("Sync", "sync failed for ${hostOf(base)}: ${e.javaClass.simpleName}")
+            Pair(false, "同步失败：无法连接到服务器")
         }
     }
 
@@ -235,11 +254,23 @@ object SyncClient {
     fun syncRulesSilently(context: Context, serverUrl: String, rulesRepo: RulesRepository): Boolean {
         return try {
             val base = serverUrl.trimEnd('/')
+            val guard = securityGuard(context, base)
+            if (guard != null) {
+                LogRing.w("Sync", "silent sync refused: $guard")
+                return false
+            }
             val knownHash = Prefs.getRulesHash(context)
-            val (body, notModified) = httpGetWithETagBlocking("$base/api/v1/rules/latest", knownHash)
+            val pins = Prefs.getCertPins(context)
+            val (body, signature, notModified) =
+                httpGetWithETagBlocking("$base/api/v1/rules/latest", knownHash, base, pins)
             if (notModified) {
                 Prefs.setLastSyncAt(context, System.currentTimeMillis())
                 return true
+            }
+            val signingKey = Prefs.getRulesSigningKey(context)
+            if (!verifyRulesSignature(signingKey, body, signature)) {
+                LogRing.w("Sync", "silent sync refused: signature mismatch")
+                return false
             }
             val parsed = parseRulesResponse(body)
             val ok = rulesRepo.applyCloudRules(
@@ -255,24 +286,80 @@ object SyncClient {
             }
             ok
         } catch (e: Exception) {
-            LogRing.w("Sync", "syncRulesSilently failed: ${e.message}")
+            // 不回显 URL，日志只留主机名
+            LogRing.w("Sync", "syncRulesSilently failed for ${hostOf(serverUrl)}: ${e.javaClass.simpleName}")
             false
         }
     }
 
+    /**
+     * 同步前的失败关闭门禁：未配签名密钥一律拒载；https 未配证书指纹一律拒连。
+     * @return 拒绝原因；通过时返回 null。
+     */
+    private fun securityGuard(context: Context, base: String): String? {
+        if (Prefs.getRulesSigningKey(context).isBlank()) {
+            return "未配置规则签名密钥，已拒绝云端规则（防篡改）。请在本页底部配置"
+        }
+        if (base.startsWith("https://", ignoreCase = true)) {
+            if (Prefs.getCertPins(context).isEmpty()) {
+                return "未配置证书指纹，已拒绝 HTTPS 连接。请在本页底部填入 sha256/... 指纹"
+            }
+        }
+        return null
+    }
+
+    /** 从 URL 中去掉 scheme 与 userinfo，只留主机名（日志/提示不泄露完整地址） */
+    internal fun hostOf(url: String): String = url.toHttpUrlOrNull()?.host ?: "invalid-url"
+
     // ---------- HTTP 原语 ----------
 
-    /** GET 带 If-None-Match，返回 (body, notModified) —— 同步阻塞版 */
-    private fun httpGetWithETagBlocking(url: String, etag: String): Pair<String, Boolean> {
+    private data class GetResult(val body: String, val signature: String?, val notModified: Boolean)
+
+    /** GET 带 If-None-Match，返回 (body, 签名头, notModified) —— 同步阻塞版 */
+    private fun httpGetWithETagBlocking(url: String, etag: String, baseUrl: String, pins: List<String>): GetResult {
+        val host = hostOf(baseUrl)
+        val httpClient = testClient ?: clientForPins(host, pins)
         val request = Request.Builder()
             .url(url)
             .header("If-None-Match", etag)
             .build()
-        client().newCall(request).execute().use { response ->
-            if (response.code == 304) return Pair("", true)
+        httpClient.newCall(request).execute().use { response ->
+            if (response.code == 304) return GetResult("", null, true)
             if (response.code !in 200..299) throw Exception("HTTP " + response.code)
-            return Pair(response.body!!.string(), false)
+            return GetResult(
+                response.body!!.string(),
+                response.header(SIGNATURE_HEADER),
+                false,
+            )
         }
+    }
+
+    // ---------- 规则签名（HMAC-SHA256，与服务端 sign.ts 同算法同口径） ----------
+
+    /** 对载荷原文计算 HMAC-SHA256 十六进制；服务端同样按最终字节串签发 */
+    internal fun hmacSha256Hex(key: String, data: String): String {
+        val mac = Mac.getInstance("HmacSHA256")
+        mac.init(SecretKeySpec(key.toByteArray(Charsets.UTF_8), "HmacSHA256"))
+        return mac.doFinal(data.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+    }
+
+    /**
+     * 验签：密钥为空、签名为空、长度不一致均判失败（失败关闭）。
+     * 比较用常量时间算法，避免逐字节提前命中泄露前缀信息。
+     */
+    internal fun verifyRulesSignature(key: String, body: String, signature: String?): Boolean {
+        if (key.isBlank() || signature.isNullOrBlank()) return false
+        val presented = signature.trim().removePrefix("sha256=").lowercase()
+        val expected = hmacSha256Hex(key, body)
+        return constantTimeEquals(expected, presented)
+    }
+
+    private fun constantTimeEquals(a: String, b: String): Boolean {
+        if (a.length != b.length) return false
+        var diff = 0
+        for (i in a.indices) diff = diff or (a[i].code xor b[i].code)
+        return diff == 0
     }
 
     private fun httpPost(url: String, body: String) {

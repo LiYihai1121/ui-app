@@ -28,6 +28,18 @@ class SettingsRepository(private val context: Context, private val rulesRepo: Ru
     fun syncNow(url: String, onResult: (Boolean, String) -> Unit) =
         SyncClient.syncRules(context, url, rulesRepo, onResult)
 
+    // ---------- 规则完整性签名密钥（与服务端 RULES_SIGNING_KEY 配对） ----------
+
+    fun rulesSigningKey(): String = Prefs.getRulesSigningKey(context)
+
+    fun saveRulesSigningKey(key: String) = Prefs.saveRulesSigningKey(context, key)
+
+    // ---------- 证书指纹（OkHttp CertificatePinner） ----------
+
+    fun certPins(): List<String> = Prefs.getCertPins(context)
+
+    fun saveCertPins(pins: List<String>) = Prefs.saveCertPins(context, pins)
+
     // ---------- 自动同步 ----------
 
     fun isAutoSyncEnabled(): Boolean = Prefs.isAutoSyncEnabled(context)
