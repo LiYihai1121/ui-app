@@ -214,7 +214,17 @@ private fun AdskipShell() {
                     popEnterTransition = { fadeIn(tween(160)) },
                     popExitTransition = { fadeOut(tween(120)) },
                 ) {
-                    composable(Routes.HOME) { HomeScreen(messenger) }
+                    composable(Routes.HOME) {
+                        HomeScreen(
+                            messenger = messenger,
+                            onOpenLogs = {
+                                navController.navigate(Routes.LOGS) { launchSingleTop = true }
+                            },
+                            onOpenApps = {
+                                navController.navigate(Routes.APPS) { launchSingleTop = true }
+                            },
+                        )
+                    }
                     composable(Routes.APPS) { AppsScreen() }
                     composable(Routes.LOGS) { LogsScreen(messenger) }
                     composable(Routes.PROFILE) { ProfileScreen(messenger) }

@@ -27,6 +27,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -42,23 +44,35 @@ import com.qingqi.adskip.ui.theme.UiSizes
  *
  * 重设计前各页面各自 new `Card(...)` 并各自决定内边距与容器色，导致同一屏内
  * 出现三种圆角与两种底色；这里把间距与配色收口到一处。
+ *
+ * `brush` 供需要渐变底的卡片（首页状态主视觉）使用：传入时容器色置为透明、
+ * 渐变铺在内容区**外层**（先 background 后 padding，才能盖满整卡并被 Card
+ * 的形状裁剪收进圆角内）。画刷取值一律来自 `MaterialTheme.colorScheme`
+ * 的角色色，调用处不得出现色值字面量。
  */
 @Composable
 fun SectionCard(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(Spacing.lg),
+    brush: Brush? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = if (brush == null) {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            } else {
+                Color.Transparent
+            },
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
-            modifier = Modifier.padding(contentPadding),
+            modifier = Modifier
+                .then(if (brush == null) Modifier else Modifier.background(brush))
+                .padding(contentPadding),
             content = content,
         )
     }

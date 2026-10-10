@@ -5,6 +5,8 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,11 +23,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
@@ -42,15 +48,20 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
@@ -69,38 +80,35 @@ import com.qingqi.adskip.ui.components.PageHeader
 import com.qingqi.adskip.ui.components.SectionCard
 import com.qingqi.adskip.ui.components.SectionHint
 import com.qingqi.adskip.ui.components.SectionTitle
+import com.qingqi.adskip.ui.components.StatTile
 import com.qingqi.adskip.ui.components.StatusOrb
 import com.qingqi.adskip.ui.components.rememberAppLabel
 import com.qingqi.adskip.ui.theme.Spacing
 import com.qingqi.adskip.ui.theme.StatusColors
 import com.qingqi.adskip.ui.theme.UiSizes
+import kotlinx.coroutines.launch
 
 /**
- * 主页：服务状态、跳过统计、关键词管理、模拟测试。
+ * 主页：服务状态、快捷操作、使用概览、关键词管理、模拟测试。
  *
- * 版式约定（v3.2 首页重设计）：
+ * 版式约定（v3.4 首页重设计，衔接 v3.2 的层级结论）：
  * - 页面自身**不**创建 `Scaffold`，inset 由外壳 `AdskipShell` 统一分发；
  * - 根节点挂 `imePadding()`，软键盘弹出时关键词输入框不会被遮住；
- * - 状态语义（运行 / 停止）只用两种颜色表达，其余元素一律走中性色，
- *   避免旧版「绿 / 蓝 / 紫」三色各说各话。
- *
- * 信息层级（v3.2 重排的理由，直接来自 v3.1 的真机截图）：
- * 旧版把 108dp 状态环 + 巨号状态标题竖排在首屏顶部，**在 1080×2340 上要滑过一次
- * 才能看到关键词输入框**——而关键词是这个 app 唯一需要用户主动操作的东西。
- * 更糟的是「打开无障碍设置」与「测试」都是 filled 按钮，视觉权重相同，
- * 用户分不清哪个是「必须做」、哪个是「想验证」。
- *
- * 因此改为：
- * 1. 状态卡横向排布（环在左、文案在右），大幅压缩首屏高度，
- *    让关键词区成为首屏之下第一个完整可见的交互区；
- * 2. 主 / 次动作分级：服务未开启时主 CTA 用 filled，运行中降级为 tonal，
- *    「测试」全程用 `TextButton`——它是可选的验证动作，不该和「去开启服务」抢焦点；
- * 3. 统计从两张大数字卡降为一行摘要：它是佐证而非主角。
+ * - 状态语义（运行 / 停止）只用两种颜色表达，其余元素一律走中性色；
+ * - 快捷操作行收录三个最高频动作（查看记录 / 添加关键词 / 管理应用），
+ *   跳转走外壳传入的回调，不持有 NavController——页面保持纯展示；
+ * - 使用概览从单行摘要升级为三格瓦片（累计跳过 / 关键词数 / 最近应用），
+ *   全部来自既有 [HomeViewModel.UiState]，**不扩接口**。
  */
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)) {
+fun HomeScreen(
+    messenger: Messenger,
+    onOpenLogs: () -> Unit = {},
+    onOpenApps: () -> Unit = {},
+    viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lastAppLabel = rememberAppLabel(state.lastApp)
@@ -133,7 +141,14 @@ fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factor
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        val listState = rememberLazyListState()
+        val scope = rememberCoroutineScope()
+        // 「添加关键词」快捷入口：滚到关键词卡让输入框进入视野（item 4，0 起数）。
+        val scrollToKeywords: () -> Unit = {
+            scope.launch { listState.animateScrollToItem(index = 4) }
+        }
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .imePadding(),
@@ -164,7 +179,15 @@ fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factor
                 )
             }
 
-            item { StatsRow(state = state, lastAppLabel = lastAppLabel) }
+            item {
+                QuickActionsRow(
+                    onOpenLogs = onOpenLogs,
+                    onOpenApps = onOpenApps,
+                    onScrollToKeywords = scrollToKeywords,
+                )
+            }
+
+            item { UsageTiles(state = state, lastAppLabel = lastAppLabel) }
 
             item {
                 KeywordsCard(
@@ -196,19 +219,26 @@ fun HomeScreen(messenger: Messenger, viewModel: HomeViewModel = viewModel(factor
 }
 
 /**
- * 状态主视觉：状态环 + 结论式文案 + 主行动按钮。
+ * 状态主视觉：渐变卡 + 状态环 + 结论式文案 + 主行动按钮。
  *
  * 文案遵循「先结论后解释」：标题直接说服务是否生效，提示语再解释怎么修，
  * 避免旧版把说明和操作混在一句长文本里。
  *
- * v3.2 版式改动：环与文案由**竖排**改为**横排**（环 108dp → 56dp）。
- * 旧版在 1080×2340 上，状态卡就占掉首屏约 60% 高度，关键词输入框必须滑过一次
- * 才看得到——而关键词是这个 app 唯一需要用户主动操作的东西。横排后状态卡高度
- * 从约 300dp 降到约 150dp，关键词区成为首屏之下第一个完整可见的交互区。
+ * 渐变底只取主题角色色（primaryContainer → surfaceContainerLow）：
+ * 蓝调中性延续品牌色相，且深浅两套主题各自成立；不引入色值字面量。
+ * 环仍用 56dp（`UiSizes.statusOrb`）横排在左——v3.2 压缩首屏高度的结论继续成立。
  */
 @Composable
 private fun StatusHero(running: Boolean, onPrimaryAction: () -> Unit, onTest: () -> Unit) {
-    SectionCard(contentPadding = PaddingValues(Spacing.lg)) {
+    SectionCard(
+        contentPadding = PaddingValues(Spacing.lg),
+        brush = Brush.linearGradient(
+            listOf(
+                MaterialTheme.colorScheme.primaryContainer,
+                MaterialTheme.colorScheme.surfaceContainerLow,
+            ),
+        ),
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             StatusOrb(
                 running = running,
@@ -275,42 +305,97 @@ private fun StatusHero(running: Boolean, onPrimaryAction: () -> Unit, onTest: ()
 }
 
 /**
- * 跳过统计：一行摘要。
+ * 快捷操作行：三个最高频动作一行直达。
  *
- * v3.2 降级说明：旧版是两张 `headlineMedium` 大数字卡，和状态主视觉抢注意力。
- * 但统计的真正作用是「佐证服务在干活」，不是用户的主要目标——用户的目标是
- * 让广告别弹。
- *
- * 本次再收一层：原来这里用 `titleMedium`（卡片标题级）显示「累计跳过 N 次」，
- * 而「我的」页的同一指标经 [com.qingqi.adskip.ui.components.StatTile] 用
- * `headlineMedium`。**同一数字在两个页面两种视觉权重**，跨页对比时用户会默认
- * 认为「我的」页那个更重要——而它并不更重要，只是块数不同。
- *
- * 改法：首页降为 `bodyMedium`，把「重要」这件事交给**颜色**（primary）而不是字号。
- * 字号承担层级、颜色承担强调，是 Material 与 Ant Design 的共同分工；
- * 用字号做强调必然与页面标题抢层级。
- *
- * 「最近应用」为空时整段不显示：空占位比不显示更糟，它会让用户以为数据丢了。
+ * 跳转通过外壳传入的回调完成，本页不持有 NavController——保持「页面纯展示」
+ * 的既有分层（insets、导航都归外壳管）。无障碍：每个入口是单个
+ * `Role.Button` 语义节点（图标为装饰、`contentDescription = null`，
+ * 文案由 label 承担），读屏一次读完「查看记录，按钮」。
  */
 @Composable
-private fun StatsRow(state: HomeViewModel.UiState, lastAppLabel: String) {
-    SectionCard(contentPadding = PaddingValues(horizontal = Spacing.xl, vertical = Spacing.lg)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = pluralStringResource(R.plurals.stats_total_short, state.totalSkips, state.totalSkips),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
+private fun QuickActionsRow(onOpenLogs: () -> Unit, onOpenApps: () -> Unit, onScrollToKeywords: () -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
+        QuickAction(
+            icon = Icons.Filled.DateRange,
+            label = stringResource(R.string.quick_open_logs),
+            onClick = onOpenLogs,
+            modifier = Modifier.weight(1f),
+        )
+        QuickAction(
+            icon = Icons.Filled.Add,
+            label = stringResource(R.string.quick_add_keyword),
+            onClick = onScrollToKeywords,
+            modifier = Modifier.weight(1f),
+        )
+        QuickAction(
+            icon = Icons.AutoMirrored.Filled.List,
+            label = stringResource(R.string.quick_open_apps),
+            onClick = onOpenApps,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun QuickAction(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.large)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(vertical = Spacing.sm),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(UiSizes.listIcon)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.secondaryContainer),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
             )
-            if (lastAppLabel.isNotBlank()) {
-                Spacer(Modifier.width(Spacing.sm))
-                Text(
-                    text = stringResource(R.string.stats_recent_short, lastAppLabel),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+        }
+        Spacer(Modifier.height(Spacing.xs))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/**
+ * 使用概览：三格瓦片（累计跳过 / 关键词数 / 最近应用）。
+ *
+ * 全部取自既有 [HomeViewModel.UiState]，不新增数据源。复用「我的」页的
+ * [StatTile]，保证同一数字在全 app 只有一种视觉权重（v3.2 的教训）。
+ * 「最近应用」为空时显示占位破折号而不是隐藏整格：三格布局保持稳定，
+ * 空占位在本组件语义下表达的是「还没有记录」，与首页整行隐藏的历史结论不同。
+ */
+@Composable
+private fun UsageTiles(state: HomeViewModel.UiState, lastAppLabel: String) {
+    SectionCard(contentPadding = PaddingValues(horizontal = Spacing.xl, vertical = Spacing.lg)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.lg)) {
+            StatTile(
+                value = state.totalSkips.toString(),
+                label = stringResource(R.string.stats_total_label),
+                modifier = Modifier.weight(1f),
+            )
+            StatTile(
+                value = state.keywords.size.toString(),
+                label = stringResource(R.string.stats_keywords_label),
+                modifier = Modifier.weight(1f),
+            )
+            StatTile(
+                value = lastAppLabel.ifBlank { "—" },
+                label = stringResource(R.string.stats_recent_label),
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }

@@ -45,7 +45,15 @@
     <string name="keywords_hint">Short text containing these keywords will be auto-clicked. Tap to remove</string>
     <string name="keyword_input_hint">Add keyword, e.g.: skip</string>
     <string name="btn_add">Add</string>
-    <string name="how_it_works">How it works: The accessibility service monitors app launches and automatically finds and clicks the "Skip" button. Data stays on device.</string>
+    <!-- Home quick actions (v3.4 redesign): three most frequent actions -->
+    <string name="quick_open_logs">View logs</string>
+    <string name="quick_add_keyword">Add keyword</string>
+    <string name="quick_open_apps">Manage apps</string>
+    <!-- Home usage snapshot tile labels -->
+    <string name="stats_keywords_label">Keywords</string>
+    <string name="stats_recent_label">Recent app</string>
+
+    <string name="how_it_works">How it works: The accessibility service monitors app launches and automatically finds and clicks the "Skip" button. Skip logs stay on device; if a server is configured, usage stats are uploaded to that server.</string>
     <string name="keyword_empty">Please enter a keyword</string>
     <string name="keyword_exists">Keyword already exists</string>
     <string name="keyword_added">Added "%1$s"</string>
@@ -192,11 +200,6 @@
     <!-- Keep this short: the row gives the title column weight(1f), so a long action label
          squeezes the title down to a single character (measured). -->
     <string name="permission_open">Open</string>
-    <plurals name="stats_total_short">
-        <item quantity="one">Skipped %1$d time</item>
-        <item quantity="other">Skipped %1$d times</item>
-    </plurals>
-    <string name="stats_recent_short">Last: %1$s</string>
 
     <!-- Node snapshot tool (debug) -->
     <string name="settings_snapshot_section">Debug tools</string>
