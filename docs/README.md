@@ -74,8 +74,10 @@ docs/
 | `3.1.0` | 已发布（tag `v3.1.0` @ `main` `ad188b0`；制品 `CN=AdSkip Release` 签名，`apksigner verify` 通过） | 协议 v2（`selectors` 字段）+ 点击结果校验 + 品牌更名「轻启」+ 图标/UI 重设计 + 快捷磁贴 + 厂商保活 + ktlint 门禁（用户可见变更见 [CHANGELOG.md](../CHANGELOG.md) 3.1.0） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
 | `3.2.0` | 已发布（tag `v3.2.0` @ `main` `f5127dd`；Release 资产 `AdSkip-v3.2.0.apk` 1,923,024 bytes + `SHA256SUMS`） | 节点快照工具 + 设置页入口（步骤 E）+ UI 重设计与权限体系重构落版 | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
 | `3.3.0` | 已发布（tag `v3.3.0` @ `1c296c0`；Release 资产 `AdSkip-v3.3.0.apk` 2,047,331 bytes + `SHA256SUMS`） | OkHttp 网络层迁移 + 服务端请求体限制/结构化日志 + 统计备份唯一名；**无**规则 HMAC、证书 pin 与强制 HTTPS | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
-| M1d / 步骤 F | **未发布**（版本号待定，`3.3.0` 已被占用） | Top 30 规则入库 + 真机回归 + 规则审核通道 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 6 节 |
-| `3.4.0` / `3.5.0` / `4.0.0` | 规划 | L2 DNS 过滤 / L3 防摇一摇 / L4 通知与系统层 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 5~6 节 |
+| M1d / 步骤 F | **未发布**（版本号待定，`3.3.0` 与 `3.4.0` 已被占用） | Top 30 规则入库 + 真机回归 + 规则审核通道 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 6 节 |
+| `3.4.0` | 已发布（2026-10-10，tag `v3.4.0` @ `main` `825c5eb`） | monorepo 解耦收官：`applicationId` 迁移 `com.qingqi.adskip`（BREAKING，需卸载重装）+ M1 非导出/包级黑名单 + M2 签名禁回退（用户可见变更见 [CHANGELOG.md](../CHANGELOG.md) 3.4.0） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
+| `3.5.0` / `3.6.0` / `4.0.0` | 规划（**待 Phase 0 合规评审获批**） | L2 DNS 过滤 / L3 防摇一摇 / L4 通知与系统层 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 5~6 节 |
+| `3.7.0` / `3.8.0` | 规划（边界解除扩展） | M5 激励视频代跳 / M6 内容型素材拦截与商店/搜索评估 | [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 10 节 |
 
 未排期能力见 [planning/ROADMAP.md](planning/ROADMAP.md) 的「候选池」；L2/L3 启动前必须先完成 Phase 0 合规评审（见 [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) 第 3 节）。
 

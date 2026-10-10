@@ -30,7 +30,7 @@
 | 优先级 | 问题 | 建议修复方案 | 预计工作量 |
 |--------|------|--------------|------------|
 | P0 | 服务端 HTTPS 支持（TLS 配置已就绪，待部署证书） | 设置 `TLS_CERT`/`TLS_KEY` 环境变量即可启用 HTTPS；客户端 release 强制 HTTPS | 部署时配置 |
-| P0 | `SyncClient` HTTP 无证书锁定 | 引入 `OkHttp` 或自写 `HostnameVerifier` + `CertificatePinner`；受「零第三方依赖」约束，待项目决策后实施 | 待评估 |
+| P0 | `SyncClient` HTTP 无证书锁定 | ✅ 已修复（v3.4.0 批次）：迁移 OkHttp 后接入 `CertificatePinner`，指纹经设置下发（必须配置） | — |
 | P1 | `Prefs` 迁移逻辑幂等性不足 | ✅ 已修复：改用 `deleteSharedPreferences` 删除明文源文件 | — |
 | P1 | `LanguagePreferences` 未使用加密存储 | ✅ 已修复：同步迁移至 `EncryptedSharedPreferences` | — |
 | P2 | `StatsRepository` 合批写 SP 无错误处理 | ✅ 已修复：`flush()` 添加 `try-catch` + `LogRing.w` | — |
@@ -43,18 +43,18 @@
 | P1 | `store.ts` 规则备份仅全量拷贝，无增量/压缩 | 长期运行可改用 WAL 或按天快照；当前 JSON 全量备份对小项目可接受 | 待评估 |
 | P2 | `Prefs.DEFAULT_SERVER` 硬编码本地 IP | ✅ 已修复：清空默认地址（`DEFAULT_SERVER=""`），未配置时不预填任何值，强制用户显式输入有效 HTTPS 地址 | — |
 | P2 | `rateLimit.ts` / `store.ts` 使用 `setInterval` 做 GC/清理 | Bun 优雅停机可能截断；改用 `setTimeout` 递归或显式清理钩子 | 0.5 天 |
-| P3 | `SyncClient` 无连接池/Keep-Alive/重试 | 引入 `OkHttp`（若允许）或手写连接池 + 指数退避；受「零第三方依赖」约束，待项目决策后实施 | 待评估 |
+| P3 | `SyncClient` 无连接池/Keep-Alive/重试 | ✅ 已修复（v3.3.0）：迁移 OkHttp 4.12，连接池/超时/重试齐备 | — |
 
 ### 🟢 低危（测试/可观测/文档）
 
 | 优先级 | 问题 | 建议修复方案 | 预计工作量 |
 |--------|------|--------------|------------|
-| P1 | `SyncClient` 无网络层单测 | 引入 `MockWebServer` 或 OkHttp Mock；受「零第三方依赖」约束，待项目决策后实施 | 待评估 |
+| P1 | `SyncClient` 无网络层单测 | ✅ 已修复（v3.3.0）：OkHttp 迁移同步引入 MockWebServer 回归（`SyncClientTest`） | — |
 | P1 | `store.ts` 无存储层单测 | ✅ 已修复：新增 `rotateStatsBackup` 测试用例，验证备份创建与轮转上限 | — |
 | P2 | 无端到端集成测试 | 补 `androidx.test` instrumentation 或 `AppTest`，覆盖 Service → Engine → 点击 → 上报全链路 | 2-3 天 |
 | P2 | 无结构化日志/指标导出 | ✅ 已修复：新增 `src/utils/logger.ts`（JSONL 格式，零运行时依赖），替换 `server.ts` 中的 `console.*` | — |
-| P3 | `SettingsScreen.kt` 快照 UI 集成未完成 | 联调节点快照导出按钮与 `SkipAdService` 接收器 | 0.5 天 |
-| P3 | 未提交构建产物残留 | 清理 `client/build-logic/convention/bin/` 或确认已 `.gitignore` | 0.5 天 |
+| P3 | `SettingsScreen.kt` 快照 UI 集成未完成 | ✅ 已完成（v3.2.0）：快照工具与设置页入口随 M1c 发布 | — |
+| P3 | 未提交构建产物残留 | ✅ 已确认：`client/build-logic/convention/bin/` 已被 `.gitignore`，不入库 | — |
 
 ---
 
@@ -65,8 +65,9 @@
 | `androidx.security:security-crypto` | EncryptedSharedPreferences | ✅ 已引入 | 版本 1.1.0-alpha07 |
 | 服务端结构化日志 | JSONL 输出 | ✅ 已实现 | `src/utils/logger.ts`，零运行时依赖 |
 | 服务端 TLS | HTTPS 支持 | ✅ 配置就绪 | 通过 `TLS_CERT`/`TLS_KEY` 环境变量启用 |
-| `OkHttp` | HTTP 客户端（连接池/证书锁定/重试） | 待评估 | 替代 `HttpURLConnection`；打破「零第三方依赖」承诺，待项目决策 |
-| `MockWebServer` | 网络层测试 | 待评估 | 与 OkHttp 配套；受 OkHttp 引入决策制约 |
+| `OkHttp` | HTTP 客户端（连接池/证书锁定/重试） | ✅ 已引入（v3.3.0） | 4.12；证书锁定经 `CertificatePinner` 于 v3.4.0 批次落地 |
+| `MockWebServer` | 网络层测试 | ✅ 已引入（v3.3.0） | `SyncClientTest` 回归使用 |
+| 规则 HMAC 签名 | 规则防篡改下发 | ✅ 已实现（v3.4.0 批次） | server `utils/sign.ts` + client `SyncClient` 本地校验 |
 | `pino` / `bun:logger` | 服务端结构化日志 | ✅ 已实现 | 自研轻量实现，无需额外依赖 |
 | `Prometheus` / OpenTelemetry | 指标导出 | P3 | 长期可观测需求 |
 | `TLS 1.3` + `HSTS` | 传输层安全 | ✅ 基础设施就绪 | 部署时配置证书即可启用 |
@@ -86,12 +87,12 @@
 - [x] 服务端结构化日志
 - [x] `SkipAdService` 接收器抽象
 - [x] `store.ts` 统计备份轮转
-- [ ] `SyncClient` 引入 OkHttp + 证书锁定（待项目决策）
-- [ ] `MockWebServer` 网络层单测（待 OkHttp 引入）
+- [x] `SyncClient` 引入 OkHttp（v3.3.0）+ 证书锁定（v3.4.0 批次）
+- [x] `MockWebServer` 网络层单测（v3.3.0）
 
 ### v3.4.0（工程化版）
 - [ ] 端到端集成测试
-- [ ] `SyncClient` 连接池/Keep-Alive/重试（待 OkHttp 引入）
+- [x] `SyncClient` 连接池/Keep-Alive/重试（随 OkHttp 迁移完成，v3.3.0）
 - [ ] `store.ts` 备份压缩/增量
 
 ### v4.0.0（可观测版）
@@ -105,7 +106,7 @@
 
 - **加密迁移风险**：`Prefs.kt` 首次启动时从明文 SP 迁移，若 `MasterKey` 生成失败会导致应用无法读取数据。回滚方案：降级为明文存储（删除 `EncryptedSharedPreferences` 相关代码，恢复 `context.getSharedPreferences`）。
 - **HTTPS 启用风险**：局域网用户若使用自签名证书，需额外配置 `network_security_config` 信任用户证书。回滚方案：release 保持 HTTP（不推荐），或提供 debug 配置允许用户自签证书。
-- **OkHttp 引入风险**：增加 APK 体积约 200-300 KB，且打破「零第三方依赖」承诺。回滚方案：保持 `HttpURLConnection`，仅做证书锁定；或接受风险后引入。
+- **OkHttp 引入风险**：已引入（v3.3.0），APK 体积约增加 200-300 KB，且打破了原「零第三方依赖」承诺（已由项目决策接受）。如需回滚可退回 `HttpURLConnection`，但会同时失去证书锁定与连接池能力，不建议。
 - **TLS 配置风险**：当前仅添加配置基础设施，未实际启用。部署时需正确配置证书路径，否则服务启动失败。回滚方案：不设置 `TLS_CERT`/`TLS_KEY` 环境变量即可回退到 HTTP。
 
 ---
