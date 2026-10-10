@@ -198,8 +198,10 @@ function rotateStatsBackup(day: string): void {
     const src = path.join(config.STATS_DIR, `${day}.json`);
     if (!dirOrFileExists(src)) return;
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    // 包含毫秒 + 随机后缀，避免快进执行中多次调用落入同一毫秒导致文件名冲突（CI 环境下 Date.now() 分辨率不足）
     const ms = Date.now();
-    const dest = path.join(config.STATS_DIR, "backups", `stats-${day}-${stamp}-${ms}.json`);
+    const seq = Math.random().toString(36).slice(2, 8);
+    const dest = path.join(config.STATS_DIR, "backups", `stats-${day}-${stamp}-${ms}-${seq}.json`);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(src, dest);
 
