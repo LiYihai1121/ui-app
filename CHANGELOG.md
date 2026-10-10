@@ -210,7 +210,7 @@
 ### Changed (3.0.3)
 
 - 原规划的 `3.1.0`「L1 引擎 + 快照工具 + Top 30 规则」大礼包里程碑**已剥离**，改为增量发版：
-  `3.0.3`（引擎内核）→ `3.1.0`（协议 v2 + 点击校验）→ `3.2.0`（快照工具）→ `3.3.0`（Top 30 规则与真机验收）→ `3.4.0` / `3.5.0` / `4.0.0`（L2 / L3 / L4）。
+  `3.0.3`（引擎内核）→ `3.1.0`（协议 v2 + 点击校验）→ `3.2.0`（快照工具）→ `3.3.0`（OkHttp 迁移与服务端工程加固；Top 30 规则与真机验收顺延至版本号待定的 M1d）→ `3.4.0` / `3.5.0` / `4.0.0`（L2 / L3 / L4）。
 - 详见 [docs/planning/ROADMAP.md](docs/planning/ROADMAP.md) 与 [docs/planning/ROADMAP-ADS.md](docs/planning/ROADMAP-ADS.md)；技术方案与步骤划分见 [docs/planning/DESIGN-PHASE1-SELECTOR.md](docs/planning/DESIGN-PHASE1-SELECTOR.md)。
 
 ## [3.0.2] - 2026-09-04

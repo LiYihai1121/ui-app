@@ -88,6 +88,7 @@ Release list 的维护要求：版本变更、tag、合并提交和 GitHub Relea
 | v3.0.3 | `958ce23` | L1 选择器第三通道内核（纯 JVM 增量） | `v3.0.3` |
 | v3.0.4 | `27c3f5c` | 安装可用性修复：release 签名回退 + 发布强制签名校验 + Secrets 正式签名 | `v3.0.4` |
 | v3.2.0 | `f5127dd` | 节点快照工具 + UI/权限重设计落版（`ServiceIntentContractTest` 守护广播字面量） | [`v3.2.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.2.0) |
+| v3.3.0 | `1c296c0` | OkHttp 网络层迁移 + 服务端请求体限制/限流/结构化日志；安全能力如实声明（无规则 HMAC、未启用证书 pin 与强制 HTTPS） | [`v3.3.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) |
 
 ## 验证命令
 
