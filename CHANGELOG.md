@@ -6,6 +6,7 @@
 
 ## 目录
 
+- [3.4.0](#340---2026-10-10)
 - [3.3.0](#330---2026-10-10)
 - [3.2.0](#320---2026-10-06)
 - [3.1.0](#310---2026-09-28)
@@ -18,6 +19,31 @@
 - [2.2.0](#220---2026-08-24)
 - [2.1.0](#210---2026-08-24)
 - [2.0.0](#200---2026-08-24)
+
+## [3.4.0] - 2026-10-10
+
+> ⚠️ **BREAKING（需要卸载重装）**：`applicationId` 由 `com.ldp.adskip` 迁移为 `com.qingqi.adskip`（[PR #74](https://github.com/LiYihai1121/ui-app/pull/74)）。已装用户升级时需先卸载旧版本再安装——Android 不允许不同包名“覆盖升级”，且旧包的 `EncryptedSharedPreferences` 数据**不会**跨包名迁移。同签名线内（同一版本家族）后续升级仍可正常覆盖安装。
+
+本轮是「monorepo 解耦 + 安全审计批次收官」：服务端彻底与客户端包名解耦、源码命名空间与安装身份统一迁移到 qingqi，并落地 M1（动态接收器非导出 + 包级黑名单）与 M2（签名禁回退）安全加固。
+
+### Added (3.4.0)
+
+- **M1 动态广播接收器非导出**：`SkipAdService` 的 `registerReceiver` 在全部 API 级别显式声明 `RECEIVER_NOT_EXPORTED`，杜绝恶意应用向导出接收器投递伪造广播（此前依赖隐式行为，低版本存在被外部触发的风险）。
+- **M1 包级硬编码黑名单**：`SafetyGuard` 新增整包黑名单（支付 / 银行 / 数字钥匙类应用），`isPackageDenied()` 先于关键词/选择器匹配拦截，`A 链 -4` 匹配入口整包不处理——即使云规则下发 `com.alipay` 风格关键词也无法驱动引擎触碰敏感 App。
+- **M2 release 签名禁回退**：`build.gradle.kts` 未配置正式签名时，点名 release 相关任务直接失败（`adskip.unsignedRelease=true` 仅限受信任环境显式产出未签名产物），不再静默回退 debug 签名——彻底封堵“第三方用同签名生成升级包覆盖安装”的发布路径。
+- **服务端 `backupStamp()`**：规则备份与统计备份统一使用「ISO 时间戳 + 进程内单调序号 + 随机 hex」命名，修复 CI 环境下同一毫秒多次轮转文件名冲突。
+
+### Changed (3.4.0)
+
+- **`applicationId` → `com.qingqi.adskip`**（BREAKING，见顶部说明）：安装身份与源码 `namespace` 统一，`build-logic` 约定插件包名同步迁移；`versionCode` 递增至 `14`（v3.3.0 = 13），`versionName` 为 `3.4`。
+- **服务端解耦 client 包名**（[PR #73](https://github.com/LiYihai1121/ui-app/pull/73)）：seed 自检目标与测试样例改用 `com.example.other`，`server/` 不再依赖客户端 `applicationId`——包名迁移不再牵动服务端测试。
+
+### Fixed (3.4.0)
+
+- `SafetyGuard` 包黑名单判定逻辑（复用于 `SkipAdEngine` 的包级入口）。
+- 服务端 HMAC 规则签名与统计备份轮转在合并后的最小测试集回归（本版测试计数 247 client / 86 server 全绿）。
+
+最终交付形态见 [RELEASE-HISTORY.md](docs/planning/RELEASE-HISTORY.md)「v3.4.0」条；验证命令与发布链路见 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [ROADMAP-ADS.md](docs/planning/ROADMAP-ADS.md) 第 6 节。
 
 ## [3.3.0] - 2026-10-10
 

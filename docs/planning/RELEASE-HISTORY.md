@@ -18,6 +18,7 @@
 
 | 版本 | Git tag | 对应提交 | GitHub Release | 状态 |
 | --- | --- | --- | --- | --- |
+| `3.4.0` | [`v3.4.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.4.0) | （tag 创建后补填） | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.4.0) | 待创建（发布流程执行中；`versionCode=14`、`versionName=3.4`、server `3.4.0`；作用域见「v3.4.0」条） |
 | `3.3.0` | [`v3.3.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) | `1c296c0` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) | 已发布（`AdSkip-v3.3.0.apk` 2,047,331 bytes，`SHA256=e33bc75b81ae6470aa75ed6bbc51dc125756178f8d6363a7df38006bcff3bf09`，Release 资产 `SHA256SUMS`；由 release.yml 构建并创建，基于 `release/v3.3.0` 分支，CI 校验版本一致性后构建 Release APK + `SHA256SUMS`） |
 | `3.2.0` | [`v3.2.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.2.0) | `f5127dd` || [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.2.0) | 已发布（`AdSkip-v3.2.0.apk` 1,923,024 bytes，`SHA256=6f958ed5…fcb4`，Release 资产 `SHA256SUMS`；由 release.yml 构建并创建，经 PR #46 Squash 合入 `main`） |
 | `3.1.0` | [`v3.1.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0) | `ad188b0` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0) | 已发布（`AdSkip-v3.1.0.apk` 1,895,460 bytes，`SHA256=30657f9c…fb6`，`CN=AdSkip Release` 正式签名，`apksigner verify` 通过；厂商保活与磁贴未真机验收，见下「发布基线说明」） |
@@ -87,6 +88,7 @@ Release list 的维护要求：版本变更、tag、合并提交和 GitHub Relea
 | v3.0.4 | `27c3f5c` | 安装可用性修复：release 签名回退 + 发布强制签名校验 + Secrets 正式签名 | `v3.0.4` |
 | v3.2.0 | `f5127dd` | 节点快照工具 + UI/权限重设计落版（`ServiceIntentContractTest` 守护广播字面量） | [`v3.2.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.2.0) |
 | v3.3.0 | `1c296c0` | Security audit remediation + OkHttp migration + certificate pinning + HMAC/Limiter/Logging hardening + unique stats backup filenames | [`v3.3.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) |
+| v3.4.0 | （tag 创建后补填） | Monorepo 解耦收官：applicationId/namespace 迁移 `com.qingqi.adskip`（BREAKING）+ 服务端解耦 client 包名 + M1 非导出/包级黑名单 + M2 签名禁回退 | [`v3.4.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.4.0) |
 
 ## 验证命令
 

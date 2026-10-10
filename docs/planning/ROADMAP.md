@@ -73,8 +73,9 @@
 - [x] **v3.2.0（M1c，已发布）**：节点快照工具——App 内导出当前界面节点树 JSON，规则编写不再靠猜（步骤 E）。交付：`service/NodeSnapshot` 捕获与序列化 + 二分查找 96 KB 截断（`truncated=true` 标记）+ 设置页调试入口（服务未运行时显式提示）+ `ServiceIntentContractTest` 守护广播字面量与 `service/` 常量的单一真值源。**随本版本一并落版「UI 重新设计与权限体系重构」全部未发版内容**（语言选择、权限清单三态化等，详见 [CHANGELOG.md](../../CHANGELOG.md) 3.2.0）。已随 PR #46 Squash 合入 `main`（提交 `f5127dd`）并打 annotated tag `v3.2.0`（2026-10-06）发布，Release 资产 `AdSkip-v3.2.0.apk` 1,923,024 bytes + `SHA256SUMS`（见 [RELEASE-HISTORY.md](RELEASE-HISTORY.md)）。
 - [x] **v3.3.0（安全审计补丁）**：OkHttp 迁移 + 证书钝化 + HMAC 规则签名校验 + 服务端安全加固（TLS 配置、限流信任链、结构化日志、500 错误通用化）。`bun test` 83 pass + `bun run typecheck` 绿；`ktlintCheck` + `assembleDebug` + `testDebugUnitTest` 全绿。发布自 `release/v3.3.0` 分支，tag `v3.3.0`。
 - [ ] **v3.3.0（M1d）**：Top 30 App 首批选择器规则入库 + 真机回归与性能采样 + 规则审核通道（步骤 F、L5 基础）
-- [ ] **v3.4.0（M2）**：L2 网络过滤层——DNS 过滤 + `filter-rules` 路由
-- [ ] **v3.5.0（M3）**：L3 防摇一摇模块（独立可选 APK）
+- [x] **v3.4.0（monorepo 解耦 + 安全批次收官，已发布）**：`applicationId`/namespace 迁移 `com.qingqi.adskip`（**BREAKING，已装用户需卸载重装**）+ 服务端解耦 client 包名 + M1 接收器非导出/包级黑名单 + M2 签名禁回退。**序列调整**：原规划 `3.4.0 = M2 (L2 DNS 过滤)` 顺延，L2 仍待 Phase 0 合规评审获批。
+- [ ] **v3.5.0（M2）**：L2 网络过滤层——DNS 过滤 + `filter-rules` 路由
+- [ ] **v3.6.0（M3）**：L3 防摇一摇模块（独立可选 APK）
 - [ ] **v4.0.0（M4）**：L4 通知过滤 + ROM 指引 + 规则生态完善
 
 ### 🧪 预发布（RC，验收未完成）
