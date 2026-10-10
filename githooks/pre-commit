@@ -15,8 +15,9 @@
 
 set -o errexit
 
-common_dir="$(git rev-parse --git-common-dir)"
-common_dir="$(cd "$common_dir" && pwd)"
+# 两个路径必须用同一套格式化规则：pwd 在 Git Bash 产出 /f/... 风格，而
+# --absolute-git-dir 产出 F:/... 风格，直接字符串比较会永远不等（误放行）。
+common_dir="$(git rev-parse --path-format=absolute --git-common-dir)"
 git_dir="$(git rev-parse --absolute-git-dir)"
 
 if [ "$common_dir" = "$git_dir" ] && [ "${ADSKIP_ALLOW_MAIN_COMMIT:-0}" != "1" ]; then
