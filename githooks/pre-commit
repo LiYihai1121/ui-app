@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+#
+# 主检出禁止直接提交（AGENTS.md「多 Agent 协作」/ AGENT-WORKFLOW 3.2）。
+#
+# 主检出（与 .git 同级的这份检出）只用于分支整合与查看；开发一律在
+# .worktrees/<agent>-<slug>/ 的独立 worktree 内进行。多个会话共写主检出
+# 会互相覆盖未提交改动（2026-10-11 事故：一方未提交改动被另一方 stash，
+# 且提交混入他人分支）。
+#
+# 启用方式（每个克隆执行一次）：
+#   git config core.hooksPath githooks
+#
+# 逃生口：紧急修复确需在主检出提交时，显式声明并事后在 PR 说明：
+#   ADSKIP_ALLOW_MAIN_COMMIT=1 git commit ...
+
+set -o errexit
+
+common_dir="$(git rev-parse --git-common-dir)"
+common_dir="$(cd "$common_dir" && pwd)"
+git_dir="$(git rev-parse --absolute-git-dir)"
+
+if [ "$common_dir" = "$git_dir" ] && [ "${ADSKIP_ALLOW_MAIN_COMMIT:-0}" != "1" ]; then
+    cat >&2 <<'MSG'
+✗ 检测到在主检出直接 commit。
+
+主检出只用于分支整合与查看。请使用独立 worktree 开发：
+  git worktree add .worktrees/<agent>-<slug> -b <type>/<id>-<slug>
+
+紧急情况需临时跳过本检查（事后须在 PR 中说明）：
+  ADSKIP_ALLOW_MAIN_COMMIT=1 git commit ...
+MSG
+    exit 1
+fi
