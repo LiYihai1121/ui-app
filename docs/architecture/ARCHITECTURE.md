@@ -83,19 +83,19 @@
 | --- | --- | --- |
 | `engine/` | 仅 Kotlin/JDK 与 `engine/` 自身 | `android.*`、`androidx.*`、其他所有 `com.qingqi.adskip.*` |
 | `core/` | Kotlin/JDK/协程、`core/` 自身 | 其他所有 `com.qingqi.adskip.*` |
-| `ui/` | Compose/AndroidX、组合根（`AdskipApp`/`AppContainer`）、`core/`、`engine/`、`data/` 领域仓库（`RulesRepository`/`StatsRepository`/`SettingsRepository`）、`R` | `service/`、`net/`、`sync/`、`data.Prefs` |
+| `ui/` | Compose/AndroidX、组合根（`AdSkipApp`/`AppContainer`）、`core/`、`engine/`、`data/` 领域仓库（`RulesRepository`/`StatsRepository`/`SettingsRepository`）、`R` | `service/`、`net/`、`sync/`、`data.Prefs` |
 | `data/` | `engine/`（RuleSet）、`net/`（设置门面委托）、`sync/`（调度委托）、Android SDK | `ui/`、`service/` |
 | `net/` | `data/`、Android SDK、org.json | `ui/`、`service/` |
 | `sync/` | `data/`、`core/`、Android SDK | `ui/`、`service/` |
 | `service/` | `core/`、`data/`、`engine/`、`net/`、组合根 | `ui/` |
 | `device/` | `core/`（LogRing）、`service/`（无障碍真实状态 `isEnabled` 与关闭请求 `requestShutdown`）、Android SDK | `ui/`、`data/`、`net/`、`sync/` |
-| 组合根（`AdskipApp`/`AppContainer`） | 全部（唯一 DI 装配点） | —（不承载业务逻辑） |
+| 组合根（`AdSkipApp`/`AppContainer`） | 全部（唯一 DI 装配点） | —（不承载业务逻辑） |
 
 规则解读：
 - **engine 纯 JVM**：不触碰任何 Android 类型——引擎单测可在纯 JVM 毫秒级运行，也是未来若需拆分 `:engine` module 的前提。
 - **ui 单向取值**：UI 只经 `StateFlow`/`UiEffect` 收状态与事件、经 `AppContainer` 拿仓库；不直连网络、后台调度与原始偏好。`data/SettingsRepository` 是设置页的唯一数据出口（收口 `SyncClient`/`SyncJobService`/`Prefs`）。
 - **core 零业务依赖**：`AppEvents` 初值不再引用 `SkipAdService`，Service 连接时主动写入真实状态；ui/service 双向都只经 core 中转。
-- **组合根兜底**：进程级初始化（如 JobScheduler 周期任务重注册）在 `AdskipApp.onCreate` 完成，不进 UI 层。
+- **组合根兜底**：进程级初始化（如 JobScheduler 周期任务重注册）在 `AdSkipApp.onCreate` 完成，不进 UI 层。
 - **device 单向向下**：`device/` 只允许「读系统状态 + 拉起系统页面」，因此可以依赖 `service/` 的只读查询，但不得反向依赖 `ui/`；磁贴关闭服务走 `SkipAdService.requestShutdown()` 发出的进程内定向广播，而非跨包持有 Service 实例。
 
 > 另一条由测试守护的隐式约定：保活入口表依赖 Android 11+ 的包可见性，`<queries>` 声明必须与 `device/VendorKeepAlive.kt` 的入口表逐条对齐，

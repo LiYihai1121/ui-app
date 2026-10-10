@@ -7,7 +7,7 @@ import androidx.compose.ui.graphics.Color
  *
  * 约定（见 docs/architecture/ARCHITECTURE.md）：
  * - 运行时 UI 一律读取 `MaterialTheme.colorScheme`，本文件只负责「角色 → 具体色值」的映射；
- * - 状态语义色（服务开 / 关）不属于 M3 角色，故单列于文件顶部并由 `AdskipTheme`
+ * - 状态语义色（服务开 / 关）不属于 M3 角色，故单列于文件顶部并由 `AdSkipTheme`
  *   通过 CompositionLocal 注入，避免业务代码散落字面量；
  * - 与 res/values/colors.xml 互不重复维护，XML 侧不定义同名色。
  *

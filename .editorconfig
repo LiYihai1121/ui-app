@@ -4,7 +4,7 @@
 # 根级一份即可同时覆盖 client/（Kotlin/KTS）与 server/（TS/HTML），
 # 避免同一份规则在两个目录各存一份、形成第二份真相。
 #
-# 变更方式：规则调整必须改本文件并同步 ktlint 约定插件（AdskipAndroidApplicationPlugin），
+# 变更方式：规则调整必须改本文件并同步 ktlint 约定插件（AdSkipAndroidApplicationPlugin），
 # 不允许在单文件里用 // ktlint-disable 掩盖问题——那是把检查关掉，不是解决检查。
 root = true
 

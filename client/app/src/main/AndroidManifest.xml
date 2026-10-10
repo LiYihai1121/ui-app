@@ -52,7 +52,7 @@
     </queries>
 
     <application
-        android:name=".AdskipApp"
+        android:name=".AdSkipApp"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"

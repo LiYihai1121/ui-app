@@ -3,7 +3,7 @@
 # 无障碍服务类名不可被混淆/移除（系统通过反射发现服务）
 -keep class com.qingqi.adskip.service.SkipAdService { *; }
 -keep class com.qingqi.adskip.sync.SyncJobService { *; }
--keep class com.qingqi.adskip.AdskipApp { *; }
+-keep class com.qingqi.adskip.AdSkipApp { *; }
 
 # 引擎接口与模型（保守保留；无反射引用，框架适配 FrameworkAdNode 归属 service 层）
 -keep class com.qingqi.adskip.engine.** { *; }

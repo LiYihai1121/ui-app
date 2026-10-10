@@ -103,7 +103,7 @@ AdSkip/            # 全栈 monorepo
 └── .github/       # CI 工作流
 
 client/app/src/main/java/com/qingqi/adskip/   # Android 客户端源码（Kotlin；engine/ 层零第三方依赖，见 ArchitectureBoundaryTest）
-├── AdskipApp.kt                    # Application 入口
+├── AdSkipApp.kt                    # Application 入口
 ├── AppContainer.kt                 # 手动 DI 容器（不引入 Hilt/Koin）
 ├── core/                           # 基础设施（时钟/线程/日志/状态总线，可单测）
 │   ├── Clock.kt                    # 时钟注入（确定性判定）

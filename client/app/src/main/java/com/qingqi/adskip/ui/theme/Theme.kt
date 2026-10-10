@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 /**
  * 应用主题。
  *
- * - [dynamicColor] 默认关闭（见下方 [AdskipTheme] 的取值与理由）：品牌敏感产品优先保配色一致，
+ * - [dynamicColor] 默认关闭（见下方 [AdSkipTheme] 的取值与理由）：品牌敏感产品优先保配色一致，
  *   低于 Android 12 时本就没有动态取色能力，两种情况下都回退到品牌色板；
  * - 状态语义色（服务开 / 关）不参与动态取色——它们承载的是「是否生效」这一安全语义，
  *   必须保持稳定可辨，故通过 [LocalStatusPalette] 单独注入。
@@ -106,7 +106,7 @@ private val DarkStatusPalette = StatusPalette(
 )
 
 /** 圆角尺度：卡片 20dp（比 M3 默认更柔和），控件 12dp，胶囊全圆。 */
-private val AdskipShapes = Shapes(
+private val AdSkipShapes = Shapes(
     extraSmall = RoundedCornerShape(Spacing.sm),
     small = RoundedCornerShape(Spacing.md),
     medium = RoundedCornerShape(Spacing.lg),
@@ -133,7 +133,7 @@ val LocalStatusPalette = staticCompositionLocalOf { LightStatusPalette }
  * 参数保留：若日后希望跟随壁纸，只需把它改回 true 即可，无需改动任何调用方。
  */
 @Composable
-fun AdskipTheme(
+fun AdSkipTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
@@ -152,8 +152,8 @@ fun AdskipTheme(
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography = AdskipTypography,
-            shapes = AdskipShapes,
+            typography = AdSkipTypography,
+            shapes = AdSkipShapes,
             content = content,
         )
     }

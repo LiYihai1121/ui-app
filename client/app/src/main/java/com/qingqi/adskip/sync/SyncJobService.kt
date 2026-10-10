@@ -8,7 +8,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.PersistableBundle
-import com.qingqi.adskip.AdskipApp
+import com.qingqi.adskip.AdSkipApp
 import com.qingqi.adskip.core.LogRing
 import com.qingqi.adskip.data.Prefs
 
@@ -61,7 +61,7 @@ class SyncJobService : JobService() {
 
     override fun onStartJob(params: JobParameters): Boolean {
         LogRing.d("Sync", "onStartJob")
-        val container = AdskipApp.get(this)
+        val container = AdSkipApp.get(this)
         val serverUrl = Prefs.getServerUrl(this)
 
         // 在 IO 线程执行同步

@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.qingqi.adskip.AdskipApp
+import com.qingqi.adskip.AdSkipApp
 import com.qingqi.adskip.AppContainer
 import com.qingqi.adskip.R
 import com.qingqi.adskip.core.AppEvents
@@ -210,7 +210,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val app = this[APPLICATION_KEY] as AdskipApp
+                val app = this[APPLICATION_KEY] as AdSkipApp
                 HomeViewModel(app.container)
             }
         }
