@@ -18,7 +18,7 @@
 
 | 版本 | Git tag | 对应提交 | GitHub Release | 状态 |
 | --- | --- | --- | --- | --- |
-| `3.4.0` | [`v3.4.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.4.0) | （tag 创建后补填） | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.4.0) | 待创建（发布流程执行中；`versionCode=14`、`versionName=3.4`、server `3.4.0`；作用域见「v3.4.0」条） |
+| `3.4.0` | [`v3.4.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.4.0) | `825c5eb` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.4.0) | 已发布（`AdSkip-v3.4.0.apk` 2,069,575 bytes，`SHA256=cfec8796…fb8f6`，Release 资产 `SHA256SUMS`；经 PR #78 Squash 合入 `main`，annotated tag `v3.4.0` 指向 `main` 提交 `825c5eb`；release workflow #38048270767 成功） |
 | `3.3.0` | [`v3.3.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) | `1c296c0` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) | 已发布（`AdSkip-v3.3.0.apk` 2,047,331 bytes，`SHA256=e33bc75b81ae6470aa75ed6bbc51dc125756178f8d6363a7df38006bcff3bf09`，`CN=AdSkip Release`，证书 SHA-256 `040d7afd0e288b7fe8df2aab43fb3f2b9b8eb458e88ab4d104d89921c9993edc`，与 v3.2.0 相同；applicationId 均为 `com.ldp.adskip`；含 `SHA256SUMS`；release workflow #38044504424 成功） |
 | `3.2.0` | [`v3.2.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.2.0) | `f5127dd` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.2.0) | 已发布（`AdSkip-v3.2.0.apk` 1,923,024 bytes，`SHA256=6f958ed5…fcb4`，Release 资产 `SHA256SUMS`；由 release.yml 构建并创建，经 PR #46 Squash 合入 `main`） |
 | `3.1.0` | [`v3.1.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0) | `ad188b0` | [GitHub Release](https://github.com/LiYihai1121/ui-app/releases/tag/v3.1.0) | 已发布（`AdSkip-v3.1.0.apk` 1,895,460 bytes，`SHA256=30657f9c…fb6`，`CN=AdSkip Release` 正式签名，`apksigner verify` 通过；厂商保活与磁贴未真机验收，见下「发布基线说明」） |
@@ -90,7 +90,7 @@ Release list 的维护要求：版本变更、tag、合并提交和 GitHub Relea
 | v3.0.4 | `27c3f5c` | 安装可用性修复：release 签名回退 + 发布强制签名校验 + Secrets 正式签名 | `v3.0.4` |
 | v3.2.0 | `f5127dd` | 节点快照工具 + UI/权限重设计落版（`ServiceIntentContractTest` 守护广播字面量） | [`v3.2.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.2.0) |
 | v3.3.0 | `1c296c0` | OkHttp 网络层迁移 + 服务端请求体限制/限流/结构化日志；安全能力如实声明（无规则 HMAC、未启用证书 pin 与强制 HTTPS） | [`v3.3.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.3.0) |
-| v3.4.0 | （tag 创建后补填） | Monorepo 解耦收官：applicationId/namespace 迁移 `com.qingqi.adskip`（BREAKING）+ 服务端解耦 client 包名 + M1 非导出/包级黑名单 + M2 签名禁回退 | [`v3.4.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.4.0) |
+| v3.4.0 | `825c5eb` | Monorepo 解耦收官：applicationId/namespace 迁移 `com.qingqi.adskip`（BREAKING）+ 服务端解耦 client 包名 + M1 非导出/包级黑名单 + M2 签名禁回退 | [`v3.4.0`](https://github.com/LiYihai1121/ui-app/releases/tag/v3.4.0) |
 
 ## 验证命令
 
