@@ -88,7 +88,12 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platforms;android-35 build-tools;35.0.0'
+          # Keep stable Build Tools aligned with ci.yml; API 37 is currently installed from beta below.
+          packages: 'platform-tools build-tools;36.0.0'
+
+      - name: Install Android 17 (API 37) platform from beta channel
+        # Match ci.yml: this platform is currently in the beta repository and the package name includes .0.
+        run: sdkmanager --install "platforms;android-37.0" --channel=1
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
