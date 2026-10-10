@@ -674,6 +674,7 @@ class ProjectStructureTest {
             "client", // Android 工程根
             "docs", // 文档
             "server", // Bun + TypeScript 服务端
+            "githooks", // 仓库级 git 钩子（core.hooksPath 指向；pre-commit 拦截主检出直接提交）
         ) + AGENT_TOOL_DIRS
 
         /**

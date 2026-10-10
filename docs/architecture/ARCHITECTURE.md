@@ -119,7 +119,7 @@
 
 | 契约 | 强制内容 | 背景（实测故障） |
 | --- | --- | --- |
-| 根目录白名单 | 只允许 `.github/` `.kilo/` `.kilocode/` `.agents/` `.worktrees/` `.cursor/` `.vscode/` `skills/` `client/` `docs/` `server/` 与 9 个治理文件 | 根目录曾长期滞留 `AdSkip-latest.apk` 与 `.kilo/`、`.mimosa/` 工具残留目录；Cursor 会在根目录写 `.cursor/` |
+| 根目录白名单 | 只允许 `.github/` `.kilo/` `.kilocode/` `.agents/` `.worktrees/` `.cursor/` `.vscode/` `skills/` `client/` `docs/` `server/` `githooks/` 与 9 个治理文件 | 根目录曾长期滞留 `AdSkip-latest.apk` 与 `.kilo/`、`.mimosa/` 工具残留目录；Cursor 会在根目录写 `.cursor/` |
 | `.vscode/` 内容 | **选择性入库**：只允许 `settings.json` 与 `extensions.json`，`launch.json` 等个人调试状态一律不入库 | 共享的编辑器行为若只存在于各自本机，任何一条都可能在某台机器上悄悄失效；而带本机路径与断点的个人状态入库即噪声 |
 | 产物不入库 | 禁止 `*.apk/*.aab/*.aar/*.log/*.zip/*.keystore/*.iml`、`.DS_Store` 等（仅放行 `gradle-wrapper.jar`） | 分发以 Releases + `SHA256SUMS` 为准；构建产物属于被忽略目录 |
 | 模块双向一致 | `settings.gradle.kts` 的 `include(":x")` ↔ 磁盘模块目录**双向**校验 | 模块目录被删却仍注册，或建了目录忘注册（代码写了但不编译） |

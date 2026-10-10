@@ -45,3 +45,9 @@
 
 <!-- 规则（分支模型、提交格式、审批与发布要求）见 CONTRIBUTING.md；此处不复制，避免两份真相。 -->
 - [ ] 已确认本次变更未违反 [CONTRIBUTING.md](../CONTRIBUTING.md) 的分支与合并规则
+
+## 多 Agent 协作检查
+
+- [ ] 开发在独立 worktree（`.worktrees/<agent>-<slug>/`）内进行，未在主检出直接提交（主检出提交会被 `githooks/pre-commit` 拦截）
+- [ ] 认领板（[AGENT-WORKFLOW.md](../docs/development/AGENT-WORKFLOW.md) 3.2）已登记本任务的工作区、分支与认领路径；跨入他人认领路径前已发起交接请求
+- [ ] 涉及协议/契约/规划文档的改动已按文档地图同步对应事实源与契约测试
