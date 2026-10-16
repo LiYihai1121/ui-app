@@ -72,6 +72,13 @@ class SettingsRepository(private val context: Context, private val rulesRepo: Ru
 
     fun setLanguageTag(tag: String?) = LanguagePreferences.setLanguageTag(context, tag)
 
+    // ---------- 引导页 ----------
+
+    /** 是否已看过首次启动引导页（详见 `Prefs.hasSeenOnboarding`）。 */
+    fun hasSeenOnboarding(): Boolean = Prefs.hasSeenOnboarding(context)
+
+    fun setSeenOnboarding(seen: Boolean) = Prefs.setSeenOnboarding(context, seen)
+
     // ---------- 应用元数据（供「我的」页展示） ----------
 
     /**

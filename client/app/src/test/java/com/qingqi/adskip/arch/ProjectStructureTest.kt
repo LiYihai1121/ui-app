@@ -317,21 +317,6 @@ class ProjectStructureTest {
         val declared = ROUTE_CONST_REGEX.findAll(routesSource)
             .map { it.groupValues[1] }
             .toSet()
-        assertTrue(
-            "Routes 应恰好登记 4 个一级路由（首页/应用/日志/我的），实际为 ${declared.sorted()}",
-            declared.size == 4,
-        )
-        assertTrue(
-            "Routes 缺少 PROFILE（「我的」页路由）",
-            declared.contains("PROFILE"),
-        )
-        // 设置已内嵌进「我的」页，不再是一级路由：若有人再加回 SETTINGS 并挂到底部导航，
-        // 就回到了「设置与关于本机分成两页」的老结构。
-        assertTrue(
-            "Routes 不应再声明 SETTINGS：设置内容已内嵌于「我的」页（v3.2 起底部导航为 4 项）",
-            !declared.contains("SETTINGS"),
-        )
-
         val inBottomBar = TOP_LEVEL_ITEM_REGEX.findAll(navSource)
             .map { it.groupValues[1] }
             .toSet()
@@ -339,13 +324,29 @@ class ProjectStructureTest {
             .map { it.groupValues[1] }
             .toSet()
 
+        // v4 起 Routes 分两层：一级（底部导航）+ 二级（从一级页进入）。
+        // 断言因此改为「底部导航恰好 4 项」而不是「Routes 恰好 4 个常量」——
+        // 后者会把二级页（应用管理 / 引导页）误判为违规。
         assertTrue(
-            "底部导航缺少一级入口：导航=${inBottomBar.sorted()}，路由=${declared.sorted()}\n" +
-                "「页面已存在但用户进不去」是本仓库发生过的真实缺陷，请同步 TopLevelDestinations。",
-            inBottomBar.containsAll(declared),
+            "底部导航应恰好登记 4 个一级路由（首页/记录/规则/我的），实际为 ${inBottomBar.sorted()}",
+            inBottomBar.size == 4,
+        )
+        listOf("HOME", "LOGS", "RULES", "PROFILE").forEach { route ->
+            assertTrue("底部导航缺少一级入口 $route：${inBottomBar.sorted()}", route in inBottomBar)
+        }
+        // 设置已内嵌进「我的」页，不再是一级路由：若有人再加回 SETTINGS 并挂到底部导航，
+        // 就回到了「设置与关于本机分成两页」的老结构。
+        assertTrue(
+            "Routes 不应再声明 SETTINGS：设置内容已内嵌于「我的」页（底部导航为 4 项）",
+            !declared.contains("SETTINGS"),
         )
         assertTrue(
-            "NavHost 缺少一级路由注册：宿主=${inNavHost.sorted()}，路由=${declared.sorted()}",
+            "底部导航里出现了未在 Routes 登记的路由：${(inBottomBar - declared).sorted()}",
+            declared.containsAll(inBottomBar),
+        )
+        assertTrue(
+            "NavHost 缺少路由注册：${(declared - inNavHost).sorted()}\n" +
+                "「页面已存在但用户进不去」是本仓库发生过的真实缺陷。",
             inNavHost.containsAll(declared),
         )
         // 反向检查：出现未在 Routes 登记的导航项会形成第二份真相。
@@ -471,9 +472,12 @@ class ProjectStructureTest {
             "「我的」页应内嵌设置内容 SettingsContent(...)，否则移除独立设置页后设置将无处可达",
             profile.contains("SettingsContent("),
         )
+        // v4 起无障碍入口移到首页（状态盾牌卡 + 无障碍开关行）：
+        // 首页才是「服务开了没有」的答案所在，把入口放在「我的」页要多跳一层。
+        val home = readUiSource("home/HomeScreen.kt")
         assertTrue(
-            "「我的」页应提供「打开无障碍设置」入口 AccessibilityCard",
-            profile.contains("AccessibilityCard("),
+            "首页应提供「打开无障碍设置」入口（KeepAliveNavigator.openAccessibilitySettings）",
+            home.contains("KeepAliveNavigator.openAccessibilitySettings"),
         )
         assertTrue(
             "无障碍跳转须经 device/ 层（KeepAliveNavigator），UI 不得自行拼 Intent",
@@ -662,6 +666,7 @@ class ProjectStructureTest {
             ".workbuddy-ai", // 同族工具目录（WorkBuddy AI 的落点，与 .workbuddy 不同名）
             ".cursor", // Cursor 本机工程状态（不入库；缺席白名单会在装了 Cursor 的机器上误红）
             ".designkit-history-delivery", // 美图设计室 AI设计 CLI（designkit）按 cwd 落的房间历史缓存，不入库
+            ".dsh-acl-recovery", // 沙箱 ACL 恢复报告（本机安全策略工具落盘），不入库
             ".vscode", // 编辑器共享配置（选择性入库，规则见 VSCODE_SHARED_FILES）
         )
 
@@ -732,7 +737,7 @@ class ProjectStructureTest {
             ".git", "node_modules", "build", ".gradle", ".kotlin", ".idea", ".vscode",
             "captures", ".tools", "signing", "dist", "out", "target", "release", "bin",
             ".mimosa", ".workbuddy", ".workbuddy-ai", ".kilo", ".kilocode", ".worktrees", ".agents",
-            ".cursor", ".designkit-history-delivery",
+            ".cursor", ".designkit-history-delivery", ".dsh-acl-recovery",
             ".cxx", ".externalNativeBuild", "data",
         )
 
@@ -759,7 +764,7 @@ class ProjectStructureTest {
             "api" to Regex("""API(?:-[A-Z0-9]+)*\.md"""),
             "architecture" to Regex("""ARCHITECTURE(?:-[A-Z0-9]+)*\.md"""),
             "development" to Regex("""(?:DEV|AGENT)(?:-[A-Z0-9]+)+\.md"""),
-            "planning" to Regex("""(?:ROADMAP|DESIGN|FOLLOW-UP|RELEASE)(?:-[A-Z0-9]+)*\.md"""),
+            "planning" to Regex("""(?:ROADMAP|DESIGN|PLAN|FOLLOW-UP|RELEASE)(?:-[A-Z0-9]+)*\.md"""),
             "guide" to Regex("""GUIDE(?:-[A-Z0-9]+)+\.md"""),
             "testing" to Regex("""[A-Z0-9]+(?:-[A-Z0-9]+)*\.md"""),
         )

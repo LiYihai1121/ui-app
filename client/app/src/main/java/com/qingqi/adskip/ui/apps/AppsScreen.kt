@@ -1,248 +1,280 @@
 package com.qingqi.adskip.ui.apps
 
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qingqi.adskip.R
 import com.qingqi.adskip.ui.components.EmptyState
 import com.qingqi.adskip.ui.components.ErrorState
 import com.qingqi.adskip.ui.components.PageHeader
+import com.qingqi.adskip.ui.components.RowDivider
+import com.qingqi.adskip.ui.components.SearchField
+import com.qingqi.adskip.ui.components.SectionCard
+import com.qingqi.adskip.ui.components.SegmentedTabs
 import com.qingqi.adskip.ui.components.SkeletonList
-import com.qingqi.adskip.ui.components.TwoLineRow
 import com.qingqi.adskip.ui.theme.Spacing
 import com.qingqi.adskip.ui.theme.UiSizes
 import com.qingqi.adskip.ui.theme.icons.AdSkipIcons
 
+/** 应用列表的三种视图（设计稿的「全部应用 / 已启用 / 未启用」）。 */
+private enum class AppsFilter { ALL, ENABLED, DISABLED }
+
 /**
- * 应用管理：所有可启动应用，逐项开关自动跳过并显示跳过次数。
+ * 应用管理（v4 设计稿）。
  *
- * 页面不再自带 `Scaffold` 与返回箭头——导航由外壳底部栏统一承载，
- * 本页只负责内容（含一个轻量标题，见 [PageHeader]）。
+ * 页面结构：返回 + 标题 → 搜索 → 三段视图切换 → 应用列表（图标 + 名称 + 包名 + 开关）。
  *
- * UX 约定（组件库补齐批次）：
- * - 应用一多（实测模拟器 30+，真机常见 100+）逐个滚动找不现实，
- *   提供按应用名 / 包名的即时搜索，以及「只看已启用」筛选；
- * - 首屏加载用 [SkeletonList] 骨架替代转圈，提前传达列表布局；
- * - 行统一走 [TwoLineRow]，与日志页共享行高与省略策略；
- * - 搜索无结果与列表为空是两种语义，空态文案分开。
+ * 为什么从一级页降为二级页：v4 设计稿把底部导航的第二个位置给了「规则」（关键词管理），
+ * 应用管理改由首页的「管理应用」瓦片进入。这不是单纯的排序变化——
+ * 「规则」是配置的核心（决定跳过什么），「应用」是配置的例外（决定对谁生效），
+ * 把核心提到一级、例外降到二级，与用户「先定规则、再挑例外」的实际顺序一致。
+ *
+ * 视图切换用**三态**而不是 v3 的「只看已启用」布尔开关：布尔只能表达两个视图，
+ * 而「只看未启用」（= 找出还没生效的应用）是一个真实需求，布尔下无处可去。
  */
 @Composable
-fun AppsScreen(viewModel: AppsViewModel = viewModel(factory = AppsViewModel.Factory)) {
+fun AppsScreen(onBack: () -> Unit = {}, viewModel: AppsViewModel = viewModel(factory = AppsViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val visible = remember(state.items, state.query, state.onlyEnabled) { state.visibleItems }
-    val focusManager = LocalFocusManager.current
+    var filter by remember { mutableStateOf(AppsFilter.ALL) }
 
-    // 底部导航 saveState/restoreState 会让本页 ViewModel 跨 tab 存活，搜索与筛选
-    // 会一直留着。离开本页即重置——它们是视图级临时状态，不是会话级偏好。
+    // 离开本页时清掉临时筛选态（理由见 AppsViewModel.clearTransientFilters）。
     DisposableEffect(Unit) {
         onDispose { viewModel.clearTransientFilters() }
     }
 
+    val visible = remember(state.items, state.query, filter) {
+        val q = state.query.trim().lowercase()
+        state.items.filter { row ->
+            val matchesFilter = when (filter) {
+                AppsFilter.ALL -> true
+                AppsFilter.ENABLED -> !row.disabled
+                AppsFilter.DISABLED -> row.disabled
+            }
+            matchesFilter && (
+                q.isEmpty() ||
+                    row.label.lowercase().contains(q) ||
+                    row.pkg.lowercase().contains(q)
+                )
+        }
+    }
+    val enabledCount = remember(state.items) { state.items.count { !it.disabled } }
+    val disabledCount = remember(state.items) { state.items.count { it.disabled } }
+
     Column(modifier = Modifier.fillMaxSize()) {
         PageHeader(
             title = stringResource(R.string.apps_title),
-            subtitle = stringResource(R.string.apps_hint),
+            onBack = onBack,
+            backLabel = stringResource(R.string.action_back),
         )
 
-        SearchField(
-            query = state.query,
-            onQueryChange = viewModel::setQuery,
-            onSearchDone = { focusManager.clearFocus() },
-            modifier = Modifier.padding(horizontal = Spacing.lg),
-        )
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding(),
+            contentPadding = PaddingValues(start = Spacing.lg, end = Spacing.lg, bottom = Spacing.xl),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md),
+        ) {
+            item {
+                SearchField(
+                    value = state.query,
+                    onValueChange = viewModel::setQuery,
+                    placeholder = stringResource(R.string.apps_search_hint),
+                )
+            }
 
-        FilterChip(
-            selected = state.onlyEnabled,
-            onClick = { viewModel.setOnlyEnabled(!state.onlyEnabled) },
-            label = { Text(stringResource(R.string.apps_filter_enabled)) },
-            modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm),
-        )
+            item {
+                SegmentedTabs(
+                    options = AppsFilter.entries,
+                    selected = filter,
+                    onSelect = { filter = it },
+                    labelOf = { option ->
+                        when (option) {
+                            AppsFilter.ALL -> stringResource(R.string.apps_tab_all, state.items.size)
+                            AppsFilter.ENABLED -> stringResource(R.string.apps_tab_enabled, enabledCount)
+                            AppsFilter.DISABLED -> stringResource(R.string.apps_tab_disabled, disabledCount)
+                        }
+                    },
+                )
+            }
 
-        when {
-            // 错误优先于 loading 与空态：失败是可恢复态，必须给出重试入口；
-            // 排在 loading 之前是因为失败时 loading 已由 ViewModel 置回 false，
-            // 若顺序颠倒，将来任何忘记复位 loading 的改动都会把错误态挡住。
-            state.failed -> ErrorState(
-                icon = AdSkipIcons.Warning,
-                title = stringResource(R.string.error_generic_title),
-                subtitle = stringResource(R.string.error_generic_hint),
-                action = {
-                    Button(onClick = viewModel::load) {
-                        Text(stringResource(R.string.btn_retry))
-                    }
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
+            when {
+                state.loading -> item { SkeletonList(rows = 6) }
 
-            state.loading && state.items.isEmpty() -> SkeletonList(
-                modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.sm),
-            )
+                state.failed -> item {
+                    ErrorState(
+                        title = stringResource(R.string.error_generic_title),
+                        subtitle = stringResource(R.string.error_generic_hint),
+                        icon = AdSkipIcons.Warning,
+                        action = {
+                            Button(onClick = viewModel::load) {
+                                Text(stringResource(R.string.btn_retry))
+                            }
+                        },
+                    )
+                }
 
-            visible.isEmpty() -> EmptyState(
-                icon = AdSkipIcons.Search,
-                title = stringResource(
-                    if (state.items.isEmpty()) R.string.apps_empty else R.string.apps_no_match,
-                ),
-                // 走到这里必然「已加载完成」：loading 分支在上面，失败分支已在最前。
-                // 旧代码用 `items.isEmpty()` 区分两种副标题，导致加载完成的空列表显示
-                // 「正在加载应用列表…」——把加载文案放进了空态。
-                subtitle = stringResource(
-                    if (state.items.isEmpty()) R.string.apps_empty_hint else R.string.apps_no_match_hint,
-                ),
-                // 空态不能只说「没有」还得给出路：搜索无结果时提供一个一键清除的入口，
-                // 否则用户要手动清空输入框并关掉筛选才能看到全部应用。
-                action = if (state.items.isNotEmpty()) {
-                    {
-                        TextButton(onClick = {
-                            viewModel.setQuery("")
-                            viewModel.setOnlyEnabled(false)
-                        }) {
-                            Text(stringResource(R.string.apps_clear_filters))
+                visible.isEmpty() -> item {
+                    EmptyState(
+                        title = stringResource(R.string.apps_empty_title),
+                        subtitle = stringResource(R.string.apps_hint),
+                        icon = AdSkipIcons.Apps,
+                    )
+                }
+
+                else -> item {
+                    SectionCard(contentPadding = PaddingValues(vertical = Spacing.xs)) {
+                        visible.forEachIndexed { index, row ->
+                            AppToggleRow(
+                                row = row,
+                                onToggle = { enabled -> viewModel.setEnabled(row.pkg, enabled) },
+                            )
+                            if (index != visible.lastIndex) {
+                                RowDivider(startIndent = Spacing.xxxl)
+                            }
                         }
                     }
-                } else {
-                    null
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
-
-            else -> LazyColumn(
-                // 底部留白：最后一行紧贴导航栏会被系统的底部 inset 压住
-                contentPadding = PaddingValues(
-                    start = Spacing.lg,
-                    end = Spacing.lg,
-                    top = Spacing.xs,
-                    bottom = Spacing.xl,
-                ),
-            ) {
-                items(visible, key = { it.pkg }) { row ->
-                    AppRowItem(row = row, onToggle = viewModel::setEnabled)
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
+            }
+
+            item {
+                Spacer(Modifier.height(Spacing.sm))
+                Text(
+                    text = stringResource(R.string.apps_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = Spacing.xs),
+                )
             }
         }
     }
 }
 
 /**
- * 应用搜索框：即时过滤，输入非空时提供一键清除。
+ * 应用行：图标 + 名称 + 包名 + 开关。整行可点。
  *
- * 回车收键盘：搜索是「即时过滤」，按回车没有提交语义，但软键盘会一直挡住下半屏列表——
- * 与首页关键词框（ImeAction.Done）保持一致，否则用户在两页得到不同的输入体验。
+ * 无障碍：整行是**一个** `Role.Switch` 节点（`toggleable`），读屏一次念完
+ * 「微信，com.tencent.mm，已开启，开关」；`Switch` 自身置为不可交互，
+ * 避免出现第二个可点区域。
  */
 @Composable
-private fun SearchField(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    onSearchDone: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier.fillMaxWidth(),
-        singleLine = true,
-        shape = MaterialTheme.shapes.small,
-        placeholder = { Text(stringResource(R.string.apps_search_placeholder)) },
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { onSearchDone() }),
-        leadingIcon = {
-            Icon(
-                imageVector = AdSkipIcons.Search,
-                contentDescription = null,
+private fun AppToggleRow(row: AppsViewModel.AppRow, onToggle: (Boolean) -> Unit) {
+    val enabled = !row.disabled
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(value = enabled, role = Role.Switch, onValueChange = onToggle)
+            .padding(horizontal = Spacing.lg, vertical = Spacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AppIcon(icon = row.icon, label = row.label)
+        Spacer(Modifier.width(Spacing.md))
+        Column(Modifier.weight(1f).padding(end = Spacing.md)) {
+            Text(
+                text = row.label,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
-        },
-        trailingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(
-                        imageVector = AdSkipIcons.Close,
-                        contentDescription = stringResource(R.string.apps_search_clear),
-                    )
-                }
-            }
-        },
-    )
+            Text(
+                text = row.pkg,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Switch(
+            checked = enabled,
+            onCheckedChange = null,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                checkedTrackColor = MaterialTheme.colorScheme.primary,
+            ),
+        )
+    }
 }
 
+/**
+ * 应用图标：有图标用图标，没有则回退为「首字 + 底衬」的占位。
+ *
+ * 回退不是为了好看——部分 ROM 的 `loadIcon` 会抛异常或返回 null（本项目在
+ * 定制系统上实测到过），没有回退时整行会留一个空洞，看起来像渲染失败。
+ */
 @Composable
-private fun AppRowItem(row: AppsViewModel.AppRow, onToggle: (String, Boolean) -> Unit) {
-    // 整行可点：命中区域从「只有开关那 40dp」扩大到整行高度。开关本身改为
-    // onCheckedChange = null（不再自行响应），由整行的 toggleable 统一处理，
-    // 否则一次点击会同时触发两处回调、把开关拨两次。
-    TwoLineRow(
-        modifier = Modifier.toggleable(
-            value = !row.disabled,
-            role = Role.Switch,
-            onValueChange = { checked -> onToggle(row.pkg, checked) },
-        ),
-        title = row.label,
-        subtitle = subtitle(row),
-        leading = {
-            val bitmap = remember(row.icon) { row.icon?.toImageBitmap() }
-            if (bitmap != null) {
-                Image(
-                    bitmap = bitmap,
-                    contentDescription = null,
-                    modifier = Modifier.size(UiSizes.listIcon),
-                )
-            } else {
-                Spacer(Modifier.size(UiSizes.listIcon))
-            }
-        },
-        trailing = {
-            Switch(checked = !row.disabled, onCheckedChange = null)
-        },
-    )
+private fun AppIcon(icon: Drawable?, label: String) {
+    val bitmap = remember(icon) { icon?.toImageBitmap() }
+    Box(
+        modifier = Modifier
+            .size(UiSizes.appIcon)
+            .clip(MaterialTheme.shapes.small)
+            .background(MaterialTheme.colorScheme.surfaceContainer),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap,
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(UiSizes.appIcon),
+            )
+        } else {
+            Text(
+                text = label.take(1),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
 }
 
-@Composable
-private fun subtitle(row: AppsViewModel.AppRow): String = when {
-    row.disabled -> stringResource(R.string.apps_disabled)
-    row.count > 0 -> pluralStringResource(R.plurals.apps_count, row.count, row.count)
-    else -> stringResource(R.string.apps_never)
-}
-
-/** Drawable 转 ImageBitmap（无 accompanist 依赖的轻量转换） */
-private fun android.graphics.drawable.Drawable.toImageBitmap(): androidx.compose.ui.graphics.ImageBitmap {
-    val size = 128
-    val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+/** 把 [Drawable] 渲染成固定边长的位图（不依赖 core-ktx 的 `toBitmap` 扩展）。 */
+private fun Drawable.toImageBitmap(): ImageBitmap {
+    val size = ICON_PIXELS
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = android.graphics.Canvas(bitmap)
     setBounds(0, 0, size, size)
     draw(canvas)
     return bitmap.asImageBitmap()
 }
+
+/** 图标位图边长（像素）。取 96 是为了在三倍屏上仍不糊，同时不至于占太多内存。 */
+private const val ICON_PIXELS = 96

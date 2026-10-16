@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>轻启 · UI 重构静态预览拼版</title>
+<style>
+  /* ===== 令牌全部取自实际源码 =====
+     Color.kt   LightPrimary=Brand60 #1D7C43, LightSurface=Neutral05 #F8F9F8,
+                LightSurfaceContainerLow #F5F7F6, LightOnSurface=Neutral90 #171C19,
+                LightOnSurfaceVariant=Neutral70 #424D46, LightOutline=Neutral50 #717F76,
+                LightOutlineVariant=Neutral30 #C7D1CB, StatusOn #2E7D32, StatusOnContainer #C8F0CB,
+                StatusOff #C62828, StatusUnknown #B26A00, StatusUnknownContainer #FFE7C2
+     Spacing.kt xs4 sm8 md12 lg16 lg2=20 xl24 xxl32 xxxl40 huge48
+     Theme.kt   圆角 XS6 SM10 MD14 LG20 XL28
+     Type.kt    见下方 sp 值
+     UiSizes.kt statusOrbHero=108 iconPlate=36 iconPlateGlyph=20 stateIllustration=72
+  */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #EDF0EE;
+    font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    color: #171C19;
+    padding: 28px 20px 48px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page-title { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+  .page-sub { font-size: 12px; color: #5A6862; line-height: 1.6; margin-bottom: 24px; }
+  .rail { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; }
+  .device-col { display: flex; flex-direction: column; gap: 10px; }
+  .device-cap { font-size: 12px; font-weight: 500; color: #424D46; text-align: center; }
+  .device-cap span { font-weight: 400; color: #717F76; }
+
+  /* 手机外框：按 412dp 逻辑宽 × 约 880dp 高，1dp≈0.95px 等比缩放 */
+  .phone {
+    width: 392px; height: 812px;
+    background: #F8F9F8;
+    border-radius: 28px;              /* 设备圆角，非 UI 令牌 */
+    border: 0.5px solid #C7D1CB;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+  .statusbar {
+    height: 26px; flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; font-size: 10px; color: #424D46;
+  }
+  .scroll { flex: 1 1 auto; overflow: hidden; }
+
+  /* PageHeader：padding start/end 16dp, top 16dp, bottom 12dp */
+  .page-header { padding: 16px 16px 12px; }
+  .page-header h2 { font-size: 22px; line-height: 30px; font-weight: 700; }  /* headlineSmall */
+  .page-header p { font-size: 14px; line-height: 23px; color: #424D46; margin-top: 4px; }  /* bodyMedium */
+
+  /* LazyColumn：水平 16dp，item 间距 16dp */
+  .list { padding: 0 16px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* SectionCard：surfaceContainerLow, 圆角 MD=14, 内边距 20dp */
+  .card {
+    background: #F5F7F6; border-radius: 14px; padding: 20px;
+  }
+  .card-tight { padding: 4px 0; }
+
+  /* SectionLabel：labelLarge 14sp/500, onSurfaceVariant, padding-left 4dp, bottom 8dp */
+  .section-label {
+    font-size: 14px; line-height: 20px; font-weight: 500; color: #424D46;
+    padding-left: 4px; margin-bottom: 8px;
+  }
+  /* SectionTitle：titleMedium 16sp/600 */
+  .section-title { font-size: 16px; line-height: 24px; font-weight: 600; color: #171C19; }
+  .section-hint { font-size: 12px; line-height: 20px; color: #424D46; }
+
+  /* 状态主视觉：实色状态容器（不再是渐变） */
+  .hero { display: flex; flex-direction: column; align-items: center; padding: 24px; }
+  .orb-wrap {
+    width: 108px; height: 108px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .orb { width: 96px; height: 96px; position: relative; display: flex; align-items: center; justify-content: center; }
+  .orb svg { position: absolute; inset: 0; }
+  .orb-core { width: 14px; height: 14px; border-radius: 50%; }
+  .hero-title { font-size: 22px; line-height: 30px; font-weight: 700; margin-top: 12px; text-align: center; }
+  .hero-hint { font-size: 14px; line-height: 23px; color: #424D46; margin-top: 4px; text-align: center; }
+  .btn {
+    margin-top: 16px; width: 100%; height: 40px; border-radius: 20px;   /* M3 Filled Button */
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 500;
+  }
+  .btn-filled { background: #1D7C43; color: #FFFFFF; }
+  .btn-tonal { background: #DCF6E7; color: #0A381D; }
+  .btn-text { background: transparent; color: #1D7C43; margin-top: 8px; }
+
+  /* StatTile：数值 headlineMedium 26sp/700，标签 labelMedium 12sp */
+  .tiles { display: flex; gap: 16px; }
+  .tile { flex: 1; min-width: 0; }
+  .tile-v { font-size: 26px; line-height: 36px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tile-v.emph { color: #1D7C43; }
+  .tile-l { font-size: 12px; line-height: 17px; color: #424D46; margin-top: 4px; }
+
+  /* QuickActionTile：卡片 + 36dp 图标底衬 + 20dp 图标 */
+  .quick-row { display: flex; gap: 12px; }
+  .quick {
+    flex: 1; background: #F5F7F6; border-radius: 14px; padding: 16px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .plate {
+    width: 36px; height: 36px; border-radius: 10px; background: #DCF6E7;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .quick-l { font-size: 12px; line-height: 17px; color: #171C19; }
+  .plate svg, .rowicon svg { display: block; }
+
+  /* 输入框 */
+  .field {
+    display: flex; align-items: center; gap: 8px;
+    background: #F8F9F8; border: 1px solid #717F76;  /* M3 OutlinedTextField 未聚焦 */
+    border-radius: 10px; padding: 0 4px 0 14px; height: 52px; margin-top: 16px;
+  }
+  .field span { font-size: 16px; color: #717F76; flex: 1; }
+  .icon-btn { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; }
+
+  /* Chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid #C7D1CB; border-radius: 8px; padding: 6px 8px 6px 12px;
+    font-size: 14px; background: #F8F9F8;
+  }
+
+  /* 分组列表行：GroupedListCard，行内边距 20dp 水平 / 12dp 垂直 */
+  .grow {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px;
+  }
+  .grow .grow-main { flex: 1; min-width: 0; }
+  .grow .grow-t { font-size: 16px; line-height: 26px; color: #171C19; }   /* bodyLarge */
+  .grow .grow-s { font-size: 12px; line-height: 20px; color: #424D46; }   /* bodySmall */
+  .grow .grow-v { font-size: 14px; line-height: 23px; color: #1D7C43; }   /* bodyMedium */
+  .divider { height: 1px; background: #C7D1CB; margin-left: 20px; }
+  .divider-full { height: 1px; background: #C7D1CB; }
+
+  /* StatusBadge */
+  .badge {
+    display: inline-flex; align-items: center;
+    border-radius: 999px; padding: 4px 8px;
+    font-size: 12px; line-height: 17px; font-weight: 500;
+  }
+  /* StatusDot 10dp */
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+  .dot-hollow { border: 1.5px solid #717F76; background: transparent; width: 10px; height: 10px; }
+
+  /* 导航栏 */
+  .navbar {
+    flex: 0 0 auto; height: 64px; background: #EFF3F1;
+    border-top: 0.5px solid #C7D1CB;
+    display: flex; align-items: center; justify-content: space-around;
+    padding: 0 8px;
+  }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 64px; }
+  .nav-pill {
+    width: 60px; height: 30px; border-radius: 15px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-pill.active { background: #DCF6E7; }
+  .nav-l { font-size: 12px; line-height: 16px; color: #424D46; }
+  .nav-item.active .nav-l { color: #1D7C43; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">轻启 · UI 重构静态预览拼版</h1>
+<p class="page-sub">
+  按重构后的<b>实际令牌值</b>还原（色值取自 Color.kt、间距取自 Spacing.kt、圆角取自 Theme.kt、字号取自 Type.kt）。<br>
+  浅色方案 · 412dp 逻辑宽等比缩放。这不是真机截图 —— 真机渲染请启动 adskip 模拟器。
+</p>
+
+<div class="rail">
+
+  <!-- ========== 首页 · 服务运行中 ========== -->
+  <div class="device-col">
+    <div class="device-cap">首页 <span>· 服务运行中（ON）</span></div>
+    <div class="phone">
+      <div class="statusbar"><span>21:09</span><span>5G &nbsp; 100%</span></div>
+      <div class="scroll">
+
+        <div class="page-header">
+          <h2>首页</h2>
+          <p>更清晰地掌握服务状态与广告跳过情况</p>
+        </div>
+
+        <div class="list">
+
+          <!-- StatusHero：实色 onContainer #C8F0CB -->
+          <div class="card hero" style="background:#C8F0CB;">
+            <div class="orb-wrap" style="background:#C8F0CB;">
+              <div class="orb">
+                <svg viewBox="0 0 96 96" fill="none">
+                  <circle cx="48" cy="48" r="40" stroke="#E3EAE6" stroke-width="6"/>
+                  <path d="M48 8 A40 40 0 0 1 83 61" stroke="#2E7D32" stroke-width="6" stroke-linecap="round"/>
+                </svg>
+                <div class="orb-core" style="background:#2E7D32;"></div>
+              </div>
+            </div>
+            <div class="hero-title" style="color:#2E7D32;">服务运行中</div>
+            <div class="hero-hint">服务已开启，可运行模拟测试验证跳过链路</div>
+            <div class="btn btn-tonal">调整系统设置</div>
+            <div class="btn btn-text">测试：模拟开屏广告</div>
+          </div>
+
+          <!-- UsageTiles：只有「累计跳过」用品牌主色 -->
+          <div>
+            <div class="section-label">使用概览</div>
+            <div class="card" style="padding:16px;">
+              <div class="tiles">
+                <div class="tile">
+                  <div class="tile-v emph">1,247</div>
+                  <div class="tile-l">累计跳过（次）</div>
+                </div>
+                <div class="tile">
+                  <div class="tile-v">12</div>
+                  <div class="tile-l">关键词（个）</div>
+                </div>
+                <div class="tile">
+                  <div class="tile-v" style="font-size:18px;line-height:36px;">微信</div>
+                  <div class="tile-l">最近应用</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 快捷操作 -->
+          <div>
+            <div class="section-label">快捷操作</div>
+            <div class="quick-row">
+              <div class="quick">
+                <div class="plate">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#1D7C43" stroke-width="1.6" stroke-linecap="round">
+                    <path d="M3 4h14M3 10h14M3 16h9"/>
+                  </svg>
+                </div>
+                <div class="quick-l">查看记录</div>
+              </div>
+              <div class="quick">
+                <div class="plate">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#1D7C43" stroke-width="1.6" stroke-linecap="round">
+                    <path d="M10 4v12M4 10h12"/>
+                  </svg>
+                </div>
+                <div class="quick-l">添加关键词</div>
+              </div>
+              <div class="quick">
+                <div class="plate">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#1D7C43" stroke-width="1.6" stroke-linecap="round">
+                    <rect x="3" y="3" width="5.5" height="5.5" rx="1.5"/>
+                    <rect x="11.5" y="3" width="5.5" height="5.5" rx="1.5"/>
+                    <rect x="3" y="11.5" width="5.5" height="5.5" rx="1.5"/>
+                    <rect x="11.5" y="11.5" width="5.5" height="5.5" rx="1.5"/>
+                  </svg>
+                </div>
+                <div class="quick-l">管理应用</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 关键词卡：加号是真实可点 IconButton -->
+          <div class="card">
+            <div class="section-title">识别关键词</div>
+            <div style="height:4px"></div>
+            <div class="section-hint">命中以下短文本即自动点击，点击条目可删除</div>
+            <div class="field">
+              <span>添加关键词，如：跳过</span>
+              <div class="icon-btn">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#717F76" stroke-width="1.8" stroke-linecap="round">
+                  <path d="M10 4v12M4 10h12"/>
+                </svg>
+              </div>
+            </div>
+            <div class="chips">
+              <div class="chip">跳过
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#424D46" stroke-width="1.6" stroke-linecap="round"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7"/></svg>
+              </div>
+              <div class="chip">跳过广告
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#424D46" stroke-width="1.6" stroke-linecap="round"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7"/></svg>
+              </div>
+              <div class="chip">关闭
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#424D46" stroke-width="1.6" stroke-linecap="round"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7"/></svg>
+              </div>
+              <div class="chip">Skippable
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#424D46" stroke-width="1.6" stroke-linecap="round"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-hint" style="padding:0 4px;">原理：通过无障碍服务监听应用启动，自动查找并点击「跳过」按钮。跳过记录仅存本机；配置服务器后，统计数据会上报至该服务器。</div>
+        </div>
+      </div>
+      <div class="navbar">
+        <div class="nav-item active">
+          <div class="nav-pill active">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#1D7C43" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L11 3l8 6.5V19h-6v-6H9v6H3z"/></svg>
+          </div>
+          <div class="nav-l">首页</div>
+        </div>
+        <div class="nav-item">
+          <div class="nav-pill">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#424D46" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="12" y="3" width="7" height="7" rx="2"/><rect x="3" y="12" width="7" height="7" rx="2"/><rect x="12" y="12" width="7" height="7" rx="2"/></svg>
+          </div>
+          <div class="nav-l">应用</div>
+        </div>
+        <div class="nav-item">
+          <div class="nav-pill">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#424D46" stroke-width="1.7" stroke-linecap="round"><path d="M4 5h14M4 11h14M4 17h9"/></svg>
+          </div>
+          <div class="nav-l">记录</div>
+        </div>
+        <div class="nav-item">
+          <div class="nav-pill">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#424D46" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="8" r="3.5"/><path d="M4.5 19c1.2-3.5 3.6-5 6.5-5s5.3 1.5 6.5 5"/></svg>
+          </div>
+          <div class="nav-l">我的</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 首页 · 无法确认（第三态） ========== -->
+  <div class="device-col">
+    <div class="device-cap">首页 <span>· 无法确认（UNKNOWN，本次新增）</span></div>
+    <div class="phone">
+      <div class="statusbar"><span>21:09</span><span>5G &nbsp; 100%</span></div>
+      <div class="scroll">
+        <div class="page-header">
+          <h2>首页</h2>
+          <p>更清晰地掌握服务状态与广告跳过情况</p>
+        </div>
+        <div class="list">
+
+          <!-- UNKNOWN：琥珀容器 + 虚线弧 + 中心短横 -->
+          <div class="card hero" style="background:#FFE7C2;">
+            <div class="orb-wrap" style="background:#FFE7C2;">
+              <div class="orb">
+                <svg viewBox="0 0 96 96" fill="none">
+                  <circle cx="48" cy="48" r="40" stroke="#BA7517" stroke-width="6" stroke-dasharray="9 7" stroke-linecap="round"/>
+                </svg>
+                <div style="width:16px;height:4px;border-radius:2px;background:#B26A00;"></div>
+              </div>
+            </div>
+            <div class="hero-title" style="color:#B26A00;font-size:20px;line-height:30px;">无法确认服务状态</div>
+            <div class="hero-hint">系统未返回无障碍服务状态，请到设置中人工核对；服务本身可能已在运行</div>
+            <div class="btn btn-filled">开启无障碍服务</div>
+            <div class="btn btn-text">测试：模拟开屏广告</div>
+          </div>
+
+          <div>
+            <div class="section-label">使用概览</div>
+            <div class="card" style="padding:16px;">
+              <div class="tiles">
+                <div class="tile"><div class="tile-v emph">1,247</div><div class="tile-l">累计跳过（次）</div></div>
+                <div class="tile"><div class="tile-v">12</div><div class="tile-l">关键词（个）</div></div>
+                <div class="tile"><div class="tile-v" style="font-size:18px;line-height:36px;">微信</div><div class="tile-l">最近应用</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="section-label">快捷操作</div>
+            <div class="quick-row">
+              <div class="quick"><div class="plate"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#1D7C43" stroke-width="1.6" stroke-linecap="round"><path d="M3 4h14M3 10h14M3 16h9"/></svg></div><div class="quick-l">查看记录</div></div>
+              <div class="quick"><div class="plate"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#1D7C43" stroke-width="1.6" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg></div><div class="quick-l">添加关键词</div></div>
+              <div class="quick"><div class="plate"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#1D7C43" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="3" width="5.5" height="5.5" rx="1.5"/><rect x="11.5" y="3" width="5.5" height="5.5" rx="1.5"/><rect x="3" y="11.5" width="5.5" height="5.5" rx="1.5"/><rect x="11.5" y="11.5" width="5.5" height="5.5" rx="1.5"/></svg></div><div class="quick-l">管理应用</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-title">识别关键词</div>
+            <div style="height:4px"></div>
+            <div class="section-hint">命中以下短文本即自动点击，点击条目可删除</div>
+            <div class="field">
+              <span>添加关键词，如：跳过</span>
+              <div class="icon-btn"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#717F76" stroke-width="1.8" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg></div>
+            </div>
+            <div class="chips">
+              <div class="chip">跳过<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#424D46" stroke-width="1.6" stroke-linecap="round"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7"/></svg></div>
+              <div class="chip">跳过广告<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#424D46" stroke-width="1.6" stroke-linecap="round"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7"/></svg></div>
+              <div class="chip">关闭<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#424D46" stroke-width="1.6" stroke-linecap="round"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7"/></svg></div>
+            </div>
+          </div>
+
+          <div class="section-hint" style="padding:0 4px;">原理：通过无障碍服务监听应用启动，自动查找并点击「跳过」按钮。跳过记录仅存本机；配置服务器后，统计数据会上报至该服务器。</div>
+        </div>
+      </div>
+      <div class="navbar">
+        <div class="nav-item active"><div class="nav-pill active"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#1D7C43" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L11 3l8 6.5V19h-6v-6H9v6H3z"/></svg></div><div class="nav-l">首页</div></div>
+        <div class="nav-item"><div class="nav-pill"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#424D46" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="12" y="3" width="7" height="7" rx="2"/><rect x="3" y="12" width="7" height="7" rx="2"/><rect x="12" y="12" width="7" height="7" rx="2"/></svg></div><div class="nav-l">应用</div></div>
+        <div class="nav-item"><div class="nav-pill"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#424D46" stroke-width="1.7" stroke-linecap="round"><path d="M4 5h14M4 11h14M4 17h9"/></svg></div><div class="nav-l">记录</div></div>
+        <div class="nav-item"><div class="nav-pill"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#424D46" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="8" r="3.5"/><path d="M4.5 19c1.2-3.5 3.6-5 6.5-5s5.3 1.5 6.5 5"/></svg></div><div class="nav-l">我的</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 我的 ========== -->
+  <div class="device-col">
+    <div class="device-cap">我的 <span>· 四区块 + 分组列表卡片</span></div>
+    <div class="phone">
+      <div class="statusbar"><span>21:09</span><span>5G &nbsp; 100%</span></div>
+      <div class="scroll">
+        <div class="page-header">
+          <h2>我的</h2>
+          <p>本机状态、使用数据、设置与关于</p>
+        </div>
+
+        <div class="list">
+          <!-- 区块 1 本机状态 -->
+          <div>
+            <div class="section-label">本机状态</div>
+            <div class="card card-tight">
+              <!-- 权限清单行：READY 带 StatusBadge，NEEDS_ACTION 用琥珀 -->
+              <div class="grow">
+                <div class="dot" style="background:#2E7D32;"></div>
+                <div class="grow-main">
+                  <div class="grow-t">无障碍服务</div>
+                  <div class="grow-s">已开启，可自动跳过开屏广告</div>
+                </div>
+                <div class="badge" style="background:#C8F0CB;color:#2E7D32;">已就绪</div>
+              </div>
+              <div class="divider"></div>
+              <div class="grow">
+                <div class="dot" style="background:#2E7D32;"></div>
+                <div class="grow-main">
+                  <div class="grow-t">电池优化白名单</div>
+                  <div class="grow-s">已加入白名单，后台不易被杀</div>
+                </div>
+                <div class="badge" style="background:#C8F0CB;color:#2E7D32;">已就绪</div>
+              </div>
+              <div class="divider"></div>
+              <div class="grow">
+                <div class="dot" style="background:#B26A00;"></div>
+                <div class="grow-main">
+                  <div class="grow-t">后台保活</div>
+                  <div class="grow-s">建议在系统设置中允许自启动</div>
+                </div>
+                <div class="badge" style="background:#FFE7C2;color:#B26A00;">待处理</div>
+              </div>
+              <div class="divider"></div>
+              <div class="grow">
+                <div class="dot-hollow"></div>
+                <div class="grow-main">
+                  <div class="grow-t">快捷磁贴</div>
+                  <div class="grow-s">需在通知栏手动添加磁贴</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="height:12px"></div>
+
+            <!-- AccessibilityCard：tonal 而非 filled（首页已占用唯一主行动） -->
+            <div class="card">
+              <div class="section-title">服务运行中</div>
+              <div style="height:16px"></div>
+              <div class="btn btn-tonal" style="margin-top:0;">开启无障碍服务</div>
+            </div>
+          </div>
+
+          <!-- 区块 2 使用数据 -->
+          <div>
+            <div class="section-label">使用数据</div>
+            <div class="card">
+              <div class="tiles">
+                <div class="tile"><div class="tile-v emph">1,247</div><div class="tile-l">累计跳过（次）</div></div>
+                <div class="tile"><div class="tile-v">23</div><div class="tile-l">已跳过应用数</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 3 设置（分组列表卡片形态） -->
+          <div>
+            <div class="section-label">设置</div>
+            <div class="card card-tight">
+              <div class="grow">
+                <div class="plate" style="border-radius:10px;background:#DCF6E7;">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#1D7C43" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><path d="M2.5 10h15M10 2.5c2 2.3 3 4.8 3 7.5s-1 5.2-3 7.5c-2-2.3-3-4.8-3-7.5s1-5.2 3-7.5z"/></svg>
+                </div>
+                <div class="grow-main"><div class="grow-t">界面语言</div></div>
+                <div class="grow-v">简体中文</div>
+              </div>
+              <div class="divider"></div>
+              <div class="grow">
+                <div class="plate" style="border-radius:10px;background:#DCF6E7;">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#1D7C43" stroke-width="1.6" stroke-linecap="round"><path d="M10 3v10M6 9l4 4 4-4M3.5 16.5h13"/></svg>
+                </div>
+                <div class="grow-main">
+                  <div class="grow-t">云端规则同步</div>
+                  <div class="grow-s">从自建服务器拉取规则与统计上报</div>
+                </div>
+              </div>
+              <div class="divider"></div>
+              <div class="grow">
+                <div class="plate" style="border-radius:10px;background:#DCF6E7;">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#1D7C43" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><path d="M10 6v4.5l3 2"/></svg>
+                </div>
+                <div class="grow-main">
+                  <div class="grow-t">免打扰时段</div>
+                  <div class="grow-s">该时段内暂停自动跳过</div>
+                </div>
+                <div class="badge" style="background:#DCF6E7;color:#0A381D;">22:00–07:00</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 4 关于 -->
+          <div>
+            <div class="section-label">关于</div>
+            <div class="card card-tight">
+              <div class="grow"><div class="grow-main"><div class="grow-t" style="font-size:14px;">应用版本</div></div><div class="grow-v">1.0 (18)</div></div>
+              <div class="divider-full" style="margin-left:20px;"></div>
+              <div class="grow"><div class="grow-main"><div class="grow-t" style="font-size:14px;">Android 版本</div></div><div class="grow-v">14</div></div>
+              <div class="divider-full" style="margin-left:20px;"></div>
+              <div class="grow"><div class="grow-main"><div class="grow-t" style="font-size:14px;">设备型号</div></div><div class="grow-v">Mi 9</div></div>
+              <div class="divider-full" style="margin-left:20px;"></div>
+              <div class="grow"><div class="grow-main"><div class="grow-t" style="font-size:14px;">厂商</div></div><div class="grow-v">小米</div></div>
+              <div class="divider"></div>
+              <div class="grow">
+                <div class="rowicon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#424D46" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.8 3.8 5.8 3.8 9s-1.3 6.2-3.8 9c-2.5-2.8-3.8-5.8-3.8-9S9.5 5.8 12 3z"/></svg></div>
+                <div class="grow-main"><div class="grow-t" style="font-size:16px;">项目主页</div></div>
+              </div>
+              <div class="divider"></div>
+              <div class="grow">
+                <div class="rowicon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#424D46" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 15a2 2 0 0 1-2 2H8l-4 3V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg></div>
+                <div class="grow-main"><div class="grow-t" style="font-size:16px;">问题反馈</div></div>
+              </div>
+            </div>
+            <div class="section-hint" style="padding:12px 20px 0;">跳过记录与统计均只保存在本机，不会上传。</div>
+          </div>
+        </div>
+      </div>
+      <div class="navbar">
+        <div class="nav-item"><div class="nav-pill"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#424D46" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L11 3l8 6.5V19h-6v-6H9v6H3z"/></svg></div><div class="nav-l">首页</div></div>
+        <div class="nav-item"><div class="nav-pill"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#424D46" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="12" y="3" width="7" height="7" rx="2"/><rect x="3" y="12" width="7" height="7" rx="2"/><rect x="12" y="12" width="7" height="7" rx="2"/></svg></div><div class="nav-l">应用</div></div>
+        <div class="nav-item"><div class="nav-pill"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#424D46" stroke-width="1.7" stroke-linecap="round"><path d="M4 5h14M4 11h14M4 17h9"/></svg></div><div class="nav-l">记录</div></div>
+        <div class="nav-item active"><div class="nav-pill active"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#1D7C43" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="8" r="3.5"/><path d="M4.5 19c1.2-3.5 3.6-5 6.5-5s5.3 1.5 6.5 5"/></svg></div><div class="nav-l">我的</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 应用 + 记录 ========== -->
+  <div class="device-col">
+    <div class="device-cap">应用 <span>· 工具栏 + 计数副标题</span></div>
+    <div class="phone" style="height:430px;">
+      <div class="statusbar"><span>21:09</span><span>5G &nbsp; 100%</span></div>
+      <div class="scroll">
+        <div class="page-header">
+          <h2>应用</h2>
+          <p>共 137 个可启动应用</p>
+        </div>
+        <div class="list">
+          <div class="field" style="margin-top:0;height:48px;">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#717F76" stroke-width="1.7" stroke-linecap="round"><circle cx="8" cy="8" r="5.5"/><path d="M12.5 12.5L16 16"/></svg>
+            <span style="font-size:14px;">搜索应用</span>
+          </div>
+          <!-- SegmentedFilter -->
+          <div style="display:flex;background:#E3EAE6;border-radius:10px;padding:3px;gap:3px;">
+            <div style="flex:1;text-align:center;padding:7px 0;border-radius:8px;background:#FFFFFF;font-size:13px;font-weight:500;color:#171C19;">全部</div>
+            <div style="flex:1;text-align:center;padding:7px 0;border-radius:8px;font-size:13px;color:#424D46;">已启用</div>
+            <div style="flex:1;text-align:center;padding:7px 0;border-radius:8px;font-size:13px;color:#424D46;">已跳过</div>
+          </div>
+          <div class="section-hint">开启后该应用启动时会自动尝试跳过开屏广告</div>
+
+          <div class="card card-tight">
+            <div class="grow">
+              <div style="width:40px;height:40px;border-radius:10px;background:#DCF6E7;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;color:#1D7C43;">微</div>
+              <div class="grow-main">
+                <div class="grow-t">微信</div>
+                <div class="grow-s">已跳过 42 次</div>
+              </div>
+              <div style="width:44px;height:26px;border-radius:13px;background:#1D7C43;position:relative;">
+                <div style="position:absolute;right:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;"></div>
+              </div>
+            </div>
+            <div class="divider" style="margin-left:16px;"></div>
+            <div class="grow">
+              <div style="width:40px;height:40px;border-radius:10px;background:#E3EAE6;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;color:#424D46;">淘</div>
+              <div class="grow-main">
+                <div class="grow-t">淘宝</div>
+                <div class="grow-s">已跳过 18 次</div>
+              </div>
+              <div style="width:44px;height:26px;border-radius:13px;background:#1D7C43;position:relative;">
+                <div style="position:absolute;right:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;"></div>
+              </div>
+            </div>
+            <div class="divider" style="margin-left:16px;"></div>
+            <div class="grow">
+              <div style="width:40px;height:40px;border-radius:10px;background:#E3EAE6;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;color:#424D46;">京</div>
+              <div class="grow-main">
+                <div class="grow-t">京东</div>
+                <div class="grow-s">尚未跳过</div>
+              </div>
+              <div style="width:44px;height:26px;border-radius:13px;background:#C7D1CB;position:relative;">
+                <div style="position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="device-cap" style="margin-top:16px;">记录 <span>· 分享升为主操作，清空降权</span></div>
+    <div class="phone" style="height:330px;">
+      <div class="statusbar"><span>21:09</span><span>5G &nbsp; 100%</span></div>
+      <div class="scroll">
+        <div class="page-header">
+          <h2>记录</h2>
+          <p>最近跳过与拦截明细</p>
+        </div>
+        <div class="list">
+          <div style="display:flex;gap:12px;align-items:center;">
+            <div class="btn" style="flex:1;margin-top:0;background:#1D7C43;color:#fff;">分享记录</div>
+            <div class="icon-btn" style="width:48px;height:40px;">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#BA1A1A" stroke-width="1.7" stroke-linecap="round"><path d="M3 5h14M8 5V3.5h4V5M5 5l1 12h8l1-12"/></svg>
+            </div>
+          </div>
+          <div class="section-hint">仅保留最近 200 条记录</div>
+          <div class="card card-tight">
+            <div class="grow">
+              <div class="dot" style="background:#2E7D32;"></div>
+              <div class="grow-main">
+                <div class="grow-t" style="font-size:14px;">微信 · 跳过「跳过」</div>
+                <div class="grow-s">21:04:12</div>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="grow">
+              <div class="dot" style="background:#2E7D32;"></div>
+              <div class="grow-main">
+                <div class="grow-t" style="font-size:14px;">淘宝 · 跳过「跳过广告」</div>
+                <div class="grow-s">20:58:30</div>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="grow">
+              <div class="dot-hollow"></div>
+              <div class="grow-main">
+                <div class="grow-t" style="font-size:14px;">京东 · 未找到跳过按钮</div>
+                <div class="grow-s">20:41:07</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

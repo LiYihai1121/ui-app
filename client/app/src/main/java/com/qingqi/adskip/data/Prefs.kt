@@ -34,6 +34,7 @@ object Prefs {
     private const val KEY_RULES_HASH = "rules_hash"
     private const val KEY_RULES_SIGNING_KEY = "rules_signing_key"
     private const val KEY_CERT_PINS = "cert_pins"
+    private const val KEY_SEEN_ONBOARDING = "seen_onboarding"
 
     private const val PREFIX_PKG_KEYWORDS = "pkg_kw:"
     private const val PREFIX_PKG_VIEW_IDS = "pkg_vid:"
@@ -340,6 +341,21 @@ object Prefs {
     fun saveCertPins(context: Context, pins: List<String>) {
         val cleaned = pins.map { it.trim() }.filter { it.isNotEmpty() }
         sp(context).edit().putString(KEY_CERT_PINS, cleaned.joinToString("\n")).apply()
+    }
+
+    // ---------- 引导页 ----------
+
+    /**
+     * 是否已看过首次启动引导页。
+     *
+     * 默认 false（新装用户看引导）；看过一次后置 true，此后不再自动展示。
+     * 为什么落盘而不是放内存：引导页的价值在「第一次」，进程重启后若又弹一次，
+     * 对老用户就是纯骚扰——而它恰恰是每次冷启动都会触发的场景。
+     */
+    fun hasSeenOnboarding(context: Context): Boolean = sp(context).getBoolean(KEY_SEEN_ONBOARDING, false)
+
+    fun setSeenOnboarding(context: Context, seen: Boolean) {
+        sp(context).edit().putBoolean(KEY_SEEN_ONBOARDING, seen).apply()
     }
 
     // ---------- 有序字符串列表序列化 ----------

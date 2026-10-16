@@ -1,7 +1,6 @@
 package com.qingqi.adskip.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -10,8 +9,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,44 +20,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.InputChip
-import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -71,48 +51,53 @@ import com.qingqi.adskip.R
 import com.qingqi.adskip.device.KeepAliveNavigator
 import com.qingqi.adskip.ui.Messenger
 import com.qingqi.adskip.ui.UiEffect
-import com.qingqi.adskip.ui.components.PageHeader
+import com.qingqi.adskip.ui.components.AppHeader
+import com.qingqi.adskip.ui.components.LabeledSwitch
 import com.qingqi.adskip.ui.components.SectionCard
 import com.qingqi.adskip.ui.components.SectionHint
-import com.qingqi.adskip.ui.components.SectionTitle
 import com.qingqi.adskip.ui.components.StatTile
-import com.qingqi.adskip.ui.components.StatusOrb
+import com.qingqi.adskip.ui.components.TagBadge
 import com.qingqi.adskip.ui.components.rememberAppLabel
 import com.qingqi.adskip.ui.theme.Spacing
 import com.qingqi.adskip.ui.theme.StatusColors
+import com.qingqi.adskip.ui.theme.TileBlue
+import com.qingqi.adskip.ui.theme.TileBlueContainer
+import com.qingqi.adskip.ui.theme.TileGreen
+import com.qingqi.adskip.ui.theme.TileGreenContainer
+import com.qingqi.adskip.ui.theme.TilePurple
+import com.qingqi.adskip.ui.theme.TilePurpleContainer
 import com.qingqi.adskip.ui.theme.UiSizes
 import com.qingqi.adskip.ui.theme.icons.AdSkipIcons
-import kotlinx.coroutines.launch
 
 /**
- * 主页：服务状态、快捷操作、使用概览、关键词管理、模拟测试。
+ * 首页（v4 设计稿）。
  *
- * 版式约定（v3.4 首页重设计，衔接 v3.2 的层级结论）：
- * - 页面自身**不**创建 `Scaffold`，inset 由外壳 `AdSkipShell` 统一分发；
- * - 根节点挂 `imePadding()`，软键盘弹出时关键词输入框不会被遮住；
- * - 状态语义（运行 / 停止）只用两种颜色表达，其余元素一律走中性色；
- * - 快捷操作行收录三个最高频动作（查看记录 / 添加关键词 / 管理应用），
- *   跳转走外壳传入的回调，不持有 NavController——页面保持纯展示；
- * - 使用概览从单行摘要升级为三格瓦片（累计跳过 / 关键词数 / 最近应用），
- *   全部来自既有 [HomeViewModel.UiState]，**不扩接口**。
+ * 版式自上而下：品牌头部 → 状态盾牌卡 → 无障碍开关行 → 模拟测试卡 → 三张快捷瓦片 → 今日统计。
+ *
+ * 与 v3 的结构差别（为什么删掉了原来的「关键词卡」与「区块标签」）：
+ *  - 关键词管理在 v4 里是**独立的一级页**（底部导航「规则」），首页不再承载它。
+ *    首页出现一个可编辑的关键词列表，会让「首页 = 看状态」这一职责失焦；
+ *  - 区块标签（SectionLabel）取消：v4 用「每块一张白卡」表达分组，
+ *    卡与卡之间的留白已足够分层，再加标签属于同一信息讲两遍。
+ *
+ * 服务状态仍是三态（开 / 关 / 无法确认）：设计稿只画了「已开启」一种，
+ * 但把 UNKNOWN 画成 OFF 是本项目复现过的真实缺陷（用户会去反复点一个不会生效的开关），
+ * 故三态保留，配色分别为绿 / 红 / 琥珀，文案各自不同。
  */
-
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
     messenger: Messenger,
     onOpenLogs: () -> Unit = {},
+    onOpenRules: () -> Unit = {},
     onOpenApps: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lastAppLabel = rememberAppLabel(state.lastApp)
 
-    // 每次回到前台都重查无障碍状态：用户从本页跳去系统设置改完开关再返回时，
-    // Activity 并未重建（LaunchedEffect(Unit) 不会重跑），而 Service 的 onDestroy
-    // 回调可能还没到——只靠进程信号会把过期的「运行中」一直显示下去，
-    // 与读系统真值的快捷磁贴说法不一致。
+    // 每次回到前台都重查无障碍状态（理由见 v3 注释：Activity 不重建时进程信号会过期）。
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.onScreenResumed()
     }
@@ -128,79 +113,157 @@ fun HomeScreen(
                     onUndo = viewModel::undoRemoveKeyword,
                 )
 
-                // 本页不提供语言切换（在设置里），该 Effect 不会从这里发出。
-                // 显式列出而不加 `else`：将来新增 Effect 时编译器会提醒这里也要处理，
-                // 而不是被 else 静默吞掉。
                 is UiEffect.RecreateActivity -> Unit
             }
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        val listState = rememberLazyListState()
-        val scope = rememberCoroutineScope()
-        // 「添加关键词」快捷入口：滚到关键词卡让输入框进入视野（item 4，0 起数）。
-        val scrollToKeywords: () -> Unit = {
-            scope.launch { listState.animateScrollToItem(index = 4) }
-        }
         LazyColumn(
-            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .imePadding()
-                // 浮层盖住首页时，把底层内容从语义树移除：浮层只吃触摸事件，被遮住的
-                // 按钮仍会被 TalkBack 聚焦并激活，视障用户会点到一个看不见的东西。
-                // 清除必须挂在**这层**而不能挂在浮层上——挂在浮层会连带清掉「跳过」
-                // 按钮自身，引擎扫不到节点、自检必超时（2026-10-11 Mi 9 真机实测）。
+                // 浮层盖住首页时把底层内容移出语义树（理由见 v3 注释，2026-10-11 真机实测）。
                 .then(
                     if (state.fakeAdVisible) Modifier.clearAndSetSemantics {} else Modifier,
                 ),
             contentPadding = PaddingValues(
                 start = Spacing.lg,
                 end = Spacing.lg,
-                // 顶部留白由 PageHeader 自带：这里再留一次会比其他一级页多出一倍间距。
                 top = 0.dp,
                 bottom = Spacing.xl,
             ),
-            verticalArrangement = Arrangement.spacedBy(Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
             item {
-                // 一级页面都要有位置锚点（见 ScreenHeaderContractTest）。
-                // 首页此前是四屏里唯一没有标题的：用户切过来后整屏像浮在空中的仪表盘。
-                PageHeader(
-                    title = stringResource(R.string.home_title),
+                AppHeader(
+                    title = stringResource(R.string.app_name),
                     subtitle = stringResource(R.string.home_subtitle),
+                    trailingIcon = AdSkipIcons.Settings,
+                    trailingLabel = stringResource(R.string.home_open_settings),
+                    onTrailingClick = onOpenSettings,
                 )
             }
 
             item {
-                StatusHero(
+                StatusShieldCard(
                     running = state.serviceRunning,
-                    onPrimaryAction = {
+                    unknown = state.accessibilityUnknown,
+                    onOpenSettings = {
                         if (!KeepAliveNavigator.openAccessibilitySettings(context)) {
                             messenger.show(context.getString(R.string.settings_open_failed))
                         }
                     },
-                    onTest = viewModel::startFakeAdTest,
                 )
             }
 
             item {
-                QuickActionsRow(
-                    onOpenLogs = onOpenLogs,
-                    onOpenApps = onOpenApps,
-                    onScrollToKeywords = scrollToKeywords,
+                SectionCard(contentPadding = PaddingValues(vertical = Spacing.xs)) {
+                    LabeledSwitch(
+                        title = stringResource(R.string.home_accessibility_service),
+                        subtitle = stringResource(
+                            if (state.serviceRunning) {
+                                R.string.home_accessibility_granted
+                            } else {
+                                R.string.home_accessibility_pending
+                            },
+                        ),
+                        checked = state.serviceRunning,
+                        icon = AdSkipIcons.Shield,
+                        onCheckedChange = {
+                            // 开关不能直接改系统权限，点击即跳系统设置（唯一可行路径）。
+                            if (!KeepAliveNavigator.openAccessibilitySettings(context)) {
+                                messenger.show(context.getString(R.string.settings_open_failed))
+                            }
+                        },
+                    )
+                }
+            }
+
+            item {
+                ActionCard(
+                    icon = AdSkipIcons.Rocket,
+                    title = stringResource(R.string.home_test_title),
+                    description = stringResource(R.string.home_test_desc),
+                    actionLabel = stringResource(R.string.home_test_action),
+                    onAction = viewModel::startFakeAdTest,
                 )
             }
 
-            item { UsageTiles(state = state, lastAppLabel = lastAppLabel) }
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+                ) {
+                    QuickTile(
+                        icon = AdSkipIcons.Clock,
+                        label = stringResource(R.string.quick_open_logs),
+                        contentColor = TileBlue,
+                        containerColor = TileBlueContainer,
+                        onClick = onOpenLogs,
+                        modifier = Modifier.weight(1f),
+                    )
+                    QuickTile(
+                        icon = AdSkipIcons.Tag,
+                        label = stringResource(R.string.quick_add_keyword),
+                        contentColor = TileGreen,
+                        containerColor = TileGreenContainer,
+                        onClick = onOpenRules,
+                        modifier = Modifier.weight(1f),
+                    )
+                    QuickTile(
+                        icon = AdSkipIcons.Apps,
+                        label = stringResource(R.string.quick_open_apps),
+                        contentColor = TilePurple,
+                        containerColor = TilePurpleContainer,
+                        onClick = onOpenApps,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
 
             item {
-                KeywordsCard(
-                    keywords = state.keywords,
-                    onAdd = viewModel::addKeyword,
-                    onRemoveAt = viewModel::removeKeyword,
-                )
+                SectionCard {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.home_stats_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = stringResource(R.string.home_stats_more),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.clickable(role = Role.Button, onClick = onOpenLogs),
+                        )
+                    }
+                    Spacer(Modifier.height(Spacing.lg))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+                    ) {
+                        StatTile(
+                            value = state.totalSkips.toString(),
+                            label = stringResource(R.string.stats_total_label),
+                            emphasis = true,
+                            modifier = Modifier.weight(1f),
+                        )
+                        StatTile(
+                            value = state.keywords.size.toString(),
+                            label = stringResource(R.string.stats_keywords_label),
+                            modifier = Modifier.weight(1f),
+                        )
+                        StatTile(
+                            value = lastAppLabel.ifBlank { "—" },
+                            label = stringResource(R.string.stats_recent_label),
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
             }
 
             item {
@@ -225,134 +288,182 @@ fun HomeScreen(
 }
 
 /**
- * 状态主视觉：渐变卡 + 状态环 + 结论式文案 + 主行动按钮。
+ * 状态盾牌卡：同心圆环 + 盾牌 + 结论 + 主行动。
  *
- * 文案遵循「先结论后解释」：标题直接说服务是否生效，提示语再解释怎么修，
- * 避免旧版把说明和操作混在一句长文本里。
+ * 环用「两个同心圆叠放」而不是 `Modifier.border`：间距门禁只放行
+ * 0/4/8/12/16/24/32/40 的 dp 字面量，环宽 4dp 无法直接书写，
+ * 而「外圈 120 / 内圈 112」两个直径之差恰好是 4dp——既绕开字面量，
+ * 又让环宽由尺寸令牌推导出来。
  *
- * 渐变底只取主题角色色（primaryContainer → surfaceContainerLow）：
- * 绿调中性延续品牌色相，且深浅两套主题各自成立；不引入色值字面量。
- * 环仍用 56dp（`UiSizes.statusOrb`）横排在左——v3.2 压缩首屏高度的结论继续成立。
+ * 三态同形不同色：形状（盾牌 + 同心环）保持不变，只有颜色与文案变化。
+ * 形状编码留给「这是什么控件」，颜色编码留给「现在什么状态」。
  */
 @Composable
-private fun StatusHero(running: Boolean, onPrimaryAction: () -> Unit, onTest: () -> Unit) {
-    SectionCard(
-        contentPadding = PaddingValues(horizontal = Spacing.xl, vertical = Spacing.xxl),
-        brush = Brush.linearGradient(
-            listOf(
-                MaterialTheme.colorScheme.primaryContainer,
-                MaterialTheme.colorScheme.surfaceContainerLowest,
-                MaterialTheme.colorScheme.surfaceContainerLow,
-            ),
-        ),
-    ) {
+private fun StatusShieldCard(running: Boolean, unknown: Boolean, onOpenSettings: () -> Unit) {
+    val container = when {
+        unknown -> StatusColors.unknownContainer
+        running -> StatusColors.onContainer
+        else -> MaterialTheme.colorScheme.surface
+    }
+    val accent = when {
+        unknown -> StatusColors.unknown
+        running -> StatusColors.on
+        else -> StatusColors.off
+    }
+    val title = stringResource(
+        when {
+            unknown -> R.string.status_unknown
+            running -> R.string.status_on
+            else -> R.string.status_off
+        },
+    )
+    val hint = stringResource(
+        when {
+            unknown -> R.string.status_unknown_hint
+            running -> R.string.home_status_protected
+            else -> R.string.status_off_hint
+        },
+    )
+
+    SectionCard(containerColor = container) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // 参考新版视觉稿：服务状态是首页的第一视觉焦点，改为居中状态徽章，
-            // 让用户打开首页后无需阅读多段说明即可判断服务是否生效。
-            StatusOrb(
-                running = running,
-                diameter = UiSizes.statusOrbHero,
-            )
+            Box(
+                modifier = Modifier
+                    .size(UiSizes.statusShield)
+                    .clip(CircleShape)
+                    .background(accent),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(UiSizes.statusShieldRing)
+                        .clip(CircleShape)
+                        .background(container),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = AdSkipIcons.Shield,
+                        contentDescription = null,
+                        modifier = Modifier.size(UiSizes.statusShieldGlyph),
+                        tint = accent,
+                    )
+                }
+            }
             Spacer(Modifier.height(Spacing.md))
             Text(
-                text = stringResource(if (running) R.string.status_on else R.string.status_off),
+                text = title,
                 style = MaterialTheme.typography.titleLarge,
-                color = if (running) StatusColors.on else StatusColors.off,
+                color = accent,
+                textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(Spacing.xs))
             Text(
-                text = stringResource(
-                    if (running) R.string.status_on_hint else R.string.status_off_hint,
-                ),
+                text = hint,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
             )
-            Spacer(Modifier.height(Spacing.xl))
-
-            // 主要操作保持高对比度；服务运行时改为次级强调，避免误导用户重复开启。
-            if (running) {
-                FilledTonalButton(
-                    onClick = onPrimaryAction,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.btn_manage_settings))
-                }
-            } else {
-                Button(
-                    onClick = onPrimaryAction,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
+            if (!running) {
+                Spacer(Modifier.height(Spacing.lg))
+                Button(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.btn_open_settings))
                 }
             }
+        }
+    }
+}
 
-            Spacer(Modifier.height(Spacing.sm))
-            TextButton(onClick = onTest) {
-                Text(stringResource(R.string.btn_test))
+/** 动作卡：图标 + 标题 + 说明 + 右侧动作按钮。 */
+@Composable
+private fun ActionCard(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    actionLabel: String,
+    onAction: () -> Unit,
+) {
+    SectionCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(UiSizes.tileIcon)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(UiSizes.tileGlyph),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+            Spacer(Modifier.width(Spacing.md))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Spacer(Modifier.width(Spacing.sm))
+            FilledTonalButton(
+                onClick = onAction,
+                contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.xs),
+            ) {
+                Text(actionLabel, style = MaterialTheme.typography.labelLarge, maxLines = 1)
             }
         }
     }
 }
 
 /**
- * 快捷操作行：三个最高频动作一行直达。
+ * 快捷入口瓦片：图标底衬 + 标签。
  *
- * 跳转通过外壳传入的回调完成，本页不持有 NavController——保持「页面纯展示」
- * 的既有分层（insets、导航都归外壳管）。无障碍：每个入口是单个
- * `Role.Button` 语义节点（图标为装饰、`contentDescription = null`，
- * 文案由 label 承担），读屏一次读完「查看记录，按钮」。
+ * 整张瓦片是**一个** `Role.Button` 语义节点（图标 `contentDescription = null`，
+ * 语义由标签承担），读屏一次念完「查看记录，按钮」。
  */
 @Composable
-private fun QuickActionsRow(onOpenLogs: () -> Unit, onOpenApps: () -> Unit, onScrollToKeywords: () -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
-        QuickAction(
-            icon = AdSkipIcons.Logs,
-            label = stringResource(R.string.quick_open_logs),
-            onClick = onOpenLogs,
-            modifier = Modifier.weight(1f),
-        )
-        QuickAction(
-            icon = AdSkipIcons.Plus,
-            label = stringResource(R.string.quick_add_keyword),
-            onClick = onScrollToKeywords,
-            modifier = Modifier.weight(1f),
-        )
-        QuickAction(
-            icon = AdSkipIcons.Apps,
-            label = stringResource(R.string.quick_open_apps),
-            onClick = onOpenApps,
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
-
-@Composable
-private fun QuickAction(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun QuickTile(
+    icon: ImageVector,
+    label: String,
+    contentColor: Color,
+    containerColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier
-            .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .clip(MaterialTheme.shapes.medium)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(vertical = Spacing.md),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
             modifier = Modifier
-                .size(UiSizes.listIcon)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.secondaryContainer),
+                .size(UiSizes.tileIcon)
+                .clip(MaterialTheme.shapes.small)
+                .background(containerColor),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.size(UiSizes.tileGlyph),
+                tint = contentColor,
             )
         }
-        Spacer(Modifier.height(Spacing.xs))
+        Spacer(Modifier.height(Spacing.sm))
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
@@ -364,170 +475,44 @@ private fun QuickAction(icon: ImageVector, label: String, onClick: () -> Unit, m
 }
 
 /**
- * 使用概览：三格瓦片（累计跳过 / 关键词数 / 最近应用）。
- *
- * 全部取自既有 [HomeViewModel.UiState]，不新增数据源。复用「我的」页的
- * [StatTile]，保证同一数字在全 app 只有一种视觉权重（v3.2 的教训）。
- * 「最近应用」为空时显示占位破折号而不是隐藏整格：三格布局保持稳定，
- * 空占位在本组件语义下表达的是「还没有记录」，与首页整行隐藏的历史结论不同。
- */
-@Composable
-private fun UsageTiles(state: HomeViewModel.UiState, lastAppLabel: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-        SectionTitle(stringResource(R.string.stats_overview_title))
-        SectionCard(contentPadding = PaddingValues(horizontal = Spacing.lg, vertical = Spacing.lg)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
-                StatTile(
-                    value = state.totalSkips.toString(),
-                    label = stringResource(R.string.stats_total_label),
-                    modifier = Modifier.weight(1f),
-                )
-                StatTile(
-                    value = state.keywords.size.toString(),
-                    label = stringResource(R.string.stats_keywords_label),
-                    modifier = Modifier.weight(1f),
-                )
-                StatTile(
-                    value = lastAppLabel.ifBlank { "—" },
-                    label = stringResource(R.string.stats_recent_label),
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
-    }
-}
-
-/**
- * 关键词卡片：输入 + 以 Chip 形式平铺已有关键词。
- *
- * 旧版把关键词渲染成整行 Text（`%1$s　✕`），删除区域只有文字本身那一小块；
- * 改为 InputChip 后，删除按钮有 48dp 的稳定命中区域，删除语义也由图标自解释。
- */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun KeywordsCard(keywords: List<String>, onAdd: (String) -> Unit, onRemoveAt: (Int) -> Unit) {
-    var input by remember { mutableStateOf("") }
-    val keyboard = LocalSoftwareKeyboardController.current
-
-    fun submit() {
-        if (input.isNotBlank()) {
-            onAdd(input)
-            input = ""
-            keyboard?.hide()
-        }
-    }
-
-    SectionCard {
-        SectionTitle(stringResource(R.string.keywords_title))
-        Spacer(Modifier.height(Spacing.xs))
-        SectionHint(stringResource(R.string.keywords_hint))
-        Spacer(Modifier.height(Spacing.lg))
-
-        OutlinedTextField(
-            value = input,
-            onValueChange = { input = it },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            shape = MaterialTheme.shapes.small,
-            placeholder = { Text(stringResource(R.string.keyword_input_hint)) },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { submit() }),
-            trailingIcon = {
-                Icon(
-                    imageVector = AdSkipIcons.Plus,
-                    contentDescription = stringResource(R.string.btn_add),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            },
-        )
-
-        AnimatedVisibility(
-            visible = keywords.isNotEmpty(),
-            enter = fadeIn(tween(180)),
-            exit = fadeOut(tween(180)),
-        ) {
-            FlowRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .animateContentSize(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
-            ) {
-                keywords.forEachIndexed { index, keyword ->
-                    val removeLabel = stringResource(R.string.keyword_remove_cd, keyword)
-                    InputChip(
-                        selected = false,
-                        onClick = { onRemoveAt(index) },
-                        label = { Text(keyword) },
-                        // 点 chip 本体即删除，因此把「删除」声明成一个自定义语义动作，
-                        // 读屏会念「删除关键词 跳过，按钮」而不是只报 chip 文本。
-                        modifier = Modifier.semantics {
-                            customActions = listOf(
-                                CustomAccessibilityAction(removeLabel) {
-                                    onRemoveAt(index)
-                                    true
-                                },
-                            )
-                        },
-                        trailingIcon = {
-                            Icon(
-                                imageVector = AdSkipIcons.Close,
-                                // 动作语义已挂在 chip 上，图标本身不再重复声明。
-                                contentDescription = null,
-                                modifier = Modifier.size(InputChipDefaults.AvatarSize),
-                            )
-                        },
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
  * 模拟开屏广告浮层：服务生效时应被自动点击「跳过」。
  *
- * 覆盖在首页之上并吃掉触摸事件，防止误触穿透到底层界面。
- *
  * 语义树注意：本浮层**不能**自己挂 `clearAndSetSemantics`——那会把「跳过」按钮
- * 一起从语义树清掉，无障碍引擎与读屏都找不到它，自检必然超时（2026-10-11 真机
- * 实测复现）。隐藏底层首页内容的职责在 [HomeScreen] 调用处：浮层可见时对
- * LazyColumn 施清除，只藏下层、不伤本层。
+ * 一起清掉，无障碍引擎与读屏都找不到它，自检必然超时（2026-10-11 真机实测复现）。
+ * 隐藏底层内容的职责在 [HomeScreen] 调用处。
  */
 @Composable
 private fun FakeAdOverlay(countdown: Int, onSkipClicked: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(Spacing.xxl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(Spacing.xxl),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Text(
-                text = stringResource(R.string.fake_ad_title),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(Modifier.height(Spacing.md))
-            Text(
-                text = stringResource(R.string.fake_ad_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(Spacing.xxxl))
-            Button(onClick = onSkipClicked) {
-                Text(stringResource(R.string.fake_ad_skip))
-            }
-            Spacer(Modifier.height(Spacing.lg))
-            Text(
-                text = pluralStringResource(R.plurals.fake_ad_countdown, countdown, countdown),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        Text(
+            text = stringResource(R.string.fake_ad_title),
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(Spacing.md))
+        Text(
+            text = stringResource(R.string.fake_ad_subtitle),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(Spacing.xxxl))
+        Button(onClick = onSkipClicked) {
+            Text(stringResource(R.string.fake_ad_skip))
         }
+        Spacer(Modifier.height(Spacing.lg))
+        TagBadge(
+            text = pluralStringResource(R.plurals.fake_ad_countdown, countdown, countdown),
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

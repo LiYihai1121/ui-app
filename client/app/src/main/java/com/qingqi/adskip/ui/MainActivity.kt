@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -35,12 +36,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.qingqi.adskip.AdSkipApp
 import com.qingqi.adskip.R
 import com.qingqi.adskip.device.LocaleApplier
 import com.qingqi.adskip.ui.apps.AppsScreen
 import com.qingqi.adskip.ui.home.HomeScreen
 import com.qingqi.adskip.ui.logs.LogsScreen
+import com.qingqi.adskip.ui.onboarding.OnboardingScreen
 import com.qingqi.adskip.ui.profile.ProfileScreen
+import com.qingqi.adskip.ui.rules.RulesScreen
 import com.qingqi.adskip.ui.theme.AdSkipTheme
 import com.qingqi.adskip.ui.theme.icons.AdSkipIcons
 import com.qingqi.adskip.ui.theme.screenContentWidth
@@ -53,7 +57,7 @@ import com.qingqi.adskip.ui.theme.screenContentWidth
  *
  * 边到边（edge-to-edge）约定：
  * `targetSdk = 35` 在 Android 15 上强制边到边，内容必然绘制到状态栏/导航栏之下。
- * 因此 insets 的唯一收口点是 [AdSkipApp] 的 `Scaffold`：页面自身不再各自处理
+ * 因此 insets 的唯一收口点是 [AdSkipShell] 的 `Scaffold`：页面自身不再各自处理
  * `statusBarsPadding`（旧版只有 Home 漏了，导致标题压在时钟上）。
  * 页面内容统一只消费 `innerPadding`。
  */
@@ -111,8 +115,8 @@ private data class TopLevelDestination(
 
 private val TopLevelDestinations = listOf(
     TopLevelDestination(Routes.HOME, R.string.nav_home, AdSkipIcons.Home, AdSkipIcons.HomeFilled),
-    TopLevelDestination(Routes.APPS, R.string.nav_apps, AdSkipIcons.Apps, AdSkipIcons.AppsFilled),
     TopLevelDestination(Routes.LOGS, R.string.nav_logs, AdSkipIcons.Logs, AdSkipIcons.LogsFilled),
+    TopLevelDestination(Routes.RULES, R.string.nav_rules, AdSkipIcons.Tag, AdSkipIcons.Tag),
     TopLevelDestination(Routes.PROFILE, R.string.nav_profile, AdSkipIcons.Profile, AdSkipIcons.ProfileFilled),
 )
 
@@ -125,6 +129,22 @@ private val TopLevelDestinations = listOf(
  * 转场只保留淡入淡出：四个目的地是**同级 tab**，不是层级导航。
  * 水平滑动暗示「进入下一层」，在 tab 切换时会给出错误的深度感；
  * 只有将来真的出现「列表 → 详情」这类二级页面时，才应恢复方向性转场。
+ *
+ * **本次重构的关键决定：不引入 `TopAppBar`。**
+ *
+ * 一开始考虑过给四个页面加统一的顶栏，但核对 M3 与 iOS 的规范后发现那是错的：
+ *  - 顶栏的存在意义是承载**导航返回**与**页面级动作**。本应用四个页面是同级的
+ *    底部导航目的地，没有任何一页需要返回箭头，也没有页面级动作（清空/分享在日志页
+ *    做成了内容区操作行）；
+ *  - 顶栏会与底部导航栏一起把内容区压掉约 128dp，而首屏最重要的信息（服务状态）
+ *    就会被挤出可视区；
+ *  - M3 对「只有一个标题、没有返回、没有动作」的场景给的做法就是**不要顶栏**，
+ *    标题直接作为内容流的第一项。
+ *
+ * 所以标题仍留在内容流里，但改由各页面画成「大标题」（见 PageHeader）——
+ * 这与 iOS Large Title、M3 的 large top app bar 展开态是同一套视觉，
+ * 只是省掉了滚动折叠的复杂度。滚动后标题移出视野是可接受的：四个页面都是
+ * 底部导航直达，用户不会「找不到自己在哪一页」——底部导航本身就是常驻的位置指示。
  */
 @Composable
 private fun AdSkipShell() {
@@ -135,10 +155,22 @@ private fun AdSkipShell() {
     val snackbarHostState = remember { SnackbarHostState() }
     val messenger = rememberMessenger(snackbarHostState)
 
+    // 引导页只在首次启动时作为起始目的地；看过一次后直接进首页。
+    val container = (LocalContext.current.applicationContext as AdSkipApp).container
+    val startDestination = remember {
+        if (container.settingsRepo.hasSeenOnboarding()) Routes.HOME else Routes.ONBOARDING
+    }
+
     // 系统返回键：在非首页时回到首页，而不是逐级退出应用。
     // 用 popBackStack 而非 popUpTo(inclusive) + 重新 navigate：后者会销毁并重建首页，
     // 用户按返回后滚动位置、输入的关键词草稿全部丢失——「回首页」不该等价于「重开首页」。
-    BackHandler(enabled = currentRoute != null && currentRoute != Routes.HOME) {
+    // 引导页不接管返回：那时首页尚未入栈，「回到首页」会绕过引导写标记的逻辑，
+    // 于是下次冷启动又弹一次。交给系统返回键直接退出更符合预期。
+    BackHandler(
+        enabled = currentRoute != null &&
+            currentRoute != Routes.HOME &&
+            currentRoute != Routes.ONBOARDING,
+    ) {
         if (!navController.popBackStack(Routes.HOME, inclusive = false)) {
             navController.navigate(Routes.HOME) {
                 popUpTo(Routes.HOME) { inclusive = true }
@@ -154,47 +186,50 @@ private fun AdSkipShell() {
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                tonalElevation = 0.dp,
-            ) {
-                TopLevelDestinations.forEach { destination ->
-                    val selected = currentDestination?.hierarchy
-                        ?.any { it.route == destination.route } == true
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            if (!selected) {
-                                navController.navigate(destination.route) {
-                                    popUpTo(Routes.HOME) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
+            // 引导页不挂底部导航：它还没有「去哪儿」的语义，多一条底栏只会分散注意力（设计稿亦然）。
+            if (currentRoute != Routes.ONBOARDING) {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 0.dp,
+                ) {
+                    TopLevelDestinations.forEach { destination ->
+                        val selected = currentDestination?.hierarchy
+                            ?.any { it.route == destination.route } == true
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                if (!selected) {
+                                    navController.navigate(destination.route) {
+                                        popUpTo(Routes.HOME) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
                                 }
-                            }
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = if (selected) destination.iconSelected else destination.icon,
-                                // null 而非 labelRes：下方 label 已渲染同一文案，
-                                // 给图标再挂一次会让读屏把每个 tab 名念两遍。
-                                contentDescription = null,
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = stringResource(destination.labelRes),
-                                style = MaterialTheme.typography.labelMedium,
-                                maxLines = 1,
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                            selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                            indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
-                    )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = if (selected) destination.iconSelected else destination.icon,
+                                    // null 而非 labelRes：下方 label 已渲染同一文案，
+                                    // 给图标再挂一次会让读屏把每个 tab 名念两遍。
+                                    contentDescription = null,
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = stringResource(destination.labelRes),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    maxLines = 1,
+                                )
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
+                        )
+                    }
                 }
             }
         },
@@ -214,7 +249,7 @@ private fun AdSkipShell() {
             Box(modifier = Modifier.screenContentWidth()) {
                 NavHost(
                     navController = navController,
-                    startDestination = Routes.HOME,
+                    startDestination = startDestination,
                     modifier = Modifier.fillMaxSize(),
                     enterTransition = { fadeIn(tween(160)) },
                     exitTransition = { fadeOut(tween(120)) },
@@ -227,14 +262,36 @@ private fun AdSkipShell() {
                             onOpenLogs = {
                                 navController.navigate(Routes.LOGS) { launchSingleTop = true }
                             },
+                            onOpenRules = {
+                                navController.navigate(Routes.RULES) { launchSingleTop = true }
+                            },
                             onOpenApps = {
                                 navController.navigate(Routes.APPS) { launchSingleTop = true }
                             },
+                            onOpenSettings = {
+                                navController.navigate(Routes.PROFILE) { launchSingleTop = true }
+                            },
                         )
                     }
-                    composable(Routes.APPS) { AppsScreen() }
                     composable(Routes.LOGS) { LogsScreen(messenger) }
+                    composable(Routes.RULES) { RulesScreen(messenger) }
                     composable(Routes.PROFILE) { ProfileScreen(messenger) }
+                    composable(Routes.APPS) {
+                        AppsScreen(onBack = { navController.popBackStack() })
+                    }
+                    composable(Routes.ONBOARDING) {
+                        OnboardingScreen(
+                            onStart = {
+                                // 落盘「已看过」再进首页：只导航不置位的话，
+                                // 下次冷启动会再弹一次引导——而引导只该出现一次。
+                                container.settingsRepo.setSeenOnboarding(true)
+                                navController.navigate(Routes.HOME) {
+                                    popUpTo(Routes.ONBOARDING) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+                        )
+                    }
                 }
             }
         }

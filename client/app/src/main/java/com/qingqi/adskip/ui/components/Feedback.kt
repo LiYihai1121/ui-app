@@ -7,6 +7,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,26 +37,30 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.qingqi.adskip.R
 import com.qingqi.adskip.ui.theme.Spacing
 import com.qingqi.adskip.ui.theme.UiSizes
 
 /*
- * 通用 UI 组件第二批（v3.1 重设计后续）。
+ * 通用 UI 组件第二批：**状态类**与**交互类**元素。
  *
- * [Common.kt] 收口了「卡片 / 标题 / 统计块」等静态元素，本文件收口
- * 各页面此前各自手写的**状态类**与**交互类**元素：
- * - [EmptyState]：空数据 / 搜索无结果的统一空态；
- * - [ConfirmDialog]：破坏性操作（清空日志等）的二次确认；
- * - [TwoLineRow]：主标题 + 副标题的两行列表行（日志条目 / 应用行共用）；
+ * [Common.kt] 收口了「卡片 / 标题 / 列表行」等静态元素，本文件收口各页面此前
+ * 各自手写的状态呈现：
+ * - [EmptyState] / [ErrorState]：空数据与失败，两者必须分开（下一步动作完全不同）；
+ * - [ConfirmDialog]：破坏性操作的二次确认；
+ * - [TwoLineRow]：主标题 + 副标题的两行列表行；
  * - [SkeletonList]：首屏加载骨架，替代孤零零的转圈；
- * - [InfoRow]：「标签 — 取值」信息行（原为「我的」页私有实现）。
+ * - [SegmentedFilter]：二选一的列表筛选（替代裸 FilterChip）。
  *
  * 用普通块注释而非 KDoc：这是「整个文件的说明」，写成 KDoc 会成为悬空注释。
  */
@@ -64,8 +70,11 @@ import com.qingqi.adskip.ui.theme.UiSizes
  *
  * 旧版日志页空态只有一行灰字，用户分不清「没有记录」和「加载失败」；
  * 统一空态后语义由标题说结论、说明给下一步，动作按钮可选。
- * 图标允许为 null——core 图标集里没有贴切的「搜索无结果」图标，
- * 与其硬凑一个语义错误的图标，不如纯文字。
+ *
+ * 重构改动：图标从 48dp 灰线稿改为**托在品牌底衬上的 64dp 图标**。
+ * 空态整屏只有一处内容，用 48dp 灰线稿会让页面看起来像「渲染失败的白屏」；
+ * 给它品牌底衬后空态成为页面的一部分而不是缺口。这是大厂空态的一致做法
+ * （Ant Design、TDesign 的空态插图都带容器底衬）。
  */
 @Composable
 fun EmptyState(
@@ -82,18 +91,27 @@ fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (icon != null) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(UiSizes.emptyStateIcon),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Box(
+                modifier = Modifier
+                    .size(UiSizes.stateIllustration)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(UiSizes.stateIllustrationIcon),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Spacer(Modifier.height(Spacing.lg))
         }
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
         )
         if (subtitle != null) {
             Spacer(Modifier.height(Spacing.sm))
@@ -101,12 +119,13 @@ fun EmptyState(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
             )
         }
         if (action != null) {
-            Spacer(Modifier.height(Spacing.lg))
+            Spacer(Modifier.height(Spacing.xl))
             action()
         }
     }
@@ -140,18 +159,27 @@ fun ErrorState(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (icon != null) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(UiSizes.emptyStateIcon),
-                tint = MaterialTheme.colorScheme.error,
-            )
+            Box(
+                modifier = Modifier
+                    .size(UiSizes.stateIllustration)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.errorContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(UiSizes.stateIllustrationIcon),
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                )
+            }
             Spacer(Modifier.height(Spacing.lg))
         }
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.error,
+            textAlign = TextAlign.Center,
         )
         if (subtitle != null) {
             Spacer(Modifier.height(Spacing.sm))
@@ -159,12 +187,13 @@ fun ErrorState(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
             )
         }
         if (action != null) {
-            Spacer(Modifier.height(Spacing.lg))
+            Spacer(Modifier.height(Spacing.xl))
             action()
         }
     }
@@ -202,11 +231,15 @@ fun ConfirmDialog(
 }
 
 /**
- * 两行列表行：可选头像 + 主标题 + 副标题 + 可选尾随控件。
+ * 两行列表行：可选头像/底衬 + 主标题 + 副标题 + 可选尾随控件。
  *
  * 日志条目与应用行此前各自拼 Row/Column，间距、字号、省略策略都不一致；
  * 收口到这里后，两页的行高节奏与文本降级行为完全相同。
  * 主标题单行省略，副标题最多两行省略——包名与时间戳都可能超长。
+ *
+ * 重构改动：行内边距从 8dp 垂直、0 水平 改为 12/20，行高从约 60dp 提到约 72dp。
+ * 旧行高按 Material 的 dense 规格（56~64dp）取，但本应用的行副标题常是
+ * 「08-16 21:03:41 ｜ com.tencent.mm」这种长文本，密排后在中文下几乎没有呼吸空间。
  */
 @Composable
 fun TwoLineRow(
@@ -215,7 +248,7 @@ fun TwoLineRow(
     modifier: Modifier = Modifier,
     leading: @Composable (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
-    contentPadding: PaddingValues = PaddingValues(vertical = Spacing.sm),
+    contentPadding: PaddingValues = PaddingValues(horizontal = Spacing.lg2, vertical = Spacing.md),
 ) {
     Row(
         modifier = modifier
@@ -252,7 +285,7 @@ fun TwoLineRow(
 }
 
 /**
- * 首屏加载骨架：若干条「圆点头像 + 两行文本」的占位块。
+ * 首屏加载骨架：若干条「圆角底衬 + 两行文本」的占位块。
  *
  * 为什么不用 `CircularProgressIndicator`：转圈只传达「在等」，
  * 不传达「等到的东西长什么样」；应用列表结构固定（图标 + 名称 + 状态），
@@ -282,7 +315,7 @@ fun SkeletonList(
         ),
         label = "skeleton-shift",
     )
-    val base = MaterialTheme.colorScheme.surfaceVariant
+    val base = MaterialTheme.colorScheme.surfaceContainerHigh
     val highlight = MaterialTheme.colorScheme.surfaceContainerHighest
     val brush = Brush.linearGradient(
         colors = listOf(base, highlight, base),
@@ -316,7 +349,7 @@ private fun SkeletonRow(brush: Brush, height: Dp, avatarSize: Dp) {
         Box(
             Modifier
                 .size(avatarSize)
-                .clip(CircleShape)
+                .clip(MaterialTheme.shapes.small)
                 .background(brush),
         )
         Spacer(Modifier.width(Spacing.md))
@@ -340,34 +373,5 @@ private fun SkeletonRow(brush: Brush, height: Dp, avatarSize: Dp) {
     }
 }
 
-/** 「标签 — 取值」信息行；取值过长时省略而非撑破布局。 */
-@Composable
-fun InfoRow(label: String, value: String, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = Spacing.sm),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(start = Spacing.lg),
-        )
-    }
-}
-
-/** [InfoRow] 之间的分隔线，颜色与卡片底色协调。 */
-@Composable
-fun InfoDivider() {
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-}
+// 「标签 — 取值」信息行已迁移到 Common.kt 的 InfoRow（与 v4 行样式统一）。
+// RowDivider / FullDivider 同样见 Common.kt。

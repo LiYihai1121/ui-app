@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>轻启 v4 UI 完整版预览（蓝色方案）</title>
+<style>
+  /* ===== 与 client/app/.../ui/theme/Color.kt 一一对应 ===== */
+  :root{
+    --brand05:#F2F7FF; --brand10:#E3EDFF; --brand20:#C7DBFF; --brand30:#9EC1FF;
+    --brand40:#6BA0FA; --brand50:#3D7DF6; --brand60:#2E6BE0; --brand70:#1F55BE; --brand90:#102C63;
+    --n00:#FFFFFF; --n05:#F7F9FC; --n10:#EFF2F7; --n20:#E2E8F0; --n30:#CBD5E1;
+    --n40:#94A3B8; --n50:#64748B; --n60:#475569; --n70:#334155; --n80:#1E293B; --n90:#0F172A;
+    --st-on:#16A34A; --st-on-c:#E8F8EE; --st-off:#DC2626; --st-off-c:#FDECEC;
+    --st-unk:#B45309; --st-unk-c:#FEF3C7;
+    --tag-sys:#E5484D; --tag-sys-c:#FDECEC;
+    --gold:#B45309; --gold-c:#FEF3C7;
+    --tile-b:#3D7DF6; --tile-bc:#E3EDFF;
+    --tile-g:#16A34A; --tile-gc:#E8F8EE;
+    --tile-p:#7C4DFF; --tile-pc:#EFE9FE;
+    --logs-bg:#1A1F2E; --logs-surface:#242B3D; --logs-surface-hi:#2E3648;
+    --logs-on:#F1F5F9; --logs-on-var:#9BA6BC; --logs-outline:#3A4356;
+    --radius-card:16px; /* Theme.kt Radii.MD */
+    --card-shadow:0 1px 2px rgba(15,23,42,.06); /* cardElevation 2dp */
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;}
+  body{background:#EAF0F8;padding:40px 24px 80px;color:var(--n90);}
+  h1{font-size:24px;text-align:center;}
+  .sub{text-align:center;color:var(--n50);font-size:13px;margin:8px 0 32px;line-height:1.8;}
+  .grid{display:flex;flex-wrap:wrap;gap:36px;justify-content:center;}
+
+  /* ===== 手机外壳 ===== */
+  .phone{width:300px;flex:none;}
+  .screen{width:300px;height:640px;border-radius:28px;overflow:hidden;position:relative;
+    background:var(--n05);box-shadow:0 8px 30px rgba(15,23,42,.18);display:flex;flex-direction:column;border:1px solid var(--n20);}
+  .label{text-align:center;font-size:13px;font-weight:600;margin-top:12px;color:var(--n60);}
+  .label small{display:block;font-weight:400;color:var(--n40);font-size:11px;margin-top:2px;}
+  .statusbar{height:26px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 16px;font-size:10px;color:inherit;flex:none;opacity:.85;}
+  .content{flex:1;overflow:hidden;padding:0 16px 12px;display:flex;flex-direction:column;gap:12px;}
+
+  /* ===== 通用组件 ===== */
+  .card{background:var(--n00);border-radius:var(--radius-card);box-shadow:var(--card-shadow);padding:14px;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;
+    background:var(--brand50);color:#fff;font-size:12px;font-weight:600;padding:7px 16px;}
+  .tag{display:inline-block;font-size:9px;padding:1px 7px;border-radius:6px;font-weight:600;}
+  .switch{width:36px;height:20px;border-radius:999px;background:var(--brand50);position:relative;flex:none;}
+  .switch::after{content:"";position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:#fff;}
+  .switch.off{background:var(--n30);}
+  .switch.off::after{right:auto;left:2px;}
+  .chev{color:var(--n40);font-size:14px;flex:none;}
+  .divider{height:1px;background:var(--n10);margin:0 -14px;}
+  .seg{display:flex;background:var(--n10);border-radius:999px;padding:3px;gap:2px;}
+  .seg span{flex:1;text-align:center;font-size:11px;padding:5px 0;border-radius:999px;color:var(--n50);}
+  .seg span.on{background:var(--brand50);color:#fff;font-weight:600;}
+  .search{height:36px;border-radius:999px;background:var(--n10);display:flex;align-items:center;
+    padding:0 14px;font-size:11px;color:var(--n40);gap:6px;}
+
+  /* ===== 页头 ===== */
+  .appheader{display:flex;align-items:center;gap:10px;padding:6px 0;}
+  .brandplate{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--brand50),var(--brand70));
+    color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex:none;}
+  .appheader .tt{font-size:15px;font-weight:700;}
+  .appheader .st{font-size:10px;color:var(--n50);}
+  .pageheader{display:flex;align-items:center;gap:8px;padding:6px 0;}
+  .pageheader .tt{font-size:15px;font-weight:700;flex:1;}
+  .pageheader .st{font-size:10px;color:var(--n50);width:100%;}
+
+  /* ===== 首页 ===== */
+  .shield{display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 14px;text-align:center;}
+  .ring{width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+  .ring .inner{width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:34px;}
+  .rowline{display:flex;align-items:center;gap:10px;padding:10px 0;}
+  .tiles{display:flex;gap:10px;}
+  .tile{flex:1;background:var(--n00);border-radius:var(--radius-card);box-shadow:var(--card-shadow);
+    padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;font-weight:600;}
+  .tile .ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .statnum{font-size:22px;font-weight:800;color:var(--brand50);}
+
+  /* ===== 规则 ===== */
+  .kw{display:flex;align-items:center;gap:8px;padding:9px 0;font-size:12px;}
+  .kw b{flex:1;font-weight:500;}
+  .kw .del{color:var(--st-off);font-size:13px;}
+  .banner{background:var(--brand05);border-radius:12px;padding:10px 12px;font-size:10px;color:var(--brand70);line-height:1.6;}
+
+  /* ===== 应用管理 ===== */
+  .app{display:flex;align-items:center;gap:10px;padding:9px 0;}
+  .app .ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:700;color:#fff;flex:none;}
+  .app .nm{font-size:12px;font-weight:600;}
+  .app .pk{font-size:9px;color:var(--n40);}
+
+  /* ===== 记录（深色） ===== */
+  .screen.dark{background:var(--logs-bg);color:var(--logs-on);}
+  .dark .content{gap:10px;}
+  .logrow{background:var(--logs-surface);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;}
+  .logrow .ic{width:30px;height:30px;border-radius:8px;background:var(--logs-surface-hi);color:var(--brand40);
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none;}
+  .logrow .nm{font-size:12px;font-weight:600;}
+  .logrow .tm{font-size:9px;color:var(--logs-on-var);}
+  .logrow .ok{color:var(--st-on);font-size:10px;display:flex;align-items:center;gap:3px;flex:none;}
+  .dark .seg{background:var(--logs-surface);}
+  .dark .seg span{color:var(--logs-on-var);}
+  .dark .seg span.on{background:var(--brand40);}
+
+  /* ===== 我的/设置 ===== */
+  .usercard{display:flex;align-items:center;gap:12px;padding:14px;}
+  .avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--brand40),var(--brand70));
+    color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex:none;}
+  .setting{display:flex;align-items:center;gap:10px;padding:11px 0;font-size:12px;font-weight:500;}
+  .setting .sic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;flex:none;}
+  .setting small{display:block;font-weight:400;font-size:9px;color:var(--n40);}
+
+  /* ===== 引导页 ===== */
+  .screen.onb{background:linear-gradient(160deg,var(--brand50) 0%,var(--brand70) 60%,var(--brand90) 100%);color:#fff;}
+  .onb .content{align-items:center;justify-content:center;gap:14px;text-align:center;padding:0 28px 40px;}
+  .onb .logo{width:72px;height:72px;border-radius:20px;background:rgba(255,255,255,.16);
+    display:flex;align-items:center;justify-content:center;font-size:34px;}
+  .onb .illu{width:150px;height:110px;border-radius:16px;background:rgba(255,255,255,.12);position:relative;margin:6px 0;}
+  .onb .illu::before{content:"拦截";position:absolute;top:14px;right:-16px;background:#fff;color:var(--brand60);
+    font-size:9px;font-weight:700;padding:3px 10px;border-radius:999px;transform:rotate(8deg);}
+  .onb .pts{text-align:left;font-size:11px;line-height:2.1;opacity:.95;}
+  .onb .pts li{list-style:none;}
+  .onb .pts li::before{content:"✓ ";color:#9BE3B4;font-weight:700;}
+  .onb .cta{width:100%;background:#fff;color:var(--brand60);border-radius:999px;padding:11px;font-size:14px;font-weight:700;text-align:center;}
+  .dots{display:flex;gap:6px;justify-content:center;}
+  .dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);}
+  .dots i.on{width:14px;border-radius:999px;background:#fff;}
+
+  /* ===== 底部导航 ===== */
+  .tabbar{flex:none;height:52px;background:var(--n00);border-top:1px solid var(--n10);
+    display:flex;align-items:center;justify-content:space-around;padding-bottom:4px;}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;color:var(--n40);}
+  .tab i{font-size:15px;font-style:normal;}
+  .tab.on{color:var(--brand50);font-weight:600;}
+  .dark .tabbar{background:var(--logs-bg);border-top-color:var(--logs-outline);}
+  .dark .tab{color:var(--logs-on-var);}
+  .dark .tab.on{color:var(--brand40);}
+
+  /* ===== 令牌面板 ===== */
+  .panel{max-width:1100px;margin:56px auto 0;background:#fff;border-radius:20px;padding:28px 32px;box-shadow:0 8px 30px rgba(15,23,42,.10);}
+  .panel h2{font-size:17px;margin-bottom:14px;}
+  .panel h3{font-size:13px;margin:18px 0 8px;color:var(--n60);}
+  .swatches{display:flex;flex-wrap:wrap;gap:8px;}
+  .sw{width:108px;font-size:9px;color:var(--n50);}
+  .sw i{display:block;height:34px;border-radius:8px;border:1px solid rgba(15,23,42,.08);margin-bottom:3px;}
+  .note{font-size:11px;color:var(--n50);line-height:1.9;background:var(--n05);border-radius:10px;padding:10px 14px;margin-top:10px;}
+  .kbd{font-family:ui-monospace,monospace;background:var(--n10);border-radius:4px;padding:0 4px;font-size:10px;}
+</style>
+</head>
+<body>
+<h1>轻启 v4 UI 完整版预览</h1>
+<p class="sub">依据 <span class="kbd">docs/planning/DESIGN-UI-V4.md</span> 与设计稿六屏还原 · 所有色值取自
+<span class="kbd">ui/theme/Color.kt</span>（Brand50 #3D7DF6）· 文案取自 <span class="kbd">strings.xml</span> ·
+卡片 = 白底 + 16dp 圆角 + 2dp 阴影，页面底 = #F7F9FC</p>
+
+<div class="grid">
+
+  <!-- ========== 1. 引导页 ========== -->
+  <div class="phone">
+    <div class="screen onb">
+      <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+      <div class="content">
+        <div class="logo">🛡️</div>
+        <div style="font-size:20px;font-weight:800;">轻启</div>
+        <div style="font-size:11px;opacity:.85;">让好用的应用，更纯净</div>
+        <div class="illu"></div>
+        <ul class="pts">
+          <li>智能识别广告内容</li>
+          <li>多重安全护栏保护</li>
+          <li>本地记录，隐私可控</li>
+          <li>支持云端同步规则</li>
+        </ul>
+        <div class="dots"><i class="on"></i><i></i><i></i></div>
+        <div class="cta">开始使用</div>
+      </div>
+    </div>
+    <div class="label">引导页 OnboardingScreen<small>仅首次启动出现 · 品牌蓝渐变 · 无底部导航</small></div>
+  </div>
+
+  <!-- ========== 2. 首页 · 运行中 ========== -->
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+      <div class="content">
+        <div class="appheader">
+          <div class="brandplate">轻</div>
+          <div style="flex:1"><div class="tt">轻启</div><div class="st">更纯净的应用体验，告别广告打扰</div></div>
+          <span class="chev">⚙️</span>
+        </div>
+        <div class="card shield">
+          <div class="ring" style="background:var(--st-on);">
+            <div class="inner" style="background:var(--st-on-c);">🛡️</div>
+          </div>
+          <div style="font-size:14px;font-weight:700;color:var(--st-on);">服务运行中</div>
+          <div style="font-size:10px;color:var(--n50);">已保护您的用机体验</div>
+        </div>
+        <div class="card" style="padding:4px 14px;">
+          <div class="rowline"><span style="font-size:13px;">♿</span>
+            <div style="flex:1"><div style="font-size:12px;font-weight:600;">无障碍服务</div>
+            <div style="font-size:9px;color:var(--st-on);">已授权</div></div>
+            <div class="switch"></div></div>
+        </div>
+        <div class="card" style="display:flex;align-items:center;gap:10px;">
+          <div class="tile ic" style="width:36px;height:36px;border-radius:10px;background:var(--tile-bc);padding:0;">🚀</div>
+          <div style="flex:1"><div style="font-size:12px;font-weight:600;">模拟广告测试</div>
+          <div style="font-size:9px;color:var(--n40);">测试广告效果，确保正常工作</div></div>
+          <span class="btn" style="padding:5px 12px;font-size:11px;">立即测试</span>
+        </div>
+        <div class="tiles">
+          <div class="tile"><div class="ic" style="background:var(--tile-bc);color:var(--tile-b);">🕐</div>查看记录</div>
+          <div class="tile"><div class="ic" style="background:var(--tile-gc);color:var(--tile-g);">🏷️</div>添加关键词</div>
+          <div class="tile"><div class="ic" style="background:var(--tile-pc);color:var(--tile-p);">📱</div>管理应用</div>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;margin-bottom:8px;">
+            <b style="flex:1;font-size:12px;">今日统计</b>
+            <span style="font-size:10px;color:var(--brand50);">查看更多 ›</span>
+          </div>
+          <div style="display:flex;text-align:center;">
+            <div style="flex:1"><div class="statnum">128</div><div style="font-size:9px;color:var(--n40);">累计跳过（次）</div></div>
+            <div style="flex:1"><div style="font-size:22px;font-weight:700;color:var(--n70);">12</div><div style="font-size:9px;color:var(--n40);">关键词（个）</div></div>
+            <div style="flex:1"><div style="font-size:22px;font-weight:700;color:var(--n70);">8</div><div style="font-size:9px;color:var(--n40);">最近应用</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab on"><i>🏠</i>首页</div><div class="tab"><i>🕐</i>记录</div>
+        <div class="tab"><i>🏷️</i>规则</div><div class="tab"><i>👤</i>我的</div>
+      </div>
+    </div>
+    <div class="label">首页 · 服务运行中（ON 态）<small>盾牌绿 #16A34A · 底部导航 首页/记录/规则/我的</small></div>
+  </div>
+
+  <!-- ========== 3. 首页 · 未开启 ========== -->
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+      <div class="content">
+        <div class="appheader">
+          <div class="brandplate">轻</div>
+          <div style="flex:1"><div class="tt">轻启</div><div class="st">更纯净的应用体验，告别广告打扰</div></div>
+          <span class="chev">⚙️</span>
+        </div>
+        <div class="card shield">
+          <div class="ring" style="background:var(--st-off);">
+            <div class="inner" style="background:var(--st-off-c);">🛡️</div>
+          </div>
+          <div style="font-size:14px;font-weight:700;color:var(--st-off);">服务未开启</div>
+          <div style="font-size:10px;color:var(--n50);">请在系统无障碍设置中开启「轻启」</div>
+          <span class="btn">开启无障碍服务</span>
+        </div>
+        <div class="card" style="padding:4px 14px;">
+          <div class="rowline"><span style="font-size:13px;">♿</span>
+            <div style="flex:1"><div style="font-size:12px;font-weight:600;">无障碍服务</div>
+            <div style="font-size:9px;color:var(--st-off);">未授权</div></div>
+            <div class="switch off"></div></div>
+        </div>
+        <div class="card shield" style="border:1px dashed var(--st-unk);">
+          <div class="ring" style="background:var(--st-unk);width:64px;height:64px;">
+            <div class="inner" style="background:var(--st-unk-c);width:56px;height:56px;font-size:22px;">❓</div>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:var(--st-unk);">无法确认服务状态（第三态示意）</div>
+          <div style="font-size:9px;color:var(--n50);line-height:1.6;">系统未返回无障碍服务状态，请到设置中人工核对；<br>服务本身可能已在运行</div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab on"><i>🏠</i>首页</div><div class="tab"><i>🕐</i>记录</div>
+        <div class="tab"><i>🏷️</i>规则</div><div class="tab"><i>👤</i>我的</div>
+      </div>
+    </div>
+    <div class="label">首页 · OFF 态 + UNKNOWN 三态示意<small>OFF=红 #DC2626 带 CTA · UNKNOWN=琥珀 #B45309</small></div>
+  </div>
+
+  <!-- ========== 4. 关键词管理 ========== -->
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+      <div class="content">
+        <div class="pageheader">
+          <div style="flex:1"><div class="tt">关键词管理</div><div class="st">关键词分组管理，支持增删改查</div></div>
+          <span class="btn" style="padding:5px 12px;font-size:10px;">＋ 添加关键词</span>
+        </div>
+        <div class="search">🔍 搜索关键词</div>
+        <div class="banner">💡 关键词用于识别广告文案，命中后将自动点击。建议添加常见广告词、诱导词等</div>
+        <div class="card" style="padding:4px 14px;">
+          <div style="font-size:11px;font-weight:700;color:var(--n50);padding:8px 0 2px;">我的关键词（5）</div>
+          <div class="kw"><b>跳过</b><span class="tag" style="background:var(--tag-sys-c);color:var(--tag-sys);">系统</span><span class="del">🗑</span></div>
+          <div class="divider"></div>
+          <div class="kw"><b>跳过广告</b><span class="tag" style="background:var(--tag-sys-c);color:var(--tag-sys);">系统</span><span class="del">🗑</span></div>
+          <div class="divider"></div>
+          <div class="kw"><b>关闭广告</b><span class="del">🗑</span></div>
+          <div class="divider"></div>
+          <div class="kw"><b>立即领取</b><span class="del">🗑</span></div>
+          <div class="divider"></div>
+          <div class="kw"><b>知道了</b><span class="del">🗑</span></div>
+        </div>
+        <div style="text-align:center;font-size:9px;color:var(--n40);">点击条目右侧的删除按钮可移除关键词 · 删除后可撤销</div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><i>🏠</i>首页</div><div class="tab"><i>🕐</i>记录</div>
+        <div class="tab on"><i>🏷️</i>规则</div><div class="tab"><i>👤</i>我的</div>
+      </div>
+    </div>
+    <div class="label">规则页 RulesScreen（一级）<small>搜索 + 系统标签 + 删除撤销 · 空态/无匹配态分离</small></div>
+  </div>
+
+  <!-- ========== 5. 应用管理 ========== -->
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+      <div class="content">
+        <div class="pageheader">
+          <span class="chev">‹</span>
+          <div style="flex:1"><div class="tt">应用管理</div><div class="st">关闭开关后，将不在该应用内自动跳过广告</div></div>
+        </div>
+        <div class="search">🔍 搜索应用名称</div>
+        <div class="seg"><span class="on">全部应用（24）</span><span>已启用（20）</span><span>未启用（4）</span></div>
+        <div class="card" style="padding:4px 14px;">
+          <div class="app"><div class="ic" style="background:#FF6B35;">淘</div>
+            <div style="flex:1"><div class="nm">手机淘宝</div><div class="pk">com.taobao.taobao · 已跳过 32 次</div></div>
+            <div class="switch"></div></div>
+          <div class="divider"></div>
+          <div class="app"><div class="ic" style="background:#07C160;">微</div>
+            <div style="flex:1"><div class="nm">微信</div><div class="pk">com.tencent.mm · 已跳过 18 次</div></div>
+            <div class="switch"></div></div>
+          <div class="divider"></div>
+          <div class="app"><div class="ic" style="background:#FE2C55;">抖</div>
+            <div style="flex:1"><div class="nm">抖音</div><div class="pk">com.ss.android.ugc.aweme · 已跳过 9 次</div></div>
+            <div class="switch off"></div></div>
+          <div class="divider"></div>
+          <div class="app"><div class="ic" style="background:#00A1D6;">哔</div>
+            <div style="flex:1"><div class="nm">哔哩哔哩</div><div class="pk">tv.danmaku.bili · 已跳过 6 次</div></div>
+            <div class="switch"></div></div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><i>🏠</i>首页</div><div class="tab"><i>🕐</i>记录</div>
+        <div class="tab"><i>🏷️</i>规则</div><div class="tab"><i>👤</i>我的</div>
+      </div>
+    </div>
+    <div class="label">应用管理 AppsScreen（二级，带返回）<small>搜索 + 三向分段筛选 · 图标缺失时首字符占位</small></div>
+  </div>
+
+  <!-- ========== 6. 跳过记录（深色） ========== -->
+  <div class="phone">
+    <div class="screen dark">
+      <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+      <div class="content">
+        <div class="pageheader">
+          <div style="flex:1"><div class="tt" style="color:var(--logs-on);">跳过记录</div>
+          <div class="st" style="color:var(--logs-on-var);">共 86 条记录 · 仅保留最近 200 条</div></div>
+          <span class="chev" style="color:var(--logs-on-var);">⤴️</span>
+        </div>
+        <div class="seg"><span class="on">全部</span><span>今天</span><span>近 7 天</span><span>近 30 天</span></div>
+        <div class="logrow"><div class="ic">淘</div>
+          <div style="flex:1"><div class="nm">手机淘宝 · 跳过</div><div class="tm">今天 14:23</div></div>
+          <span class="ok">✓ 已跳过</span></div>
+        <div class="logrow"><div class="ic">抖</div>
+          <div style="flex:1"><div class="nm">抖音 · 跳过广告</div><div class="tm">今天 11:05</div></div>
+          <span class="ok">✓ 已跳过</span></div>
+        <div class="logrow"><div class="ic">哔</div>
+          <div style="flex:1"><div class="nm">哔哩哔哩 · 跳过</div><div class="tm">昨天 22:41</div></div>
+          <span class="ok">✓ 已跳过</span></div>
+        <div class="logrow"><div class="ic">微</div>
+          <div style="flex:1"><div class="nm">微信 · 关闭广告</div><div class="tm">昨天 09:12</div></div>
+          <span class="ok">✓ 已跳过</span></div>
+        <div style="text-align:center;font-size:10px;color:var(--st-off);padding:4px;">清空日志</div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><i>🏠</i>首页</div><div class="tab on"><i>🕐</i>记录</div>
+        <div class="tab"><i>🏷️</i>规则</div><div class="tab"><i>👤</i>我的</div>
+      </div>
+    </div>
+    <div class="label">跳过记录 LogsScreen（单页深色）<small>底 #1A1F2E · 行卡 #242B3D · 浅色模式下也保持深色</small></div>
+  </div>
+
+  <!-- ========== 7. 我的 / 设置 ========== -->
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+      <div class="content">
+        <div class="pageheader"><div class="tt">设置</div></div>
+        <div class="card usercard">
+          <div class="avatar">用</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;">用户123456
+              <span class="tag" style="background:var(--gold-c);color:var(--gold);">Premium 会员</span></div>
+            <div style="font-size:9px;color:var(--n40);margin-top:3px;">累计跳过 128 次 · 已跳过应用 24 个</div>
+          </div>
+        </div>
+        <div class="card" style="padding:2px 14px;">
+          <div class="setting"><div class="sic" style="background:var(--tile-bc);">🛠️</div>
+            <div style="flex:1">服务设置<small>无障碍 · 保活 · 权限</small></div><span class="chev">⌄</span></div>
+          <div class="divider"></div>
+          <div style="background:var(--n05);border-radius:10px;margin:6px 0;padding:10px;font-size:10px;color:var(--n60);line-height:1.9;">
+            ▸ 无障碍服务 <b style="color:var(--st-on);">已就绪</b> · 后台运行 <b style="color:var(--st-on);">已就绪</b><br>
+            ▸ 自启动 / 后台白名单 <b style="color:var(--st-unk);">需要处理</b> <span class="btn" style="padding:2px 10px;font-size:9px;">去设置</span><br>
+            ▸ 权限与系统开关：已就绪 3 / 4 项
+          </div>
+          <div class="divider"></div>
+          <div class="setting"><div class="sic" style="background:var(--tile-gc);">☁️</div>
+            <div style="flex:1">云端同步<small>规则备份 · 设备同步</small></div><span class="chev">›</span></div>
+          <div class="divider"></div>
+          <div class="setting"><div class="sic" style="background:var(--tile-pc);">🔒</div>
+            <div style="flex:1">隐私与安全<small>数据隐私 · 权限说明</small></div><span class="chev">›</span></div>
+          <div class="divider"></div>
+          <div class="setting"><div class="sic" style="background:var(--n10);">🌐</div>
+            <div style="flex:1">语言设置<small>跟随系统</small></div><span class="chev">›</span></div>
+          <div class="divider"></div>
+          <div class="setting"><div class="sic" style="background:var(--brand05);">ℹ️</div>
+            <div style="flex:1">关于我们<small>版本 1.0.0</small></div><span class="chev">›</span></div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><i>🏠</i>首页</div><div class="tab"><i>🕐</i>记录</div>
+        <div class="tab"><i>🏷️</i>规则</div><div class="tab on"><i>👤</i>我的</div>
+      </div>
+    </div>
+    <div class="label">我的 / 设置 ProfileScreen<small>用户卡 + 5 项手风琴行（图示「服务设置」展开态）</small></div>
+  </div>
+
+  <!-- ========== 8. 添加关键词弹窗 ========== -->
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+      <div class="content" style="filter:saturate(.6);opacity:.55;">
+        <div class="pageheader">
+          <div style="flex:1"><div class="tt">关键词管理</div><div class="st">关键词分组管理，支持增删改查</div></div>
+          <span class="btn" style="padding:5px 12px;font-size:10px;">＋ 添加关键词</span>
+        </div>
+        <div class="search">🔍 搜索关键词</div>
+        <div class="card" style="padding:4px 14px;">
+          <div class="kw"><b>跳过</b><span class="tag" style="background:var(--tag-sys-c);color:var(--tag-sys);">系统</span><span class="del">🗑</span></div>
+          <div class="divider"></div>
+          <div class="kw"><b>关闭广告</b><span class="del">🗑</span></div>
+        </div>
+      </div>
+      <div style="position:absolute;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:28px;">
+        <div style="background:#fff;border-radius:20px;padding:20px;width:100%;box-shadow:0 12px 40px rgba(15,23,42,.3);">
+          <div style="font-size:14px;font-weight:700;margin-bottom:12px;">添加关键词</div>
+          <div style="height:38px;border-radius:10px;border:1.5px solid var(--brand50);display:flex;align-items:center;padding:0 12px;font-size:11px;color:var(--n90);">
+            立即领取<span style="margin-left:2px;color:var(--brand50);">▏</span>
+          </div>
+          <div style="font-size:9px;color:var(--n40);margin:8px 0 14px;">命中后将自动点击含该文案的按钮 · 重复关键词会被拒绝（keyword_exists）</div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <span style="font-size:12px;color:var(--n50);padding:6px 14px;">取消</span>
+            <span class="btn">添加</span>
+          </div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><i>🏠</i>首页</div><div class="tab"><i>🕐</i>记录</div>
+        <div class="tab on"><i>🏷️</i>规则</div><div class="tab"><i>👤</i>我的</div>
+      </div>
+    </div>
+    <div class="label">AddKeywordDialog（聚焦输入态）<small>遮罩 scrim + 20dp 弹窗 · 主色描边聚焦框</small></div>
+  </div>
+
+  <!-- ========== 9. 清空日志确认弹窗（深色） ========== -->
+  <div class="phone">
+    <div class="screen dark">
+      <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+      <div class="content" style="opacity:.5;">
+        <div class="pageheader"><div class="tt" style="color:var(--logs-on);">跳过记录</div></div>
+        <div class="logrow"><div class="ic">淘</div>
+          <div style="flex:1"><div class="nm">手机淘宝 · 跳过</div><div class="tm">今天 14:23</div></div>
+          <span class="ok">✓ 已跳过</span></div>
+        <div class="logrow"><div class="ic">抖</div>
+          <div style="flex:1"><div class="nm">抖音 · 跳过广告</div><div class="tm">今天 11:05</div></div>
+          <span class="ok">✓ 已跳过</span></div>
+      </div>
+      <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:28px;">
+        <div style="background:var(--logs-surface);border-radius:20px;padding:20px;width:100%;border:1px solid var(--logs-outline);">
+          <div style="font-size:14px;font-weight:700;color:var(--logs-on);margin-bottom:8px;">清空全部记录？</div>
+          <div style="font-size:11px;color:var(--logs-on-var);line-height:1.7;margin-bottom:16px;">清空后无法恢复，但可在提示条内撤销。</div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <span style="font-size:12px;color:var(--logs-on-var);padding:6px 14px;">取消</span>
+            <span class="btn" style="background:var(--st-off);">确定</span>
+          </div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><i>🏠</i>首页</div><div class="tab on"><i>🕐</i>记录</div>
+        <div class="tab"><i>🏷️</i>规则</div><div class="tab"><i>👤</i>我的</div>
+      </div>
+    </div>
+    <div class="label">ConfirmDialog · 清空日志（破坏性操作）<small>确认按钮用 StatusOff 红 · 深色页弹窗随页反色</small></div>
+  </div>
+
+  <!-- ========== 10. 删除撤销 Snackbar ========== -->
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+      <div class="content">
+        <div class="pageheader">
+          <div style="flex:1"><div class="tt">关键词管理</div><div class="st">关键词分组管理，支持增删改查</div></div>
+          <span class="btn" style="padding:5px 12px;font-size:10px;">＋ 添加关键词</span>
+        </div>
+        <div class="card" style="padding:4px 14px;">
+          <div style="font-size:11px;font-weight:700;color:var(--n50);padding:8px 0 2px;">我的关键词（4）</div>
+          <div class="kw"><b>跳过</b><span class="tag" style="background:var(--tag-sys-c);color:var(--tag-sys);">系统</span><span class="del">🗑</span></div>
+          <div class="divider"></div>
+          <div class="kw"><b>立即领取</b><span class="del">🗑</span></div>
+          <div class="divider"></div>
+          <div class="kw"><b>知道了</b><span class="del">🗑</span></div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="background:var(--n80);border-radius:12px;padding:11px 14px;display:flex;align-items:center;
+          box-shadow:0 4px 16px rgba(15,23,42,.25);">
+          <span style="flex:1;font-size:11px;color:#F1F5F9;">已删除「关闭广告」</span>
+          <span style="font-size:11px;font-weight:700;color:var(--brand30);">撤销</span>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><i>🏠</i>首页</div><div class="tab"><i>🕐</i>记录</div>
+        <div class="tab on"><i>🏷️</i>规则</div><div class="tab"><i>👤</i>我的</div>
+      </div>
+    </div>
+    <div class="label">删除关键词 + 撤销 Snackbar<small>inverseSurface #1E293B · 撤销后按原索引恢复</small></div>
+  </div>
+
+  <!-- ========== 11. 空态 ========== -->
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+      <div class="content">
+        <div class="pageheader">
+          <div style="flex:1"><div class="tt">关键词管理</div><div class="st">关键词分组管理，支持增删改查</div></div>
+          <span class="btn" style="padding:5px 12px;font-size:10px;">＋ 添加关键词</span>
+        </div>
+        <div class="search">🔍 搜索关键词</div>
+        <div class="card" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:24px;">
+          <div style="width:72px;height:72px;border-radius:20px;background:var(--brand05);display:flex;align-items:center;justify-content:center;font-size:30px;">🏷️</div>
+          <div style="font-size:13px;font-weight:700;">还没有关键词</div>
+          <div style="font-size:10px;color:var(--n50);line-height:1.7;">添加常见广告词，命中后自动点击跳过</div>
+          <span class="btn" style="margin-top:4px;">添加关键词</span>
+          <div class="divider" style="width:100%;margin:14px 0 0;"></div>
+          <div style="font-size:10px;color:var(--n40);padding-top:10px;">搜索无匹配时：标题换为「没有匹配的关键词」，不出现添加按钮</div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><i>🏠</i>首页</div><div class="tab"><i>🕐</i>记录</div>
+        <div class="tab on"><i>🏷️</i>规则</div><div class="tab"><i>👤</i>我的</div>
+      </div>
+    </div>
+    <div class="label">EmptyState（规则页）<small>空列表与搜索无匹配是两套文案 · 空态带主行动按钮</small></div>
+  </div>
+
+  <!-- ========== 12. 错误态 ========== -->
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+      <div class="content">
+        <div class="pageheader">
+          <span class="chev">‹</span>
+          <div style="flex:1"><div class="tt">应用管理</div><div class="st">关闭开关后，将不在该应用内自动跳过广告</div></div>
+        </div>
+        <div class="card" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:24px;">
+          <div style="width:72px;height:72px;border-radius:20px;background:var(--st-off-c);display:flex;align-items:center;justify-content:center;font-size:30px;">⚠️</div>
+          <div style="font-size:13px;font-weight:700;">加载失败</div>
+          <div style="font-size:10px;color:var(--n50);line-height:1.7;">数据没能读出来，可重试一次；<br>若反复失败请反馈日志。</div>
+          <span class="btn" style="margin-top:4px;">重试</span>
+          <div style="font-size:9px;color:var(--n40);padding-top:12px;line-height:1.7;">
+            UiStateContractTest 机检：任何 ErrorState 必须带 <span class="kbd">btn_retry</span> 重试出口</div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><i>🏠</i>首页</div><div class="tab"><i>🕐</i>记录</div>
+        <div class="tab"><i>🏷️</i>规则</div><div class="tab"><i>👤</i>我的</div>
+      </div>
+    </div>
+    <div class="label">ErrorState（应用管理）<small>error_generic_title/hint + 重试按钮 · 契约测试强制</small></div>
+  </div>
+
+  <!-- ========== 13. 骨架屏 ========== -->
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+      <div class="content">
+        <div class="pageheader">
+          <span class="chev">‹</span>
+          <div style="flex:1"><div class="tt">应用管理</div><div class="st">关闭开关后，将不在该应用内自动跳过广告</div></div>
+        </div>
+        <div class="search">🔍 搜索应用名称</div>
+        <div class="card" style="padding:6px 14px;">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;">
+            <div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(90deg,var(--n10) 25%,var(--n20) 50%,var(--n10) 75%);background-size:200% 100%;animation:sk 1.4s infinite;"></div>
+            <div style="flex:1"><div style="height:11px;width:55%;border-radius:6px;background:linear-gradient(90deg,var(--n10) 25%,var(--n20) 50%,var(--n10) 75%);background-size:200% 100%;animation:sk 1.4s infinite;"></div>
+            <div style="height:8px;width:80%;border-radius:6px;margin-top:7px;background:var(--n10);"></div></div>
+          </div>
+          <div class="divider"></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;">
+            <div style="width:34px;height:34px;border-radius:9px;background:var(--n10);"></div>
+            <div style="flex:1"><div style="height:11px;width:45%;border-radius:6px;background:var(--n10);"></div>
+            <div style="height:8px;width:70%;border-radius:6px;margin-top:7px;background:var(--n10);"></div></div>
+          </div>
+          <div class="divider"></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;">
+            <div style="width:34px;height:34px;border-radius:9px;background:var(--n10);"></div>
+            <div style="flex:1"><div style="height:11px;width:60%;border-radius:6px;background:var(--n10);"></div>
+            <div style="height:8px;width:75%;border-radius:6px;margin-top:7px;background:var(--n10);"></div></div>
+          </div>
+        </div>
+        <div style="font-size:9px;color:var(--n40);text-align:center;">加载中向无障碍播报「正在加载」（state_loading_announcement）</div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><i>🏠</i>首页</div><div class="tab"><i>🕐</i>记录</div>
+        <div class="tab"><i>🏷️</i>规则</div><div class="tab"><i>👤</i>我的</div>
+      </div>
+    </div>
+    <div class="label">SkeletonList 加载态<small>占位块扫光动画 · 行布局与真实列表一致避免跳动</small></div>
+  </div>
+</div>
+
+<style>@keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}</style>
+
+<div class="panel" style="margin-top:48px;">
+  <h2>组件状态总览（默认 / 悬停 / 选中 / 禁用）</h2>
+  <h3>开关 Switch</h3>
+  <div style="display:flex;gap:28px;align-items:center;font-size:10px;color:var(--n50);">
+    <span style="text-align:center;"><span class="switch" style="display:inline-block;"></span><br>开启 · Brand50</span>
+    <span style="text-align:center;"><span class="switch off" style="display:inline-block;"></span><br>关闭 · Neutral30</span>
+    <span style="text-align:center;"><span class="switch" style="display:inline-block;opacity:.38;"></span><br>禁用 · alpha 0.38</span>
+    <span style="text-align:center;"><span class="switch" style="display:inline-block;box-shadow:0 0 0 6px var(--brand10);"></span><br>按下 · 态层 12%</span>
+  </div>
+  <h3>主按钮 Button</h3>
+  <div style="display:flex;gap:14px;align-items:center;font-size:10px;color:var(--n50);">
+    <span style="text-align:center;"><span class="btn">立即测试</span><br>默认</span>
+    <span style="text-align:center;"><span class="btn" style="background:var(--brand60);">立即测试</span><br>按下 Brand60</span>
+    <span style="text-align:center;"><span class="btn" style="opacity:.38;">立即测试</span><br>禁用</span>
+    <span style="text-align:center;"><span class="btn" style="background:var(--st-off);">确定</span><br>破坏性 · StatusOff</span>
+  </div>
+  <h3>分段控件 / 标签 / 导航</h3>
+  <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;font-size:10px;color:var(--n50);">
+    <span class="seg" style="width:180px;"><span class="on">全部</span><span>今天</span><span>近 7 天</span></span>
+    <span class="tag" style="background:var(--tag-sys-c);color:var(--tag-sys);">系统</span>
+    <span class="tag" style="background:var(--gold-c);color:var(--gold);">Premium 会员</span>
+    <span class="tag" style="background:var(--brand10);color:var(--brand70);">选中态 = 实心胶囊</span>
+  </div>
+  <div class="note">行内元素的默认/悬停/选中均来自 M3 态层（state layer）规范：悬停 +8%、聚焦/按下 +12% 主色叠加；
+  禁用统一 alpha 0.38（内容）/ 0.12（容器）。本静态稿以近似色块示意，运行时由 Compose 自动合成。</div>
+</div>
+
+<!-- ========== 令牌面板 ========== -->
+<div class="panel">
+  <h2>设计令牌速查（与 Color.kt / Spacing.kt / Theme.kt 对齐）</h2>
+  <h3>品牌蓝阶梯</h3>
+  <div class="swatches">
+    <div class="sw"><i style="background:#F2F7FF"></i>Brand05<br>#F2F7FF</div>
+    <div class="sw"><i style="background:#E3EDFF"></i>Brand10<br>#E3EDFF</div>
+    <div class="sw"><i style="background:#C7DBFF"></i>Brand20<br>#C7DBFF</div>
+    <div class="sw"><i style="background:#9EC1FF"></i>Brand30<br>#9EC1FF</div>
+    <div class="sw"><i style="background:#6BA0FA"></i>Brand40<br>#6BA0FA</div>
+    <div class="sw"><i style="background:#3D7DF6"></i><b>Brand50 主色</b><br>#3D7DF6</div>
+    <div class="sw"><i style="background:#2E6BE0"></i>Brand60<br>#2E6BE0</div>
+    <div class="sw"><i style="background:#1F55BE"></i>Brand70<br>#1F55BE</div>
+    <div class="sw"><i style="background:#17408F"></i>Brand80<br>#17408F</div>
+    <div class="sw"><i style="background:#102C63;color:#fff"></i>Brand90<br>#102C63</div>
+  </div>
+  <h3>状态三态（颜色 + 几何双重表达）</h3>
+  <div class="swatches">
+    <div class="sw"><i style="background:#16A34A"></i>StatusOn<br>#16A34A</div>
+    <div class="sw"><i style="background:#E8F8EE"></i>OnContainer<br>#E8F8EE</div>
+    <div class="sw"><i style="background:#DC2626"></i>StatusOff<br>#DC2626</div>
+    <div class="sw"><i style="background:#FDECEC"></i>OffContainer<br>#FDECEC</div>
+    <div class="sw"><i style="background:#B45309"></i>StatusUnknown<br>#B45309</div>
+    <div class="sw"><i style="background:#FEF3C7"></i>UnknownContainer<br>#FEF3C7</div>
+  </div>
+  <h3>中性色（带蓝调）与记录页深色专用</h3>
+  <div class="swatches">
+    <div class="sw"><i style="background:#F7F9FC"></i>Neutral05 页面底<br>#F7F9FC</div>
+    <div class="sw"><i style="background:#FFFFFF"></i>Neutral00 卡片<br>#FFFFFF</div>
+    <div class="sw"><i style="background:#64748B"></i>Neutral50<br>#64748B</div>
+    <div class="sw"><i style="background:#0F172A;color:#fff"></i>Neutral90<br>#0F172A</div>
+    <div class="sw"><i style="background:#1A1F2E;color:#fff"></i>LogsDarkBg<br>#1A1F2E</div>
+    <div class="sw"><i style="background:#242B3D;color:#fff"></i>LogsDarkSurface<br>#242B3D</div>
+    <div class="sw"><i style="background:#2E3648;color:#fff"></i>LogsDarkHigh<br>#2E3648</div>
+  </div>
+  <h3>形状与尺寸</h3>
+  <div class="note">
+    卡片圆角 <span class="kbd">Radii.MD = 16dp</span> · 阴影 <span class="kbd">cardElevation = 2dp</span> ·
+    间距阶梯 <span class="kbd">4 / 8 / 12 / 16 / 24 / 32 / 40dp</span>（UiContractTest 机检）·
+    状态盾牌 <span class="kbd">120dp 外环 + 112dp 内圆</span> · 快捷瓦片图标 <span class="kbd">48dp</span> ·
+    搜索框 <span class="kbd">44dp 高胶囊</span> · 分段控件 <span class="kbd">36dp 实心选中</span> ·
+    底部导航 4 项：首页 / 记录 / 规则 / 我的（应用管理降为二级）
+  </div>
+  <h3>与设计稿的差异说明（图标替换，详见 DESIGN-UI-V4.md §8）</h3>
+  <div class="note">
+    盾牌（设计稿为闪电）、齿轮、对勾、垃圾桶等以 AdSkipIcons 现有图标 / 占位符号代替，本预览中以 emoji 示意；
+    头像为首字符占位；品牌文案不出现「AdSkip」字样；其余布局、间距、配色、圆角、阴影、组件状态均按设计稿还原。
+  </div>
+</div>
+</body>
+</html>

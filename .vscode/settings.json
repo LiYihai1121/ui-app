@@ -70,7 +70,8 @@
     "**/.workbuddy/**",
     "**/.workbuddy-ai/**",
     "**/.cursor/**",
-    "**/.designkit-history-delivery/**"
+    "**/.designkit-history-delivery/**",
+    "**/.dsh-acl-recovery/**"
   ],
 
   // 120 与 .editorconfig 的 max_line_length 对齐。**这是一处必须手工同步的耦合**：

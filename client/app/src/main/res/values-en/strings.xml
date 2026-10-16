@@ -5,20 +5,16 @@
     <string name="service_desc">Automatically detects and clicks the "Skip" button on splash ads. Supports text keyword and ViewID matching. Runs locally only.</string>
 
     <!-- Main page -->
-    <string name="home_title">Home</string>
-    <string name="home_subtitle">Your service status and skip activity at a glance</string>
+    <string name="home_subtitle">A cleaner app experience, free of ad interruptions</string>
     <string name="status_off">Service is off</string>
     <string name="status_on">Service is running</string>
     <string name="status_off_hint">Please enable "轻启" in system Accessibility settings</string>
-    <string name="status_on_hint">Service is enabled. Run a simulation to verify the skip flow</string>
+    <string name="status_unknown">Service state unavailable</string>
+    <string name="status_unknown_hint">The system did not report the accessibility state. Please verify manually in Settings; the service may already be running</string>
     <string name="btn_open_settings">Enable Accessibility Service</string>
-    <string name="btn_manage_settings">Manage Accessibility Settings</string>
-    <string name="btn_test">Test: Simulate Splash Ad</string>
     <string name="settings_open_failed">Cannot open accessibility settings. Go to Settings → Accessibility manually</string>
-    <string name="stats_overview_title">Usage overview</string>
     <string name="stats_total_label">Total skips</string>
     <string name="nav_home">Home</string>
-    <string name="nav_apps">Apps</string>
     <string name="nav_logs">Logs</string>
     <string name="btn_confirm">OK</string>
     <string name="btn_cancel">Cancel</string>
@@ -44,8 +40,6 @@
     <string name="action_undo">Undo</string>
 
     <!-- Keywords -->
-    <string name="keywords_title">Detection Keywords</string>
-    <string name="keywords_hint">Short text containing these keywords will be auto-clicked. Tap to remove</string>
     <string name="keyword_input_hint">Add keyword, e.g.: skip</string>
     <string name="btn_add">Add</string>
     <!-- Home quick actions (v3.4 redesign): three most frequent actions -->
@@ -80,36 +74,28 @@
     <string name="toast_skipped">Skipped splash ad on %1$s</string>
 
     <!-- App Manager -->
-    <string name="apps_title">Apps</string>
+    <string name="apps_title">App management</string>
     <string name="apps_hint">Toggle off to stop auto-skipping in that app</string>
     <plurals name="apps_count">
         <item quantity="one">Skipped %1$d time</item>
         <item quantity="other">Skipped %1$d times</item>
     </plurals>
-    <string name="apps_never">Never skipped</string>
-    <string name="apps_disabled">Disabled</string>
-    <string name="apps_search_placeholder">Search app name or package</string>
-    <string name="apps_search_clear">Clear search</string>
-    <string name="apps_filter_enabled">Enabled only</string>
-    <string name="apps_empty">No manageable apps found</string>
-    <string name="apps_empty_hint">No third-party app with a launcher icon was detected on this device</string>
-    <string name="apps_no_match">No matching apps</string>
-    <string name="apps_no_match_hint">Try another keyword, or turn off the “Enabled only” filter</string>
-    <string name="apps_clear_filters">Clear search and filters</string>
+    <plurals name="apps_subtitle">
+        <item quantity="one">%1$d launchable app</item>
+        <item quantity="other">%1$d launchable apps</item>
+    </plurals>
 
     <!-- Skip Logs -->
-    <string name="logs_title">Logs</string>
+    <string name="logs_title">Skip history</string>
     <plurals name="logs_subtitle">
-        <item quantity="one">%1$d record, only the latest 200 are kept</item>
-        <item quantity="other">%1$d records, only the latest 200 are kept</item>
+        <item quantity="one">%1$d record</item>
+        <item quantity="other">%1$d records</item>
     </plurals>
-    <string name="logs_empty">No records yet</string>
+    <string name="logs_retention_note">Only the latest 200 records are kept</string>
     <string name="logs_empty_hint">Once the service is on, every auto-skip will show up here</string>
     <string name="logs_clear">Clear Logs</string>
-    <string name="logs_clear_confirm">This will delete all skip records permanently. Continue?</string>
     <string name="logs_cleared">Logs cleared</string>
     <string name="logs_share">Share</string>
-    <string name="logs_item_subtitle">%1$s | %2$s</string>
 
     <!-- Cloud Sync Settings -->
     <string name="settings_cloud_section">Cloud Rules</string>
@@ -180,10 +166,7 @@
 
     <!-- Profile -->
     <string name="nav_profile">Profile</string>
-    <string name="profile_title">Profile</string>
-    <string name="profile_subtitle">On-device usage overview and version info</string>
-    <string name="profile_usage_section">Usage</string>
-    <string name="profile_about_section">About</string>
+    <string name="profile_title">Settings</string>
     <string name="profile_version_label">App version</string>
     <string name="profile_android_label">Android version</string>
     <string name="profile_device_label">Device model</string>
@@ -217,4 +200,61 @@
     <string name="watchdog_channel_name">Service keeper</string>
     <string name="watchdog_notify_title">Ad-skip service stopped</string>
     <string name="watchdog_notify_text">Tap to re-enable the accessibility service</string>
+
+    <string name="nav_rules">Rules</string>
+    <string name="home_open_settings">Settings</string>
+    <string name="home_accessibility_service">Accessibility service</string>
+    <string name="home_accessibility_granted">Granted</string>
+    <string name="home_accessibility_pending">Not granted</string>
+    <string name="home_test_title">Simulate an ad</string>
+    <string name="home_test_desc">Verify the skip flow works</string>
+    <string name="home_test_action">Test now</string>
+    <string name="home_stats_title">Today</string>
+    <string name="home_stats_more">More</string>
+    <string name="home_status_protected">Your device is protected</string>
+    <string name="rules_title">Keyword rules</string>
+    <string name="rules_subtitle">Group and manage keywords</string>
+    <string name="rules_add">Add keyword</string>
+    <string name="rules_search_hint">Search keywords</string>
+    <string name="rules_banner">Keywords are matched against ad copy and tapped automatically. Add common ad and prompt words.</string>
+    <string name="rules_count">My keywords (%1$d)</string>
+    <string name="rules_system_tag">Built-in</string>
+    <string name="rules_empty_title">No keywords yet</string>
+    <string name="rules_no_match_title">No matching keyword</string>
+    <string name="rules_empty_hint">Add common ad words to auto-tap skip buttons</string>
+    <string name="rules_footer_hint">Tap the delete button on a row to remove a keyword</string>
+    <string name="apps_search_hint">Search apps</string>
+    <string name="apps_tab_all">All (%1$d)</string>
+    <string name="apps_tab_enabled">Enabled (%1$d)</string>
+    <string name="apps_tab_disabled">Disabled (%1$d)</string>
+    <string name="apps_empty_title">No apps to manage</string>
+    <string name="logs_filter_all">All</string>
+    <string name="logs_filter_today">Today</string>
+    <string name="logs_filter_week">7 days</string>
+    <string name="logs_filter_month">30 days</string>
+    <string name="logs_result_skipped">Skipped</string>
+    <string name="logs_empty_share">Nothing to share yet</string>
+    <string name="logs_share_title">Share skip history</string>
+    <string name="logs_empty_title">No skip records</string>
+    <string name="logs_clear_confirm_title">Clear all records?</string>
+    <string name="logs_clear_confirm_message">This cannot be undone, but you can undo it from the snackbar.</string>
+    <string name="profile_user_placeholder">User 123456</string>
+    <string name="profile_premium_badge">Premium member</string>
+    <string name="profile_row_service">Service settings</string>
+    <string name="profile_row_service_desc">Accessibility · Keep-alive · Permissions</string>
+    <string name="profile_row_cloud">Cloud sync</string>
+    <string name="profile_row_cloud_desc">Rule backup · Device sync</string>
+    <string name="profile_row_privacy">Privacy &amp; security</string>
+    <string name="profile_row_privacy_desc">Data privacy · Permission details</string>
+    <string name="profile_row_language">Language</string>
+    <string name="profile_row_about">About us</string>
+    <string name="onboarding_subtitle">A cleaner experience for the apps you love</string>
+    <string name="onboarding_point_1">Detects ad content automatically</string>
+    <string name="onboarding_point_2">Multiple safety guardrails</string>
+    <string name="onboarding_point_3">Local records, controllable privacy</string>
+    <string name="onboarding_point_4">Cloud rule sync supported</string>
+    <string name="onboarding_start">Get started</string>
+    <string name="onboarding_badge">Blocked</string>
+    <string name="action_back">Back</string>
+    <string name="action_share">Share</string>
 </resources>

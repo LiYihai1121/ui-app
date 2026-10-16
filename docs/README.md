@@ -26,6 +26,10 @@ docs/
 │   ├── DESIGN-ARCH-REVIEW.md      整体架构评审与技术设计（含 P1/P2 落地修复规格）
 │   ├── DESIGN-BUILD-FRAMEWORK.md  构建框架工程化（version catalog / build-logic / 模块拆分）
 │   ├── DESIGN-ARCH-EVOLUTION.md   架构演进计划（R1 多模块化 / R2 SQLite 存储 / R3 部署）
+│   ├── DESIGN-MODULE-REARCH.md    分层与模块化重构技术设计（覆盖率驱动 · 能力层模块化 · ADR）
+│   ├── DESIGN-UI-REVIEW.md        客户端 UI 设计评审与重构方案（问题清单 / 令牌与组件重构 / 验收门禁）
+│   ├── DESIGN-UI-V4.md            客户端 UI v4 设计还原与交互规格（六模块功能 · 交互流程 · 边界 · 差异清单）
+│   ├── PLAN-OFFLINE-SYNC.md       离线缓存与数据同步整体重设计实施计划（计划书，未评审）
 │   ├── ROADMAP-ADS-VERIFY.md      能力边界「不做限制」：外部证据 / 风险评估 / 门禁验证记录
 │   ├── FOLLOW-UP.md               安全加固与技术补充计划（已修复清单 / 待修复 / 里程碑）
 │   └── RELEASE-HISTORY.md         发布链路（tag / 提交 / Release / 制品）
@@ -51,6 +55,10 @@ docs/
 | 查「不做限制」边界变更的证据、风险评估与验证数字 | [planning/ROADMAP-ADS-VERIFY.md](planning/ROADMAP-ADS-VERIFY.md) |
 | 了解构建框架演进方案（version catalog / 约定插件 / 模块拆分） | [planning/DESIGN-BUILD-FRAMEWORK.md](planning/DESIGN-BUILD-FRAMEWORK.md) |
 | 了解前后端架构演进方向与技术选型（R1–R3） | [planning/DESIGN-ARCH-EVOLUTION.md](planning/DESIGN-ARCH-EVOLUTION.md) |
+| 评审分层/模块化重构路线（覆盖率驱动 · 能力层模块边界 · 迁移顺序） | [planning/DESIGN-MODULE-REARCH.md](planning/DESIGN-MODULE-REARCH.md) |
+| 评审客户端 UI 设计、查重构依据与验收门禁 | [planning/DESIGN-UI-REVIEW.md](planning/DESIGN-UI-REVIEW.md) |
+| 实现/评审当前 UI（v4 蓝色方案）：模块功能、交互流程、边界处理、与设计图的差异 | [planning/DESIGN-UI-V4.md](planning/DESIGN-UI-V4.md) |
+| 查离线缓存与数据同步重设计的实施计划（未评审） | [planning/PLAN-OFFLINE-SYNC.md](planning/PLAN-OFFLINE-SYNC.md) |
 | 配置本机开发环境 | [development/DEV-ENVIRONMENT.md](development/DEV-ENVIRONMENT.md) |
 | 查某版本发布到哪个提交、哪个 tag | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) |
 | 查安全加固/技术短板跟进计划（已修复清单 / 待修复 / 里程碑） | [planning/FOLLOW-UP.md](planning/FOLLOW-UP.md) |
@@ -72,6 +80,9 @@ docs/
 | L2 DNS、L3 Root、L4 通知治理边界与 Phase 0 决策提案 | [planning/DESIGN-ADS-FILTERING.md](planning/DESIGN-ADS-FILTERING.md) | 提案不代表正式合规批准；L2/L3 仍禁用 |
 | 构建框架演进方案（version catalog / build-logic / 模块拆分） | [planning/DESIGN-BUILD-FRAMEWORK.md](planning/DESIGN-BUILD-FRAMEWORK.md) | 本页不复制其坑位清单；
 | 架构演进（客户端多模块化 / 服务端存储 / 部署） | [planning/DESIGN-ARCH-EVOLUTION.md](planning/DESIGN-ARCH-EVOLUTION.md) | 引用 ROADMAP 版本号；与 L1–L5 能力里程碑的合并点见其第 7 节 |目录结构的**已生效**规则见 [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) 第 2.2 节 |
+| 分层/模块化重构路线（覆盖率驱动 · 能力层模块边界） | [planning/DESIGN-MODULE-REARCH.md](planning/DESIGN-MODULE-REARCH.md) | 其为 [planning/DESIGN-ARCH-EVOLUTION.md](planning/DESIGN-ARCH-EVOLUTION.md) 的 R1 动机重述与范围扩展；模块拆分蓝图仍以 [planning/DESIGN-BUILD-FRAMEWORK.md](planning/DESIGN-BUILD-FRAMEWORK.md) 阶段 C 为准 |
+| 客户端 UI 设计规范与本次重构决策（三态状态语义 / 令牌与组件契约） | [planning/DESIGN-UI-REVIEW.md](planning/DESIGN-UI-REVIEW.md) | 表现层（`ui/`）的唯一评审记录；间距与颜色契约由 `UiContractTest` / `ColorSchemeContractTest` 机器强制 |
+| 客户端 UI 的**当前**落地规格（v4：六模块功能 / 交互流程 / 边界 / 差异清单） | [planning/DESIGN-UI-V4.md](planning/DESIGN-UI-V4.md) | 表现层的现行事实源；v3 评审记录（DESIGN-UI-REVIEW）保留为历史依据，两者冲突时以本文为准 |
 | 已发布版本链路（tag / 提交 / Release / 制品） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) | CHANGELOG 只记用户可见变更，不复述链路 |
 | 协议与接口 | [api/API.md](api/API.md) + [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md)（第 7 节） | DESIGN 只描述增量字段 |
 | 客户端/服务端分层与模块职责 | [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) | README 只给目录树摘要 |
@@ -118,7 +129,7 @@ docs/
 | `api/` | 对外接口、数据格式与协议契约 | `API[-<TOPIC>].md` | `API.md` |
 | `architecture/` | 系统架构、模块职责与边界 | `ARCHITECTURE[-<TOPIC>].md` | `ARCHITECTURE.md` |
 | `development/` | 开发环境和协作流程；环境类用 `DEV`，协作类用 `AGENT` | `<DEV\|AGENT>-<TOPIC>.md` | `DEV-ENVIRONMENT.md`、`AGENT-WORKFLOW.md` |
-| `planning/` | 路线图、技术设计、跟进事项和发布记录 | `ROADMAP[-<TOPIC>].md`、`DESIGN-<TOPIC>.md`、`FOLLOW-UP[-<TOPIC>].md`、`RELEASE[-<TOPIC>].md` | `ROADMAP-ADS.md`、`DESIGN-PHASE1-SELECTOR.md`、`FOLLOW-UP.md`、`RELEASE-HISTORY.md` |
+| `planning/` | 路线图、技术设计、实施计划、跟进事项和发布记录 | `ROADMAP[-<TOPIC>].md`、`DESIGN-<TOPIC>.md`、`PLAN-<TOPIC>.md`、`FOLLOW-UP[-<TOPIC>].md`、`RELEASE[-<TOPIC>].md` | `ROADMAP-ADS.md`、`DESIGN-PHASE1-SELECTOR.md`、`PLAN-OFFLINE-SYNC.md`、`FOLLOW-UP.md`、`RELEASE-HISTORY.md` |
 | `guide/`（按需创建） | 面向用户或贡献者的操作指南 | `GUIDE-<TOPIC>.md` | `GUIDE-RULE-AUTHORING.md` |
 | `testing/`（已创建） | 真机验收计划与测试记录 | `[A-Z0-9][-A-Z0-9]*.md` | `TOP30-REAL-DEVICE-ACCEPTANCE.md` |
 

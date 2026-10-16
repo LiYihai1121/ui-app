@@ -39,8 +39,21 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     ) {
         val testActive: Boolean get() = fakeAdVisible
 
-        /** 服务已确认开启。UNKNOWN 不算开启，避免拿不确定的状态去承诺功能可用。 */
+        /**
+         * 服务已确认开启。UNKNOWN 不算开启，避免拿不确定的状态去承诺功能可用。
+         */
         val serviceRunning: Boolean get() = accessibilityStatus == AccessibilityStatus.ON
+
+        /**
+         * 服务状态**无法确认**（既不是确定开、也不是确定关）。
+         *
+         * 为什么单列这一个投影而不是只留 [serviceRunning]：
+         * 旧版把 UNKNOWN 与 OFF 都渲染成同一句「服务未开启」，用户看到红色结论后
+         * 会去点开系统设置重开服务——但 UNKNOWN 的真实成因是**读不到系统状态**
+         * （无权限、系统查询失败），重开服务没有用，真正要做的是人工核对。
+         * 把两态压成一态，等于给用户指了一条走不通的路。
+         */
+        val accessibilityUnknown: Boolean get() = accessibilityStatus == AccessibilityStatus.UNKNOWN
     }
 
     private val _uiState = MutableStateFlow(UiState())

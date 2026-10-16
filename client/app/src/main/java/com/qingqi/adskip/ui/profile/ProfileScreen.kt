@@ -2,8 +2,11 @@ package com.qingqi.adskip.ui.profile
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,75 +19,85 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qingqi.adskip.R
 import com.qingqi.adskip.device.KeepAliveNavigator
+import com.qingqi.adskip.device.LanguageMode
 import com.qingqi.adskip.device.PermissionKeys
 import com.qingqi.adskip.device.Vendor
 import com.qingqi.adskip.ui.Messenger
-import com.qingqi.adskip.ui.components.InfoDivider
+import com.qingqi.adskip.ui.components.FullDivider
 import com.qingqi.adskip.ui.components.InfoRow
 import com.qingqi.adskip.ui.components.PageHeader
 import com.qingqi.adskip.ui.components.SectionCard
-import com.qingqi.adskip.ui.components.SectionHint
-import com.qingqi.adskip.ui.components.SectionTitle
-import com.qingqi.adskip.ui.components.StatTile
+import com.qingqi.adskip.ui.components.SettingRow
+import com.qingqi.adskip.ui.components.TagBadge
 import com.qingqi.adskip.ui.settings.SettingsContent
+import com.qingqi.adskip.ui.settings.SettingsViewModel
+import com.qingqi.adskip.ui.theme.BadgeGold
+import com.qingqi.adskip.ui.theme.BadgeGoldContainer
 import com.qingqi.adskip.ui.theme.Spacing
 import com.qingqi.adskip.ui.theme.UiSizes
 import com.qingqi.adskip.ui.theme.icons.AdSkipIcons
 
+/** 可展开的设置分组。同一时刻只展开一个，避免页面被无限拉长。 */
+private enum class SettingSection { SERVICE, CLOUD, PRIVACY, LANGUAGE, ABOUT }
+
 /**
- * 「我的」页：本机使用概览 + 无障碍入口 + 设置 + 应用与设备信息。
+ * 「我的」页（v4 设计稿，页面标题为「设置」）。
  *
- * 自 v3.2 起本页取代原独立的「设置」一级页面（底部导航由 5 项收敛为 4 项），
- * 依据是设置与「关于本机」本就属同一心智模型，分成两页会让用户为改一个
- * 免打扰时段而去名为「设置」的第三个页签。设置内容经 [SettingsContent] 内嵌，
- * 复用其 ViewModel 与全部既有逻辑，不做复制。
+ * 版式：用户卡 → 五行设置项。与 v3 的差别是本页从「四个区块 + 内嵌全部设置」
+ * 收敛为**一条索引**：v3 把权限清单、统计、全部设置项、关于信息全部铺在一屏，
+ * 结果是首屏要滑很久才能看到「语言设置」这类高频项。
  *
- * 版式沿用 v3.1 重设计的约定：
- * - 页面自身**不**创建 `Scaffold`，inset 由外壳统一分发；
- * - 卡片走 [SectionCard]，标题走 [SectionTitle]，不各页自行 new `Card`；
- * - 状态（服务开/关）只用一种强调色表达，其余一律中性色。
+ * **为什么是「行内展开」而不是「跳到二级页」**：设计稿的每一行都带 `>`，
+ * 暗示进入下一层。本实现改为行内展开——原因是本应用的全部设置项
+ * 共用同一个 [SettingsViewModel] 与同一份状态，为「云端同步」单独开一个
+ * NavHost 目的地会引入第二份状态来源；行内展开让「设置」始终只有一屏状态。
+ * 静止态与设计稿一致（用户卡 + 五行），展开态是设计稿未覆盖的补充。
+ *
+ * 无障碍设置入口仍经 `device/KeepAliveNavigator`（UI 不自行拼 Intent）。
  */
 @Composable
-fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory)) {
+fun ProfileScreen(
+    messenger: Messenger,
+    viewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory),
+    settingsViewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val settings by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val tileLabel = stringResource(R.string.tile_label)
+    var expanded by remember { mutableStateOf<SettingSection?>(null) }
 
     // 每次回到前台都重读：统计可能已变化，且用户可能刚跳去系统无障碍设置改了开关。
-    // 用 ON_RESUME 而非 LaunchedEffect(Unit)——后者只在首次进入组合时跑一次，
-    // 从系统设置返回时 Activity 并未重建，过期状态会被一直显示下去。
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refreshAccessibilityStatus()
         viewModel.refreshStats()
     }
 
-    /*
-     * 权限清单各行的跳转出口。
-     *
-     * 统一经 device/KeepAliveNavigator（系统入口的唯一出口，含可解析性探测与降级），
-     * UI 不自行拼 Intent。失败时给出「手动路径」提示，而不是静默无事发生。
-     */
     val onOpenPermission: (String) -> Unit = { key ->
         val vendorName = viewModel.vendorName(state.vendor)
         when (key) {
@@ -102,167 +115,244 @@ fun ProfileScreen(messenger: Messenger, viewModel: ProfileViewModel = viewModel(
 
             PermissionKeys.VENDOR_KEEPALIVE -> {
                 val opened = KeepAliveNavigator.openKeepAliveSettings(context) != null
-                val res = if (opened) {
-                    R.string.settings_keepalive_opened
-                } else {
-                    R.string.settings_keepalive_failed
-                }
+                val res = if (opened) R.string.settings_keepalive_opened else R.string.settings_keepalive_failed
                 messenger.show(context.getString(res, vendorName))
             }
 
             PermissionKeys.QUICK_TILE -> {
-                // 低版本无法主动请求添加，退化为文案引导（文案已含手动路径）。
                 messenger.show(context.getString(R.string.settings_tile_manual, tileLabel))
             }
         }
     }
+
     Column(modifier = Modifier.fillMaxSize()) {
-        PageHeader(
-            title = stringResource(R.string.profile_title),
-            subtitle = stringResource(R.string.profile_subtitle),
-        )
+        PageHeader(title = stringResource(R.string.profile_title))
 
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .imePadding(),
             contentPadding = PaddingValues(start = Spacing.lg, end = Spacing.lg, bottom = Spacing.xl),
-            verticalArrangement = Arrangement.spacedBy(Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            /*
-             * 「我的」页承载四类互不相干的内容，顺序按**用户来访目的**排：
-             *
-             * 1. 权限与系统开关 —— 最高优先。它回答「这个应用到底工作了吗」，
-             *    是唯一会阻塞全部功能的内容；权限没配好，下面三项都没有意义。
-             * 2. 使用概览 —— 「它替我跳过了多少」，功能生效的正反馈。
-             * 3. 设置 —— 用户会反复回来调整的高频项（云端规则 / 免打扰）。
-             * 4. 关于 —— 版本号、设备型号，基本只在遇到问题时才看，放最后。
-             *
-             * 此前的顺序把权限卡排在设置之后：一个「还没配好」的权限清单被压在两屏
-             * 之外，而设置项在功能未生效时几乎都是无效配置。
-             */
+            item { UserCard(totalSkips = state.totalSkips, activeApps = state.activeAppCount) }
+
             item {
-                PermissionCard(
-                    items = state.permissionItems,
-                    readyCount = state.permissionReadyCount,
-                    onOpen = { key -> onOpenPermission(key) },
-                )
+                SectionCard(contentPadding = PaddingValues(vertical = Spacing.xs)) {
+                    SettingRow(
+                        icon = AdSkipIcons.Settings,
+                        title = stringResource(R.string.profile_row_service),
+                        subtitle = stringResource(R.string.profile_row_service_desc),
+                        onClick = { expanded = expanded.toggle(SettingSection.SERVICE) },
+                    )
+                    RowDividerThin()
+                    SettingRow(
+                        icon = AdSkipIcons.Server,
+                        title = stringResource(R.string.profile_row_cloud),
+                        subtitle = stringResource(R.string.profile_row_cloud_desc),
+                        onClick = { expanded = expanded.toggle(SettingSection.CLOUD) },
+                    )
+                    RowDividerThin()
+                    SettingRow(
+                        icon = AdSkipIcons.Shield,
+                        title = stringResource(R.string.profile_row_privacy),
+                        subtitle = stringResource(R.string.profile_row_privacy_desc),
+                        onClick = { expanded = expanded.toggle(SettingSection.PRIVACY) },
+                    )
+                    RowDividerThin()
+                    SettingRow(
+                        icon = AdSkipIcons.Globe,
+                        title = stringResource(R.string.profile_row_language),
+                        subtitle = stringResource(settings.language.labelRes()),
+                        onClick = { expanded = expanded.toggle(SettingSection.LANGUAGE) },
+                    )
+                    RowDividerThin()
+                    SettingRow(
+                        icon = AdSkipIcons.Info,
+                        title = stringResource(R.string.profile_row_about),
+                        subtitle = state.versionDisplay.ifBlank { stringResource(R.string.profile_value_unknown) },
+                        onClick = { expanded = expanded.toggle(SettingSection.ABOUT) },
+                    )
+                }
             }
-            item { UsageCard(state = state) }
-            item { SettingsContent(messenger) }
+
             item {
-                AccessibilityCard(
-                    running = state.serviceRunning,
-                    onOpen = {
-                        // 系统入口统一经 device/ 层探测可解析性后降级，UI 不自行拼 Intent
-                        if (!KeepAliveNavigator.openAccessibilitySettings(context)) {
-                            messenger.show(context.getString(R.string.settings_open_failed))
+                AnimatedVisibility(visible = expanded == SettingSection.SERVICE) {
+                    PermissionCard(
+                        items = state.permissionItems,
+                        readyCount = state.permissionReadyCount,
+                        onOpen = onOpenPermission,
+                    )
+                }
+            }
+
+            item {
+                AnimatedVisibility(visible = expanded == SettingSection.CLOUD) {
+                    SettingsContent(messenger)
+                }
+            }
+
+            item {
+                AnimatedVisibility(visible = expanded == SettingSection.PRIVACY) {
+                    SectionCard {
+                        Text(
+                            text = stringResource(R.string.profile_privacy_hint),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+
+            item {
+                AnimatedVisibility(visible = expanded == SettingSection.LANGUAGE) {
+                    SectionCard(contentPadding = PaddingValues(vertical = Spacing.xs)) {
+                        LanguageMode.entries.forEach { mode ->
+                            LanguageOptionRow(
+                                mode = mode,
+                                selected = settings.language == mode,
+                                onSelect = { settingsViewModel.setLanguage(mode) },
+                            )
                         }
-                    },
-                )
+                    }
+                }
             }
-            item { AboutCard(state = state, vendorName = viewModel::vendorName) }
+
+            item {
+                AnimatedVisibility(visible = expanded == SettingSection.ABOUT) {
+                    AboutCard(state = state, vendorName = viewModel::vendorName)
+                }
+            }
         }
     }
+}
+
+/** 展开/收起切换：点已展开的那一行则收起。 */
+private fun SettingSection?.toggle(target: SettingSection): SettingSection? = if (this == target) null else target
+
+/** 语言模式 → 显示名。与设置页各自持有的私有映射同源（都指向同一组文案）。 */
+private fun LanguageMode.labelRes(): Int = when (this) {
+    LanguageMode.SYSTEM -> R.string.language_system
+    LanguageMode.CHINESE -> R.string.language_zh
+    LanguageMode.ENGLISH -> R.string.language_en
 }
 
 /**
- * 无障碍服务入口卡片。
+ * 用户卡：头像 + 用户名 + 会员徽章 + 使用概览。
  *
- * 与权限清单的分工：清单里的「无障碍服务」行只报**状态**（并且刻意不带行内按钮），
- * 本卡片是它唯一的**行动入口**，服务被系统强杀后用户落到「我的」页可少一次返回。
- *
- * 这里只显示状态结论（「服务未开启 / 服务运行中」）。早期它还重复渲染整句
- * `status_off_hint`，与清单行的状态描述叠在同一屏讲同一件事；去掉重复后，
- * 清单行 → 本卡片的视觉动线变成「是什么状态 → 怎么改变它」。
- *
- * 按钮用 tonal 而非 filled：首页已经把「去开启服务」做成全应用唯一的主行动，
- * 本页作为第二入口再用 filled 会在同一屏里出现两个同权重的 filled 按钮，
- * 把首页建立的优先级抹平。
+ * 头像用「底衬 + 人像图形」而不是位图：设计稿是一张真实照片，本应用没有账号体系、
+ * 也就没有头像来源，引入网络图片会与「本地优先、隐私可控」直接冲突。
+ * 见交付说明的图标替换差异。
  */
 @Composable
-private fun AccessibilityCard(running: Boolean, onOpen: () -> Unit) {
+private fun UserCard(totalSkips: Int, activeApps: Int) {
     SectionCard {
-        SectionTitle(
-            stringResource(if (running) R.string.status_on else R.string.status_off),
-        )
-        Spacer(Modifier.height(Spacing.lg))
-        FilledTonalButton(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.btn_open_settings))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(UiSizes.avatar)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = AdSkipIcons.Profile,
+                    contentDescription = null,
+                    modifier = Modifier.size(UiSizes.rowIcon),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+            Spacer(Modifier.width(Spacing.md))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.profile_user_placeholder),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(Spacing.xs))
+                TagBadge(
+                    text = stringResource(R.string.profile_premium_badge),
+                    containerColor = BadgeGoldContainer,
+                    contentColor = BadgeGold,
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = totalSkips.toString(),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = stringResource(R.string.profile_active_apps_label, activeApps),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
 
+/** 语言选项行：单选。整行可点，读屏念「简体中文，已选中，单选按钮」。 */
 @Composable
-private fun UsageCard(state: ProfileViewModel.UiState) {
-    SectionCard {
-        SectionTitle(stringResource(R.string.profile_usage_section))
-        Spacer(Modifier.height(Spacing.lg))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.lg),
-        ) {
-            StatTile(
-                value = state.totalSkips.toString(),
-                label = stringResource(R.string.stats_total_label),
-                modifier = Modifier.weight(1f),
-            )
-            StatTile(
-                value = state.activeAppCount.toString(),
-                label = stringResource(R.string.profile_active_apps_label),
-                modifier = Modifier.weight(1f),
-            )
-        }
-        // 此处不再重复「服务运行中 / 未开启」的状态提示：同一句话在首页状态卡已经
-        // 出现过，页脚再写一遍只会让概览卡变长而不增加信息。服务状态属于「做什么」
-        // 而不是「用得怎么样」，后者才是概览该回答的。
+private fun LanguageOptionRow(mode: LanguageMode, selected: Boolean, onSelect: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onSelect)
+            .padding(horizontal = Spacing.lg, vertical = Spacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Spacer(Modifier.width(Spacing.md))
+        Text(
+            text = stringResource(mode.labelRes()),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 
+/** 关于卡：版本与设备信息 + 外链。 */
 @Composable
 private fun AboutCard(state: ProfileViewModel.UiState, vendorName: (Vendor) -> String) {
-    SectionCard {
-        SectionTitle(stringResource(R.string.profile_about_section))
-        Spacer(Modifier.height(Spacing.sm))
-
+    SectionCard(contentPadding = PaddingValues(vertical = Spacing.xs)) {
         InfoRow(
             label = stringResource(R.string.profile_version_label),
             value = state.versionDisplay.ifBlank { stringResource(R.string.profile_value_unknown) },
         )
-        InfoDivider()
+        FullDivider()
         InfoRow(
             label = stringResource(R.string.profile_android_label),
             value = state.androidVersion.ifBlank { stringResource(R.string.profile_value_unknown) },
         )
-        InfoDivider()
+        FullDivider()
         InfoRow(
             label = stringResource(R.string.profile_device_label),
             value = state.deviceModel.ifBlank { stringResource(R.string.profile_value_unknown) },
         )
-        InfoDivider()
+        FullDivider()
         InfoRow(
             label = stringResource(R.string.profile_vendor_label),
             value = vendorName(state.vendor),
         )
-        InfoDivider()
+        FullDivider()
         LinkRow(
             icon = AdSkipIcons.Globe,
             label = stringResource(R.string.profile_link_project),
             url = PROJECT_URL,
         )
-        InfoDivider()
+        FullDivider()
         LinkRow(
             icon = AdSkipIcons.Feedback,
             label = stringResource(R.string.profile_link_feedback),
             url = FEEDBACK_URL,
         )
-
-        Spacer(Modifier.height(Spacing.md))
-        SectionHint(stringResource(R.string.profile_privacy_hint))
     }
 }
 
-/** 开源项目主页与问题反馈入口（应用商店若上架，可在此同步补充）。 */
+/** 开源项目主页与问题反馈入口。 */
 private const val PROJECT_URL = "https://github.com/LiYihai1121/ui-app"
 private const val FEEDBACK_URL = "https://github.com/LiYihai1121/ui-app/issues"
 
@@ -284,7 +374,7 @@ private fun LinkRow(icon: ImageVector, label: String, url: String) {
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 }
             }
-            .padding(vertical = Spacing.sm),
+            .padding(horizontal = Spacing.lg, vertical = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -298,6 +388,14 @@ private fun LinkRow(icon: ImageVector, label: String, url: String) {
             text = label,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
+}
+
+/** 卡片内的细分隔线（两侧各内缩一个卡片内边距）。 */
+@Composable
+private fun RowDividerThin() {
+    FullDivider(modifier = Modifier.padding(horizontal = Spacing.lg))
 }

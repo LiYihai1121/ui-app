@@ -2,8 +2,10 @@ package com.qingqi.adskip.ui.settings
 
 import android.app.Activity
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,10 +17,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -34,7 +36,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -48,6 +49,7 @@ import com.qingqi.adskip.ui.Messenger
 import com.qingqi.adskip.ui.UiEffect
 import com.qingqi.adskip.ui.components.LabeledChoiceRow
 import com.qingqi.adskip.ui.components.LabeledSwitch
+import com.qingqi.adskip.ui.components.RowDivider
 import com.qingqi.adskip.ui.components.SectionCard
 import com.qingqi.adskip.ui.components.SectionHint
 import com.qingqi.adskip.ui.components.SectionTitle
@@ -128,7 +130,9 @@ fun SettingsContent(
 
         SectionCard {
             SectionTitle(stringResource(R.string.settings_cloud_section))
-            Spacer(Modifier.height(Spacing.md))
+            Spacer(Modifier.height(Spacing.sm))
+            SectionHint(stringResource(R.string.settings_desc))
+            Spacer(Modifier.height(Spacing.lg))
             OutlinedTextField(
                 value = state.serverUrlInput,
                 onValueChange = viewModel::onServerUrlChanged,
@@ -136,6 +140,7 @@ fun SettingsContent(
                 label = { Text(stringResource(R.string.settings_server_label)) },
                 placeholder = { Text(stringResource(R.string.settings_server_hint)) },
                 singleLine = true,
+                shape = MaterialTheme.shapes.small,
             )
             Spacer(Modifier.height(Spacing.md))
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
@@ -156,7 +161,11 @@ fun SettingsContent(
             }
             state.syncResult?.let {
                 Spacer(Modifier.height(Spacing.md))
-                Text(text = it, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
             }
             Spacer(Modifier.height(Spacing.sm))
             Text(
@@ -171,23 +180,29 @@ fun SettingsContent(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(Spacing.sm))
             if (state.isCleartextServer) {
-                Text(
-                    text = stringResource(R.string.settings_cleartext_warning),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                )
-                Spacer(Modifier.height(Spacing.sm))
+                Spacer(Modifier.height(Spacing.md))
+                // 明文告警从「一行红字」升级为带容器底的警示条：它是**安全风险**，
+                // 不是校验错误。一行与正文同字号的红色文字在长卡片里会被直接略过。
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.errorContainer,
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_cleartext_warning),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.padding(Spacing.md),
+                    )
+                }
             }
-            SectionHint(stringResource(R.string.settings_desc))
         }
 
         SectionCard {
             SectionTitle(stringResource(R.string.settings_security_section))
             Spacer(Modifier.height(Spacing.sm))
             SectionHint(stringResource(R.string.settings_security_desc))
-            Spacer(Modifier.height(Spacing.md))
+            Spacer(Modifier.height(Spacing.lg))
             OutlinedTextField(
                 value = state.signingKeyInput,
                 onValueChange = viewModel::onSigningKeyChanged,
@@ -195,6 +210,7 @@ fun SettingsContent(
                 label = { Text(stringResource(R.string.settings_signing_key_label)) },
                 placeholder = { Text(stringResource(R.string.settings_signing_key_hint)) },
                 singleLine = true,
+                shape = MaterialTheme.shapes.small,
                 visualTransformation = PasswordVisualTransformation(),
             )
             Spacer(Modifier.height(Spacing.md))
@@ -205,6 +221,7 @@ fun SettingsContent(
                 label = { Text(stringResource(R.string.settings_cert_pins_label)) },
                 placeholder = { Text(stringResource(R.string.settings_cert_pins_hint)) },
                 minLines = 2,
+                shape = MaterialTheme.shapes.small,
             )
             Spacer(Modifier.height(Spacing.md))
             FilledTonalButton(
@@ -214,39 +231,56 @@ fun SettingsContent(
             }
         }
 
-        SectionCard {
-            SectionTitle(stringResource(R.string.settings_schedule_section))
-            // 统一走 components/LabeledSwitch：此前本页自带的 SwitchRow 只让开关本身
-            // 可点，而 LabeledSwitch 整行可点（命中区域远大于开关）。同一个「设置开关」
-            // 在应用列表里整行可点、在设置页只能点小开关，用户会当成其中一个是 bug。
+        SectionCard(contentPadding = PaddingValues(vertical = Spacing.xs)) {
+            SectionTitle(
+                text = stringResource(R.string.settings_schedule_section),
+                modifier = Modifier.padding(
+                    start = Spacing.lg2,
+                    top = Spacing.md,
+                    bottom = Spacing.sm,
+                ),
+            )
             LabeledSwitch(
                 title = stringResource(R.string.settings_auto_sync),
                 checked = state.autoSync,
                 onCheckedChange = viewModel::setAutoSync,
                 icon = AdSkipIcons.Clock,
             )
-            HorizontalDivider(Modifier.padding(vertical = Spacing.sm))
+            RowDivider(startIndent = Spacing.md)
             LabeledSwitch(
                 title = stringResource(R.string.settings_dnd),
                 checked = state.dndEnabled,
                 onCheckedChange = viewModel::setDndEnabled,
                 icon = AdSkipIcons.Moon,
             )
-            Spacer(Modifier.height(Spacing.md))
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                FilledTonalButton(onClick = { pickingStart = true }, enabled = state.dndEnabled) {
-                    Text(stringResource(R.string.settings_dnd_start))
-                }
-                FilledTonalButton(onClick = { pickingEnd = true }, enabled = state.dndEnabled) {
-                    Text(stringResource(R.string.settings_dnd_end))
+            // 免打扰时段：开关打开后才展开时段选择。
+            // 旧版把两个时段按钮与时段文本**始终**渲染，开关关着时它们只是变灰——
+            // 用户看到两个禁用的按钮会以为缺少权限，而不是「先打开上面的开关」。
+            // 改为按需展开后，「先开开关再选时段」这个因果由布局直接表达。
+            AnimatedVisibility(visible = state.dndEnabled) {
+                Column(modifier = Modifier.padding(start = Spacing.lg2, end = Spacing.lg2, bottom = Spacing.md)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                        FilledTonalButton(
+                            onClick = { pickingStart = true },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(stringResource(R.string.settings_dnd_start))
+                        }
+                        FilledTonalButton(
+                            onClick = { pickingEnd = true },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(stringResource(R.string.settings_dnd_end))
+                        }
+                    }
+                    Spacer(Modifier.height(Spacing.sm))
+                    Text(
+                        text = formatMinuteRange(state.dndStartMinute, state.dndEndMinute),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
-            Spacer(Modifier.height(Spacing.sm))
-            Text(
-                text = formatMinuteRange(state.dndStartMinute, state.dndEndMinute),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
 
         SectionCard {
@@ -258,19 +292,22 @@ fun SettingsContent(
                     stringResource(vendorLabelRes(state.keepAliveVendor)),
                 ),
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(Spacing.sm))
             SectionHint(stringResource(R.string.settings_keepalive_hint))
             Spacer(Modifier.height(Spacing.lg))
-            Button(
+            // 两个动作从 filled Button 降为 FilledTonalButton：本屏里已经有
+            // 云端同步、保存安全配置等真正的 filled 主操作，保活跳转是「建议操作」，
+            // 一屏出现四个同权重实心按钮会把真正的主操作淹没。
+            FilledTonalButton(
                 onClick = viewModel::openKeepAliveSettings,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.settings_keepalive_open))
             }
             Spacer(Modifier.height(Spacing.md))
-            Button(
+            FilledTonalButton(
                 onClick = { KeepAliveNavigator.openBatteryOptimizationSettings(context) },
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -285,7 +322,8 @@ fun SettingsContent(
                 )
             }
             Spacer(Modifier.height(Spacing.lg))
-            HorizontalDivider(Modifier.padding(bottom = Spacing.lg))
+            RowDivider(startIndent = 0.dp)
+            Spacer(Modifier.height(Spacing.lg))
             SectionHint(
                 stringResource(
                     R.string.settings_tile_hint,
@@ -293,7 +331,7 @@ fun SettingsContent(
                 ),
             )
             Spacer(Modifier.height(Spacing.lg))
-            Button(
+            FilledTonalButton(
                 onClick = viewModel::requestAddTile,
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -304,12 +342,8 @@ fun SettingsContent(
         SectionCard {
             SectionTitle(stringResource(R.string.settings_snapshot_section))
             Spacer(Modifier.height(Spacing.sm))
-            Text(
-                text = stringResource(R.string.settings_snapshot_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(Spacing.md))
+            SectionHint(stringResource(R.string.settings_snapshot_hint))
+            Spacer(Modifier.height(Spacing.lg))
             FilledTonalButton(
                 onClick = viewModel::exportNodeSnapshot,
                 modifier = Modifier.fillMaxWidth(),

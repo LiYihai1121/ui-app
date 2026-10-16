@@ -22,7 +22,13 @@ import androidx.compose.ui.unit.dp
  * - 24dp 视窗、2dp 描边、圆头圆角——与 Material line 图标同构，可无缝替换；
  * - 描边/填充统一用黑色占位，实际颜色由 `Icon(tint = …)` 注入
  *   （与 Material 图标相同的约定，保证随主题着色）；
- * - **禁止箭头语素**：不含箭头、纸飞机、chevron。指向性一律由布局与文案表达；
+ * - **箭头语素自 v4 起解禁（仅限 chevron）**：原规则为「禁止箭头 / 纸飞机 / chevron，
+ *   指向性一律由布局与文案表达」。v4 设计稿的每一处可点行尾都带 `>`，
+ *   这是移动端「整行可点」最通用的可发现性信号；去掉它会让设计稿里
+ *   「关键词行 / 设置行 / 应用行」的可点性只能靠用户试出来。
+ *   故**刻意**新增 [ChevronRight]，并把这条决定写在这里而非悄悄加一个图标。
+ *   其余箭头语素（返回箭头、纸飞机）仍在禁止之列——返回由系统返回键与
+ *   页面标题承担，分享由 [Share] 的三节点图形承担。
  * - 新增图标前先确认现库没有可复用语义；需要新图标时保持同一套几何语言
  *   （圆角矩形 + 圆弧 + 直线段）。
  */
@@ -488,6 +494,155 @@ object AdSkipIcons {
                 lineTo(15.7f, 12.2f)
                 moveTo(8.3f, 15f)
                 lineTo(12.9f, 15f)
+            }
+        }
+    }
+
+    // ==================== v4 设计稿新增 ====================
+
+    /**
+     * 右向指示符（chevron）。
+     *
+     * 见文件头「箭头语素自 v4 起解禁」——这是本次**刻意**引入的箭头类语素，
+     * 用于标记「整行可点」。仅在行尾作为可点性提示使用，不得用于导航返回。
+     */
+    val ChevronRight: ImageVector by lazy {
+        icon("AdSkip.ChevronRight") {
+            pathStroke {
+                moveTo(9.6f, 5.4f)
+                lineTo(16.2f, 12f)
+                lineTo(9.6f, 18.6f)
+            }
+        }
+    }
+
+    /**
+     * 左向指示符（返回）。
+     *
+     * 与 [ChevronRight] 同为本次刻意引入的箭头语素（见文件头说明）。
+     * 仅用于二级页的返回入口：系统返回键仍然工作，但「关键词管理」「应用管理」
+     * 这类从首页进入的页面必须给出可见的返回路径。
+     */
+    val ChevronLeft: ImageVector by lazy {
+        icon("AdSkip.ChevronLeft") {
+            pathStroke {
+                moveTo(14.4f, 5.4f)
+                lineTo(7.8f, 12f)
+                lineTo(14.4f, 18.6f)
+            }
+        }
+    }
+
+    /** 设置（齿轮）。圆心 + 八向齿。 */
+    val Settings: ImageVector by lazy {
+        icon("AdSkip.Settings") {
+            pathStroke {
+                moveTo(8.6f, 12f)
+                arcTo(3.4f, 3.4f, 0f, false, false, 15.4f, 12f)
+                arcTo(3.4f, 3.4f, 0f, false, false, 8.6f, 12f)
+                close()
+            }
+            pathStroke {
+                moveTo(12f, 4.4f)
+                lineTo(12f, 6.4f)
+                moveTo(12f, 17.6f)
+                lineTo(12f, 19.6f)
+                moveTo(4.4f, 12f)
+                lineTo(6.4f, 12f)
+                moveTo(17.6f, 12f)
+                lineTo(19.6f, 12f)
+                moveTo(6.6f, 6.6f)
+                lineTo(8f, 8f)
+                moveTo(16f, 16f)
+                lineTo(17.4f, 17.4f)
+                moveTo(17.4f, 6.6f)
+                lineTo(16f, 8f)
+                moveTo(8f, 16f)
+                lineTo(6.6f, 17.4f)
+            }
+        }
+    }
+
+    /** 对勾（完成 / 卖点列表）。 */
+    val Check: ImageVector by lazy {
+        icon("AdSkip.Check") {
+            pathStroke {
+                moveTo(5f, 12.6f)
+                lineTo(9.8f, 17.4f)
+                lineTo(19f, 7f)
+            }
+        }
+    }
+
+    /** 信息（圆形 + i，用于提示条）。 */
+    val Info: ImageVector by lazy {
+        icon("AdSkip.Info") {
+            pathStroke {
+                moveTo(3.6f, 12f)
+                arcTo(8.4f, 8.4f, 0f, false, false, 20.4f, 12f)
+                arcTo(8.4f, 8.4f, 0f, false, false, 3.6f, 12f)
+                close()
+                moveTo(12f, 11.2f)
+                lineTo(12f, 16.4f)
+            }
+            pathFill {
+                moveTo(12.95f, 8.2f)
+                arcTo(0.95f, 0.95f, 0f, false, false, 11.05f, 8.2f)
+                arcTo(0.95f, 0.95f, 0f, false, false, 12.95f, 8.2f)
+                close()
+            }
+        }
+    }
+
+    /**
+     * 规则（标签）。
+     *
+     * 为什么不复用 [Logs]：规则页与记录页在底栏相邻，两个「文档 + 摘要行」
+     * 图形并排会让用户无法靠形状区分（形状编码失效，只剩文字）。
+     * 标签图形与「关键词」这一语义也更贴近。
+     */
+    val Tag: ImageVector by lazy {
+        icon("AdSkip.Tag") {
+            pathStroke {
+                moveTo(11.4f, 4.4f)
+                lineTo(19.6f, 4.4f)
+                lineTo(19.6f, 12.6f)
+                lineTo(12.2f, 19.8f)
+                lineTo(4.2f, 11.8f)
+                close()
+            }
+            pathFill {
+                moveTo(16f, 8f)
+                arcTo(1.2f, 1.2f, 0f, false, false, 16f, 5.6f)
+                arcTo(1.2f, 1.2f, 0f, false, false, 16f, 8f)
+                close()
+            }
+        }
+    }
+
+    /** 火箭（模拟测试入口）。 */
+    val Rocket: ImageVector by lazy {
+        icon("AdSkip.Rocket") {
+            pathStroke {
+                moveTo(12f, 3.8f)
+                curveTo(15.6f, 6.6f, 16.8f, 11f, 15f, 15f)
+                lineTo(9f, 15f)
+                curveTo(7.2f, 11f, 8.4f, 6.6f, 12f, 3.8f)
+                close()
+                moveTo(9f, 15f)
+                lineTo(6.6f, 17.6f)
+                lineTo(6.6f, 19.4f)
+                lineTo(9.8f, 19.4f)
+                moveTo(15f, 15f)
+                lineTo(17.4f, 17.6f)
+                lineTo(17.4f, 19.4f)
+                lineTo(14.2f, 19.4f)
+            }
+            pathStroke {
+                moveTo(10.2f, 8.6f)
+                arcTo(1.8f, 1.8f, 0f, false, false, 13.8f, 8.6f)
+                arcTo(1.8f, 1.8f, 0f, false, false, 10.2f, 8.6f)
+                close()
             }
         }
     }

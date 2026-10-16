@@ -28,9 +28,12 @@ class ScreenHeaderContractTest {
 
     @Test
     fun `every top level screen renders a page header`() {
+        // v4 起首页改用 AppHeader（品牌标识 + 应用名 + 副标题 + 右上动作）：
+        // 它同样承担「我在哪一屏」的锚点职责，故两种头部都算合规。
         val missing = screens.filterNot { relative ->
             val file = File(uiRoot(), relative)
-            file.isFile && "PageHeader(" in file.readText()
+            val text = if (file.isFile) file.readText() else ""
+            "PageHeader(" in text || "AppHeader(" in text
         }
 
         assertTrue(
@@ -52,7 +55,9 @@ class ScreenHeaderContractTest {
 
         // 每个一级页面一个标题文案，与 nav_*（导航栏短标签）分开：
         // 导航标签受限于栏宽（「首页」两字），页面标题可以更完整。
-        val required = listOf("home_title", "apps_title", "logs_title", "profile_title")
+        // v4 起首页标题由 `app_name` 承担（品牌名即标题，见 AppHeader），
+        // 故这里改为校验四个**页面名**文案：记录 / 规则 / 应用管理 / 设置。
+        val required = listOf("apps_title", "logs_title", "rules_title", "profile_title")
         val missing = mutableListOf<String>()
         locales.forEach { locale ->
             val xml = File(resRoot, "$locale/strings.xml")
