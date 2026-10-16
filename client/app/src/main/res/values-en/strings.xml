@@ -76,21 +76,9 @@
     <!-- App Manager -->
     <string name="apps_title">App management</string>
     <string name="apps_hint">Toggle off to stop auto-skipping in that app</string>
-    <plurals name="apps_count">
-        <item quantity="one">Skipped %1$d time</item>
-        <item quantity="other">Skipped %1$d times</item>
-    </plurals>
-    <plurals name="apps_subtitle">
-        <item quantity="one">%1$d launchable app</item>
-        <item quantity="other">%1$d launchable apps</item>
-    </plurals>
 
     <!-- Skip Logs -->
     <string name="logs_title">Skip history</string>
-    <plurals name="logs_subtitle">
-        <item quantity="one">%1$d record</item>
-        <item quantity="other">%1$d records</item>
-    </plurals>
     <string name="logs_retention_note">Only the latest 200 records are kept</string>
     <string name="logs_empty_hint">Once the service is on, every auto-skip will show up here</string>
     <string name="logs_clear">Clear Logs</string>
@@ -238,8 +226,8 @@
     <string name="logs_empty_title">No skip records</string>
     <string name="logs_clear_confirm_title">Clear all records?</string>
     <string name="logs_clear_confirm_message">This cannot be undone, but you can undo it from the snackbar.</string>
-    <string name="profile_user_placeholder">User 123456</string>
-    <string name="profile_premium_badge">Premium member</string>
+    <string name="profile_local_user">Local user</string>
+    <string name="profile_local_only_hint">Data stays on this device</string>
     <string name="profile_row_service">Service settings</string>
     <string name="profile_row_service_desc">Accessibility · Keep-alive · Permissions</string>
     <string name="profile_row_cloud">Cloud sync</string>
@@ -257,4 +245,13 @@
     <string name="onboarding_badge">Blocked</string>
     <string name="action_back">Back</string>
     <string name="action_share">Share</string>
+    <string name="value_not_available">—</string>
+    <plurals name="apps_count">
+        <item quantity="one">Skipped %1$d time</item>
+        <item quantity="other">Skipped %1$d times</item>
+    </plurals>
+    <plurals name="logs_subtitle">
+        <item quantity="one">%1$d record</item>
+        <item quantity="other">%1$d records</item>
+    </plurals>
 </resources>

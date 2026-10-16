@@ -116,7 +116,7 @@ private data class TopLevelDestination(
 private val TopLevelDestinations = listOf(
     TopLevelDestination(Routes.HOME, R.string.nav_home, AdSkipIcons.Home, AdSkipIcons.HomeFilled),
     TopLevelDestination(Routes.LOGS, R.string.nav_logs, AdSkipIcons.Logs, AdSkipIcons.LogsFilled),
-    TopLevelDestination(Routes.RULES, R.string.nav_rules, AdSkipIcons.Tag, AdSkipIcons.Tag),
+    TopLevelDestination(Routes.RULES, R.string.nav_rules, AdSkipIcons.Tag, AdSkipIcons.TagFilled),
     TopLevelDestination(Routes.PROFILE, R.string.nav_profile, AdSkipIcons.Profile, AdSkipIcons.ProfileFilled),
 )
 

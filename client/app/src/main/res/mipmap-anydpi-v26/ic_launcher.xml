@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  自适应图标（品牌版 · 轻启）：背景（薄荷绿渐变）+ 前景（白色羽毛箭头）+ 单色层（Android 13+ 主题图标）。
+  自适应图标（品牌版 · 轻启）：背景（科技蓝渐变）+ 前景（白色羽毛箭头）+ 单色层（Android 13+ 主题图标）。
 
   三个图层缺一不可：
   - 缺 monochrome：Android 13+ 开启主题图标后，本应用不会出现在主题图标选择器里；
   - 缺 background/foreground：旧于 API 26 的系统无法渲染（minSdk 26，故无需位图回退）。
 
   图层来源（2026-10 美图设计室「方案2 · 轻羽掠影」）：
-  - background：drawable/ic_launcher_background.xml（#57E08E 品牌薄荷绿渐变）；
+  - background：drawable/ic_launcher_background.xml（科技蓝渐变，与 Color.kt Brand50 同轴）；
   - foreground / monochrome：drawable-nodpi/ic_launcher_foreground_logo.png 与
     ic_launcher_monochrome_logo.png，同一份白色剪影（单色层为纯黑，由系统按主题着色），
     由 2048px 设计源图提取，主体占 108dp 画布的 60%（落在 72/108 安全区内，

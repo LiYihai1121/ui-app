@@ -60,7 +60,6 @@ import com.qingqi.adskip.ui.theme.UiSizes
  * - [ConfirmDialog]：破坏性操作的二次确认；
  * - [TwoLineRow]：主标题 + 副标题的两行列表行；
  * - [SkeletonList]：首屏加载骨架，替代孤零零的转圈；
- * - [SegmentedFilter]：二选一的列表筛选（替代裸 FilterChip）。
  *
  * 用普通块注释而非 KDoc：这是「整个文件的说明」，写成 KDoc 会成为悬空注释。
  */

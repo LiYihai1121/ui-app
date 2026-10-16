@@ -54,10 +54,9 @@ import com.qingqi.adskip.ui.components.PageHeader
 import com.qingqi.adskip.ui.components.SectionCard
 import com.qingqi.adskip.ui.components.SettingRow
 import com.qingqi.adskip.ui.components.TagBadge
+import com.qingqi.adskip.ui.labelRes
 import com.qingqi.adskip.ui.settings.SettingsContent
 import com.qingqi.adskip.ui.settings.SettingsViewModel
-import com.qingqi.adskip.ui.theme.BadgeGold
-import com.qingqi.adskip.ui.theme.BadgeGoldContainer
 import com.qingqi.adskip.ui.theme.Spacing
 import com.qingqi.adskip.ui.theme.UiSizes
 import com.qingqi.adskip.ui.theme.icons.AdSkipIcons
@@ -230,19 +229,12 @@ fun ProfileScreen(
 /** 展开/收起切换：点已展开的那一行则收起。 */
 private fun SettingSection?.toggle(target: SettingSection): SettingSection? = if (this == target) null else target
 
-/** 语言模式 → 显示名。与设置页各自持有的私有映射同源（都指向同一组文案）。 */
-private fun LanguageMode.labelRes(): Int = when (this) {
-    LanguageMode.SYSTEM -> R.string.language_system
-    LanguageMode.CHINESE -> R.string.language_zh
-    LanguageMode.ENGLISH -> R.string.language_en
-}
-
 /**
- * 用户卡：头像 + 用户名 + 会员徽章 + 使用概览。
+ * 用户卡：头像 + 本地身份文案 + 使用概览。
  *
- * 头像用「底衬 + 人像图形」而不是位图：设计稿是一张真实照片，本应用没有账号体系、
- * 也就没有头像来源，引入网络图片会与「本地优先、隐私可控」直接冲突。
- * 见交付说明的图标替换差异。
+ * 头像用「底衬 + 人像图形」而不是位图：本应用没有账号体系、也就没有头像来源，
+ * 引入网络图片会与「本地优先、隐私可控」直接冲突。同理，用户名只展示「本地用户」
+ * 中性身份，不展示设计稿残留的假用户名与会员徽章。
  */
 @Composable
 private fun UserCard(totalSkips: Int, activeApps: Int) {
@@ -265,17 +257,18 @@ private fun UserCard(totalSkips: Int, activeApps: Int) {
             Spacer(Modifier.width(Spacing.md))
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.profile_user_placeholder),
+                    text = stringResource(R.string.profile_local_user),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Spacer(Modifier.height(Spacing.xs))
-                TagBadge(
-                    text = stringResource(R.string.profile_premium_badge),
-                    containerColor = BadgeGoldContainer,
-                    contentColor = BadgeGold,
+                Text(
+                    text = stringResource(R.string.profile_local_only_hint),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
             Column(horizontalAlignment = Alignment.End) {

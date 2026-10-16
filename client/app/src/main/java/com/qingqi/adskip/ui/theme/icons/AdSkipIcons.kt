@@ -140,18 +140,6 @@ object AdSkipIcons {
         }
     }
 
-    /** 应用（实心，导航选中态）。 */
-    val AppsFilled: ImageVector by lazy {
-        icon("AdSkip.AppsFilled") {
-            pathFill {
-                roundedRect(4.5f, 4.5f, 7f, 7f, 1.6f)
-                roundedRect(12.5f, 4.5f, 7f, 7f, 1.6f)
-                roundedRect(4.5f, 12.5f, 7f, 7f, 1.6f)
-                roundedRect(12.5f, 12.5f, 7f, 7f, 1.6f)
-            }
-        }
-    }
-
     /** 记录：文档 + 摘要行（日志/记录的通用符号）。 */
     val Logs: ImageVector by lazy {
         icon("AdSkip.Logs") {
@@ -227,30 +215,6 @@ object AdSkipIcons {
     }
 
     // ==================== 操作 ====================
-
-    /** 添加（加号）。 */
-    val Plus: ImageVector by lazy {
-        icon("AdSkip.Plus") {
-            pathStroke {
-                moveTo(12f, 5.2f)
-                lineTo(12f, 18.8f)
-                moveTo(5.2f, 12f)
-                lineTo(18.8f, 12f)
-            }
-        }
-    }
-
-    /** 关闭/移除（叉号）。 */
-    val Close: ImageVector by lazy {
-        icon("AdSkip.Close") {
-            pathStroke {
-                moveTo(6.8f, 6.8f)
-                lineTo(17.2f, 17.2f)
-                moveTo(17.2f, 6.8f)
-                lineTo(6.8f, 17.2f)
-            }
-        }
-    }
 
     /** 清空（垃圾桶）。 */
     val Delete: ImageVector by lazy {
@@ -405,39 +369,6 @@ object AdSkipIcons {
                 moveTo(12f, 7.4f)
                 lineTo(12f, 12.4f)
                 lineTo(15.4f, 14.2f)
-            }
-        }
-    }
-
-    /** 保活（心电脉冲）。 */
-    val Activity: ImageVector by lazy {
-        icon("AdSkip.Activity") {
-            pathStroke {
-                moveTo(3.4f, 12.6f)
-                lineTo(7.6f, 12.6f)
-                lineTo(9.6f, 6.8f)
-                lineTo(12.8f, 17.2f)
-                lineTo(14.8f, 12.6f)
-                lineTo(20.6f, 12.6f)
-            }
-        }
-    }
-
-    /** 快照（相机）。 */
-    val Snapshot: ImageVector by lazy {
-        icon("AdSkip.Snapshot") {
-            pathStroke {
-                moveTo(8.9f, 7.2f)
-                lineTo(9.7f, 5.3f)
-                quadTo(9.9f, 4.8f, 10.5f, 4.8f)
-                lineTo(13.5f, 4.8f)
-                quadTo(14.1f, 4.8f, 14.3f, 5.3f)
-                lineTo(15.1f, 7.2f)
-                roundedRect(3.9f, 7.2f, 16.2f, 12f, 2f)
-                moveTo(8.6f, 13.2f)
-                arcTo(3.4f, 3.4f, 0f, false, false, 15.4f, 13.2f)
-                arcTo(3.4f, 3.4f, 0f, false, false, 8.6f, 13.2f)
-                close()
             }
         }
     }
@@ -612,6 +543,24 @@ object AdSkipIcons {
                 close()
             }
             pathFill {
+                moveTo(16f, 8f)
+                arcTo(1.2f, 1.2f, 0f, false, false, 16f, 5.6f)
+                arcTo(1.2f, 1.2f, 0f, false, false, 16f, 8f)
+                close()
+            }
+        }
+    }
+
+    /** 标签（实心，导航选中态）。轮廓版的小圆点是实心；实心版改为挖孔，避免融进底色。 */
+    val TagFilled: ImageVector by lazy {
+        icon("AdSkip.TagFilled") {
+            pathFill(PathFillType.EvenOdd) {
+                moveTo(11.4f, 4.4f)
+                lineTo(19.6f, 4.4f)
+                lineTo(19.6f, 12.6f)
+                lineTo(12.2f, 19.8f)
+                lineTo(4.2f, 11.8f)
+                close()
                 moveTo(16f, 8f)
                 arcTo(1.2f, 1.2f, 0f, false, false, 16f, 5.6f)
                 arcTo(1.2f, 1.2f, 0f, false, false, 16f, 8f)

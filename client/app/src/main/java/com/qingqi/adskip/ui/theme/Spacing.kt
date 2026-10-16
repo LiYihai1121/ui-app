@@ -57,12 +57,6 @@ object UiSizes {
     /** 列表行图标边长 */
     val listIcon = 40.dp
 
-    /** 空态占位图标边长 */
-    val emptyStateIcon = 48.dp
-
-    /** 可点击元素的最小触控目标边长（Material 无障碍基线） */
-    val touchTarget = 48.dp
-
     /** 行内次要图标边长（日志行状态点等） */
     val inlineIcon = 18.dp
 
@@ -71,12 +65,6 @@ object UiSizes {
 
     /** 图标底衬（图标背板）边长 */
     val iconPlate = 36.dp
-
-    /** 首页状态环直径（紧凑态） */
-    val statusOrb = 56.dp
-
-    /** 首页主视觉状态环直径 */
-    val statusOrbHero = 108.dp
 
     /** 状态环外层光晕直径 */
     val orbHalo = 96.dp
@@ -125,9 +113,6 @@ object UiSizes {
 
     /** 页面内容最大宽度（宽屏下封顶居中，见 MainActivity） */
     val contentMaxWidth = 640.dp
-
-    /** 顶栏高度（页面标题位于顶栏时的滚动容器基准） */
-    val topBar = 64.dp
 
     /*
      * ---- 以下为 v4 设计稿新增 ----
@@ -190,10 +175,6 @@ object UiSizes {
     /** 引导页插图中「设备」的宽 / 高。 */
     val illustrationBackWidth = 132.dp
     val illustrationBackHeight = 176.dp
-
-    /** 引导页页码点：当前页与其余页的直径。 */
-    val dotActive = 8.dp
-    val dotIdle = 6.dp
 }
 
 /**

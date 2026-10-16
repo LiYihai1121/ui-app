@@ -31,6 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -38,6 +40,7 @@ import com.qingqi.adskip.R
 import com.qingqi.adskip.data.StatsRepository
 import com.qingqi.adskip.ui.Messenger
 import com.qingqi.adskip.ui.components.ConfirmDialog
+import com.qingqi.adskip.ui.components.EmptyState
 import com.qingqi.adskip.ui.components.PageHeader
 import com.qingqi.adskip.ui.components.SegmentedTabs
 import com.qingqi.adskip.ui.components.rememberAppLabel
@@ -144,22 +147,14 @@ fun LogsScreen(messenger: Messenger, viewModel: LogsViewModel = viewModel(factor
 
                 if (filtered.isEmpty()) {
                     item {
-                        Column(
-                            modifier = Modifier.fillMaxWidth().padding(top = Spacing.xxl),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.logs_empty_title),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = LogsDarkOnSurface,
-                            )
-                            Spacer(Modifier.height(Spacing.sm))
-                            Text(
-                                text = stringResource(R.string.logs_empty_hint),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = LogsDarkOnSurfaceVariant,
-                            )
-                        }
+                        // 与应用/规则页共用 EmptyState：本页被 LogsDarkSurfaceTheme 覆盖，
+                        // EmptyState 内的 colorScheme 角色会自动解析为深色值。
+                        EmptyState(
+                            title = stringResource(R.string.logs_empty_title),
+                            subtitle = stringResource(R.string.logs_empty_hint),
+                            icon = AdSkipIcons.EmptyLogs,
+                            modifier = Modifier.semantics { heading() },
+                        )
                     }
                 } else {
                     filtered.forEach { entry ->

@@ -70,12 +70,9 @@ val StatusUnknownContainer = Color(0xFFFEF3C7)
 val Brand05 = Color(0xFFF2F7FF)
 val Brand10 = Color(0xFFE3EDFF)
 val Brand20 = Color(0xFFC7DBFF)
-val Brand30 = Color(0xFF9EC1FF)
 val Brand40 = Color(0xFF6BA0FA)
 val Brand50 = Color(0xFF3D7DF6)
-val Brand60 = Color(0xFF2E6BE0)
 val Brand70 = Color(0xFF1F55BE)
-val Brand80 = Color(0xFF17408F)
 val Brand90 = Color(0xFF102C63)
 
 // ==================== 中性色阶梯（带冷调，与品牌蓝同色相） ====================
@@ -103,10 +100,6 @@ val Neutral95 = Color(0xFF020617)
 /** 系统内置关键词标签的红色（设计稿「系统」tag）。 */
 val TagSystem = Color(0xFFE5484D)
 val TagSystemContainer = Color(0xFFFDECEC)
-
-/** 会员徽章的金色（设计稿 Premium 徽章）。 */
-val BadgeGold = Color(0xFFB45309)
-val BadgeGoldContainer = Color(0xFFFEF3C7)
 
 /** 快捷瓦片的辅助配色（设计稿三张瓦片分别是蓝 / 绿 / 紫）。 */
 val TileBlue = Color(0xFF3D7DF6)

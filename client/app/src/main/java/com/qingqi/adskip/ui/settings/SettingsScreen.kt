@@ -1,7 +1,6 @@
 package com.qingqi.adskip.ui.settings
 
 import android.app.Activity
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -53,6 +52,7 @@ import com.qingqi.adskip.ui.components.RowDivider
 import com.qingqi.adskip.ui.components.SectionCard
 import com.qingqi.adskip.ui.components.SectionHint
 import com.qingqi.adskip.ui.components.SectionTitle
+import com.qingqi.adskip.ui.labelRes
 import com.qingqi.adskip.ui.theme.Spacing
 import com.qingqi.adskip.ui.theme.icons.AdSkipIcons
 import com.qingqi.adskip.ui.vendorLabelRes
@@ -141,6 +141,12 @@ fun SettingsContent(
                 placeholder = { Text(stringResource(R.string.settings_server_hint)) },
                 singleLine = true,
                 shape = MaterialTheme.shapes.small,
+                isError = state.serverUrlError,
+                supportingText = if (state.serverUrlError) {
+                    { Text(stringResource(R.string.settings_url_invalid)) }
+                } else {
+                    null
+                },
             )
             Spacer(Modifier.height(Spacing.md))
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
@@ -212,6 +218,12 @@ fun SettingsContent(
                 singleLine = true,
                 shape = MaterialTheme.shapes.small,
                 visualTransformation = PasswordVisualTransformation(),
+                isError = state.signingKeyError,
+                supportingText = if (state.signingKeyError) {
+                    { Text(stringResource(R.string.settings_signing_key_too_short)) }
+                } else {
+                    null
+                },
             )
             Spacer(Modifier.height(Spacing.md))
             OutlinedTextField(
@@ -222,6 +234,10 @@ fun SettingsContent(
                 placeholder = { Text(stringResource(R.string.settings_cert_pins_hint)) },
                 minLines = 2,
                 shape = MaterialTheme.shapes.small,
+                isError = state.certPinsError != null,
+                supportingText = state.certPinsError?.let { pin ->
+                    { Text(stringResource(R.string.settings_cert_pin_invalid, pin)) }
+                },
             )
             Spacer(Modifier.height(Spacing.md))
             FilledTonalButton(
@@ -416,20 +432,6 @@ private fun LanguagePickerDialog(current: LanguageMode, onPick: (LanguageMode) -
             }
         },
     )
-}
-
-/**
- * 语言模式 → 显示名。
- *
- * 语言名**不随当前界面语言翻译**（英文环境下也显示「简体中文」）：
- * 用户看不懂当前语言时，正是靠母语名认路；把「简体中文」译成
- * "Simplified Chinese" 会让中文用户找不到自己的语言。
- */
-@StringRes
-private fun LanguageMode.labelRes(): Int = when (this) {
-    LanguageMode.SYSTEM -> R.string.language_system
-    LanguageMode.CHINESE -> R.string.language_zh
-    LanguageMode.ENGLISH -> R.string.language_en
 }
 
 /** M3 TimePicker 封装为对话框（分钟粒度，24 小时制） */

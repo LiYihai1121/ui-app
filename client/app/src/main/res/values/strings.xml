@@ -73,18 +73,9 @@
     <!-- 应用管理 -->
     <string name="apps_title">应用管理</string>
     <string name="apps_hint">关闭开关后，将不在该应用内自动跳过广告</string>
-    <plurals name="apps_count">
-        <item quantity="other">已跳过 %1$d 次</item>
-    </plurals>
-    <plurals name="apps_subtitle">
-        <item quantity="other">共 %1$d 个可启动应用</item>
-    </plurals>
 
     <!-- 跳过日志 -->
     <string name="logs_title">跳过记录</string>
-    <plurals name="logs_subtitle">
-        <item quantity="other">共 %1$d 条记录</item>
-    </plurals>
     <string name="logs_retention_note">仅保留最近 200 条记录</string>
     <string name="logs_empty_hint">服务开启后，每次自动跳过都会记录在这里</string>
     <string name="logs_clear">清空日志</string>
@@ -232,8 +223,8 @@
     <string name="logs_empty_title">暂无跳过记录</string>
     <string name="logs_clear_confirm_title">清空全部记录？</string>
     <string name="logs_clear_confirm_message">清空后无法恢复，但可在提示条内撤销。</string>
-    <string name="profile_user_placeholder">用户123456</string>
-    <string name="profile_premium_badge">Premium 会员</string>
+    <string name="profile_local_user">本地用户</string>
+    <string name="profile_local_only_hint">数据仅保存在本机</string>
     <string name="profile_row_service">服务设置</string>
     <string name="profile_row_service_desc">无障碍 · 保活 · 权限</string>
     <string name="profile_row_cloud">云端同步</string>
@@ -251,4 +242,11 @@
     <string name="onboarding_badge">拦截</string>
     <string name="action_back">返回</string>
     <string name="action_share">分享</string>
+    <string name="value_not_available">—</string>
+    <plurals name="apps_count">
+        <item quantity="other">已跳过 %1$d 次</item>
+    </plurals>
+    <plurals name="logs_subtitle">
+        <item quantity="other">共 %1$d 条记录</item>
+    </plurals>
 </resources>

@@ -52,6 +52,13 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         val batteryExemption: BatteryExemption = BatteryExemption.UNKNOWN,
         /** 界面语言选择。 */
         val language: LanguageMode = LanguageMode.DEFAULT,
+
+        // 即时校验态：输入非空且非法才亮红，空值不标错（用户还没开始填）。
+        // 保存时的最终校验仍以 saveServerUrl/saveSecurityConfig 为准，这里只负责
+        // 让用户在输入过程中就看到错在哪一栏，而不是提交后才从 Snackbar 里找原因。
+        val serverUrlError: Boolean = false,
+        val signingKeyError: Boolean = false,
+        val certPinsError: String? = null,
         /** 当前设备所属 ROM，用于保活引导文案与手动路径提示（device/VendorKeepAlive） */
         val keepAliveVendor: Vendor = Vendor.GENERIC,
     ) {
@@ -91,16 +98,30 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     val effects: SharedFlow<UiEffect> = _effects
 
     fun onServerUrlChanged(value: String) {
-        _uiState.value = _uiState.value.copy(serverUrlInput = value)
+        _uiState.value = _uiState.value.copy(
+            serverUrlInput = value,
+            serverUrlError = value.isNotBlank() && !isValidServerUrl(value.trim()),
+        )
     }
 
     fun onSigningKeyChanged(value: String) {
-        _uiState.value = _uiState.value.copy(signingKeyInput = value)
+        _uiState.value = _uiState.value.copy(
+            signingKeyInput = value,
+            signingKeyError = value.isNotBlank() && value.trim().length < 16,
+        )
     }
 
     fun onCertPinsChanged(value: String) {
-        _uiState.value = _uiState.value.copy(certPinsInput = value)
+        _uiState.value = _uiState.value.copy(
+            certPinsInput = value,
+            certPinsError = firstInvalidPin(value),
+        )
     }
+
+    /** 返回第一条非法指纹（用于 supportingText 定位），全部合法或未填返回 null。 */
+    private fun firstInvalidPin(raw: String): String? =
+        raw.split('\n', ',').map { it.trim() }.filter { it.isNotEmpty() }
+            .firstOrNull { !isValidCertificatePin(it) }
 
     fun isValidServerUrl(url: String): Boolean = ServerEndpoint.isValid(url)
 

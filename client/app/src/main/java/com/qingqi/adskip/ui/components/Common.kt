@@ -43,6 +43,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import com.qingqi.adskip.ui.theme.Spacing
+import com.qingqi.adskip.ui.theme.TagSystem
+import com.qingqi.adskip.ui.theme.TagSystemContainer
 import com.qingqi.adskip.ui.theme.UiSizes
 import com.qingqi.adskip.ui.theme.icons.AdSkipIcons
 
@@ -544,6 +546,9 @@ fun LabeledSwitch(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface,
+                // 设置项标题偶发超长（英文长句），最多两行、末行省略，防止把开关挤出屏。
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
             if (subtitle != null) {
                 Text(
@@ -579,8 +584,10 @@ fun KeywordRow(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
     systemTag: String? = null,
-    systemContainerColor: Color = MaterialTheme.colorScheme.errorContainer,
-    systemContentColor: Color = MaterialTheme.colorScheme.error,
+    // 系统预置词用专用的 TagSystem 红，而不是语义错误色：被标红的应是「出错的」，
+    // 「系统词」只是来源说明，语义色会误导用户以为规则有问题。
+    systemContainerColor: Color = TagSystemContainer,
+    systemContentColor: Color = TagSystem,
 ) {
     Row(
         modifier = modifier

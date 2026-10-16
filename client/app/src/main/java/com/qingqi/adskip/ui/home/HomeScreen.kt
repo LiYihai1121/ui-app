@@ -258,7 +258,7 @@ fun HomeScreen(
                             modifier = Modifier.weight(1f),
                         )
                         StatTile(
-                            value = lastAppLabel.ifBlank { "—" },
+                            value = lastAppLabel.ifBlank { stringResource(R.string.value_not_available) },
                             label = stringResource(R.string.stats_recent_label),
                             modifier = Modifier.weight(1f),
                         )

@@ -11,9 +11,9 @@
       改配色请改矢量里的 gradient item，不要在此加回同名颜色。
     -->
     <!--
-      窗口级导航栏色（values/values-night 的 themes.xml 引用）。取品牌绿的深色调
-      #1D7C43（= Color.kt 的 LightPrimary）：导航栏在明暗主题下都要让浅色图标清晰，
-      直接用图标用的亮薄荷 #57E08E 会偏亮。改色请与 Color.kt 的主色同步。
+      窗口级导航栏色（values/values-night 的 themes.xml 引用）。取 v4 品牌蓝的
+      深色调 #2E6CE0（与 Color.kt 的 Brand50 #3D7DF6 同轴压暗）：导航栏在明暗
+      主题下都要让浅色图标清晰。改色请与 Color.kt 的主色同步。
     -->
-    <color name="brand">#1D7C43</color>
+    <color name="brand">#2E6CE0</color>
 </resources>

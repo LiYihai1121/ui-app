@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  启动器图标背景层（品牌版 · 薄荷绿渐变）。
+  启动器图标背景层（品牌版 · 科技蓝渐变）。
 
-  设计语言（与美图设计室 2026-10 交付的「方案2 · 轻羽掠影」一致）：
-  - 品牌主色 #57E08E：直接采样自设计源图，四角 32×32 patch 标准差 <1.2，
-    确认源图背景为纯色，故以此为品牌底色基准；
-  - 纵向两段渐变 #66E89C → #47D383：纯色在大尺寸桌面图标上显得平板，
-    加 4% 左右的明度跨度即可获得质感，又不破坏品牌色识别；
-  - 不再保留 Tech V4 的电路网格：新标识是扁平单色剪影，网格纹理会与它争夺注意力。
+  设计语言：
+  - 品牌主色采样自 Color.kt 的 Brand50 #3D7DF6（v4 科技蓝，界面主色唯一事实源）；
+  - 纵向两段渐变 #4A87F7 → #2E6CE0：以 Brand50 为中轴，上下各偏移约 4% 明度，
+    纯色在大尺寸桌面图标上显得平板，小跨度渐变即可获得质感又不破坏识别；
+  - 不保留电路网格纹理：标识是扁平单色剪影，网格会与它争夺注意力。
 
-  前景层为 drawable-nodpi/ic_launcher_foreground_logo.png（白色羽毛箭头），
+  前景层为 drawable-nodpi/ic_launcher_foreground_logo.png（白色剪影），
   由 2048px 设计源图按 108dp 画布的 60% 安全区提取，边缘带抗锯齿 alpha。
   改品牌色请改本文件的 gradient item，不要回 values/colors.xml 加同名颜色
   （该处只保留被引用的资源色，避免第二份真相）。
@@ -27,8 +26,8 @@
                 android:type="linear"
                 android:startX="54" android:startY="0"
                 android:endX="54" android:endY="108">
-                <item android:offset="0" android:color="#66E89C" />
-                <item android:offset="1" android:color="#47D383" />
+                <item android:offset="0" android:color="#4A87F7" />
+                <item android:offset="1" android:color="#2E6CE0" />
             </gradient>
         </aapt:attr>
     </path>

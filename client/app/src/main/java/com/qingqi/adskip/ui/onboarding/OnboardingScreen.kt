@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -105,10 +104,7 @@ fun OnboardingScreen(onStart: () -> Unit) {
         OnboardingPoint(stringResource(R.string.onboarding_point_3))
         OnboardingPoint(stringResource(R.string.onboarding_point_4))
 
-        Spacer(Modifier.height(Spacing.xl))
-        PageDots()
-
-        Spacer(Modifier.height(Spacing.lg))
+        Spacer(Modifier.height(Spacing.xxl))
         Button(
             onClick = onStart,
             modifier = Modifier.fillMaxWidth(),
@@ -198,27 +194,3 @@ private fun OnboardingPoint(text: String) {
         )
     }
 }
-
-/**
- * 页码点。
- *
- * 本页只有一屏（没有横向翻页），点阵因此是**装饰性**的：
- * 它告诉用户「这是一组内容的第一页」。刻意不做成可点——不可点的装饰若长得像控件，
- * 用户点了没反应就会怀疑应用卡住。故整组挂在 `clearAndSetSemantics` 之外、
- * 也不带任何点击处理。
- */
-@Composable
-private fun PageDots() {
-    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-        repeat(PAGE_COUNT) { index ->
-            Box(
-                modifier = Modifier
-                    .size(if (index == 0) UiSizes.dotActive else UiSizes.dotIdle)
-                    .clip(CircleShape)
-                    .background(if (index == 0) Brand50 else Brand20),
-            )
-        }
-    }
-}
-
-private const val PAGE_COUNT = 3
