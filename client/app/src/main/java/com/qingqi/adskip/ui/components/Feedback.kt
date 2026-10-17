@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
@@ -284,10 +285,14 @@ fun SkeletonList(
     )
     val base = MaterialTheme.colorScheme.surfaceVariant
     val highlight = MaterialTheme.colorScheme.surfaceContainerHighest
+    // 渐变端点必须用**像素**：Brush 的 Offset 处于 DrawScope 的像素空间，而 rowHeight 是 Dp。
+    // 曾直接写 rowHeight.value（dp 数值当像素），256dp 高的行只有顶部 256px 以内有渐变，
+    // 下方一整段只剩纯色——微光扫过时行底部「不亮」，像渲染残留。
+    val rowHeightPx = with(LocalDensity.current) { rowHeight.toPx() }
     val brush = Brush.linearGradient(
         colors = listOf(base, highlight, base),
         start = Offset(shift * 400f - 200f, 0f),
-        end = Offset(shift * 400f + 200f, rowHeight.value),
+        end = Offset(shift * 400f + 200f, rowHeightPx),
     )
 
     Column(
