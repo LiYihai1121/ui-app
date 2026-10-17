@@ -49,7 +49,7 @@ jobs:
           java-version: '17'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
           # 只装稳定通道的工具：build-tools 36.0.0 是 AGP 9.x 的最低要求（已在稳定通道）。
           # platform 37 单独在下一步装——它当前是 Beta，不在稳定通道里。
@@ -105,7 +105,7 @@ jobs:
           java-version: '17'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
           # 与上面 Structure Contract job 保持一致：只装稳定通道工具，
           # platform 37 走下面的 beta 通道安装步骤。
