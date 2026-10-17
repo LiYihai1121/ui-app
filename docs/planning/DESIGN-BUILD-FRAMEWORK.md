@@ -1,8 +1,8 @@
 # 构建框架工程化设计（DESIGN-BUILD-FRAMEWORK）
 
 > **状态**：阶段 B（version catalog + build-logic 约定插件 + Gradle 硬化）已实施（见 CHANGELOG Unreleased）；
-> 阶段 C（`core:common` / `core:engine` 模块拆分）待排期。阶段 A（目录结构契约）已落地，见
-> [ARCHITECTURE.md 第 2.2 节](../architecture/ARCHITECTURE.md#22-目录结构契约)。
+> 阶段 C（`core:common` / `core:engine` 模块拆分）待排期。阶段 A（目录结构契约）已落地，由
+> `ProjectStructureTest` 白名单强制。
 > **最后更新**：2026-09-28
 >
 > **补充（2026-09-28）**：静态检查 `ktlint` 已接入（规则集事实源为仓库根 `.editorconfig`，插件由约定插件应用，

@@ -11,7 +11,7 @@ metadata:
 > **规则指针（唯一事实源，本文不复制正文）**
 > - 网络层实现（唯一出口）：`client/app/src/main/java/com/qingqi/adskip/net/SyncClient.kt`
 > - 网络与 TLS 契约测试：`net/SyncClientTest`、`ui/settings/CertificatePinTest`
-> - 安全模型与组件暴露：[ARCHITECTURE.md](../../docs/architecture/ARCHITECTURE.md) 第 5 节
+> - 安全模型与组件暴露：`engine/SafetyGuard.kt` 黑名单与 `AndroidManifest.xml` 导出面（`ManifestContractTest` 守护）
 > - 协议 / 鉴权 / 限频契约：[API.md](../../docs/api/API.md)
 > - 安全策略与密钥纪律：[SECURITY.md](../../SECURITY.md)、[AGENTS.md](../../AGENTS.md)「提交」
 

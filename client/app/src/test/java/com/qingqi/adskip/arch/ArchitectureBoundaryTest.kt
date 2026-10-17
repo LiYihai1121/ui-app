@@ -6,7 +6,7 @@ import java.io.File
 
 /**
  * 架构边界守护测试：扫描 `src/main/java` 源码的 import 关系，
- * 强制执行 ARCHITECTURE.md 第 2.1 节「边界契约」，违反即测试失败。
+ * 强制执行分层「边界契约」，违反即测试失败。
  *
  * 纯 JVM 源码扫描（不依赖 Android SDK），随 `testDebugUnitTest` 门禁运行——
  * 把边界从文档约定升级为 CI 可执行规则。
@@ -89,7 +89,7 @@ class ArchitectureBoundaryTest {
         val root = sourceRoot()
         val dir = File(root, pkgDir)
         assertTrue(
-            "边界契约违规：源码目录不存在 $dir（目录结构变化需同步更新本测试与 ARCHITECTURE.md 2.1）",
+            "边界契约违规：源码目录不存在 $dir（目录结构变化需同步更新本测试）",
             dir.isDirectory,
         )
 
@@ -106,9 +106,9 @@ class ArchitectureBoundaryTest {
             }
 
         assertTrue(
-            "边界契约违规（ARCHITECTURE.md 第 2.1 节，包 $pkgDir/ 禁止以下依赖）：\n" +
+            "边界契约违规（包 $pkgDir/ 禁止以下依赖）：\n" +
                 violations.joinToString("\n") + "\n" +
-                "若确为合理演进，请先更新 ARCHITECTURE.md 边界契约与本测试规则。",
+                "若确为合理演进，请先更新本测试规则。",
             violations.isEmpty(),
         )
     }

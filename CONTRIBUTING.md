@@ -326,8 +326,8 @@ git rebase -i --autosquash origin/main
 单人开发时按上面的分支模型即可。当**多个 Agent（或多名协作者）同时在一个仓库工作**时，额外遵守 [docs/development/AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md)，核心是四点：
 
 1. **隔离**：每个 Agent 一个真正的 `git worktree`（`.worktrees/<agent>-<slug>/`），禁止在仓库内复制整仓；Agent 产物目录必须写进共享 `.gitignore`，不得只写本机 `.git/info/exclude`。
-2. **所有权**：同一文件同一时间只有一个写入者（开工前认领），`CHANGELOG.md`、`docs/planning/ROADMAP*.md`、`docs/architecture/ARCHITECTURE.md`、`docs/README.md` 为单写者事实源。
-3. **契约**：跨包/跨端边界的改动必须附带可执行契约测试（客户端由 `ArchitectureBoundaryTest`、`ManifestContractTest`、`ProjectStructureTest`、`RepoHygieneTest` 守护），先写失败测试再写实现；目录布局本身也是契约，新增根级文件/目录需先更新 `ProjectStructureTest` 白名单并在 PR 说明理由（细则见 [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) 第 2.2 节）。
+2. **所有权**：同一文件同一时间只有一个写入者（开工前认领），`CHANGELOG.md`、`docs/planning/ROADMAP*.md`、`docs/README.md` 为单写者事实源。
+3. **契约**：跨包/跨端边界的改动必须附带可执行契约测试（客户端由 `ArchitectureBoundaryTest`、`ManifestContractTest`、`ProjectStructureTest`、`RepoHygieneTest` 守护），先写失败测试再写实现；目录布局本身也是契约，新增根级文件/目录需先更新 `ProjectStructureTest` 白名单并在 PR 说明理由。
 4. **交接与合并**：分支与 Agent 一一绑定，禁止对他人分支 rebase/force-push（见 [§4](#4-合并冲突处理rebase-还是-merge)）；交接给出「改了什么 / 边界变化 / 验证结果 / 遗留风险 / 下一步」五项；合并仍走 PR + Squash，顺序上先合依赖方（见[堆叠分支](#2-分支策略)）。
 
 违反上述约定时，仓库卫生类问题会由 `RepoHygieneTest` 直接判失败（如仓库内出现无 `.git` 元数据的整仓副本、忽略规则缺失、协作文档未登记、分支名不合规）。
@@ -507,7 +507,7 @@ CI 只能证明「编译通过、逻辑符合契约」，**不能证明「在真
 | 门禁命令（提交前必须自跑的五条） | [AGENTS.md](AGENTS.md)「验证与合并」 |
 | 目录/产物/分支名的机器判定规则 | `ProjectStructureTest` / `RepoHygieneTest`（代码即事实源） |
 | 本机工具链、SDK、JDK 与排障步骤 | [docs/development/DEV-ENVIRONMENT.md](docs/development/DEV-ENVIRONMENT.md) |
-| 目录/架构契约的判定细则 | [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) 第 2.1/2.2 节 |
+| 目录/架构契约的判定细则 | `ArchitectureBoundaryTest` / `ProjectStructureTest`（代码即事实源） |
 | 并行协作的隔离与交接细则 | [docs/development/AGENT-WORKFLOW.md](docs/development/AGENT-WORKFLOW.md) |
 
 > 新增命令一律加到上表对应的事实源，本文件只保留指针。

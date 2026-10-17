@@ -141,7 +141,6 @@
 
 ## 相关文档
 
-- [架构文档](../architecture/ARCHITECTURE.md)
 - [API 参考](../api/API.md)
 - [开发环境](../development/DEV-ENVIRONMENT.md)
 - [发布历史](../planning/RELEASE-HISTORY.md)

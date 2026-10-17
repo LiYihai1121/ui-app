@@ -11,7 +11,7 @@ metadata:
 > **规则指针（唯一事实源，本文不复制正文）**
 > - 安全策略与密钥纪律：[SECURITY.md](../../SECURITY.md)、[AGENTS.md](../../AGENTS.md)「提交」（不提交密钥/签名文件/构建产物）
 > - 协议与鉴权契约：[docs/api/API.md](../../docs/api/API.md)
-> - 分层边界：[docs/architecture/ARCHITECTURE.md](../../docs/architecture/ARCHITECTURE.md) 2.1
+> - 分层边界：`ArchitectureBoundaryTest`（可执行契约）
 
 ## 自检动作
 

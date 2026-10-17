@@ -113,7 +113,7 @@
   厂商 ROM 识别与自启动/后台管理一键跳转（MIUI / HarmonyOS / MagicOS / ColorOS / OriginOS / Flyme / OxygenOS / One UI），
   含 Android 11+ `<queries>` 包可见性声明与无障碍真实状态查询。
   > 原本属于 M4「ROM 指引」的一部分，鉴于「跳过静默失效」是当前最高频的用户投诉来源（强杀无障碍服务），提前到小版本交付；
-  > M4 保留通知过滤与通知类 ROM 指引。详见 [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) 第 2/2.1/3 节。
+  > M4 保留通知过滤与通知类 ROM 指引。device/ 层边界由 `ArchitectureBoundaryTest` 守护。
 
 > **为什么剥离原 `3.1.0`**：原计划把「选择器引擎 + 快照工具 + Top 30 规则 + 真机验收 ≥95%」压在单个 `3.1.0` 里，而引擎内核（步骤 A/B）已按 PR 增量并入 `main` 却无版本承载——继续维持大礼包会让未发布内容堆积，且真机指标反过来阻塞协议与工具。现按「是否产生用户可见能力」切分小版本：每个版本可独立验收、独立回滚（选择器是纯增量字段，服务端停发即回退 v1 行为，无数据迁移）。
 

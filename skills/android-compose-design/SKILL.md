@@ -10,8 +10,8 @@ metadata:
 
 | 关注点 | 事实源 |
 | --- | --- |
-| 客户端分层职责与 `ui/` 层边界（禁止 import `service/` 等） | [ARCHITECTURE.md](../../docs/architecture/ARCHITECTURE.md) 第 2.1 节 |
-| 目录结构契约（新增文件落点） | [ARCHITECTURE.md](../../docs/architecture/ARCHITECTURE.md) 第 2.2 节 |
+| 客户端分层职责与 `ui/` 层边界（禁止 import `service/` 等） | `ArchitectureBoundaryTest`（可执行契约） |
+| 目录结构契约（新增文件落点） | `ProjectStructureTest`（可执行契约） |
 | 主题 token 与设计系统实现 | `client/app/src/main/java/com/qingqi/adskip/ui/theme/`（`Color.kt` / `Type.kt` / `Spacing.kt` / `Theme.kt`） |
 | 可复用组件 | `ui/components/`（`Common.kt`、`Feedback.kt`、`StatusOrb.kt`） |
 | UI 契约测试 | `UiContractTest` / `ColorSchemeContractTest` / `ScreenHeaderContractTest` / `UiStateContractTest` |

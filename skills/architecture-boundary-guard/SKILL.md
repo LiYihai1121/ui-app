@@ -11,13 +11,13 @@ metadata:
 | 关注点 | 事实源 |
 | --- | --- |
 | 契约先行原则（先写失败测试再写实现） | [AGENTS.md](../../AGENTS.md)「多 Agent 协作」 |
-| 边界契约（`ui/` 禁 import `service/` 等） | [ARCHITECTURE.md](../../docs/architecture/ARCHITECTURE.md) 第 2.1 节 |
-| 目录结构契约与根级白名单 | [ARCHITECTURE.md](../../docs/architecture/ARCHITECTURE.md) 第 2.2 节 |
-| 测试地图（哪些契约由哪个测试固化） | [ARCHITECTURE.md](../../docs/architecture/ARCHITECTURE.md) 第 10 节 |
-| 项目结构与根级条目 | [ARCHITECTURE.md](../../docs/architecture/ARCHITECTURE.md) 第 11 节；`ProjectStructureTest` |
+| 边界契约（`ui/` 禁 import `service/` 等） | `ArchitectureBoundaryTest`（可执行契约） |
+| 目录结构契约与根级白名单 | `ProjectStructureTest` 的 `ALLOWED_ROOT_DIRS` / `ALLOWED_ROOT_FILES` |
+| 测试地图（哪些契约由哪个测试固化） | 本文「契约测试地图」一节 |
+| 项目结构与根级条目 | `ProjectStructureTest` |
 | 文档地图登记义务 | [docs/README.md](../../docs/README.md) |
 
-> 本文件**刻意不复制**边界规则与白名单清单：它们由守护测试与 ARCHITECTURE 文档双源维护，复制第三份必然漂移。
+> 本文件**刻意不复制**边界规则与白名单清单：它们由守护测试维护，复制第二份必然漂移。
 
 ## 契约测试地图（改动命中即先改测试）
 
@@ -39,5 +39,5 @@ metadata:
 ## 提交前自检
 
 1. 命中地图的契约测试全绿，且是**因为实现正确**而绿、不是因测试被放宽——放宽契约必须在 PR 中单独说明理由；
-2. 协议/数据形态变更同步 [API.md](../../docs/api/API.md) 与 [ARCHITECTURE.md](../../docs/architecture/ARCHITECTURE.md)；
+2. 协议/数据形态变更同步 [API.md](../../docs/api/API.md)；
 3. 门禁命令全集见 [AGENTS.md](../../AGENTS.md)「验证与合并」——自行跑通再提交，不推给 CI。

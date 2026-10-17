@@ -66,7 +66,7 @@ main 冻结点 → cut release/vX.Y.Z → bump PR（chore(release) 单独提交�
 ### 3.2 递增规则与历史豁免
 
 - **PATCH**：纯修复（崩溃、安全补丁、发版链路问题），无新能力、无协议字段变化 → `v3.4.1`；
-- **MINOR**：向后兼容的新能力或新协议字段（旧客户端行为不变，ARCHITECTURE 第 7 节）→ `v3.5.0`；
+- **MINOR**：向后兼容的新能力或新协议字段（旧客户端行为不变，见 [API.md](../api/API.md)「协议演进」）→ `v3.5.0`；
 - **MAJOR**：出现以下任一情况——`applicationId`/包名变更、协议不兼容（schemaVersion 淘汰旧字段）、数据存储格式不迁移、权限面变化 → `v4.0.0`。
 - **历史豁免**：v3.4.0 的 `applicationId` BREAKING 落在 MINOR（`versionName` X.Y 约定的时期产物），已列入流程审计豁免线；**自本设计生效起，BREAKING 一律 MAJOR**，豁免不再延续。
 

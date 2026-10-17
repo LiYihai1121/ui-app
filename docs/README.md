@@ -9,9 +9,6 @@ docs/
 ├── README.md          本页：文档地图与事实源声明（唯一入口）
 ├── api/               对外接口与协议契约
 │   └── API.md
-├── architecture/      系统架构与模块职责
-│   ├── ARCHITECTURE.md
-│   └── ARCHITECTURE-DIRECTORY-STRUCTURE.md  完整目录树与各目录 SDLC 职责映射（目录设计单点事实源）
 ├── development/       开发环境与工具链
 │   ├── DEV-ENVIRONMENT.md
 │   └── AGENT-WORKFLOW.md         多 Agent 协作：隔离 / 所有权 / 契约 / 交接
@@ -29,7 +26,6 @@ docs/
 │   ├── ROADMAP-ADS-VERIFY.md      能力边界「不做限制」：外部证据 / 风险评估 / 门禁验证记录
 │   ├── FOLLOW-UP.md               安全加固与技术补充计划（已修复清单 / 待修复 / 里程碑）
 │   └── RELEASE-HISTORY.md         发布链路（tag / 提交 / Release / 制品）
-└── diagrams/          架构图（adskip-architecture.json 源 + .html 渲染）
 ```
 
 > 根级不在 `docs/` 下的文档：`skills/README.md` 是**随仓库版本控制的 Agent 技能**的开发规范（`skills/` 目录挂载于根 `kilo.json`），见 [../skills/README.md](../skills/README.md)。
@@ -39,8 +35,6 @@ docs/
 | 我想… | 读 |
 | --- | --- |
 | 了解这是什么、怎么用 | [../README.md](../README.md) |
-| 了解架构、模块职责、协议与安全模型 | [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) |
-| 查完整目录树、每个目录的用途与 SDLC 阶段映射 | [architecture/ARCHITECTURE-DIRECTORY-STRUCTURE.md](architecture/ARCHITECTURE-DIRECTORY-STRUCTURE.md) |
 | 对接服务端接口 | [api/API.md](api/API.md) |
 | 知道接下来做什么、按什么顺序做 | [planning/ROADMAP.md](planning/ROADMAP.md) → [planning/ROADMAP-ADS.md](planning/ROADMAP-ADS.md) |
 | 看某项能力的技术设计与实施步骤 | [planning/DESIGN-PHASE1-SELECTOR.md](planning/DESIGN-PHASE1-SELECTOR.md) |
@@ -71,15 +65,15 @@ docs/
 | Top 30 真机验收口径、试次记录与放行证据 | [testing/TOP30-REAL-DEVICE-ACCEPTANCE.md](testing/TOP30-REAL-DEVICE-ACCEPTANCE.md) | 只记录实际设备结果，不将模拟器/单测标为真机通过 |
 | L2 DNS、L3 Root、L4 通知治理边界与 Phase 0 决策提案 | [planning/DESIGN-ADS-FILTERING.md](planning/DESIGN-ADS-FILTERING.md) | 提案不代表正式合规批准；L2/L3 仍禁用 |
 | 构建框架演进方案（version catalog / build-logic / 模块拆分） | [planning/DESIGN-BUILD-FRAMEWORK.md](planning/DESIGN-BUILD-FRAMEWORK.md) | 本页不复制其坑位清单；
-| 架构演进（客户端多模块化 / 服务端存储 / 部署） | [planning/DESIGN-ARCH-EVOLUTION.md](planning/DESIGN-ARCH-EVOLUTION.md) | 引用 ROADMAP 版本号；与 L1–L5 能力里程碑的合并点见其第 7 节 |目录结构的**已生效**规则见 [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) 第 2.2 节 |
+| 架构演进（客户端多模块化 / 服务端存储 / 部署） | [planning/DESIGN-ARCH-EVOLUTION.md](planning/DESIGN-ARCH-EVOLUTION.md) | 引用 ROADMAP 版本号；与 L1–L5 能力里程碑的合并点见其第 7 节 |
 | 已发布版本链路（tag / 提交 / Release / 制品） | [planning/RELEASE-HISTORY.md](planning/RELEASE-HISTORY.md) | CHANGELOG 只记用户可见变更，不复述链路 |
-| 协议与接口 | [api/API.md](api/API.md) + [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md)（第 7 节） | DESIGN 只描述增量字段 |
-| 客户端/服务端分层与模块职责 | [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) | README 只给目录树摘要 |
+| 协议与接口 | [api/API.md](api/API.md) | DESIGN 只描述增量字段 |
+| 目录结构契约（根级条目 / 模块布局 / 分层边界） | `ProjectStructureTest` 与 `ArchitectureBoundaryTest`（可执行契约） | 文档只描述意图，判定以测试为准 |
 | 流程规范（分支/提交/门禁/发版） | [CONTRIBUTING.md](../CONTRIBUTING.md) | [AGENTS.md](../AGENTS.md) 为执行摘要 |
 | 多 Agent 并行协作（隔离/所有权/契约/交接） | [development/AGENT-WORKFLOW.md](development/AGENT-WORKFLOW.md) | 本页不复制其条款，仅登记入口；其卫生检查由 `RepoHygieneTest` 强制 |
 | Agent 技能开发（SKILL.md 格式 / 校验 / 挂载） | [../skills/README.md](../skills/README.md) | 技能只保留指针与自检动作，不复制规则；分支/提交/门禁仍以 [CONTRIBUTING.md](../CONTRIBUTING.md) 为准 |
 
-> **改规划的顺序**：先改 `docs/planning/ROADMAP.md`（版本意图）→ 再改同目录的 `ROADMAP-ADS.md` 与 `DESIGN-PHASE1-SELECTOR.md` 的版本归属 → 最后同步 `CHANGELOG.md` 与 `RELEASE-HISTORY.md` 的对应行。`docs/api/API.md`、`docs/architecture/ARCHITECTURE.md` 涉及协议字段时一并更新。
+> **改规划的顺序**：先改 `docs/planning/ROADMAP.md`（版本意图）→ 再改同目录的 `ROADMAP-ADS.md` 与 `DESIGN-PHASE1-SELECTOR.md` 的版本归属 → 最后同步 `CHANGELOG.md` 与 `RELEASE-HISTORY.md` 的对应行。`docs/api/API.md` 涉及协议字段时一并更新。
 
 ## 当前规划全景（表格更新于 2026-10-10；基线补注 2026-10-16）
 
@@ -116,7 +110,6 @@ docs/
 | 文档模块 | 目录用途 | 文件名格式 | 示例 |
 | --- | --- | --- | --- |
 | `api/` | 对外接口、数据格式与协议契约 | `API[-<TOPIC>].md` | `API.md` |
-| `architecture/` | 系统架构、模块职责与边界 | `ARCHITECTURE[-<TOPIC>].md` | `ARCHITECTURE.md` |
 | `development/` | 开发环境和协作流程；环境类用 `DEV`，协作类用 `AGENT` | `<DEV\|AGENT>-<TOPIC>.md` | `DEV-ENVIRONMENT.md`、`AGENT-WORKFLOW.md` |
 | `planning/` | 路线图、技术设计、跟进事项和发布记录 | `ROADMAP[-<TOPIC>].md`、`DESIGN-<TOPIC>.md`、`FOLLOW-UP[-<TOPIC>].md`、`RELEASE[-<TOPIC>].md` | `ROADMAP-ADS.md`、`DESIGN-PHASE1-SELECTOR.md`、`FOLLOW-UP.md`、`RELEASE-HISTORY.md` |
 | `guide/`（按需创建） | 面向用户或贡献者的操作指南 | `GUIDE-<TOPIC>.md` | `GUIDE-RULE-AUTHORING.md` |
@@ -124,18 +117,17 @@ docs/
 
 通用规则：
 
-- 文档分类目录使用**小写 kebab-case**；按内容归类到上表模块，新增目录前先登记文档地图和结构守护测试。`diagrams/` 专门存放图表等非 Markdown 资产，不用作文档模块。
+- 文档分类目录使用**小写 kebab-case**；按内容归类到上表模块，新增目录前先登记文档地图和结构守护测试。
 - `.md` 文件名使用**全大写 ASCII 字母、数字与短横线**，扩展名固定为 `.md`。`<TOPIC>` 和可选部分用短横线分词；`PHASE1` 等阶段编号中的数字紧跟词干，不插入空格或下划线。
 - 模块前缀按上表固定，不得跨目录复用其他模块的前缀；一个模块内同一主题的多份文档用额外主题词区分，禁止用 `NEW`、`FINAL`、日期或版本号代替主题。
 - 目录入口 `README.md` 是固定例外，不参与模块前缀规则；当前 `docs/README.md` 是唯一的文档地图入口。
-- 非文档资产采用 `lower-kebab-case`，与可阅读文档区分，例如 `diagrams/adskip-architecture.json` / `.html`。
 - H1 使用 `<中文主题>（<文件基名>）`，基名不带 `.md`；入口文档可用其入口主题，不强制重复 `README`。例如 `# 多 Agent 协作规范（AGENT-WORKFLOW）`。
 
 - **改名流程**：`git mv` 改文件名 → `git grep` 全仓同步所有引用（含本文档地图）→ 守护测试若硬编码文档名（如 `RepoHygieneTest.WORKFLOW_DOC`）一并更新 → 跑相关门禁后提交。
 
 ## 维护规则
 
-- 本页登记全部文档；文档按模块归入对应子目录（`api/` `architecture/` `development/` `planning/`，新建模块目录同样登记到「目录结构」），命名遵守上节「文档命名规范」；文档改名或移动后，用 `git grep` 检索全仓引用并同步。
+- 本页登记全部文档；文档按模块归入对应子目录（`api/` `development/` `planning/`，新建模块目录同样登记到「目录结构」），命名遵守上节「文档命名规范」；文档改名或移动后，用 `git grep` 检索全仓引用并同步。
 - 规划类文档（ROADMAP / ROADMAP-ADS / DESIGN）首部必须保留「状态 + 最后更新」行。
 - 版本号、里程碑编号、测试计数等事实只在一处维护，其余位置只引用。
 - 发布核对清单见 [CONTRIBUTING.md](../CONTRIBUTING.md) 的「每次发布完成后的最小核对清单」。

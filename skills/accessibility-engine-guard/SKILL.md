@@ -14,7 +14,7 @@ metadata:
 | 匹配算法、性能预算、兄弟节点已知风险 | 同上第 5 节 |
 | 点击结果校验（防劫持回退） | 同上第 7 节 |
 | 协议 v2（`selectors` 字段）与服务端校验 | 同上第 6 节；[API.md](../../docs/api/API.md) |
-| 安全模型（黑名单、导出面） | [ARCHITECTURE.md](../../docs/architecture/ARCHITECTURE.md) 第 5 节 |
+| 安全模型（黑名单、导出面） | `engine/SafetyGuard.kt` 黑名单与 `AndroidManifest.xml` 导出面（`ManifestContractTest` 守护） |
 | 引擎实现 | `engine/`（`SkipRuleEngine.kt`、`SafetyGuard.kt`、`selector/`）与 `service/SkipAdService.kt` |
 
 > 本文件**刻意不复制**黑名单包名清单、语法 BNF、性能阈值数字：以源码与 DESIGN 文档为准。
@@ -31,4 +31,4 @@ metadata:
 1. 契约先行：跨端（协议/夹具）改动先写失败测试——`SelectorContractTest`（客户端）与 server `utils/validate.ts` 夹具**双端一致**；
 2. 引擎改动同步 `SelectorParserTest` / `SelectorMatcherTest` / `SkipRuleEngineTest` / `SafetyGuardTest` / `ServiceIntentContractTest`；
 3. 性能预算不回退：`findTarget` 预算见 DESIGN 第 5.2 节，新增回溯逻辑须给出不劣化证据；
-4. 旧客户端兼容：`schemaVersion` 演进保持 v1 行为不变（ARCHITECTURE 第 7 节）。
+4. 旧客户端兼容：`schemaVersion` 演进保持 v1 行为不变（见 [API.md](../../docs/api/API.md)「协议演进」）。

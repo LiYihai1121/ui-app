@@ -15,7 +15,7 @@ import java.io.File
  * 3. `settings.gradle.kts` 里的 `include(":x")` 与磁盘上的模块目录可能不同步
  *    （模块删了仍注册 → 构建迷惑；建了目录忘注册 → 代码不被编译）。
  *
- * 契约细则见 `docs/architecture/ARCHITECTURE.md` 第 2.2 节；
+ * 本文件的白名单即契约细则；
  * 纯 JVM 文件系统扫描，不依赖 Android SDK，随 `testDebugUnitTest` 门禁运行。
  *
  * 修订方式：**白名单是刻意收紧的**。确需新增根级条目时，先更新本测试的
@@ -40,7 +40,7 @@ class ProjectStructureTest {
         val unexpectedFiles = (actualFiles - ALLOWED_ROOT_FILES).sorted()
 
         assertTrue(
-            "仓库根目录出现了未登记的条目（ARCHITECTURE.md 第 2.2 节的白名单）：\n" +
+            "仓库根目录出现了未登记的条目（本测试的白名单）：\n" +
                 (unexpectedDirs + unexpectedFiles).joinToString("\n") { "  $it" } +
                 "\n新增根级目录/文件会让仓库结构失去边界（历史上根目录就长出过 *.apk 与工具残留目录）。\n" +
                 "若确有必要：\n" +
@@ -80,7 +80,7 @@ class ProjectStructureTest {
                 offenders.joinToString("\n") { "  $it" } +
                 "\n分发以 GitHub Releases + SHA256SUMS 为准，仓库内不得保留任何 *.apk；" +
                 "调试日志请写到仓库之外，编辑器/系统残留文件请加入 .gitignore。\n" +
-                "详见 ARCHITECTURE.md 第 2.2 节与 docs/development/DEV-ENVIRONMENT.md。",
+                "详见 docs/development/DEV-ENVIRONMENT.md。",
             offenders.isEmpty(),
         )
     }
@@ -186,7 +186,7 @@ class ProjectStructureTest {
         }
 
         assertTrue(
-            "模块源码布局不符合标准（ARCHITECTURE.md 第 2.2 节）：\n" +
+            "模块源码布局不符合标准：\n" +
                 problems.joinToString("\n") { "  $it" } +
                 "\n标准布局：src/main/{java,res} + src/main/AndroidManifest.xml（应用模块）、src/test/java。",
             problems.isEmpty(),
@@ -752,12 +752,11 @@ class ProjectStructureTest {
         val SCRATCH_NAMES = setOf(".DS_Store", "Thumbs.db", "desktop.ini")
 
         /** docs/ 下允许的分类目录。 */
-        val ALLOWED_DOC_DIRS = setOf("api", "architecture", "development", "planning", "diagrams", "testing")
+        val ALLOWED_DOC_DIRS = setOf("api", "development", "planning", "testing")
 
         /** 与 docs/README.md 文档命名规范对应的模块文件名规则。 */
         val DOC_NAME_PATTERNS = mapOf(
             "api" to Regex("""API(?:-[A-Z0-9]+)*\.md"""),
-            "architecture" to Regex("""ARCHITECTURE(?:-[A-Z0-9]+)*\.md"""),
             "development" to Regex("""(?:DEV|AGENT)(?:-[A-Z0-9]+)+\.md"""),
             "planning" to Regex("""(?:ROADMAP|DESIGN|FOLLOW-UP|RELEASE)(?:-[A-Z0-9]+)*\.md"""),
             "guide" to Regex("""GUIDE(?:-[A-Z0-9]+)+\.md"""),

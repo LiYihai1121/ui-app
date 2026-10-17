@@ -21,7 +21,7 @@ language: zh-CN
 按以下顺序处理冲突：
 
 1. 用户明确要求。
-2. 项目自身规则：AGENTS.md、CLAUDE.md、CONTRIBUTING.md、README、架构文档、CI 约束等。
+2. 项目自身规则：AGENTS.md、CLAUDE.md、CONTRIBUTING.md、README、CI 约束等。
 3. 本 Skill。
 4. 语言/框架/工具官方约定。
 5. 一般工程最佳实践。
@@ -916,7 +916,6 @@ refactor: isolate email gateway
 - README。
 - ADR。
 - API 文档。
-- 架构文档。
 - 注释。
 
 注释应解释“为什么”，而不是重复“代码在做什么”。

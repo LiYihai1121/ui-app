@@ -22,7 +22,7 @@ metadata:
 2. [ ] 新增 / 改名 / 删除文档 → 同步 [docs/README.md](../../docs/README.md) 文档地图（目录结构 + 阅读顺序 + 事实源表），并检查全文引用（含技能指针）；
 3. [ ] 规划项落地 → 核查 [FOLLOW-UP.md](../../docs/planning/FOLLOW-UP.md)「待修复」清单：已实现的标注完成或移除，不保留陈旧状态；
 4. [ ] 版本发布 → 回填 [RELEASE-HISTORY.md](../../docs/planning/RELEASE-HISTORY.md) 台账（版本 / 提交 / tag / 制品 / 回滚基线）；
-5. [ ] 协议或数据形态变更 → 同步 [API.md](../../docs/api/API.md) 与 [ARCHITECTURE.md](../../docs/architecture/ARCHITECTURE.md)；
+5. [ ] 协议或数据形态变更 → 同步 [API.md](../../docs/api/API.md)；
 6. [ ] 用户可见变更 → [CHANGELOG.md](../../CHANGELOG.md) 补对应版本段。
 
 ## 自检：确认未出现以下情况

@@ -14,7 +14,7 @@ metadata:
 | 厂商标签与 UI 映射 | `ui/VendorLabels.kt` |
 | 快捷磁贴 | `device/SkipTileService.kt`、`device/QuickTileLogic.kt` |
 | `<queries>` 可见性声明与 manifest 契约 | `AndroidManifest.xml`；`ManifestContractTest` |
-| 目录落点 | [ARCHITECTURE.md](../../docs/architecture/ARCHITECTURE.md) 第 2.2 节 |
+| 目录落点 | `ProjectStructureTest` 白名单（`device/` 为已登记目录） |
 
 > 本文件**刻意不复制**厂商清单与 ROM 设置页路径字典：以 `VendorKeepAlive.kt` 入口表为准，文档里的路径会随 ROM 版本静默失效。
 

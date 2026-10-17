@@ -34,4 +34,4 @@ metadata:
 
 - 向 `server/` 引入未评审的 npm 运行时依赖（破坏零依赖约束）
 - 客户端夹具与服务端夹具不一致（第二份真相）
-- 协议字段改动却未同步 [API.md](../../docs/api/API.md) 与 [ARCHITECTURE.md](../../docs/architecture/ARCHITECTURE.md)
+- 协议字段改动却未同步 [API.md](../../docs/api/API.md)

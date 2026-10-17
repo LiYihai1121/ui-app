@@ -10,7 +10,7 @@ import com.qingqi.adskip.sync.SyncJobService
  *
  * 收口「服务器地址 / 手动同步 / 自动同步调度 / 免打扰时段」的读写，
  * 使 ui 层不直接依赖 [SyncClient]（网络）、[SyncJobService]（后台调度）与 [Prefs]（原始偏好）——
- * 边界契约见 ARCHITECTURE.md 第 2.1 节，由 ArchitectureBoundaryTest 守护。
+ * 边界契约由 ArchitectureBoundaryTest 守护。
  *
  * @param rulesRepo 同步结果落地规则仓库（[SyncClient.syncRules] 需要）
  */

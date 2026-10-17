@@ -82,7 +82,7 @@ git rev-parse --show-toplevel  # 确认工作区根
 | Agent | 工作区 | 分支 | 认领路径 | 状态 |
 | --- | --- | --- | --- | --- |
 | `gzdx` | `.worktrees/gzdx-gitleaks` | `ci/gitleaks-enforce` | `.gitleaks.toml`、`.github/workflows/ci.yml`、`SECURITY.md`、`client/app/src/test/.../arch/ProjectStructureTest.kt`、`AGENT-WORKFLOW.md`（认领板自身） | 进行中 |
-| — | — | — | `docs/architecture/ARCHITECTURE.md`、`CHANGELOG.md` | 预留：仅集成者写 |
+| — | — | — | `CHANGELOG.md` | 预留：仅集成者写 |
 | `gzdx` | `.worktrees/gzdx-ui-polish` | `feature/icon-refresh`（PR #131）→ `feature/ui-icon-library` → `feature/ui-detail-polish` → `feature/theme-mode-setting`（同工作区串行） | `client/app/src/main/res/**`（图标/磁贴/strings）、`ui/theme/**`、`ui/MainActivity.kt`、`ui/home/**`、`ui/apps/**`、`ui/logs/**`、`ui/profile/**`、`ui/settings/**`、`ui/components/**`、`core/ThemePreferences.kt`、`data/SettingsRepository.kt`、`client/app/build.gradle.kts`、`client/gradle/libs.versions.toml`、`client/app/src/test/java/com/qingqi/adskip/arch/UiContractTest.kt`、本文件认领板行 | 进行中 |
 
 状态取值：`进行中` / `待合并` / `阻塞` / `已完成`。任务认领与状态广播优先使用协作工具的任务清单与信箱，其次才用本表（避免两处状态打架）。
@@ -108,7 +108,6 @@ git rev-parse --show-toplevel  # 确认工作区根
 | --- | --- |
 | `CHANGELOG.md` | 单一发布者写；其他 Agent 只在自己的分支改自己的条目块，冲突时由发布者裁定 |
 | `docs/planning/ROADMAP.md`、`ROADMAP-ADS.md` | 版本意图的唯一定义处，改动需与实现同一 PR |
-| `docs/architecture/ARCHITECTURE.md` | 分层与边界契约；改边界必须同时改 `ArchitectureBoundaryTest` |
 | `docs/README.md` | 文档地图；新增/改名/删除文档必须同 PR 登记 |
 | `AGENTS.md` / `CONTRIBUTING.md` | 流程规范；由流程所有者维护 |
 
@@ -156,7 +155,7 @@ Agent 之间移交任务或收工时，输出以下五项，缺一项都会让�
 ```text
 1. 新增 client/.../device/{VendorKeepAlive,QuickTileLogic,KeepAliveNavigator,SkipTileService}.kt，
    SkipAdService 增加 isEnabled()/requestShutdown()，AndroidManifest 注册磁贴与 <queries>。
-2. 新增 device/ 层边界（ARCHITECTURE.md 2.1），由 ArchitectureBoundaryTest 守护；
+2. 新增 device/ 层边界（由 ArchitectureBoundaryTest 守护）；
    新增 ManifestContractTest 守护磁贴注册与 <queries> 覆盖。
 3. assembleDebug 通过；testDebugUnitTest 全绿（新增用例若干）；bun test 全绿；typecheck exit 0。
 4. 入口表为社区经验值，ROM 升级可能失效（已做运行时可解析性探测 + 降级）；
