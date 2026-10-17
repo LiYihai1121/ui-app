@@ -85,6 +85,31 @@ import com.qingqi.adskip.ui.theme.icons.AdSkipIcons
 import kotlinx.coroutines.launch
 
 /**
+ * 首页 LazyColumn 的 item key 单一事实源。
+ *
+ * 「添加关键词」等入口要滚动到关键词卡：`animateScrollToItem` 只接受下标，
+ * 旧实现把下标 4 硬编码在闭包里—— LazyColumn 上方增删任何一个 item 都会让它
+ * 静默滚错位置（不报错、不崩溃，只是滚到别的东西），且没有任何测试能发现。
+ *
+ * 规则：item 顺序 = [order] 声明序；滚动目标一律经 [indexOf] 推导，不得出现
+ * 魔法下标。新增/删除 item 时同步改这一处即可，配套 `HomeItemsTest` 锁住
+ * 「源码中的 item 顺序 == order 声明序」。
+ */
+internal object HomeItems {
+    const val HEADER = "home-header"
+    const val STATUS = "home-status"
+    const val QUICK_ACTIONS = "home-quick-actions"
+    const val USAGE = "home-usage"
+    const val KEYWORDS = "home-keywords"
+    const val HINT = "home-hint"
+
+    /** 组合顺序即声明序。 */
+    val order: List<String> = listOf(HEADER, STATUS, QUICK_ACTIONS, USAGE, KEYWORDS, HINT)
+
+    fun indexOf(key: String): Int = order.indexOf(key)
+}
+
+/**
  * 主页：服务状态、快捷操作、使用概览、关键词管理、模拟测试。
  *
  * 版式约定（v3.4 首页重设计，衔接 v3.2 的层级结论）：
@@ -96,7 +121,6 @@ import kotlinx.coroutines.launch
  * - 使用概览从单行摘要升级为三格瓦片（累计跳过 / 关键词数 / 最近应用），
  *   全部来自既有 [HomeViewModel.UiState]，**不扩接口**。
  */
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
@@ -139,9 +163,10 @@ fun HomeScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         val listState = rememberLazyListState()
         val scope = rememberCoroutineScope()
-        // 「添加关键词」快捷入口：滚到关键词卡让输入框进入视野（item 4，0 起数）。
+        // 「添加关键词」快捷入口：滚到关键词卡让输入框进入视野。
+        // 下标由 HomeItems.order 推导而非硬编码——增删 item 不会让这里静默失效。
         val scrollToKeywords: () -> Unit = {
-            scope.launch { listState.animateScrollToItem(index = 4) }
+            scope.launch { listState.animateScrollToItem(HomeItems.indexOf(HomeItems.KEYWORDS)) }
         }
         LazyColumn(
             state = listState,
@@ -164,7 +189,7 @@ fun HomeScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(Spacing.lg),
         ) {
-            item {
+            item(key = HomeItems.HEADER) {
                 // 一级页面都要有位置锚点（见 ScreenHeaderContractTest）。
                 // 首页此前是四屏里唯一没有标题的：用户切过来后整屏像浮在空中的仪表盘。
                 PageHeader(
@@ -173,7 +198,7 @@ fun HomeScreen(
                 )
             }
 
-            item {
+            item(key = HomeItems.STATUS) {
                 StatusHero(
                     running = state.serviceRunning,
                     onPrimaryAction = {
@@ -185,7 +210,7 @@ fun HomeScreen(
                 )
             }
 
-            item {
+            item(key = HomeItems.QUICK_ACTIONS) {
                 QuickActionsRow(
                     onOpenLogs = onOpenLogs,
                     onOpenApps = onOpenApps,
@@ -193,9 +218,9 @@ fun HomeScreen(
                 )
             }
 
-            item { UsageTiles(state = state, lastAppLabel = lastAppLabel) }
+            item(key = HomeItems.USAGE) { UsageTiles(state = state, lastAppLabel = lastAppLabel) }
 
-            item {
+            item(key = HomeItems.KEYWORDS) {
                 KeywordsCard(
                     keywords = state.keywords,
                     onAdd = viewModel::addKeyword,
@@ -203,7 +228,7 @@ fun HomeScreen(
                 )
             }
 
-            item {
+            item(key = HomeItems.HINT) {
                 SectionHint(
                     text = stringResource(R.string.how_it_works),
                     modifier = Modifier.padding(horizontal = Spacing.xs),
