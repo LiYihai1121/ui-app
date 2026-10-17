@@ -35,6 +35,18 @@
 
 ---
 
+## 已修复（2026-10-16）—— UI 缺陷批次（代码走读 + 契约测试扫描发现，均为客户端 ui/ 层）
+
+| # | 问题 | 修复内容 | 文件 |
+|---|------|----------|------|
+| 26 | **日志页 LazyColumn 重复 key 崩溃**：key 只用 `ts:pkg:label` 三元组，而 ts 是毫秒粒度——同一应用同一标签在同一毫秒内被跳过两次（无障碍事件风暴下可达）即 key 重复，布局期抛 `IllegalArgumentException` 崩溃，而日志页是底部导航主 tab | key 改为内容三元组 + 位序（`itemsIndexed`）；本列表是头部前插的追加型列表，位序在同帧内唯一即满足 key 契约。key 构造提取为纯函数 `logRowKey`，`LogRowKeyTest` 4 例守护注入性 | `ui/logs/LogsScreen.kt`, `LogRowKeyTest.kt` |
+| 27 | **应用标签解析主线程全表扫描**：`rememberAppLabel` 在组合期调用 `resolveAppLabel`，旧实现每个未命中包名都跑一次 `queryIntentActivities` 全量枚举（真机 100+ 应用），解析 N 个包名 = N 次主线程扫描 | 新增 `LabelIndex`（包名 → 懒加载器）全程只查一次，建索引不加载任何标签；`rememberAppLabel` 改经 `produceState` + `Dispatchers.IO` 解析，首帧显示包名、解析后替换；查询失败降级空索引。`LabelIndexTest` 5 例 | `ui/components/Common.kt`, `LabelIndexTest.kt` |
+| 28 | **应用管理页图标主线程转换**：`AppRowItem` 在组合期把 Drawable 转 128×128 `ImageBitmap`，LazyColumn 滚动时离屏行回收、回屏重组合，100+ 应用即上百次主线程位图分配 | 转换挪进 `AppsViewModel.load()` 已有的 `Dispatchers.IO` 块，`AppRow.icon` 改存 `ImageBitmap?`；`AppsScreen` 只渲染 | `ui/apps/AppsViewModel.kt`, `AppsScreen.kt` |
+| 29 | **骨架屏微光渐变 dp/px 混用**：`Brush.linearGradient` 终点把 `rowHeight.value`（Dp 数值）当像素用，渐变只覆盖行顶部一小段，微光扫过时行底部「不亮」，纯视觉缺陷不崩不报错 | 改 `with(LocalDensity.current) { rowHeight.toPx() }`；源码契约测试 `SkeletonShimmerContractTest` 锁住「必须 toPx、不得再用 rowHeight.value」 | `ui/components/Feedback.kt`, `SkeletonShimmerContractTest.kt` |
+| 30 | **首页滚动魔法下标**：「添加关键词」入口 `animateScrollToItem(index = 4)` 硬编码，LazyColumn 上方增删任何 item 都会静默滚错位置（不报错不崩溃） | 新增 `HomeItems` 单一事实源（item key 常量 + `order` 声明序 + `indexOf`）；`HomeItemsTest` 4 例 = 纯映射断言 + 源码扫描契约（item 出现顺序必须等于 `order`、不得有未带 key 的 item） | `ui/home/HomeScreen.kt`, `HomeItemsTest.kt` |
+
+---
+
 ## 待修复（按优先级）
 
 ### 🔴 高危（安全/稳定性）
