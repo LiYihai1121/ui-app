@@ -25,7 +25,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,6 +42,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.qingqi.adskip.ui.theme.Spacing
 import com.qingqi.adskip.ui.theme.UiSizes
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 统一卡片容器。
@@ -335,10 +338,36 @@ fun LabeledSwitch(
 @Composable
 fun rememberAppLabel(pkg: String): String {
     val context = LocalContext.current
-    return remember(pkg) { resolveAppLabel(context, pkg) }
+    // 解析放到 IO 协程：queryIntentActivities 是全表枚举（真机 100+ 应用），
+    // 在组合期（主线程）同步跑会直接卡住首帧。首帧先显示原始包名、解析完成后
+    // 替换为应用名——统计瓦片的一帧延迟好过主线程扫描。
+    val label by produceState(initialValue = pkg, pkg, context) {
+        value = withContext(Dispatchers.IO) { resolveAppLabel(context, pkg) }
+    }
+    return label
+}
+
+/**
+ * 启动器应用标签索引：包名 → 懒加载器。
+ *
+ * 为什么是「一次查询 + 懒加载」而不是旧的「每个包名查一遍」：旧实现对每个未命中
+ * 缓存的包名都跑一次 `queryIntentActivities` 全量枚举——解析 N 个不同包名就是
+ * N 次全表扫描，且都发生在主线程（调用链 rememberAppLabel → 组合期）。现在
+ * 全程只查一次，之后每个包名只是 map 查找 + 一次 `loadLabel`。
+ *
+ * 存加载器而非加载好的字符串：建索引阶段不能把 100+ 个应用的标签全部加载
+ * （loadLabel 走资源解析，比枚举本身更贵），只在真正取用时加载。
+ *
+ * 提成独立类是为了可单测（JVM 无 PackageManager），测试见 `LabelIndexTest`。
+ */
+internal class LabelIndex(private val loaders: Map<String, () -> String?>) {
+    /** 命中返回标签；未命中或加载抛错均返回 null（由调用方回退）。 */
+    operator fun get(pkg: String): String? = loaders[pkg]?.let { runCatching(it).getOrNull() }
 }
 
 private val labelCache = HashMap<String, String>()
+
+@Volatile private var labelIndex: LabelIndex? = null
 
 fun resolveAppLabel(context: Context, pkg: String): String {
     if (pkg.isBlank()) return pkg
@@ -346,15 +375,10 @@ fun resolveAppLabel(context: Context, pkg: String): String {
         labelCache[pkg]?.let { return it }
     }
     val pm = context.packageManager
-    val label = runCatching {
-        pm.queryIntentActivities(
-            android.content.Intent(android.content.Intent.ACTION_MAIN)
-                .addCategory(android.content.Intent.CATEGORY_LAUNCHER),
-            0,
-        )
-            .firstOrNull { it.activityInfo?.packageName == pkg }
-            ?.let { it.loadLabel(pm).toString() }
-    }.getOrNull()
+    // 双检锁取进程内唯一索引。两个线程同时建索引是可容忍的竞态（内容一致、
+    // 各自加载自己的），索引内容不依赖时序，故不为此加锁。
+    val index = labelIndex ?: buildLauncherLabelIndex(pm).also { labelIndex = it }
+    val label = index[pkg]
         ?: runCatching {
             pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()
         }.getOrNull()
@@ -363,3 +387,19 @@ fun resolveAppLabel(context: Context, pkg: String): String {
     synchronized(labelCache) { labelCache[pkg] = result }
     return result
 }
+
+/** 一次 MAIN/LAUNCHER 查询建全量索引；查询失败时退化为空索引（调用方回退单包查询）。 */
+private fun buildLauncherLabelIndex(pm: android.content.pm.PackageManager): LabelIndex = LabelIndex(
+    runCatching {
+        pm.queryIntentActivities(
+            android.content.Intent(android.content.Intent.ACTION_MAIN)
+                .addCategory(android.content.Intent.CATEGORY_LAUNCHER),
+            0,
+        )
+            .mapNotNull { ri ->
+                val pkg = ri.activityInfo?.packageName ?: return@mapNotNull null
+                pkg to { ri.loadLabel(pm).toString() }
+            }
+            .toMap()
+    }.getOrElse { emptyMap() },
+)
