@@ -28,7 +28,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -213,10 +212,11 @@ private fun AppRowItem(row: AppsViewModel.AppRow, onToggle: (String, Boolean) ->
         title = row.label,
         subtitle = subtitle(row),
         leading = {
-            val bitmap = remember(row.icon) { row.icon?.toImageBitmap() }
-            if (bitmap != null) {
+            // 位图由 ViewModel 在 IO 线程转好（见 AppsViewModel.AppRow.icon）：
+            // 转换涉及 128×128 位图分配与 draw，放组合期执行会让 100+ 项的列表滚动掉帧。
+            if (row.icon != null) {
                 Image(
-                    bitmap = bitmap,
+                    bitmap = row.icon,
                     contentDescription = null,
                     modifier = Modifier.size(UiSizes.listIcon),
                 )
@@ -235,14 +235,4 @@ private fun subtitle(row: AppsViewModel.AppRow): String = when {
     row.disabled -> stringResource(R.string.apps_disabled)
     row.count > 0 -> pluralStringResource(R.plurals.apps_count, row.count, row.count)
     else -> stringResource(R.string.apps_never)
-}
-
-/** Drawable 转 ImageBitmap（无 accompanist 依赖的轻量转换） */
-private fun android.graphics.drawable.Drawable.toImageBitmap(): androidx.compose.ui.graphics.ImageBitmap {
-    val size = 128
-    val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
-    val canvas = android.graphics.Canvas(bitmap)
-    setBounds(0, 0, size, size)
-    draw(canvas)
-    return bitmap.asImageBitmap()
 }

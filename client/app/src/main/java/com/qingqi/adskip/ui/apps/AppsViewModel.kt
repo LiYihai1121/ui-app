@@ -2,6 +2,8 @@ package com.qingqi.adskip.ui.apps
 
 import android.content.Intent
 import android.graphics.drawable.Drawable
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -25,7 +27,12 @@ import kotlinx.coroutines.withContext
  */
 class AppsViewModel(private val container: AppContainer) : ViewModel() {
 
-    data class AppRow(val pkg: String, val label: String, val icon: Drawable?, val disabled: Boolean, val count: Int)
+    /**
+     * @param icon 已转好的位图。**必须在 IO 线程转换后传入**：Drawable → ImageBitmap
+     * 要分配 128×128 ARGB 位图并走一次 draw，在组合期（主线程）执行会让应用列表
+     * （真机 100+ 项）滚动时反复卡帧。
+     */
+    data class AppRow(val pkg: String, val label: String, val icon: ImageBitmap?, val disabled: Boolean, val count: Int)
 
     data class UiState(
         val items: List<AppRow> = emptyList(),
@@ -97,7 +104,7 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
                                 pkg = pkg,
                                 label = it.loadLabel(pm).toString(),
                                 icon = try {
-                                    it.loadIcon(pm)
+                                    it.loadIcon(pm).toImageBitmap()
                                 } catch (_: Exception) {
                                     null
                                 },
@@ -136,4 +143,19 @@ class AppsViewModel(private val container: AppContainer) : ViewModel() {
             }
         }
     }
+}
+
+/**
+ * Drawable → ImageBitmap（无 accompanist 依赖的轻量转换）。
+ *
+ * **只应在 IO 线程调用**（见 [load] 的 withContext 块）：位图分配 + draw 都是
+ * 实打实的主线程工作量，放在组合期执行会让列表滚动掉帧。
+ */
+private fun Drawable.toImageBitmap(): ImageBitmap {
+    val size = 128
+    val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(bitmap)
+    setBounds(0, 0, size, size)
+    draw(canvas)
+    return bitmap.asImageBitmap()
 }
