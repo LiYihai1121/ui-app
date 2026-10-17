@@ -176,16 +176,60 @@ jobs:
         #   轨二 = 本步在发布链路内自动产出 Keep a Changelog 分节草稿 notes-draft.md，
         #          随 Release 上传，作为 CHANGELOG.md 人工定稿的输入物（CONTRIBUTING 发布核对清单）。
         shell: bash
+        env:
+          # 版本序列基线 = 当前版本序列的首个 tag（见 RELEASE-HISTORY.md「版本起点声明」）。
+          # 为什么必须有它：2026-10-13 仓库历史重置后，旧序列 tag（v2.0.0–v3.4.2）仍留在
+          # main 的提交祖先链上（重置时以 `merge -s ours` 声明旧 main 为祖先）。因此**任何走
+          # 提交拓扑的取法都会跨序列命中 v3.4.2**，把重置前的整段历史误列为本次变更。
+          # 故此处按**版本序**而非拓扑取上一版本，并用基线把候选集限制在当前序列内。
+          # 序列再次重置时，必须同步更新本值。
+          SERIES_BASELINE_TAG: v1.0.0
+          # 已归档的旧版本序列区间（RELEASE-HISTORY.md 3.4.2 行）。关键细节：旧序列 tag 走的是
+          # 「按版本号排除」而非拓扑——v1.0.1 本身就带旧历史祖先（reset 前 main 的提交），
+          # `merge-base --is-ancestor v2.0.0 v1.0.1` 为真，拓扑无法区分新旧序列。
+          # 不排除的后果：未来 MAJOR 跳跃（如 v4.0.0，因 v2/v3 号段已被占用）按版本序取最大
+          # 候选会命中 v3.4.2，把重置前的整段历史误列为本次变更。
+          SERIES_OLD_MIN_TAG: v2.0.0
+          SERIES_OLD_MAX_TAG: v3.4.2
         run: |
           set -euo pipefail
-          prev_tag="$(git describe --tags --abbrev=0 --match 'v[0-9]+.[0-9]+.[0-9]+' "${RELEASE_TAG}^{commit}^" 2>/dev/null || true)"
+          mkdir -p release
+          # 上一版本 = 同时满足以下三条的候选 tag 中版本号最大者：
+          #   1) 版本号 ∈ [序列基线, 当前发布)   —— 用 sort -V + 基线锚点定位
+          #   2) 不在已归档的旧序列区间内         —— 否则 MAJOR 跳跃时误配 v3.4.2
+          #   3) 是本次发布提交的祖先             —— 否则 diff 区间无意义（如 v1.0.0 属历史标签）
+          # 条件 1 一次性过滤；条件 2、3 从高版本往低版本逐条校验，取第一个通过者。
+          prev_tag="$(
+            { git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' || true; echo "$RELEASE_TAG"; } \
+              | sort -V -u \
+              | awk -v cur="$RELEASE_TAG" -v base="$SERIES_BASELINE_TAG" \
+                    -v oldmin="$SERIES_OLD_MIN_TAG" -v oldmax="$SERIES_OLD_MAX_TAG" '
+                  function vkey(s) {
+                    gsub(/^v/, "", s)
+                    split(s, p, ".")
+                    return sprintf("%06d%06d%06d", p[1], p[2], p[3])
+                  }
+                  $0 == cur { exit }
+                  $0 == base { seen = 1 }
+                  seen {
+                    k = vkey($0)
+                    if (k >= vkey(oldmin) && k <= vkey(oldmax)) next
+                    print $0
+                  }' \
+              | tac \
+              | while read -r t; do
+                  git merge-base --is-ancestor "$t" "${RELEASE_TAG}^{commit}" 2>/dev/null || continue
+                  echo "$t"
+                  break
+                done
+          )"
           if [ -n "$prev_tag" ] && [ "$prev_tag" != "$RELEASE_TAG" ]; then
             node scripts/generate-changelog.mjs "$prev_tag" "$RELEASE_TAG" > release/notes-draft.md
           else
             {
               echo "## Changelog 草稿（${RELEASE_TAG}）"
               echo ""
-              echo "> 未找到上一版本 tag（首个版本或历史豁免线之前），本 Release 无自动草稿，CHANGELOG.md 条目全人工撰写。"
+              echo "> 未找到同序列内的上一版本 tag（首个版本、基线 tag 不在祖先链上、或区间内无合格候选），本 Release 无自动草稿，CHANGELOG.md 条目全人工撰写。"
             } > release/notes-draft.md
           fi
           echo "prev_tag=${prev_tag:-<none>}"
