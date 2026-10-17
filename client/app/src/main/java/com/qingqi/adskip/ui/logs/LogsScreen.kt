@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.qingqi.adskip.R
+import com.qingqi.adskip.data.StatsRepository
 import com.qingqi.adskip.ui.Messenger
 import com.qingqi.adskip.ui.components.ConfirmDialog
 import com.qingqi.adskip.ui.components.EmptyState
@@ -149,7 +150,12 @@ fun LogsScreen(messenger: Messenger, viewModel: LogsViewModel = viewModel(factor
             )
         } else {
             LazyColumn(contentPadding = PaddingValues(start = Spacing.lg, end = Spacing.lg, bottom = Spacing.xl)) {
-                items(state.logs, key = { "${it.ts}:${it.pkg}:${it.label}" }) { entry ->
+                // key 必须含位序：ts 是毫秒粒度（Prefs.addLog 用 System.currentTimeMillis），
+                // 同一应用同一标签在同一毫秒内被跳过两次时「ts:pkg:label」完全相同——
+                // LazyColumn 遇到重复 key 会在布局期直接抛 IllegalArgumentException 崩溃，
+                // 而日志页是底部导航的主 tab。key 只需在同一帧内唯一即可：本列表是
+                // 「头部前插、不改序」的追加型列表，位序在同一份数据内自洽。
+                itemsIndexed(state.logs, key = { index, entry -> logRowKey(index, entry) }) { _, entry ->
                     TwoLineRow(
                         title = entry.label,
                         // 走 stringResource 而非硬编码「 ｜ 」，否则英文环境仍显示中文分隔符，
@@ -166,3 +172,21 @@ fun LogsScreen(messenger: Messenger, viewModel: LogsViewModel = viewModel(factor
         }
     }
 }
+
+/**
+ * 日志行的 LazyColumn key：内容三元组 + 位序，**提取成纯函数**以便单测守护注入性。
+ *
+ * 背景（崩溃路径）：`Prefs.addLog` 用 `System.currentTimeMillis()` 作 ts（毫秒粒度），
+ * 同一应用同一标签在同一毫秒内被跳过两次（无障碍事件风暴下真实可达）时
+ * 「ts:pkg:label」完全相同；LazyColumn 对重复 key 抛
+ * `IllegalArgumentException: Key ... was already used`，直接崩在布局期。
+ *
+ * 为什么加位序就够：key 的契约只是「同一帧内唯一」。本列表是头部前插的追加型
+ * 列表（`addLog` 永远插到最前、从不改序），位序在同一份数据内自洽；
+ * 新记录前插时既有行 key 整体后移一位，代价仅是全部行重新组合（≤200 行，
+ * 且 LazyColumn 只为可见行创建组合），远小于崩溃风险。
+ *
+ * 配套测试：`ui/logs/LogRowKeyTest`（构造内容完全相同的相邻条目断言 key 互异）。
+ */
+internal fun logRowKey(index: Int, entry: StatsRepository.LogEntry): String =
+    "${entry.ts}:${entry.pkg}:${entry.label}:$index"
