@@ -1,8 +1,10 @@
 # 整体架构评审与技术设计（DESIGN-ARCH-REVIEW）
 
-> 状态：待评审（本文随 feature 分支提交，合并前需领域负责人 review）；最后更新：2026-10-16。
+> 状态：已合并（[#179](https://github.com/LiYihai1121/ui-app/pull/179)，`723a315`）；最后更新：2026-10-16。
 > 范围：轻启/AdSkip 客户端（Kotlin + Compose）+ 服务端（Bun + TypeScript）整体架构现状评审，以及 FOLLOW-UP 中两条 P1、一条 P2 的落地技术设计。
 > 依据：[ARCHITECTURE.md](../architecture/ARCHITECTURE.md)、[API.md](../api/API.md)、[FOLLOW-UP.md](FOLLOW-UP.md) 与全量关键源码核对（2026-10-16，含 server/src/*、client/app/src/main/java 下 engine/data/net/service/sync/core）。
+>
+> **落地状态（2026-10-16 勘误）**：本文 §6 五项修复**已全部落地**——§6.1/§6.2 随 v1.0.1（[#167](https://github.com/LiYihai1121/ui-app/pull/167)，`c68133a`）先行修入 main（评审基线误记为未修）；§6.3/§6.4/§6.5 随 [#181](https://github.com/LiYihai1121/ui-app/pull/181)（`465a5e8`）落地。各节标题下标注实际落地形态与本文设计的差异（落地实现择优调整处）。
 
 ## 1. 评审结论
 
@@ -24,30 +26,35 @@
 - **证据**：`SafetyGuard.SELF_PKG = "com.qingqi.adskip"` 与 `applicationId` 相同；`canClick()` 对自身包**一律返回 false**（防自触发死循环）。`SkipAdService.onAccessibilityEvent` 在 `AppEvents.testActive == true` 时放行自身包事件进入 `trySkip`，但随后 `canClick(target, pkg)` 仍将自身包拦死——自检浮层「跳过」永远点不了。
 - **影响**：发布版开屏自检功能不可用（#145 曾用 `.debug` 后缀并行包绕过护栏而误判修复）。
 - **修复设计**见 §6.1。
+- **✅ 已落地**：v1.0.1（#167，`c68133a`）——本文评审基线误记为未修，实际参数化形态为 `canClick(node, pkg, allowSelfPackage = false)`（参数名与 §6.1 的 `testActive` 不同，语义一致）。
 
 ### 2.2 P1 跳过计数双重累加（FOLLOW-UP §待修复 #2）
 
 - **证据**：`StatsRepository.recordSkip()` 调用 `Prefs.recordSkip()`（**立即写 SP** `total_skips` 与 `pkg_count:$pkg`），随后又 `pendingTotal++` / `pendingByPkg[pkg]++`；`total() = Prefs.getTotalSkips() + pendingTotal` **双算**。且 `flush()` 落盘后**不重置** `pendingTotal` / `pendingByPkg`，计数无界膨胀。
 - **影响**：首页计数虚高（单次跳过后立即显示 2、5 秒后 3）；进程生命周期内 `total()` 持续漂移；结构自 v3.4.0 #78 引入。
 - **修复设计**见 §6.2。
+- **✅ 已落地**：v1.0.1（#167，`c68133a`）——落地形态比本文设计更进一步：`Prefs` 拆为 `appendSkipLog`（只写日志）+ `addSkipCounts`（计数唯一落盘路径），`StatsRepository` 改经 `StatsStore` 端口注入（单测用假实现），flush 前置重置待落盘增量。
 
 ### 2.3 P2 引擎误跳系统界面文本（FOLLOW-UP §待修复）
 
 - **证据**：`SkipRuleEngine.matches()` 仅校验 `isVisible` / `isEditable`，**不校验 `clickable`**；`SafetyGuard.canClick()` 校验 visible + 面积，同样不校验 `clickable`；`clickNode()` 末尾兜底坐标手势。于是任何含关键词的可见文本（含不可点击的纯文本行）都会被点击——API 33 设置页本应用服务行「轻启 · Skip Splash Ads」被点并落库 `com.android.settings`。
 - **影响**：系统界面误跳计数；用户可感知的异常点击。
 - **修复设计**见 §6.3。
+- **✅ 已落地**：#181（`465a5e8`）——落地形态为「可点击路径护栏」：节点自身或 ≤4 层祖先可点击（`isClickable` 或 `clickableParent()` 命中），纯文本行不再被点。
 
 ### 2.4 P2 云端规则落地非原子（评审新发现）
 
 - **证据**：`RulesRepository.applyCloudRules()` 先 `Prefs.clearAllPkgRules()` 删除全部 `pkg_*` 键，再逐条 `savePkgKeywords/ViewIds/Selectors` 写回。中间进程死亡（同步正在执行时被系统杀掉）→ 应用专属规则全丢，仅剩全局关键词。
 - **影响**：极端场景下云端规则半覆盖；表现为「同步过反而应用专属规则消失」。概率低但不可自愈。
 - **修复设计**见 §6.4。
+- **✅ 已落地**：#181（`465a5e8`）——落地形态为端口化：`RulesStore` 接口 + `PrefsRulesStore`，`Prefs.replaceAllRules` 单次 edit 原子提交全部键；分次写入路径（`savePkgKeywords` 等五方法）已删除。
 
 ### 2.5 P3 v1 上报失败回退 v0 的双重上报风险（评审新发现）
 
 - **证据**：`SyncClient.reportSkip()` v1 批量上报**任何异常**（含 429 限流、5xx）都回退 `POST /api/skip` 单条上报。
 - **影响**：网络抖动时同一跳过事件可能双份入库（v1 失败后 v0 成功），服务端 `byApp` 计数虚增；v0 通道继续消耗写令牌桶。
 - **修复设计**见 §6.5。
+- **✅ 已落地**：#181（`465a5e8`）——回退捕获收紧为仅 `IOException`；429/4xx/5xx 传播外层静默失败，不回退。
 
 ## 3. 目标设计（关键模块契约）
 
@@ -163,39 +170,47 @@ UI 开自检 → AppEvents.setTestActive(true)
 
 ## 6. 待修复项落地设计
 
-### 6.1 P1 自检超时修复（0.5 天）
+### 6.1 P1 自检超时修复（0.5 天）— ✅ 已落地（v1.0.1，#167 `c68133a`）
 
 - `SafetyGuard.canClick(node, pkg, testActive: Boolean = false)`：自身包判定改为 `if (pkg == SELF_PKG && !testActive) return false`。默认参数保持所有既有调用点行为不变。
 - `SkipAdService.trySkip` 调用处传入 `AppEvents.testActive`（service 已依赖 core，不违反边界；engine 不引入 core 依赖）。
 - 测试态说明：自检由 UI 显式开启/关闭，不存在「广告页面递归触发自身事件」的死循环回路，放行自身包不破坏防自触发设计的意图。
 - **契约测试**：JVM 单测断言——发布包名 `com.qingqi.adskip` + `testActive=false` → `canClick=false`；+ `testActive=true` → `canClick=true`（其余黑名单/系统包断言不变，包级黑名单测试态也生效）。
 
-### 6.2 P1 计数双重累加修复（0.5 天）
+### 6.2 P1 计数双重累加修复（0.5 天）— ✅ 已落地（v1.0.1，#167 `c68133a`）
 
 - `Prefs.recordSkip()` 删除 `total_skips` 与 `pkg_count:$pkg` 的写入，**只保留日志**（`addLog`）。
 - `StatsRepository.flush()` 末尾新增：`pendingTotal = 0; pendingByPkg.clear()`。
 - 读路径（`total()` / `countFor()`）与触发点（5s 延迟 / onDestroy 强制）不变。
 - **契约测试**：JVM/Robolectric 单测断言「N 次 `recordSkip` → `total() == N`，且 `flush()` 后仍为 N」。
 
-### 6.3 P2 引擎误跳修复（1 天）
+### 6.3 P2 引擎误跳修复（1 天）— ✅ 已落地（#181，`465a5e8`）
+
+> 落地差异：实现为「可点击路径护栏」（自身或 ≤4 层祖先可点击即放行），而非本文 `isClickable || isFocusable` 的并集校验——`isFocusable` 单独不构成放行条件，父链可达点击仍放行（广告按钮的可点击父容器场景）。落地契约见 `SafetyGuardTest` 的 4 个新增用例。
 
 - `SafetyGuard.canClick()` 合法性校验增加 `node.isClickable || node.isFocusable`（复用 `AdNode` 既有抽象，**不改接口**）。广告跳过按钮均为可点击节点；纯文本行不再被点。
 - 包级豁免（备选，与上者取其一或并存）：`DENY_SYSTEM_PACKAGES` 已覆盖 `com.android.settings` / `systemui`；按需补充 launcher 类系统包。
 - **回归用例**：真实窗口回归（API 33 设置页服务行不再被点；`com.android.settings` 不再产生落库计数）。
 
-### 6.4 P2 规则落地原子化（0.5 天）
+### 6.4 P2 规则落地原子化（0.5 天）— ✅ 已落地（#181，`465a5e8`）
+
+> 落地差异：经 `RulesStore` 端口 + `Prefs.replaceAllRules` 单次 edit 实现（参照 StatsStore 先例，使原子性可在纯 JVM 单测断言）；**分次写入路径已删除**（`savePkgKeywords/ViewIds/Selectors`、`clearAllPkgRules`、`replaceDisabledPackages`）——保留即给「半新半旧」复发留门。另：`RulesRepository` 的 `android.util.LruCache` 换为纯 Kotlin `LinkedHashMap`（isReturnDefaultValues 下 LruCache 是空壳，缓存失效无法在 JVM 断言）。落地契约见 `RulesRepositoryTest` 7 项。
 
 - `RulesRepository.applyCloudRules()` 改为两阶段：① 在内存构建 `新 pkg 键值映射`（含 disabled 集合）；② 单次 `Prefs.sp(context).edit()`：先 remove 全部旧 `pkg_*` 键，再 put 新键，一次 `apply()`。
 - `SharedPreferences` 的 `apply()` 本身异步落盘但**语义原子**（同一 edit 要么整体生效要么整体不生效），消除半覆盖窗口。
 - **契约测试**：JVM/Robolectric 单测断言——`applyCloudRules` 后旧应用专属规则全部被替换、新规则完整生效（用计数断言，无需模拟崩溃）。
 
-### 6.5 P3 v1→v0 回退收紧（0.5 天）
+### 6.5 P3 v1→v0 回退收紧（0.5 天）— ✅ 已落地（#181，`465a5e8`）
+
+> 落地差异：回退捕获由「所有 Exception」收紧为仅 `IOException`（网络层异常，含连接失败/DNS/超时）；`SyncClientTest` 落地 3 个用例（500 不回退 / 429 不回退 / 断网 DISCONNECT_AT_START 才回退）。
 
 - `SyncClient.reportSkip()` 的 v0 回退仅保留**网络层异常**（`IOException` 等连接失败）；HTTP 状态非 2xx（429/5xx/4xx）直接静默失败，不再回退。
 - v0 端点（`/api/skip`）在服务端继续保留供旧客户端兼容，客户端新代码不再主动回退。
 - **回归**：`SyncClientTest`（MockWebServer）补一例——v1 返回 429 时不再产生 v0 请求。
 
 ## 7. 契约测试清单（合并前必须全绿）
+
+> 落地状态（2026-10-16）：下表全部已落地——§6.1/§6.2 随 v1.0.1（#167）；§6.3/§6.4/§6.5 随 #181（RulesRepositoryTest 为新建，其余为扩展）。全量门禁实测：`ktlintCheck + testDebugUnitTest`（286 项 / 34 套件 / 0 失败）+ `assembleDebug` 全绿。
 
 | 测试 | 文件（拟） | 断言 |
 |---|---|---|
