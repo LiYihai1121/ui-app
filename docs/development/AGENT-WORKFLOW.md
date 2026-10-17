@@ -81,9 +81,28 @@ git rev-parse --show-toplevel  # 确认工作区根
 
 | Agent | 工作区 | 分支 | 认领路径 | 状态 |
 | --- | --- | --- | --- | --- |
-| `gzdx` | `.worktrees/gzdx-gitleaks` | `ci/gitleaks-enforce` | `.gitleaks.toml`、`.github/workflows/ci.yml`、`SECURITY.md`、`client/app/src/test/.../arch/ProjectStructureTest.kt`、`AGENT-WORKFLOW.md`（认领板自身） | 进行中 |
+| `agent-60` | `.worktrees/agent-merge-60/` | `refactor/ui-adaptive-layout`（PR #60） | `client/app/src/main/java/com/qingqi/adskip/ui/MainActivity.kt`、`ui/components/Common.kt`、`ui/components/Feedback.kt`、`client/app/src/test/java/com/qingqi/adskip/arch/UiContractTest.kt` | 进行中 |
+| `agent-64` | `.worktrees/agent-merge-64/` | `fix/skill-audit-code-quality`（PR #64） | `client/app/src/main/java/com/qingqi/adskip/net/SyncClient.kt` | 进行中 |
+| `gzdx` | `.worktrees/gzdx-hygiene-fix/` | `ci/repo-hygiene-fix` | `.github/PULL_REQUEST_TEMPLATE.md`、本文件认领板 | 进行中 |
 | — | — | — | `docs/architecture/ARCHITECTURE.md`、`CHANGELOG.md` | 预留：仅集成者写 |
-| `gzdx` | `.worktrees/gzdx-ui-polish` | `feature/icon-refresh`（PR #131）→ `feature/ui-icon-library` → `feature/ui-detail-polish` → `feature/theme-mode-setting`（同工作区串行） | `client/app/src/main/res/**`（图标/磁贴/strings）、`ui/theme/**`、`ui/MainActivity.kt`、`ui/home/**`、`ui/apps/**`、`ui/logs/**`、`ui/profile/**`、`ui/settings/**`、`ui/components/**`、`core/ThemePreferences.kt`、`data/SettingsRepository.kt`、`client/app/build.gradle.kts`、`client/gradle/libs.versions.toml`、`client/app/src/test/java/com/qingqi/adskip/arch/UiContractTest.kt`、本文件认领板行 | 进行中 |
+
+### 3.2.1 仓库清理记录
+
+- **2026-10-13**：清理主检出的分支、worktree 与标签混乱。本地分支 33 → 5，worktree 25 → 3（主检出 + 上表两行），删除 16 条远端分支与非版本 tag `backup/m1d-rule-audit-channel`，`git gc --prune=now` 后 `.git` 12.5 MB → 7.9 MB。
+  清理后分支与工作区互不游离：**每个在研 PR 至多一条分支，每个登记工作区至多一个 PR**，无孤儿分支、无孤儿 worktree。
+  上表只登记仍有活跃工作区的任务；仅存分支、暂无工作区的在研 PR 不进表（避免两处状态打架）。
+- 认领板此前的两行 `gzdx` 登记（`.worktrees/gzdx-gitleaks`、`.worktrees/gzdx-ui-polish`）及其全部串联分支已随清理一并移除：
+  `ci/gitleaks-enforce`、`feature/ui-icon-library`、`feature/ui-detail-polish` 对应的 PR 已合并且工作区已归档；
+  `feature/icon-refresh`、`feature/theme-mode-setting` 的远端分支仍保留为在研 PR 的事实源，本地分支已删（内容完整，可从远端重建）。
+- `.worktrees/` 下 3 个未登记、无 `.git` 元数据的孤儿目录（`degree-report-hardening`、`pr-bodies`、`staging-p0`）
+  已移出仓库到仓库外归档目录，未删除内容。
+- **分支命名合规**：`feat/reference-ui-functional-completion` 改为 `feature/reference-ui-functional-completion`。
+  `feat` 不在第 4 节与 `RepoHygieneTest` 允许的 type 列表中；本机在该分支运行 `testDebugUnitTest` 时
+  `current branch follows the naming convention` 会失败（CI 用 `actions/checkout` 检到 PR merge ref、处于 detached HEAD，
+  `readHeadRef` 返回空串即放行，故不影响 CI 绿灯）。GitHub 不支持重命名 PR 的 head 分支，
+  故原 #161 关闭、由内容完全一致的 #166 替代（同一 head 提交，#161 已留审计说明）。
+  **未处理**：PR #160 的 head 分支 `ui/reference-home-redesign-clean` 属同类违规（`ui` 不在允许列表），
+  但其 head 提交为当日推送、正处于活跃开发且 `mergeable = CONFLICTING`，故不动作，留待该分支属主协商后再改。
 
 状态取值：`进行中` / `待合并` / `阻塞` / `已完成`。任务认领与状态广播优先使用协作工具的任务清单与信箱，其次才用本表（避免两处状态打架）。
 
@@ -95,8 +114,7 @@ git rev-parse --show-toplevel  # 确认工作区根
 >
 > **硬性要求**：主检出只用于分支整合与查看，**禁止任何会话在主检出直接开发**。
 > 每个会话必须先执行 `git worktree add .worktrees/<agent>-<slug> <branch>` 并在其中工作
-> （AGENTS.md「多 Agent 协作」一票否决项）。`release/v3.4.1` 的进行中改动（versionCode 15）
-> 应迁入 `.worktrees/<agent>-v341/` 后继续，并在此表登记认领。
+> （AGENTS.md「多 Agent 协作」一票否决项）。
 >
 > 逃生口 `ADSKIP_ALLOW_MAIN_COMMIT=1` **仅限紧急修复**，且必须在对应 PR 说明中登记原因与时间——逃生口是审计债，不是常规通道。
 
